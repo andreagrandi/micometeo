@@ -1,0 +1,38 @@
+description = "P2a: build a 500 m grid of a Pistoia Apennines sample area with terrain, soil and rock type."
+seed = 42
+time_limit_minutes = 30
+
+[settings]
+# Margin in degrees added around the grid when downloading, so edge squares are fully covered.
+download_margin_degrees = 0.005
+
+# About 11 km by 10 km from Cutigliano to San Marcello Pistoiese, in degrees.
+# Beech, chestnut and fir forest between about 600 and 1,900 m.
+[settings.sample_box]
+west = 10.66
+south = 44.05
+east = 10.80
+north = 44.14
+
+[settings.terrain]
+# Below this mean slope a square is close to flat and its direction means little.
+flat_slope_deg = 5.0
+# Below this the slopes inside a square face many ways, from 0 for all ways to 1 for one way.
+min_resultant_length = 0.3
+# Neighbouring elevation pixels closer than this count as the same value.
+same_altitude_m = 0.5
+
+[settings.soil]
+depth = "5-15cm"
+properties = ["phh2o", "clay", "sand", "silt"]
+
+# Widest 90 percent range of a soil value that still counts as medium reliability.
+[settings.soil.max_range]
+phh2o = 1.5
+clay = 20.0
+sand = 20.0
+silt = 20.0
+
+[settings.rock]
+layer = "rt_dbg.el_geol.unita_geologica_areale_10k"
+pause_seconds = 0.05
