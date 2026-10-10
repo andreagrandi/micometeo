@@ -1,4 +1,4 @@
-description = "P2a: build a 500 m grid of a Pistoia Apennines sample area with terrain, soil and rock type."
+description = "P2: build a 500 m grid of a Pistoia Apennines sample area with terrain, soil, rock type and forest."
 seed = 42
 time_limit_minutes = 30
 
@@ -36,3 +36,11 @@ silt = 20.0
 [settings.rock]
 layer = "rt_dbg.el_geol.unita_geologica_areale_10k"
 pause_seconds = 0.05
+
+[settings.forest]
+# Below this share of forest pixels a square counts as having no forest.
+no_forest_below = 0.1
+# Between the no forest share and this share, the forest is a small part of the square and the leaf type is low reliability.
+low_reliability_below = 0.3
+# From this share of broadleaf among the forest pixels a square is broadleaf. At one minus this share or less it is conifer.
+broadleaf_from = 0.75

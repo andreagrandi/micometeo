@@ -5,3 +5,5 @@ soilgrids_clay_5-15cm,clay_pct,250 m,260.4,1.0,500,False
 soilgrids_sand_5-15cm,sand_pct,250 m,263.4,1.0,500,False
 soilgrids_silt_5-15cm,silt_pct,250 m,259.8,1.0,500,False
 toscana_geologia_10k,rock_unit_code rock_unit_name rock_description,"1:10,000 map",924.5,0.393,500,True
+copernicus_forest_type_2018,forest_share broadleaf_share leaf_type,10 m,415.9,0.716,500,False
+toscana_inventario_forestale_400m,regional_forest_type,one point per 400 m cell,400.0,0.529,500,False

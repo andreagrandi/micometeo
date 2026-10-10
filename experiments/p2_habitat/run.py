@@ -1,4 +1,4 @@
-"""P2a: fill a 500 m grid of a Pistoia Apennines sample area with terrain, soil and rock type."""
+"""P2: fill a 500 m grid of a Pistoia Apennines sample area with terrain, soil, rock type and forest."""
 
 import csv
 from pathlib import Path
@@ -11,7 +11,7 @@ from rasterio.warp import Resampling
 
 from micometeo.context import RunContext
 from micometeo.finds.grid import CELL_SIZE_M
-from micometeo.habitat import detail, rock, soil, terrain
+from micometeo.habitat import detail, forest, inventory, rock, soil, terrain
 from micometeo.habitat.grid import (
     SampleGrid,
     build_grid,
@@ -36,6 +36,10 @@ VALUE_COLUMNS = [
     "sand_pct",
     "silt_pct",
     "rock_unit_code",
+    "forest_share",
+    "broadleaf_share",
+    "leaf_type",
+    "regional_forest_type",
 ]
 LAYER_COLUMNS = [
     "layer_id",
@@ -67,6 +71,8 @@ def output_columns() -> list[str]:
         columns.append(column)
         if column == "rock_unit_code":
             columns += ["rock_unit_name", "rock_description"]
+        if column == "regional_forest_type":
+            columns.append("regional_forest_points")
         columns += [f"{column}_source", f"{column}_reliability"]
     return columns
 
@@ -250,6 +256,85 @@ def add_rock(
     return layer, answers
 
 
+def add_forest(
+    *, context: RunContext, grid: SampleGrid, squares: list[dict[str, Any]]
+) -> tuple[Path, dict[str, Any]]:
+    """Download the forest type map and add forest share, broadleaf share and leaf type."""
+    path = forest.download_forest_type(grid=grid, raw_dir=context.raw_dir)
+    note = read_download_note(path=path)
+    context.add_source(
+        name="Copernicus forest type 2018",
+        url=note["url"],
+        licence=forest.LICENCE,
+        version="High Resolution Layer Forest Type, reference year 2018",
+        downloaded_at=note["downloaded_at"],
+        query=note["query"],
+    )
+    context.add_input(path)
+    pixels = forest.mask_unusable(
+        pixels=warp_to_grid(path=path, grid=grid, resampling=Resampling.nearest)
+    )
+    for square, values in zip(
+        squares,
+        forest.summarise_forest(pixels=pixels, grid=grid, settings=context.config["forest"]),
+    ):
+        square.update(values)
+    layer = {
+        "layer_id": forest.LAYER_ID,
+        "provider": "European Environment Agency, Copernicus Land Monitoring Service",
+        "title": "High Resolution Layer Forest Type 2018, broadleaf and conifer forest",
+        "url": note["url"],
+        "licence": forest.LICENCE,
+        "version": "Forest type 2018, forest means at least 10 percent tree cover over at least 0.5 ha",
+        "download_date": note["downloaded_at"][:10],
+        "file_format": "GeoTIFF exported from the EEA image service",
+        "coordinate_system": "EPSG:3035, served by the EEA image service",
+        "stated_detail": "10 m pixels",
+    }
+    return path, layer
+
+
+def add_inventory(
+    *, context: RunContext, grid: SampleGrid, squares: list[dict[str, Any]]
+) -> tuple[list[list[dict[str, Any]]], dict[str, Any]]:
+    """Download the Tuscany forest inventory and add the regional forest type to every square."""
+    path = inventory.download_inventory(raw_dir=context.raw_dir)
+    note = read_download_note(path=path)
+    context.add_source(
+        name="Regione Toscana forest inventory",
+        url=note["url"],
+        licence=inventory.LICENCE,
+        version="Inventario forestale della Toscana, surveyed 1985 to 1993, revised 2009",
+        downloaded_at=note["downloaded_at"],
+        query={"files": note["files"]},
+    )
+    context.add_input(path)
+    points = inventory.read_points(path=path, grid=grid)
+    square_points = inventory.points_by_square(points=points, grid=grid)
+    for square, in_square in zip(squares, square_points):
+        square.update(
+            inventory.summarise_square(
+                points=in_square,
+                centre=(square["corner_e"] + CELL_SIZE_M / 2, square["corner_n"] + CELL_SIZE_M / 2),
+                forest=square,
+                low_reliability_below=context.config["forest"]["low_reliability_below"],
+            )
+        )
+    layer = {
+        "layer_id": inventory.LAYER_ID,
+        "provider": "Regione Toscana, GEOscopio",
+        "title": "Inventario forestale della Toscana, forest category at survey points",
+        "url": inventory.DOWNLOAD_URL,
+        "licence": inventory.LICENCE,
+        "version": "Field survey 1985 to 1993, dataset revised 2009",
+        "download_date": note["downloaded_at"][:10],
+        "file_format": "ESRI Shapefile, only the attribute table is read",
+        "coordinate_system": "EPSG:3003, Gauss-Boaga west",
+        "stated_detail": "one survey point per 400 m cell",
+    }
+    return square_points, layer
+
+
 def detail_table(
     *,
     context: RunContext,
@@ -257,6 +342,8 @@ def detail_table(
     dem_path: Path,
     soil_paths: dict[str, Path],
     rock_answers: dict[str, Any],
+    forest_path: Path,
+    inventory_points: list[list[dict[str, Any]]],
     box: tuple[float, float, float, float],
 ) -> list[dict[str, Any]]:
     """Measure the real detail of every layer inside the sample box."""
@@ -323,6 +410,40 @@ def detail_table(
             "mixed_square_share": detail.mixed_square_share(blocks=rock_blocks),
         }
     )
+    values, spacing_east, spacing_north = detail.native_values(path=forest_path, bounds=box)
+    forest_pixels = forest.mask_unusable(
+        pixels=warp_to_grid(path=forest_path, grid=grid, resampling=Resampling.nearest)
+    )
+    rows.append(
+        {
+            "layer_id": forest.LAYER_ID,
+            "used_for": "forest_share broadleaf_share leaf_type",
+            "stated_detail": "10 m",
+            "real_detail_m": detail.real_detail_m(
+                values=forest.mask_unusable(pixels=np.array(values)).tolist(),
+                tolerance=0.0,
+                spacing_east_m=spacing_east,
+                spacing_north_m=spacing_north,
+            ),
+            "mixed_square_share": detail.mixed_square_share(
+                blocks=square_blocks(pixels=forest_pixels, grid=grid).tolist()
+            ),
+        }
+    )
+    rows.append(
+        {
+            "layer_id": inventory.LAYER_ID,
+            "used_for": "regional_forest_type",
+            "stated_detail": "one point per 400 m cell",
+            "real_detail_m": 400.0,
+            "mixed_square_share": detail.mixed_square_share(
+                blocks=[
+                    [point["name"] for point in in_square] if len(in_square) >= 2 else []
+                    for in_square in inventory_points
+                ]
+            ),
+        }
+    )
     for row in rows:
         row["square_size_m"] = CELL_SIZE_M
         row["coarser_than_square"] = row["real_detail_m"] > CELL_SIZE_M
@@ -341,6 +462,8 @@ def run(context: RunContext) -> None:
     dem_path, dem_layer = add_terrain(context=context, grid=grid, squares=squares, bounds=bounds)
     soil_paths, soil_layers = add_soil(context=context, grid=grid, squares=squares, bounds=bounds)
     rock_layer, rock_answers = add_rock(context=context, grid=grid, squares=squares)
+    forest_path, forest_layer = add_forest(context=context, grid=grid, squares=squares)
+    inventory_points, inventory_layer = add_inventory(context=context, grid=grid, squares=squares)
 
     columns = output_columns()
     grid_path = context.output_dir / "grid.parquet"
@@ -350,7 +473,11 @@ def run(context: RunContext) -> None:
     )
 
     layers_path = Path(settings.get("layers_path") or LAYERS_PATH)
-    write_csv(rows=[dem_layer, *soil_layers, rock_layer], columns=LAYER_COLUMNS, path=layers_path)
+    write_csv(
+        rows=[dem_layer, *soil_layers, rock_layer, forest_layer, inventory_layer],
+        columns=LAYER_COLUMNS,
+        path=layers_path,
+    )
     reports_dir = Path(settings.get("reports_dir") or REPORTS_DIR)
     coverage_path = reports_dir / "p2_coverage.csv"
     write_csv(
@@ -368,6 +495,8 @@ def run(context: RunContext) -> None:
             dem_path=dem_path,
             soil_paths=soil_paths,
             rock_answers=rock_answers,
+            forest_path=forest_path,
+            inventory_points=inventory_points,
             box=box,
         ),
         columns=DETAIL_COLUMNS,
