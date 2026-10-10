@@ -1,0 +1,446 @@
+{
+  "experiment": "p2_habitat",
+  "run_id": "20261010T192011Z-c4f95b",
+  "command": "micometeo run p2_habitat",
+  "status": "completed",
+  "error": null,
+  "started_at": "2026-10-10T19:20:11Z",
+  "finished_at": "2026-10-10T19:20:24Z",
+  "duration_seconds": 13.423,
+  "time_limit_seconds": 1800,
+  "seed": 42,
+  "config": {
+    "description": "P2: build a 500 m grid of a Pistoia Apennines sample area with terrain, soil, rock type and forest.",
+    "seed": 42,
+    "time_limit_minutes": 30,
+    "settings": {
+      "download_margin_degrees": 0.005,
+      "sample_box": {
+        "west": 10.66,
+        "south": 44.05,
+        "east": 10.8,
+        "north": 44.14
+      },
+      "terrain": {
+        "flat_slope_deg": 5.0,
+        "min_resultant_length": 0.3,
+        "same_altitude_m": 0.5
+      },
+      "soil": {
+        "depth": "5-15cm",
+        "properties": [
+          "phh2o",
+          "clay",
+          "sand",
+          "silt"
+        ],
+        "max_range": {
+          "phh2o": 1.5,
+          "clay": 20.0,
+          "sand": 20.0,
+          "silt": 20.0
+        }
+      },
+      "rock": {
+        "layer": "rt_dbg.el_geol.unita_geologica_areale_10k",
+        "pause_seconds": 0.05
+      },
+      "forest": {
+        "no_forest_below": 0.1,
+        "low_reliability_below": 0.3,
+        "broadleaf_from": 0.75
+      }
+    }
+  },
+  "git": {
+    "commit": "977a076ed450dcf789dcd14c96a51c34d0b25eee",
+    "uncommitted_changes": true
+  },
+  "versions": {
+    "python": "3.13.1",
+    "micometeo": "0.1.0",
+    "packages": {
+      "affine": "3.0.1",
+      "attrs": "26.1.0",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "click": "8.5.0",
+      "contourpy": "1.4.0",
+      "cycler": "0.12.1",
+      "distlib": "0.4.3",
+      "filelock": "4.1.0",
+      "fonttools": "4.66.1",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.1",
+      "kiwisolver": "1.5.1",
+      "matplotlib": "3.11.2",
+      "micometeo": "0.1.0",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "osmium": "4.3.1",
+      "packaging": "26.3",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.4",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "pyarrow": "26.0.0",
+      "Pygments": "2.21.0",
+      "pyparsing": "3.3.3",
+      "pyproj": "3.8.0",
+      "pyshp": "3.1.6",
+      "pytest": "9.1.1",
+      "python-dateutil": "2.9.0.post0",
+      "python-discovery": "1.6.2",
+      "PyYAML": "6.0.3",
+      "rasterio": "1.5.2",
+      "requests": "2.34.2",
+      "shapely": "2.2.0",
+      "six": "1.17.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.6"
+    }
+  },
+  "computer": {
+    "os": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "cpu_count": 10,
+    "processor": "arm",
+    "total_ram_bytes": 34359738368
+  },
+  "inputs": [
+    {
+      "path": "data/raw/p2_habitat/copernicus_dem_glo30.tif",
+      "sha256": "3cf13ca7ea172e48e64963983da72f53f5aaf3c0ac07a3be9a219a1a837607f1",
+      "size_bytes": 757975
+    },
+    {
+      "path": "data/raw/p2_habitat/soilgrids_phh2o_5-15cm_mean.tif",
+      "sha256": "5538cbaeb2e2c2f444a01d85fc043e2109c1362eec5dfb170a5ca17b9d030030",
+      "size_bytes": 6315
+    },
+    {
+      "path": "data/raw/p2_habitat/soilgrids_phh2o_5-15cm_Q0.05.tif",
+      "sha256": "6e329a6dce2ad80a0ac1ebbd907f493074bb45c4e6de2472698bf180ca231eb3",
+      "size_bytes": 6315
+    },
+    {
+      "path": "data/raw/p2_habitat/soilgrids_phh2o_5-15cm_Q0.95.tif",
+      "sha256": "ae83ad1a821cf0d80339ff455a6dc489d8e761009c520c9e8cb7f8b61d95d92f",
+      "size_bytes": 6315
+    },
+    {
+      "path": "data/raw/p2_habitat/soilgrids_clay_5-15cm_mean.tif",
+      "sha256": "76f828a1bfcd25bfdff5c01f1a69c06fd59b6774c4e9d084209609e94a7dd1da",
+      "size_bytes": 6315
+    },
+    {
+      "path": "data/raw/p2_habitat/soilgrids_clay_5-15cm_Q0.05.tif",
+      "sha256": "308db728099ad2beec688aa8465963d9238c23faa0829f335f968c18352fd680",
+      "size_bytes": 6315
+    },
+    {
+      "path": "data/raw/p2_habitat/soilgrids_clay_5-15cm_Q0.95.tif",
+      "sha256": "e1dde8b1404cbdf11bf4414006228cbf1ab974ce70aec9e9f06807f5a41b6804",
+      "size_bytes": 6315
+    },
+    {
+      "path": "data/raw/p2_habitat/soilgrids_sand_5-15cm_mean.tif",
+      "sha256": "70ae93ce8067361f4b46d7c92a1052ea7de5afc2a4a770ec7c2ea87d7dc6cb14",
+      "size_bytes": 6315
+    },
+    {
+      "path": "data/raw/p2_habitat/soilgrids_sand_5-15cm_Q0.05.tif",
+      "sha256": "244d6126258f25469c31709ffb814a01e9fd98eb8e2b71ae86ac3cf834f0ed1a",
+      "size_bytes": 6315
+    },
+    {
+      "path": "data/raw/p2_habitat/soilgrids_sand_5-15cm_Q0.95.tif",
+      "sha256": "ad96a57b5e769aad25aa1eae8550837437bbe7992acd77e9b71d9fadc12edc45",
+      "size_bytes": 6315
+    },
+    {
+      "path": "data/raw/p2_habitat/soilgrids_silt_5-15cm_mean.tif",
+      "sha256": "bd03087e52354b96aa0d1a157495b900ee732e3f5aff8188b40c2d7c419ae4a3",
+      "size_bytes": 6315
+    },
+    {
+      "path": "data/raw/p2_habitat/soilgrids_silt_5-15cm_Q0.05.tif",
+      "sha256": "2ddee46445f7007c3a98783591a72e6bcba04bf296932c616f002bf47d277cff",
+      "size_bytes": 6315
+    },
+    {
+      "path": "data/raw/p2_habitat/soilgrids_silt_5-15cm_Q0.95.tif",
+      "sha256": "3c2cc6d1834f425d5eaa1f5c2c4662a45e0207061351f562ce2df05704eff08c",
+      "size_bytes": 6315
+    },
+    {
+      "path": "data/raw/p2_habitat/toscana_geologia_10k_points.json",
+      "sha256": "82d7513127828f2e2e63639c201ad22b73b0db079ff272cae6cbb43bb63e297d",
+      "size_bytes": 342650
+    },
+    {
+      "path": "data/raw/p2_habitat/copernicus_forest_type_2018.tif",
+      "sha256": "06ed4f2ef8780fe64da735b04f9a0fec51aa425f3a492c2dcdb8506751df33db",
+      "size_bytes": 1459858
+    },
+    {
+      "path": "data/raw/p2_habitat/toscana_inventario_forestale/ift_1c_polygon.dbf",
+      "sha256": "01d498fb8085b6f84d400e093b34f5550f24cb12fa9b33f59707be247dd6c168",
+      "size_bytes": 173768306
+    }
+  ],
+  "sources": [
+    {
+      "name": "Copernicus DEM GLO-30 elevation map",
+      "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N44_00_E010_00_DEM/Copernicus_DSM_COG_10_N44_00_E010_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-30 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-30 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "GLO-30 public release on AWS, tiles last modified Mon, 09 May 2022 14:24:11 GMT",
+      "downloaded_at": "2026-10-10T18:43:19Z",
+      "query": {
+        "tiles": [
+          "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N44_00_E010_00_DEM/Copernicus_DSM_COG_10_N44_00_E010_00_DEM.tif"
+        ],
+        "bounds": [
+          10.648604340270948,
+          44.04029172757544,
+          10.80931777386663,
+          44.14604811341716
+        ]
+      }
+    },
+    {
+      "name": "ISRIC SoilGrids 2.0 phh2o 5-15cm mean",
+      "url": "https://files.isric.org/soilgrids/latest/data/phh2o/phh2o_5-15cm_mean.vrt",
+      "licence": "CC BY 4.0",
+      "version": "SoilGrids 2.0",
+      "downloaded_at": "2026-10-10T18:43:22Z",
+      "query": {
+        "bounds": [
+          10.648604340270948,
+          44.04029172757544,
+          10.80931777386663,
+          44.14604811341716
+        ]
+      }
+    },
+    {
+      "name": "ISRIC SoilGrids 2.0 phh2o 5-15cm Q0.05",
+      "url": "https://files.isric.org/soilgrids/latest/data/phh2o/phh2o_5-15cm_Q0.05.vrt",
+      "licence": "CC BY 4.0",
+      "version": "SoilGrids 2.0",
+      "downloaded_at": "2026-10-10T18:43:25Z",
+      "query": {
+        "bounds": [
+          10.648604340270948,
+          44.04029172757544,
+          10.80931777386663,
+          44.14604811341716
+        ]
+      }
+    },
+    {
+      "name": "ISRIC SoilGrids 2.0 phh2o 5-15cm Q0.95",
+      "url": "https://files.isric.org/soilgrids/latest/data/phh2o/phh2o_5-15cm_Q0.95.vrt",
+      "licence": "CC BY 4.0",
+      "version": "SoilGrids 2.0",
+      "downloaded_at": "2026-10-10T18:43:29Z",
+      "query": {
+        "bounds": [
+          10.648604340270948,
+          44.04029172757544,
+          10.80931777386663,
+          44.14604811341716
+        ]
+      }
+    },
+    {
+      "name": "ISRIC SoilGrids 2.0 clay 5-15cm mean",
+      "url": "https://files.isric.org/soilgrids/latest/data/clay/clay_5-15cm_mean.vrt",
+      "licence": "CC BY 4.0",
+      "version": "SoilGrids 2.0",
+      "downloaded_at": "2026-10-10T18:43:33Z",
+      "query": {
+        "bounds": [
+          10.648604340270948,
+          44.04029172757544,
+          10.80931777386663,
+          44.14604811341716
+        ]
+      }
+    },
+    {
+      "name": "ISRIC SoilGrids 2.0 clay 5-15cm Q0.05",
+      "url": "https://files.isric.org/soilgrids/latest/data/clay/clay_5-15cm_Q0.05.vrt",
+      "licence": "CC BY 4.0",
+      "version": "SoilGrids 2.0",
+      "downloaded_at": "2026-10-10T18:43:38Z",
+      "query": {
+        "bounds": [
+          10.648604340270948,
+          44.04029172757544,
+          10.80931777386663,
+          44.14604811341716
+        ]
+      }
+    },
+    {
+      "name": "ISRIC SoilGrids 2.0 clay 5-15cm Q0.95",
+      "url": "https://files.isric.org/soilgrids/latest/data/clay/clay_5-15cm_Q0.95.vrt",
+      "licence": "CC BY 4.0",
+      "version": "SoilGrids 2.0",
+      "downloaded_at": "2026-10-10T18:43:44Z",
+      "query": {
+        "bounds": [
+          10.648604340270948,
+          44.04029172757544,
+          10.80931777386663,
+          44.14604811341716
+        ]
+      }
+    },
+    {
+      "name": "ISRIC SoilGrids 2.0 sand 5-15cm mean",
+      "url": "https://files.isric.org/soilgrids/latest/data/sand/sand_5-15cm_mean.vrt",
+      "licence": "CC BY 4.0",
+      "version": "SoilGrids 2.0",
+      "downloaded_at": "2026-10-10T18:43:49Z",
+      "query": {
+        "bounds": [
+          10.648604340270948,
+          44.04029172757544,
+          10.80931777386663,
+          44.14604811341716
+        ]
+      }
+    },
+    {
+      "name": "ISRIC SoilGrids 2.0 sand 5-15cm Q0.05",
+      "url": "https://files.isric.org/soilgrids/latest/data/sand/sand_5-15cm_Q0.05.vrt",
+      "licence": "CC BY 4.0",
+      "version": "SoilGrids 2.0",
+      "downloaded_at": "2026-10-10T18:43:53Z",
+      "query": {
+        "bounds": [
+          10.648604340270948,
+          44.04029172757544,
+          10.80931777386663,
+          44.14604811341716
+        ]
+      }
+    },
+    {
+      "name": "ISRIC SoilGrids 2.0 sand 5-15cm Q0.95",
+      "url": "https://files.isric.org/soilgrids/latest/data/sand/sand_5-15cm_Q0.95.vrt",
+      "licence": "CC BY 4.0",
+      "version": "SoilGrids 2.0",
+      "downloaded_at": "2026-10-10T18:43:58Z",
+      "query": {
+        "bounds": [
+          10.648604340270948,
+          44.04029172757544,
+          10.80931777386663,
+          44.14604811341716
+        ]
+      }
+    },
+    {
+      "name": "ISRIC SoilGrids 2.0 silt 5-15cm mean",
+      "url": "https://files.isric.org/soilgrids/latest/data/silt/silt_5-15cm_mean.vrt",
+      "licence": "CC BY 4.0",
+      "version": "SoilGrids 2.0",
+      "downloaded_at": "2026-10-10T18:44:03Z",
+      "query": {
+        "bounds": [
+          10.648604340270948,
+          44.04029172757544,
+          10.80931777386663,
+          44.14604811341716
+        ]
+      }
+    },
+    {
+      "name": "ISRIC SoilGrids 2.0 silt 5-15cm Q0.05",
+      "url": "https://files.isric.org/soilgrids/latest/data/silt/silt_5-15cm_Q0.05.vrt",
+      "licence": "CC BY 4.0",
+      "version": "SoilGrids 2.0",
+      "downloaded_at": "2026-10-10T18:44:08Z",
+      "query": {
+        "bounds": [
+          10.648604340270948,
+          44.04029172757544,
+          10.80931777386663,
+          44.14604811341716
+        ]
+      }
+    },
+    {
+      "name": "ISRIC SoilGrids 2.0 silt 5-15cm Q0.95",
+      "url": "https://files.isric.org/soilgrids/latest/data/silt/silt_5-15cm_Q0.95.vrt",
+      "licence": "CC BY 4.0",
+      "version": "SoilGrids 2.0",
+      "downloaded_at": "2026-10-10T18:44:13Z",
+      "query": {
+        "bounds": [
+          10.648604340270948,
+          44.04029172757544,
+          10.80931777386663,
+          44.14604811341716
+        ]
+      }
+    },
+    {
+      "name": "Regione Toscana geology database, 1:10,000 rock units",
+      "url": "https://www502.regione.toscana.it/geoscopio_qg/cgi-bin/qgis_mapserv",
+      "licence": "CC BY, version not stated in the metadata record",
+      "version": "Database geologico regionale, map service as queried",
+      "downloaded_at": "2026-10-10T18:49:55Z",
+      "query": {
+        "layer": "rt_dbg.el_geol.unita_geologica_areale_10k",
+        "points": 2016
+      }
+    },
+    {
+      "name": "Copernicus forest type 2018",
+      "url": "https://image.discomap.eea.europa.eu/arcgis/rest/services/GioLandPublic/HRL_ForestType_2018/ImageServer/exportImage",
+      "licence": "Copernicus Land Monitoring Service data, free and open access under EU Regulation 1159/2013. Credit: \u00a9 European Union, Copernicus Land Monitoring Service 2018, European Environment Agency",
+      "version": "High Resolution Layer Forest Type, reference year 2018",
+      "downloaded_at": "2026-10-10T19:20:14Z",
+      "query": {
+        "bbox": "4373500,2326500,4385500,2337000",
+        "bboxSR": 3035,
+        "imageSR": 3035,
+        "size": "1200,1050",
+        "format": "tiff",
+        "pixelType": "U8",
+        "interpolation": "RSP_NearestNeighbor",
+        "f": "image"
+      }
+    },
+    {
+      "name": "Regione Toscana forest inventory",
+      "url": "https://www502.regione.toscana.it/geoscopio/download/tematici/ift/ift.zip",
+      "licence": "CC BY-SA 4.0",
+      "version": "Inventario forestale della Toscana, surveyed 1985 to 1993, revised 2009",
+      "downloaded_at": "2026-10-10T19:20:18Z",
+      "query": {
+        "files": [
+          "ift_1c_polygon.shp",
+          "ift_1c_polygon.shx",
+          "licenza_ccbysa.pdf",
+          "_leggimi.txt",
+          "IFT.pdf",
+          "ift_1c_polygon.dbf"
+        ]
+      }
+    }
+  ],
+  "outputs": [
+    "data/processed/p2_habitat/20261010T192011Z-c4f95b/grid.parquet",
+    "data/p2_layers.csv",
+    "reports/p2_coverage.csv",
+    "reports/p2_gaps.csv",
+    "reports/p2_detail.csv"
+  ]
+}

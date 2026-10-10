@@ -10,6 +10,7 @@ dependencies = [
     "osmium>=4.3.1",
     "pyarrow>=26.0.0",
     "pyproj>=3.8.0",
+    "pyshp>=3.1.6",
     "rasterio>=1.5.2",
     "shapely>=2.2.0",
 ]

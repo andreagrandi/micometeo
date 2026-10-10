@@ -10,7 +10,7 @@ NOT TESTED.
 | ID | Assumption | Experiment and issue | Status | Reason | Evidence link |
 |---|---|---|---|---|---|
 | A1 | Enough trustworthy, dated, located porcini finds exist. | P1, #3 | INCONCLUSIVE | Switzerland and Austria have 4,747 reliable finds, enough to test weather. Tuscany and the Apennines have 85, too few on their own. | [P1 report](../reports/p1_observations.md), [run record](../reports/runs/p1_observations/20261010T181005Z-696b43.json) |
-| A2 | Tree and habitat data help at regional level. | P2, #4 and #5 | NOT TESTED | | |
+| A2 | Tree and habitat data help at regional level. | P2, #4 and #5 | VALIDATED | A 504-square sample grid can be rebuilt with one command. Terrain, rock type, forest cover and broadleaf or conifer cover at least 98 percent of squares at detail finer than 500 m. The Tuscany forest inventory names beech, chestnut and oak woods at one point every 400 m, but dates from 1985 to 1993 and stops at the regional border. Soil from SoilGrids is too uncertain to separate squares. | [P2 report](../reports/p2_habitat.md), [run record](../reports/runs/p2_habitat/20261010T192011Z-c4f95b.json) |
 | A3 | Past weather is enough to judge conditions today. | P3a, #6 | NOT TESTED | | |
 | A4 | A forecast 7 days ahead can be tested without knowing the outcome. | P3b, #7 | NOT TESTED | | |
 | A5 | Weather and habitat signals beat a simple guess. | P4, #8 and #9 | NOT TESTED | | |

@@ -7,3 +7,7 @@ clay_pct,504,504,1.0
 sand_pct,504,504,1.0
 silt_pct,504,504,1.0
 rock_unit_code,494,504,0.98
+forest_share,504,504,1.0
+broadleaf_share,497,504,0.986
+leaf_type,504,504,1.0
+regional_forest_type,491,504,0.974
