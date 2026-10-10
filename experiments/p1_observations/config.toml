@@ -1,0 +1,66 @@
+description = "P1: count reliable porcini finds in Tuscany and in Switzerland plus Austria."
+seed = 42
+time_limit_minutes = 30
+
+[settings]
+# Species group and areas follow decisions D3 and D4 in docs/decisions.md.
+gbif_taxon_keys = [5954958, 8733688, 5954691, 5954949]
+inat_taxon_ids = [48701, 333772, 350216, 335942]
+tuscany_gid = "ITA.16_1"
+pistoia_gid = "ITA.16.8_1"
+comparison_countries = ["CH", "AT"]
+inat_pistoia_place_id = 33195
+# Set to the key of an earlier GBIF download to rebuild exactly the same records.
+gbif_download_key = "0019331-260928105237408"
+
+[settings.emilia_apennines]
+gid = "ITA.6_1"
+west = 9.0
+south = 43.5
+east = 13.0
+north = 44.3
+
+[settings.inat_places]
+tuscany = { place_id = 13073, area = "home" }
+emilia_romagna = { place_id = 96905, area = "home", max_latitude = 44.3 }
+switzerland = { place_id = 7236, area = "comparison" }
+austria = { place_id = 8057, area = "comparison" }
+
+[settings.filters]
+# GBIF kinds of record that are not a mushroom seen in the field.
+not_find_kinds = ["MATERIAL_SAMPLE"]
+earliest_date = "1990-01-01"
+max_uncertainty_m = 1000
+duplicate_distance_m = 100
+bad_gbif_issues = [
+    "ZERO_COORDINATE",
+    "COORDINATE_INVALID",
+    "COUNTRY_COORDINATE_MISMATCH",
+    "PRESUMED_SWAPPED_COORDINATE",
+]
+
+# A point outside its area box counts as an odd place.
+[settings.filters.area_boxes.home]
+west = 9.5
+south = 42.2
+east = 12.9
+north = 44.5
+
+[settings.filters.area_boxes.comparison]
+west = 5.9
+south = 45.8
+east = 17.2
+north = 49.1
+
+[settings.roads]
+# Distances are capped at radius_m. A place with no road within it counts as radius_m.
+radius_m = 1000
+near_m = 100
+max_finds_per_area = 500
+random_points_per_area = 500
+gadm_countries = ["CHE_0", "AUT_0"]
+
+# Geofabrik extracts that cover each area, read locally for roads and paths.
+[settings.roads.extracts]
+home = ["italy/centro", "italy/nord-est"]
+comparison = ["switzerland", "austria"]

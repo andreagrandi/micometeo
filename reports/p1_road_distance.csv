@@ -1,0 +1,9 @@
+area,group,nearest,points,median_m,median_low_m,median_high_m,share_near,share_near_low,share_near_high
+home,finds,road,85,189,101,281,0.388,0.282,0.482
+home,finds,road_or_path,85,36,24,57,0.729,0.635,0.824
+home,random_places,road,500,228,179,270,0.316,0.274,0.354
+home,random_places,road_or_path,500,83,71,94,0.572,0.532,0.614
+comparison,finds,road,500,276,234,311,0.278,0.238,0.316
+comparison,finds,road_or_path,500,38,32,41,0.842,0.808,0.872
+comparison,random_places,road,500,288,245,384,0.25,0.214,0.288
+comparison,random_places,road_or_path,500,64,57,72,0.656,0.612,0.696

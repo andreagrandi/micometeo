@@ -1,0 +1,7 @@
+# Copy to .envrc, fill in and run `direnv allow`. Never commit .envrc.
+# Free GBIF account, needed to request occurrence downloads.
+# GBIF has no API key. Use the account username, not the email, and its password.
+export GBIF_USERNAME=
+export GBIF_PASSWORD=
+export GBIF_EMAIL=
+# Open-Meteo needs no login for the free API.
