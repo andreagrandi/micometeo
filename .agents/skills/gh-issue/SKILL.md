@@ -54,11 +54,18 @@ See [REFERENCE.md](REFERENCE.md) for classifications, templates, IDs, and API pa
   the size label.
 - Use `experiment` for a PoC that tests an assumption and produces a report.
   Its body uses the experiment template, which names the assumption, inputs,
-  outputs, limits and stop or pivot conditions.
+  outputs, limits and when to stop or change course.
 - For an epic or split, prefer one independently reviewable outcome per child,
   make dependencies explicit, classify every child independently, and keep the
   native parent-child relationship.
 - Never recommend a model in issue content.
+
+## Plain language
+
+Write titles, bodies and acceptance criteria so someone outside data science
+or meteorology can follow them. Follow the "Plain language" section of the
+repository `AGENTS.md`, including its table of terms to avoid, and check every
+draft against it before showing it.
 
 ## Size and implementation readiness
 

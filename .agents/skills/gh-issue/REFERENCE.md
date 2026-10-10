@@ -22,30 +22,31 @@ Pass label names to `gh issue create`:
 
 Priority has no default. Ask when it is not stated or inferable.
 
-- High: on the critical path to the GO / PIVOT / NO-GO gate, or a defect that
-  invalidates evidence, such as data leakage, wrong provenance or a committed
+- High: needed before the GO / PIVOT / NO-GO decision and blocking other
+  issues, or a defect that makes evidence untrustworthy, such as using data
+  that did not exist yet on a date, a wrong source record, or a committed
   secret.
-- Medium: required for the gate but not blocking other work, or a defect with
-  a workaround.
+- Medium: needed before the decision but not blocking other work, or a defect
+  with a workaround.
 - Low: polish, docs, refactors, minor developer experience.
 
 Area:
 
-- Observations: GBIF and iNaturalist occurrences, taxonomy, deduplication,
-  location quality.
-- Habitat: forest, tree, land cover, terrain, soil and geology layers, the
-  spatial grid.
-- Weather: historical weather, reanalysis, archived forecast runs, point-in-time
-  features.
-- Modeling: evaluation protocol, splits, baselines, rules and models.
-- Web: API and mobile map.
-- Operations: repository scaffold, environment, Docker, backup, restore,
-  deployment plans.
+- Observations: GBIF and iNaturalist finds, species, duplicates, location
+  accuracy.
+- Habitat: forest, tree, land cover, terrain, soil and rock type layers, the
+  map grid.
+- Weather: past weather, forecasts published in the past, and the weather
+  totals built from them.
+- Modeling: test rules, data splits, simple guesses, rules and models.
+- Web: API and phone map.
+- Operations: repository setup, environment, Docker, backup, restore,
+  server plans.
 - Research: licenses, costs, decision records and validation reports.
 
 Size is approximate; never estimate exact LOC in issue content.
 
-Use High orchestration risk for point-in-time or leakage-sensitive logic,
+Use High risk for logic that could use data not yet available on a given date,
 evaluation design, licensing that could block reuse, migrations, public API
 compatibility, multiple runtime or UI surfaces, or failures likely to survive
 ordinary tests. Otherwise use Normal. Size and risk are independent.
@@ -85,9 +86,9 @@ named assumptions from the PRD.
 
 <Runtime caps, data volume caps, no purchases, API terms to respect>
 
-## Stop or pivot
+## Stop or change course
 
-<Evidence that ends the experiment early and what to record>
+<Evidence that ends the experiment early, and what to record>
 
 ## Dependencies
 
@@ -96,7 +97,7 @@ named assumptions from the PRD.
 ## Implementation classification
 
 - **Estimated size:** <S|M|L|XL>
-- **Orchestration risk:** <Normal|High>
+- **Risk:** <Normal|High>
 - **Reason:** <One concise sentence>
 ```
 
@@ -123,7 +124,7 @@ named assumptions from the PRD.
 ## Implementation classification
 
 - **Estimated size:** <S|M|L|XL>
-- **Orchestration risk:** <Normal|High>
+- **Risk:** <Normal|High>
 - **Reason:** <One concise sentence>
 ```
 
@@ -162,7 +163,7 @@ the PoC ID, such as `P1: ...`.
 ## Epic classification
 
 - **Overall size:** <S|M|L|XL>
-- **Overall orchestration risk:** <Normal|High>
+- **Overall risk:** <Normal|High>
 - **Reason:** <One concise sentence>
 ```
 
