@@ -1,0 +1,7 @@
+layer_id,used_for,stated_detail,real_detail_m,mixed_square_share,square_size_m,coarser_than_square
+copernicus_dem_glo30,altitude_m slope_deg aspect_deg,about 30 m,27.5,1.0,500,False
+soilgrids_phh2o_5-15cm,soil_ph,250 m,402.0,0.992,500,False
+soilgrids_clay_5-15cm,clay_pct,250 m,260.4,1.0,500,False
+soilgrids_sand_5-15cm,sand_pct,250 m,263.4,1.0,500,False
+soilgrids_silt_5-15cm,silt_pct,250 m,259.8,1.0,500,False
+toscana_geologia_10k,rock_unit_code rock_unit_name rock_description,"1:10,000 map",924.5,0.393,500,True
