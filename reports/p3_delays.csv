@@ -1,0 +1,5 @@
+checked_at,today,source,dataset,last_complete_rain_day,days_missing_before_today,last_day_complete_for_all_variables
+2026-10-10T21:00:35Z,2026-10-10,Open-Meteo Historical Weather API,era5_seamless,2026-10-04,5,2026-10-04
+2026-10-10T21:00:35Z,2026-10-10,Open-Meteo Historical Weather API,era5,2026-10-04,5,2026-10-04
+2026-10-10T21:00:35Z,2026-10-10,Open-Meteo Historical Weather API,ecmwf_ifs,2026-10-09,0,2026-10-09
+2026-10-10T21:00:35Z,2026-10-10,Open-Meteo Forecast API,best_match past_days,2026-10-09,0,2026-10-09

@@ -1,0 +1,10 @@
+area,window_days,places_compared,median_abs_rain_difference_mm,p90_abs_rain_difference_mm,median_abs_temperature_difference_c
+comparison,7,91,4.9,17.4,0.33
+comparison,14,91,4.9,17.4,0.16
+comparison,30,91,4.9,17.4,0.08
+home,7,78,3.95,21.96,0.44
+home,14,78,3.95,21.96,0.22
+home,30,78,3.95,21.96,0.1
+all,7,169,4.5,18.72,0.37
+all,14,169,4.5,18.72,0.18
+all,30,169,4.5,18.72,0.09
