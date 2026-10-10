@@ -1,0 +1,26 @@
+description = "P3a: rebuild the rain and temperature of the 7, 14 and 30 days before each find, as looked back on and as known on that morning."
+seed = 42
+time_limit_minutes = 30
+
+[settings]
+# Finds from the P1 run. Only rows with area home or comparison are in this file.
+finds_path = "data/processed/p1_observations/20261010T181005Z-696b43/finds.parquet"
+# Every home find (Tuscany) is used. This many comparison finds (Switzerland and Austria) are drawn with the seed.
+comparison_sample = 215
+# Window lengths in days.
+windows = [7, 14, 30]
+# Reconstructed past weather appears with a delay. For the on the morning view, the last this many days before the assessment date come from model values for past hours.
+reconstructed_missing_days = 6
+# Seconds to wait between two real requests, to stay far below 600 calls a minute.
+pause_seconds = 0.2
+# Fixed point for the publication delay check, in the Pistoia sample area.
+check_latitude = 44.05
+check_longitude = 10.8
+# Days of history the publication delay check asks for.
+delay_check_days = 15
+# Days of history the Forecast API gives in the today check.
+forecast_past_days = 31
+# Home finds added to the Pistoia point in the today check.
+today_check_home_places = 4
+# Folder for the small CSV files that people read.
+reports_dir = "reports"

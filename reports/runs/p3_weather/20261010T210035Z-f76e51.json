@@ -1,0 +1,139 @@
+{
+  "experiment": "p3_weather",
+  "run_id": "20261010T210035Z-f76e51",
+  "command": "micometeo run p3_weather",
+  "status": "completed",
+  "error": null,
+  "started_at": "2026-10-10T21:00:35Z",
+  "finished_at": "2026-10-10T21:00:48Z",
+  "duration_seconds": 12.963,
+  "time_limit_seconds": 1800,
+  "seed": 42,
+  "config": {
+    "description": "P3a: rebuild the rain and temperature of the 7, 14 and 30 days before each find, as looked back on and as known on that morning.",
+    "seed": 42,
+    "time_limit_minutes": 30,
+    "settings": {
+      "finds_path": "data/processed/p1_observations/20261010T181005Z-696b43/finds.parquet",
+      "comparison_sample": 215,
+      "windows": [
+        7,
+        14,
+        30
+      ],
+      "reconstructed_missing_days": 6,
+      "pause_seconds": 0.2,
+      "check_latitude": 44.05,
+      "check_longitude": 10.8,
+      "delay_check_days": 15,
+      "forecast_past_days": 31,
+      "today_check_home_places": 4,
+      "reports_dir": "reports"
+    }
+  },
+  "git": {
+    "commit": "4a2611c86f595d64fe69c933156dc4d0d8531fff",
+    "uncommitted_changes": true
+  },
+  "versions": {
+    "python": "3.13.1",
+    "micometeo": "0.1.0",
+    "packages": {
+      "affine": "3.0.1",
+      "attrs": "26.1.0",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "click": "8.5.0",
+      "contourpy": "1.4.0",
+      "cycler": "0.12.1",
+      "distlib": "0.4.3",
+      "filelock": "4.1.0",
+      "fonttools": "4.66.1",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.1",
+      "kiwisolver": "1.5.1",
+      "matplotlib": "3.11.2",
+      "micometeo": "0.1.0",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "osmium": "4.3.1",
+      "packaging": "26.3",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.4",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "pyarrow": "26.0.0",
+      "Pygments": "2.21.0",
+      "pyparsing": "3.3.3",
+      "pyproj": "3.8.0",
+      "pyshp": "3.1.6",
+      "pytest": "9.1.1",
+      "python-dateutil": "2.9.0.post0",
+      "python-discovery": "1.6.2",
+      "PyYAML": "6.0.3",
+      "rasterio": "1.5.2",
+      "requests": "2.34.2",
+      "shapely": "2.2.0",
+      "six": "1.17.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.6"
+    }
+  },
+  "computer": {
+    "os": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "cpu_count": 10,
+    "processor": "arm",
+    "total_ram_bytes": 34359738368
+  },
+  "inputs": [
+    {
+      "path": "data/processed/p1_observations/20261010T181005Z-696b43/finds.parquet",
+      "sha256": "be6d18961fc6d3a92d90abe60d992ca67c595dc159292cf2bbec7cb96a0c30e8",
+      "size_bytes": 246997
+    }
+  ],
+  "sources": [
+    {
+      "name": "Open-Meteo Historical Weather API",
+      "url": "https://archive-api.open-meteo.com/v1/archive",
+      "licence": "CC BY 4.0",
+      "version": "v1",
+      "downloaded_at": "2026-10-10T21:00:35Z",
+      "query": {
+        "latitude": "<place>",
+        "longitude": "<place>",
+        "start_date": "<assessment date minus 31 days>",
+        "end_date": "<day before the assessment date>",
+        "hourly": "precipitation,temperature_2m,soil_moisture_0_to_7cm,soil_temperature_0_to_7cm,et0_fao_evapotranspiration",
+        "models": "era5_seamless or ecmwf_ifs or era5",
+        "timezone": "GMT"
+      }
+    },
+    {
+      "name": "Open-Meteo Forecast API",
+      "url": "https://api.open-meteo.com/v1/forecast",
+      "licence": "CC BY 4.0",
+      "version": "v1",
+      "downloaded_at": "2026-10-10T21:00:35Z",
+      "query": {
+        "latitude": "<place>",
+        "longitude": "<place>",
+        "hourly": "precipitation,temperature_2m,soil_moisture_0_to_7cm,soil_temperature_0_to_7cm,et0_fao_evapotranspiration",
+        "past_days": 31,
+        "forecast_days": 1,
+        "timezone": "GMT"
+      }
+    }
+  ],
+  "outputs": [
+    "data/processed/p3_weather/20261010T210035Z-f76e51/weather_windows.parquet",
+    "reports/p3_summary.csv",
+    "reports/p3_view_differences.csv",
+    "reports/p3_delays.csv",
+    "reports/p3_today_check.csv",
+    "reports/p3_metrics.csv"
+  ]
+}

@@ -1,0 +1,3 @@
+scope,places,requests,cache_hits,request_seconds,estimated_quota_calls,wall_seconds
+sample,300,0,469,0.0,0.0,0.4
+checks,5,19,0,8.4,32.1,12.4
