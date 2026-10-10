@@ -15,8 +15,8 @@ each assumption is in [docs/decisions.md](docs/decisions.md).
 
 1. Install [uv](https://docs.astral.sh/uv/).
 2. Install the environment with `uv sync`.
-3. Copy the login template with `cp .env.example .env` and fill in what an
-   experiment needs. Open-Meteo needs no login.
+3. Copy the login template with `cp .envrc.example .envrc`, fill in what an
+   experiment needs and run `direnv allow`. Open-Meteo needs no login.
 4. Install the secret scanner hook with `uv run pre-commit install`.
 
 ## Run an experiment
