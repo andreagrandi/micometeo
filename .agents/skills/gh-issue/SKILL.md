@@ -118,4 +118,3 @@ Prefer 8 criteria or fewer; more suggests the issue should be split.
 - Do not re-run successful mutations as verification.
 - Report URLs, type, Priority, Area, Size, risk, parent links, dependencies,
   verification result, and the actual authenticated-call count.
-

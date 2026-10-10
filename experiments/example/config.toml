@@ -1,0 +1,10 @@
+description = "Download one week of daily weather for Pistoia and save a small summary."
+seed = 42
+time_limit_minutes = 5
+
+[settings]
+latitude = 43.93
+longitude = 10.91
+start_date = "2025-10-01"
+end_date = "2025-10-07"
+timezone = "Europe/Rome"

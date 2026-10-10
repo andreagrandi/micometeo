@@ -54,4 +54,3 @@ of naming the technique.
 
 Use the `gh-issue` skill in `.agents/skills/gh-issue/` to create or change
 GitHub issues.
-

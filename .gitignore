@@ -218,3 +218,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Micometeo project
+data/raw/
+data/processed/
+.cache/
+cache/
+!.env.example

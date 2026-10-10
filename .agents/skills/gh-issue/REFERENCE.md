@@ -288,4 +288,3 @@ query {
 Compare the response locally with the approved specification. One parent
 `sub_issues` request and only the needed direct `blocked_by` requests finish
 relationship verification.
-
