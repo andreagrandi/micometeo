@@ -1,0 +1,41 @@
+description = "P1c: compare weekly Google Trends interest in porcini in Tuscany with weekly porcini finds."
+seed = 42
+time_limit_minutes = 5
+
+[settings]
+# Finds and timing finds from the P1 run. Only home finds (Tuscany and the Emilia Apennines next to it) are used.
+finds_path = "data/processed/p1_observations/20261011T075009Z-796984/finds.parquet"
+timing_finds_path = "data/processed/p1_observations/20261011T075009Z-796984/timing_finds.parquet"
+# Years with fewer finds than this are left out of the comparison.
+min_finds_per_year = 5
+# A year lines up when the search peak is at most this many days from the median find date.
+lines_up_days = 14
+# Weeks the search values are moved against the finds, in each direction.
+max_shift_weeks = 4
+# How many times the years are redrawn to get the uncertainty range.
+repeats = 1000
+# Folder for the small CSV files that people read.
+reports_dir = "reports"
+# Google has no open Trends API, so the files come from the CSV button on the Trends website, clicked in a browser.
+download_date = "2026-10-11"
+search_terms = ["porcini", "funghi porcini"]
+# Google code for Tuscany.
+search_area = "IT-52"
+
+[[settings.exports]]
+path = "experiments/p1c_flush_signs/trends_exports/tuscany_2015-2019.csv"
+start = "2015-01-01"
+end = "2019-12-31"
+url = "https://trends.google.com/trends/explore?date=2015-01-01%202019-12-31&geo=IT-52&q=porcini,funghi%20porcini&hl=en"
+
+[[settings.exports]]
+path = "experiments/p1c_flush_signs/trends_exports/tuscany_2020-2024.csv"
+start = "2020-01-01"
+end = "2024-12-31"
+url = "https://trends.google.com/trends/explore?date=2020-01-01%202024-12-31&geo=IT-52&q=porcini,funghi%20porcini&hl=en"
+
+[[settings.exports]]
+path = "experiments/p1c_flush_signs/trends_exports/tuscany_2025-2026.csv"
+start = "2025-01-01"
+end = "2026-10-10"
+url = "https://trends.google.com/trends/explore?date=2025-01-01%202026-10-10&geo=IT-52&q=porcini,funghi%20porcini&hl=en"

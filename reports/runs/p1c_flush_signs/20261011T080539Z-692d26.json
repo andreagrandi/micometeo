@@ -1,0 +1,196 @@
+{
+  "experiment": "p1c_flush_signs",
+  "run_id": "20261011T080539Z-692d26",
+  "command": "micometeo run p1c_flush_signs",
+  "status": "completed",
+  "error": null,
+  "started_at": "2026-10-11T08:05:39Z",
+  "finished_at": "2026-10-11T08:05:40Z",
+  "duration_seconds": 1.715,
+  "time_limit_seconds": 300,
+  "seed": 42,
+  "config": {
+    "description": "P1c: compare weekly Google Trends interest in porcini in Tuscany with weekly porcini finds.",
+    "seed": 42,
+    "time_limit_minutes": 5,
+    "settings": {
+      "finds_path": "data/processed/p1_observations/20261011T075009Z-796984/finds.parquet",
+      "timing_finds_path": "data/processed/p1_observations/20261011T075009Z-796984/timing_finds.parquet",
+      "min_finds_per_year": 5,
+      "lines_up_days": 14,
+      "max_shift_weeks": 4,
+      "repeats": 1000,
+      "reports_dir": "reports",
+      "download_date": "2026-10-11",
+      "search_terms": [
+        "porcini",
+        "funghi porcini"
+      ],
+      "search_area": "IT-52",
+      "exports": [
+        {
+          "path": "experiments/p1c_flush_signs/trends_exports/tuscany_2015-2019.csv",
+          "start": "2015-01-01",
+          "end": "2019-12-31",
+          "url": "https://trends.google.com/trends/explore?date=2015-01-01%202019-12-31&geo=IT-52&q=porcini,funghi%20porcini&hl=en"
+        },
+        {
+          "path": "experiments/p1c_flush_signs/trends_exports/tuscany_2020-2024.csv",
+          "start": "2020-01-01",
+          "end": "2024-12-31",
+          "url": "https://trends.google.com/trends/explore?date=2020-01-01%202024-12-31&geo=IT-52&q=porcini,funghi%20porcini&hl=en"
+        },
+        {
+          "path": "experiments/p1c_flush_signs/trends_exports/tuscany_2025-2026.csv",
+          "start": "2025-01-01",
+          "end": "2026-10-10",
+          "url": "https://trends.google.com/trends/explore?date=2025-01-01%202026-10-10&geo=IT-52&q=porcini,funghi%20porcini&hl=en"
+        }
+      ]
+    }
+  },
+  "git": {
+    "commit": "ec1bdcfe6713204dfba1b396442bbfa306d4e153",
+    "uncommitted_changes": true
+  },
+  "versions": {
+    "python": "3.13.1",
+    "micometeo": "0.1.0",
+    "packages": {
+      "affine": "3.0.1",
+      "attrs": "26.1.0",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "click": "8.5.0",
+      "contourpy": "1.4.0",
+      "cycler": "0.12.1",
+      "distlib": "0.4.3",
+      "filelock": "4.1.0",
+      "fonttools": "4.66.1",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.1",
+      "kiwisolver": "1.5.1",
+      "matplotlib": "3.11.2",
+      "micometeo": "0.1.0",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "osmium": "4.3.1",
+      "packaging": "26.3",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.4",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "pyarrow": "26.0.0",
+      "Pygments": "2.21.0",
+      "pyparsing": "3.3.3",
+      "pyproj": "3.8.0",
+      "pyshp": "3.1.6",
+      "pytest": "9.1.1",
+      "python-dateutil": "2.9.0.post0",
+      "python-discovery": "1.6.2",
+      "PyYAML": "6.0.3",
+      "rasterio": "1.5.2",
+      "requests": "2.34.2",
+      "shapely": "2.2.0",
+      "six": "1.17.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.6"
+    }
+  },
+  "computer": {
+    "os": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "cpu_count": 10,
+    "processor": "arm",
+    "total_ram_bytes": 34359738368
+  },
+  "inputs": [
+    {
+      "path": "experiments/p1c_flush_signs/trends_exports/tuscany_2015-2019.csv",
+      "sha256": "cf31c2ac5a38e163828f759311321348ce935388e1ccaf6b6f3ef660f360836b",
+      "size_bytes": 4146
+    },
+    {
+      "path": "experiments/p1c_flush_signs/trends_exports/tuscany_2020-2024.csv",
+      "sha256": "9f7a75255d0276e889788985084d8b72dd998e041240eb9d93350f4391024a63",
+      "size_bytes": 4135
+    },
+    {
+      "path": "experiments/p1c_flush_signs/trends_exports/tuscany_2025-2026.csv",
+      "sha256": "4f5bf247d838d0e1f73b047d61bd74a95497a549a2b7ba43c1a08558248e20d8",
+      "size_bytes": 1511
+    },
+    {
+      "path": "data/processed/p1_observations/20261011T075009Z-796984/finds.parquet",
+      "sha256": "076ae91d77e6015d67dd6e0cde0bb2bfea7252d60a261f94c0c3b807f8469115",
+      "size_bytes": 247890
+    },
+    {
+      "path": "data/processed/p1_observations/20261011T075009Z-796984/timing_finds.parquet",
+      "sha256": "ea1ba83afb4c4cbf975c854547473ae96ff03f855b3d262dcb9e8f4efc12e0f1",
+      "size_bytes": 117973
+    }
+  ],
+  "sources": [
+    {
+      "name": "Google Trends export tuscany_2015-2019.csv",
+      "url": "https://trends.google.com/trends/explore?date=2015-01-01%202019-12-31&geo=IT-52&q=porcini,funghi%20porcini&hl=en",
+      "licence": "Google Trends terms of service",
+      "version": "website export",
+      "downloaded_at": "2026-10-11",
+      "query": {
+        "terms": [
+          "porcini",
+          "funghi porcini"
+        ],
+        "area": "IT-52",
+        "start": "2015-01-01",
+        "end": "2019-12-31",
+        "downloaded_by": "CSV button on the Trends website, in a browser"
+      }
+    },
+    {
+      "name": "Google Trends export tuscany_2020-2024.csv",
+      "url": "https://trends.google.com/trends/explore?date=2020-01-01%202024-12-31&geo=IT-52&q=porcini,funghi%20porcini&hl=en",
+      "licence": "Google Trends terms of service",
+      "version": "website export",
+      "downloaded_at": "2026-10-11",
+      "query": {
+        "terms": [
+          "porcini",
+          "funghi porcini"
+        ],
+        "area": "IT-52",
+        "start": "2020-01-01",
+        "end": "2024-12-31",
+        "downloaded_by": "CSV button on the Trends website, in a browser"
+      }
+    },
+    {
+      "name": "Google Trends export tuscany_2025-2026.csv",
+      "url": "https://trends.google.com/trends/explore?date=2025-01-01%202026-10-10&geo=IT-52&q=porcini,funghi%20porcini&hl=en",
+      "licence": "Google Trends terms of service",
+      "version": "website export",
+      "downloaded_at": "2026-10-11",
+      "query": {
+        "terms": [
+          "porcini",
+          "funghi porcini"
+        ],
+        "area": "IT-52",
+        "start": "2025-01-01",
+        "end": "2026-10-10",
+        "downloaded_by": "CSV button on the Trends website, in a browser"
+      }
+    }
+  ],
+  "outputs": [
+    "reports/p1c_weekly_series.csv",
+    "reports/p1c_by_year.csv",
+    "reports/p1c_summary.csv",
+    "reports/p1c_shifts.csv",
+    "reports/p1c_flush_signs.png"
+  ]
+}
