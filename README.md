@@ -2,7 +2,9 @@
 
 This repository holds the Epic 1 validation experiments for Micometeo. The
 scope is in [the PRD](Micometeo_PRD_Epic_1_Validation_EN.md) and the status of
-each assumption is in [docs/decisions.md](docs/decisions.md).
+each assumption is in [docs/decisions.md](docs/decisions.md). To plan the
+work after Epic 1, start with
+[docs/planning_after_epic1.md](docs/planning_after_epic1.md).
 
 ## Limits
 
