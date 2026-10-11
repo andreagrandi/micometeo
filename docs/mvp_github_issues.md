@@ -118,3 +118,21 @@ The correction used 37 authenticated GitHub CLI calls: one issue-list read,
 one relationship snapshot, one pre-edit change check, 33 sequential body
 updates and one final verification query. The final query reported 4986
 points remaining. No issue classification or relationship mutation was sent.
+
+## Review corrections
+
+On 11 October 2026, a review of the MVP issues changed 17 bodies. The
+specification files and GitHub bodies match again after the change.
+
+- A zoomed-out map shows 10 km block summaries instead of an empty map with
+  a zoom-in prompt. #48 stores them, #49 serves them, #56 draws them, and
+  #51, #61 and #62 check them.
+- #38 sets up phone access to the laptop through Tailscale, with an HTTPS
+  address that #57 and #62 use for the location check on a real phone.
+- #55 adds Playwright browser tests in Chromium and WebKit, and shared date,
+  number and unit formatting for Italian and English. #58 and #62 check it.
+- Book Corners references link to its public GitHub repository. #38 points to
+  `.envrc.example`, #57 to the Nominatim place search in Book Corners, and #33
+  quotes the P4 scores correctly.
+
+Epic 1, #1, was closed because all its sub-issues were closed.

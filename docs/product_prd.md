@@ -153,7 +153,7 @@ The epic owns the detailed prompt and the mockups. This PRD supplies their scope
 
 ## Technical starting point
 
-Use [Book Corners](../../book-corners/README.md) as the implementation reference. Reuse its established structure and tools where they meet these requirements.
+Use [Book Corners](https://github.com/andreagrandi/book-corners) as the implementation reference. Reuse its established structure and tools where they meet these requirements.
 
 | Part | Starting choice and reason |
 |---|---|
