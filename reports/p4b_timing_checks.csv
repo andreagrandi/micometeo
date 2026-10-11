@@ -1,4 +1,8 @@
 set,chosen_model,check,value,lower_end,passed
+final,rain_14d,T1,0.254,0.211,False
+final,rain_14d,T2,0.137,0.064,True
+home_final,rain_14d,T1,0.273,0.083,False
+home_final,rain_14d,T2,0.091,-0.0,False
 home_test,rain_14d,T1,0.27,0.115,False
 home_test,rain_14d,T2,0.206,0.03,True
 test,rain_14d,T1,0.25,0.207,False
