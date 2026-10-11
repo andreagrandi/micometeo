@@ -472,6 +472,13 @@ persisted input IDs and running a separate database worker. Micometeo adds
 logical job keys, attempt history and interruption recovery. The worker uses
 the same host environment as Django.
 
+The checks follow Book Corners `.github/workflows/ci.yml` and `noxfile.py` for
+the PostGIS service, native geographic libraries, migration checks and tests.
+Micometeo runs the commands directly through `uv` and keeps its existing
+pre-commit hooks. It adds a Git history secret scan and restricts Python test
+connections to loopback addresses. It omits Book Corners deployment steps and
+its frontend build because this application has no frontend yet.
+
 The application stays separate from the existing P5 directories. This setup
 has no product data tables, account system, frontend build, deployment job or
 hosting credentials.
