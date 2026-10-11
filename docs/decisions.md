@@ -1,5 +1,11 @@
 # Decisions
 
+For the app after Epic 1, use the [product PRD](product_prd.md). The owner
+selected all-Italy coverage and accepted clearly labelled experimental
+percentages at launch. Field validation is not a release condition. The
+completed investigation and its historical decisions below remain evidence.
+Their earlier product suggestions do not override the later interview.
+
 ## Assumptions
 
 Each assumption comes from section 2 of the PRD. A final status is one of

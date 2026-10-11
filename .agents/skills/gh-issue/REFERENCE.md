@@ -8,10 +8,13 @@ Project: number `9`, ID `PVT_kwHOAAm1584BmebS`
 
 | Field | Field ID | Options |
 |---|---|---|
-| Priority | `PVTSSF_lAHOAAm1584BmebSzhlHUdU` | High `8ae88294`; Medium `4150b902`; Low `195aaa9c` |
-| Area | `PVTSSF_lAHOAAm1584BmebSzhlHUeQ` | Observations `b482b62f`; Habitat `8f0e36d3`; Weather `4a4d5da4`; Modeling `7c2ff745`; Web `81652542`; Operations `28c76f4c`; Research `91c18a95` |
+| Priority | `PVTSSF_lAHOAAm1584BmebSzhlHUdU` | High `11ab1cfc`; Medium `f708776c`; Low `c98a518a` |
+| Area | `PVTSSF_lAHOAAm1584BmebSzhlHUeQ` | Observations `2ec95c32`; Habitat `dcfa8f97`; Weather `cd8fa0a6`; Modeling `7788089d`; Web `628ab47e`; Operations `9b044dc6`; Research `76f21ed5` |
 | Status | `PVTSSF_lAHOAAm1584BmebSzhlHUaw` | Todo `f75ad846`; In Progress `47fc9ee4`; Done `98236657` |
-| Size | `PVTSSF_lAHOAAm1584BmebSzhlHUhs` | S `855411c1`; M `78633b54`; L `f46c5cc6`; XL `611bd67c` |
+| Size | `PVTSSF_lAHOAAm1584BmebSzhlHUhs` | S `19398795`; M `99413039`; L `6b4c4eaa`; XL `6df14021` |
+
+These option IDs were refreshed after matching the project colors to the
+other projects on 11 October 2026.
 
 Pass label names to `gh issue create`:
 
@@ -21,6 +24,12 @@ Pass label names to `gh issue create`:
 ## Classification
 
 Priority has no default. Ask when it is not stated or inferable.
+
+For product work after Epic 1, use High for MVP prerequisites and work that
+blocks other MVP tickets. Use Medium for required work that can follow the
+main implementation. The curated UI is a launch requirement, so it is not
+Low merely because the work concerns appearance. Deferred roadmap choices
+use Low. The investigation rules below remain relevant to Epic 1.
 
 - High: needed before the GO / PIVOT / NO-GO decision and blocking other
   issues, or a defect that makes evidence untrustworthy, such as using data

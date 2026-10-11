@@ -1,0 +1,97 @@
+{
+  "experiment": "p4_test_rules",
+  "run_id": "20261011T081836Z-025341",
+  "command": "micometeo run p4_test_rules",
+  "status": "completed",
+  "error": null,
+  "started_at": "2026-10-11T08:18:36Z",
+  "finished_at": "2026-10-11T08:18:36Z",
+  "duration_seconds": 0.259,
+  "time_limit_seconds": 1800,
+  "seed": 42,
+  "config": {
+    "description": "P4a: split find days into tuning, test and final sets by 100 km blocks and years, so no test day sits near a tuning day.",
+    "seed": 42,
+    "time_limit_minutes": 30,
+    "settings": {
+      "finds_path": "data/processed/p1_observations/20261011T075009Z-796984/finds.parquet",
+      "block_size_m": 100000,
+      "tuning_share": 0.6,
+      "test_share": 0.2,
+      "final_from_year": 2025,
+      "test_from_year": 2022,
+      "buffer_m": 25000,
+      "reports_dir": "reports"
+    }
+  },
+  "git": {
+    "commit": "b221ab66fc9d2879c3540e82d72cb7a650b990e5",
+    "uncommitted_changes": true
+  },
+  "versions": {
+    "python": "3.13.1",
+    "micometeo": "0.1.0",
+    "packages": {
+      "affine": "3.0.1",
+      "attrs": "26.1.0",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "click": "8.5.0",
+      "contourpy": "1.4.0",
+      "cycler": "0.12.1",
+      "distlib": "0.4.3",
+      "filelock": "4.1.0",
+      "fonttools": "4.66.1",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.1",
+      "kiwisolver": "1.5.1",
+      "matplotlib": "3.11.2",
+      "micometeo": "0.1.0",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "osmium": "4.3.1",
+      "packaging": "26.3",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.4",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "pyarrow": "26.0.0",
+      "Pygments": "2.21.0",
+      "pyparsing": "3.3.3",
+      "pyproj": "3.8.0",
+      "pyshp": "3.1.6",
+      "pytest": "9.1.1",
+      "python-dateutil": "2.9.0.post0",
+      "python-discovery": "1.6.2",
+      "PyYAML": "6.0.3",
+      "rasterio": "1.5.2",
+      "requests": "2.34.2",
+      "shapely": "2.2.0",
+      "six": "1.17.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.6"
+    }
+  },
+  "computer": {
+    "os": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "cpu_count": 10,
+    "processor": "arm",
+    "total_ram_bytes": 34359738368
+  },
+  "inputs": [
+    {
+      "path": "data/processed/p1_observations/20261011T075009Z-796984/finds.parquet",
+      "sha256": "076ae91d77e6015d67dd6e0cde0bb2bfea7252d60a261f94c0c3b807f8469115",
+      "size_bytes": 247890
+    }
+  ],
+  "sources": [],
+  "outputs": [
+    "data/processed/p4_test_rules/20261011T081836Z-025341/cases.parquet",
+    "data/processed/p4_test_rules/20261011T081836Z-025341/blocks.csv",
+    "reports/p4a_split_counts.csv"
+  ]
+}
