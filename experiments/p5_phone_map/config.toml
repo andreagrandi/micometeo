@@ -1,0 +1,25 @@
+description = "P5: measure data size, answer time and memory of the demo API for phone-sized map views."
+seed = 42
+time_limit_minutes = 10
+
+[settings]
+reports_dir = "reports"
+api_dir = "apps/api"
+species = "porcini"
+# Days ahead asked for in the repeated requests, from today to the last forecast day.
+days_ahead = [0, 2, 7]
+# Requests per view and day, the median answer time is reported.
+repeats = 5
+
+# Window of a common phone in CSS pixels, the size used in the browser check.
+[settings.window]
+width = 390
+height = 844
+
+# Middle of the made-up grid around Pistoia.
+[settings.centre]
+longitude = 10.835
+latitude = 43.95
+
+[settings.views]
+zooms = [10, 11, 12, 13]

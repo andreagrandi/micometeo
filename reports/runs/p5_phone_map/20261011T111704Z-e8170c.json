@@ -1,0 +1,127 @@
+{
+  "experiment": "p5_phone_map",
+  "run_id": "20261011T111704Z-e8170c",
+  "command": "micometeo run p5_phone_map",
+  "status": "completed",
+  "error": null,
+  "started_at": "2026-10-11T11:17:04Z",
+  "finished_at": "2026-10-11T11:17:04Z",
+  "duration_seconds": 0.689,
+  "time_limit_seconds": 600,
+  "cpu_seconds": 0.525,
+  "peak_memory_bytes": 47300608,
+  "seed": 42,
+  "config": {
+    "description": "P5: measure data size, answer time and memory of the demo API for phone-sized map views.",
+    "seed": 42,
+    "time_limit_minutes": 10,
+    "settings": {
+      "reports_dir": "reports",
+      "api_dir": "apps/api",
+      "species": "porcini",
+      "days_ahead": [
+        0,
+        2,
+        7
+      ],
+      "repeats": 5,
+      "window": {
+        "width": 390,
+        "height": 844
+      },
+      "centre": {
+        "longitude": 10.835,
+        "latitude": 43.95
+      },
+      "views": {
+        "zooms": [
+          10,
+          11,
+          12,
+          13
+        ]
+      }
+    }
+  },
+  "git": {
+    "commit": "f19712943383010383f32ae0c0c795782d4df0c8",
+    "uncommitted_changes": true
+  },
+  "versions": {
+    "python": "3.13.1",
+    "micometeo": "0.1.0",
+    "packages": {
+      "affine": "3.0.1",
+      "attrs": "26.1.0",
+      "cdsapi": "0.7.7",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "click": "8.5.0",
+      "cloudpickle": "3.1.2",
+      "contourpy": "1.4.0",
+      "cycler": "0.12.1",
+      "distlib": "0.4.3",
+      "ecmwf-datastores-client": "0.5.3",
+      "filelock": "4.1.0",
+      "fonttools": "4.66.1",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.1",
+      "joblib": "1.6.0",
+      "kiwisolver": "1.5.1",
+      "matplotlib": "3.11.2",
+      "micometeo": "0.1.0",
+      "multiurl": "0.3.9",
+      "narwhals": "2.27.1",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "osmium": "4.3.1",
+      "packaging": "26.3",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.4",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "pyarrow": "26.0.0",
+      "Pygments": "2.21.0",
+      "pyparsing": "3.3.3",
+      "pyproj": "3.8.0",
+      "pyshp": "3.1.6",
+      "pytest": "9.1.1",
+      "python-dateutil": "2.9.0.post0",
+      "python-discovery": "1.6.2",
+      "pytz": "2026.5",
+      "PyYAML": "6.0.3",
+      "rasterio": "1.5.2",
+      "requests": "2.34.2",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "shapely": "2.2.0",
+      "six": "1.17.0",
+      "threadpoolctl": "3.7.0",
+      "tqdm": "4.70.1",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.6"
+    }
+  },
+  "computer": {
+    "os": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "cpu_count": 10,
+    "processor": "arm",
+    "total_ram_bytes": 34359738368
+  },
+  "inputs": [
+    {
+      "path": "apps/api/micometeo_api/demo_grid.json.gz",
+      "sha256": "ff87664f08f4e51c3eb7821988a745478bde34edbdb639589a96b8801bdf78c7",
+      "size_bytes": 109036
+    }
+  ],
+  "sources": [],
+  "outputs": [
+    "reports/p5_api_requests.csv",
+    "reports/p5_api_memory.csv"
+  ]
+}
