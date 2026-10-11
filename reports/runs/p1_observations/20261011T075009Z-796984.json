@@ -1,0 +1,548 @@
+{
+  "experiment": "p1_observations",
+  "run_id": "20261011T075009Z-796984",
+  "command": "micometeo run p1_observations",
+  "status": "completed",
+  "error": null,
+  "started_at": "2026-10-11T07:50:09Z",
+  "finished_at": "2026-10-11T07:52:48Z",
+  "duration_seconds": 159.269,
+  "time_limit_seconds": 1800,
+  "seed": 42,
+  "config": {
+    "description": "P1: count reliable porcini finds in Tuscany and in Switzerland plus Austria.",
+    "seed": 42,
+    "time_limit_minutes": 30,
+    "settings": {
+      "gbif_taxon_keys": [
+        5954958,
+        8733688,
+        5954691,
+        5954949
+      ],
+      "inat_taxon_ids": [
+        48701,
+        333772,
+        350216,
+        335942
+      ],
+      "tuscany_gid": "ITA.16_1",
+      "pistoia_gid": "ITA.16.8_1",
+      "comparison_countries": [
+        "CH",
+        "AT"
+      ],
+      "inat_pistoia_place_id": 33195,
+      "gbif_download_key": "0019331-260928105237408",
+      "emilia_apennines": {
+        "gid": "ITA.6_1",
+        "west": 9.0,
+        "south": 43.5,
+        "east": 13.0,
+        "north": 44.3
+      },
+      "inat_places": {
+        "tuscany": {
+          "place_id": 13073,
+          "area": "home"
+        },
+        "emilia_romagna": {
+          "place_id": 96905,
+          "area": "home",
+          "max_latitude": 44.3
+        },
+        "switzerland": {
+          "place_id": 7236,
+          "area": "comparison"
+        },
+        "austria": {
+          "place_id": 8057,
+          "area": "comparison"
+        }
+      },
+      "filters": {
+        "not_find_kinds": [
+          "MATERIAL_SAMPLE"
+        ],
+        "earliest_date": "1990-01-01",
+        "max_uncertainty_m": 1000,
+        "duplicate_distance_m": 100,
+        "bad_gbif_issues": [
+          "ZERO_COORDINATE",
+          "COORDINATE_INVALID",
+          "COUNTRY_COORDINATE_MISMATCH",
+          "PRESUMED_SWAPPED_COORDINATE"
+        ],
+        "timing": {
+          "small_square_m": 10000,
+          "small_square_max_uncertainty_m": 5000,
+          "large_square_m": 30000,
+          "large_square_max_uncertainty_m": 30000
+        },
+        "area_boxes": {
+          "home": {
+            "west": 9.5,
+            "south": 42.2,
+            "east": 12.9,
+            "north": 44.5
+          },
+          "comparison": {
+            "west": 5.9,
+            "south": 45.8,
+            "east": 17.2,
+            "north": 49.1
+          }
+        }
+      },
+      "roads": {
+        "radius_m": 1000,
+        "near_m": 100,
+        "max_finds_per_area": 500,
+        "random_points_per_area": 500,
+        "gadm_countries": [
+          "CHE_0",
+          "AUT_0"
+        ],
+        "extracts": {
+          "home": [
+            "italy/centro",
+            "italy/nord-est"
+          ],
+          "comparison": [
+            "switzerland",
+            "austria"
+          ]
+        }
+      }
+    }
+  },
+  "git": {
+    "commit": "07096713986aefb3d9f48ede2292180b89e05746",
+    "uncommitted_changes": true
+  },
+  "versions": {
+    "python": "3.13.1",
+    "micometeo": "0.1.0",
+    "packages": {
+      "affine": "3.0.1",
+      "attrs": "26.1.0",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "click": "8.5.0",
+      "contourpy": "1.4.0",
+      "cycler": "0.12.1",
+      "distlib": "0.4.3",
+      "filelock": "4.1.0",
+      "fonttools": "4.66.1",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.1",
+      "kiwisolver": "1.5.1",
+      "matplotlib": "3.11.2",
+      "micometeo": "0.1.0",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "osmium": "4.3.1",
+      "packaging": "26.3",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.4",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "pyarrow": "26.0.0",
+      "Pygments": "2.21.0",
+      "pyparsing": "3.3.3",
+      "pyproj": "3.8.0",
+      "pyshp": "3.1.6",
+      "pytest": "9.1.1",
+      "python-dateutil": "2.9.0.post0",
+      "python-discovery": "1.6.2",
+      "PyYAML": "6.0.3",
+      "rasterio": "1.5.2",
+      "requests": "2.34.2",
+      "shapely": "2.2.0",
+      "six": "1.17.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.6"
+    }
+  },
+  "computer": {
+    "os": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "cpu_count": 10,
+    "processor": "arm",
+    "total_ram_bytes": 34359738368
+  },
+  "inputs": [
+    {
+      "path": "data/raw/p1_observations/gbif_0019331-260928105237408.zip",
+      "sha256": "130d01d1244318d3c11b40a42779be69af5208fa55a19ac98945df2fd4b63bae",
+      "size_bytes": 1830378
+    },
+    {
+      "path": "data/raw/p1_observations/inat_tuscany_001.json",
+      "sha256": "979f6bf5b83578cbe02b692d411882ecfe2ec9931e078af86c1f30cb945f4ea6",
+      "size_bytes": 7363132
+    },
+    {
+      "path": "data/raw/p1_observations/inat_emilia_romagna_001.json",
+      "sha256": "fe310e7bff2ac1a1d993c55acb5f0b2f883e771091467d331f88425a2b5ddb66",
+      "size_bytes": 4210396
+    },
+    {
+      "path": "data/raw/p1_observations/inat_switzerland_001.json",
+      "sha256": "1c1b3c9bf2b1b73096f4060b4a9b9e2d686654506c85c696044ada0839754d98",
+      "size_bytes": 19605977
+    },
+    {
+      "path": "data/raw/p1_observations/inat_switzerland_002.json",
+      "sha256": "4067f17f5c0301e946c47f6d893b4c87d8068b215b6f0e9c86adf863e522bd2f",
+      "size_bytes": 15723827
+    },
+    {
+      "path": "data/raw/p1_observations/inat_switzerland_003.json",
+      "sha256": "062ae88ef0c443da9987cd136fcdf1cd1485816a5b2c45cc75aafc327161bb4c",
+      "size_bytes": 4748799
+    },
+    {
+      "path": "data/raw/p1_observations/inat_austria_001.json",
+      "sha256": "8933173720d269c4d139d98ca4d3dd7e2e7dd16f66c3669e130b9b402afef455",
+      "size_bytes": 12647539
+    },
+    {
+      "path": "data/raw/p1_observations/inat_austria_002.json",
+      "sha256": "b10fc0139812ef9987a9069bd8ab1650cc57b8838868647d6e09732f06e257d7",
+      "size_bytes": 10832171
+    },
+    {
+      "path": "data/raw/p1_observations/inat_austria_003.json",
+      "sha256": "22544b46933b2d67679c11d0ecce4da13dcf5f30071c826ade0c3e3334a26ae9",
+      "size_bytes": 11122578
+    },
+    {
+      "path": "data/raw/p1_observations/inat_austria_004.json",
+      "sha256": "1b8ce466364fe0bdb27ec0aa831288ce330ac04ca6b126c088aca66885d24df0",
+      "size_bytes": 9454628
+    },
+    {
+      "path": "data/raw/p1_observations/inat_austria_005.json",
+      "sha256": "de022f785c9493983ccbce36797e30fc13cd6b612e4966cd25a19a36ff08a8b5",
+      "size_bytes": 8503823
+    },
+    {
+      "path": "data/raw/p1_observations/inat_austria_006.json",
+      "sha256": "7034756c26c101a510088dc91beb6d3cf0ec34c2b1352b30aed64ecd15df73a0",
+      "size_bytes": 9442588
+    },
+    {
+      "path": "data/raw/p1_observations/inat_austria_007.json",
+      "sha256": "882eb2ae83e4319004066f9dc4089e2f7f1c973638cae5a981bb80c223872f5e",
+      "size_bytes": 636570
+    },
+    {
+      "path": "data/raw/p1_observations/osm/centro-latest.osm.pbf",
+      "sha256": "9fcfe51bab23b3a828da521c0bf4e54bff21527f5a71fe2008f7c18138aa4ec5",
+      "size_bytes": 384857630
+    },
+    {
+      "path": "data/raw/p1_observations/osm/nord-est-latest.osm.pbf",
+      "sha256": "09170cf1edb03394c4898635e1e42f5f5d78628786a57ec30585cc1cc378cb20",
+      "size_bytes": 625011207
+    },
+    {
+      "path": "data/raw/p1_observations/osm/switzerland-latest.osm.pbf",
+      "sha256": "5949f716b354d0c89cf8c694577ad5e8459faa4a258515838c5ce40196e45aee",
+      "size_bytes": 548037032
+    },
+    {
+      "path": "data/raw/p1_observations/osm/austria-latest.osm.pbf",
+      "sha256": "caeb30dccd661b5a232ecae5928812dd98476e1f3afe2068dba972d4ba85181a",
+      "size_bytes": 812039090
+    },
+    {
+      "path": "data/raw/p1_observations/gadm41_AUT_0.json.zip",
+      "sha256": "f83ba27bfa38c7147655249c941101c687abb1981e0e7390cf8116938d18d99b",
+      "size_bytes": 19593
+    },
+    {
+      "path": "data/raw/p1_observations/gadm41_CHE_0.json.zip",
+      "sha256": "3e52a94fe84f5c3672e10278ec695ec381528ed83f7cf258239fd36e3f187404",
+      "size_bytes": 10577
+    },
+    {
+      "path": "data/raw/p1_observations/gadm41_ITA_1.json.zip",
+      "sha256": "f42fb1f30d4c72695fa6e48d7ac0179af4c38f426514f41c58e9057604d3939c",
+      "size_bytes": 132004
+    }
+  ],
+  "sources": [
+    {
+      "name": "GBIF occurrence download",
+      "url": "https://www.gbif.org/occurrence/download/0019331-260928105237408",
+      "licence": "{\"CC-BY-NC\": 1499, \"CC-BY\": 10224, \"CC0\": 88}",
+      "version": "10.15468/dl.gw48at",
+      "downloaded_at": "2026-10-11T07:50:09Z",
+      "query": {
+        "download_key": "0019331-260928105237408",
+        "doi": "10.15468/dl.gw48at",
+        "created": "2026-10-10T16:12:03.913+00:00",
+        "total_records": 11811,
+        "predicate": {
+          "type": "and",
+          "predicates": [
+            {
+              "type": "in",
+              "key": "TAXON_KEY",
+              "values": [
+                "5954958",
+                "8733688",
+                "5954691",
+                "5954949"
+              ]
+            },
+            {
+              "type": "equals",
+              "key": "HAS_COORDINATE",
+              "value": "true"
+            },
+            {
+              "type": "or",
+              "predicates": [
+                {
+                  "type": "equals",
+                  "key": "GADM_GID",
+                  "value": "ITA.16_1"
+                },
+                {
+                  "type": "and",
+                  "predicates": [
+                    {
+                      "type": "equals",
+                      "key": "GADM_GID",
+                      "value": "ITA.6_1"
+                    },
+                    {
+                      "type": "within",
+                      "geometry": "POLYGON((9.0 43.5,13.0 43.5,13.0 44.3,9.0 44.3,9.0 43.5))"
+                    }
+                  ]
+                },
+                {
+                  "type": "in",
+                  "key": "COUNTRY",
+                  "values": [
+                    "CH",
+                    "AT"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "iNaturalist observations, tuscany",
+      "url": "https://api.inaturalist.org/v1/observations",
+      "licence": "{\"CC-BY-SA\": 1, \"other\": 36, \"CC-BY-NC\": 80, \"CC-BY-NC-ND\": 2, \"CC-BY\": 7, \"CC0\": 2}",
+      "version": "v1",
+      "downloaded_at": "2026-10-11T07:50:10Z",
+      "query": {
+        "taxon_id": "48701,333772,350216,335942",
+        "place_id": 13073,
+        "quality_grade": "any",
+        "per_page": 200,
+        "order_by": "id",
+        "order": "asc",
+        "max_latitude": null
+      }
+    },
+    {
+      "name": "iNaturalist observations, emilia_romagna",
+      "url": "https://api.inaturalist.org/v1/observations",
+      "licence": "{\"CC-BY-NC\": 17, \"CC-BY-NC-ND\": 6, \"other\": 10, \"CC0\": 1}",
+      "version": "v1",
+      "downloaded_at": "2026-10-11T07:50:10Z",
+      "query": {
+        "taxon_id": "48701,333772,350216,335942",
+        "place_id": 96905,
+        "quality_grade": "any",
+        "per_page": 200,
+        "order_by": "id",
+        "order": "asc",
+        "max_latitude": 44.3
+      }
+    },
+    {
+      "name": "iNaturalist observations, switzerland",
+      "url": "https://api.inaturalist.org/v1/observations",
+      "licence": "{\"CC-BY\": 99, \"other\": 141, \"CC-BY-NC\": 199, \"CC-BY-NC-ND\": 7, \"CC-BY-NC-SA\": 1, \"CC0\": 5, \"CC-BY-SA\": 2}",
+      "version": "v1",
+      "downloaded_at": "2026-10-11T07:50:10Z",
+      "query": {
+        "taxon_id": "48701,333772,350216,335942",
+        "place_id": 7236,
+        "quality_grade": "any",
+        "per_page": 200,
+        "order_by": "id",
+        "order": "asc",
+        "max_latitude": null
+      }
+    },
+    {
+      "name": "iNaturalist observations, austria",
+      "url": "https://api.inaturalist.org/v1/observations",
+      "licence": "{\"CC-BY-NC\": 863, \"CC-BY-NC-SA\": 4, \"other\": 142, \"CC0\": 58, \"CC-BY\": 150, \"CC-BY-NC-ND\": 3}",
+      "version": "v1",
+      "downloaded_at": "2026-10-11T07:50:11Z",
+      "query": {
+        "taxon_id": "48701,333772,350216,335942",
+        "place_id": 8057,
+        "quality_grade": "any",
+        "per_page": 200,
+        "order_by": "id",
+        "order": "asc",
+        "max_latitude": null
+      }
+    },
+    {
+      "name": "OpenStreetMap extract italy/centro from Geofabrik",
+      "url": "https://download.geofabrik.de/europe/italy/centro-latest.osm.pbf",
+      "licence": "ODbL 1.0",
+      "version": "2026-10-08T20:21:06Z",
+      "downloaded_at": "2026-10-11T07:51:09Z",
+      "query": {
+        "highway": "any",
+        "area": "home",
+        "radius_m": 1000,
+        "near_m": 100,
+        "max_finds_per_area": 500,
+        "random_points_per_area": 500,
+        "gadm_countries": [
+          "CHE_0",
+          "AUT_0"
+        ],
+        "extracts": {
+          "home": [
+            "italy/centro",
+            "italy/nord-est"
+          ],
+          "comparison": [
+            "switzerland",
+            "austria"
+          ]
+        }
+      }
+    },
+    {
+      "name": "OpenStreetMap extract italy/nord-est from Geofabrik",
+      "url": "https://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf",
+      "licence": "ODbL 1.0",
+      "version": "2026-10-08T20:21:06Z",
+      "downloaded_at": "2026-10-11T07:51:09Z",
+      "query": {
+        "highway": "any",
+        "area": "home",
+        "radius_m": 1000,
+        "near_m": 100,
+        "max_finds_per_area": 500,
+        "random_points_per_area": 500,
+        "gadm_countries": [
+          "CHE_0",
+          "AUT_0"
+        ],
+        "extracts": {
+          "home": [
+            "italy/centro",
+            "italy/nord-est"
+          ],
+          "comparison": [
+            "switzerland",
+            "austria"
+          ]
+        }
+      }
+    },
+    {
+      "name": "OpenStreetMap extract switzerland from Geofabrik",
+      "url": "https://download.geofabrik.de/europe/switzerland-latest.osm.pbf",
+      "licence": "ODbL 1.0",
+      "version": "2026-10-08T20:21:06Z",
+      "downloaded_at": "2026-10-11T07:52:46Z",
+      "query": {
+        "highway": "any",
+        "area": "comparison",
+        "radius_m": 1000,
+        "near_m": 100,
+        "max_finds_per_area": 500,
+        "random_points_per_area": 500,
+        "gadm_countries": [
+          "CHE_0",
+          "AUT_0"
+        ],
+        "extracts": {
+          "home": [
+            "italy/centro",
+            "italy/nord-est"
+          ],
+          "comparison": [
+            "switzerland",
+            "austria"
+          ]
+        }
+      }
+    },
+    {
+      "name": "OpenStreetMap extract austria from Geofabrik",
+      "url": "https://download.geofabrik.de/europe/austria-latest.osm.pbf",
+      "licence": "ODbL 1.0",
+      "version": "2026-10-08T20:21:06Z",
+      "downloaded_at": "2026-10-11T07:52:46Z",
+      "query": {
+        "highway": "any",
+        "area": "comparison",
+        "radius_m": 1000,
+        "near_m": 100,
+        "max_finds_per_area": 500,
+        "random_points_per_area": 500,
+        "gadm_countries": [
+          "CHE_0",
+          "AUT_0"
+        ],
+        "extracts": {
+          "home": [
+            "italy/centro",
+            "italy/nord-est"
+          ],
+          "comparison": [
+            "switzerland",
+            "austria"
+          ]
+        }
+      }
+    },
+    {
+      "name": "GADM 4.1 area outlines",
+      "url": "https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_{name}.json.zip",
+      "licence": "GADM licence, free for non-commercial use",
+      "version": "4.1",
+      "downloaded_at": "2026-10-11T07:52:48Z",
+      "query": {
+        "files": [
+          "ITA_1",
+          "CHE_0",
+          "AUT_0"
+        ]
+      }
+    }
+  ],
+  "outputs": [
+    "data/processed/p1_observations/20261011T075009Z-796984/all_records.parquet",
+    "data/processed/p1_observations/20261011T075009Z-796984/finds.parquet",
+    "data/processed/p1_observations/20261011T075009Z-796984/timing_finds.parquet",
+    "reports/p1_counts.csv",
+    "reports/p1_dropped.csv",
+    "reports/p1_map.png",
+    "reports/p1_road_distance.csv"
+  ]
+}

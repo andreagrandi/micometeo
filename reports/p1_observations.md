@@ -98,9 +98,52 @@ Two findings changed the counts:
 Counts by year, season, source, position error, blur, identification and licence, before
 and after cleaning, are in `reports/p1_counts.csv`.
 
-No committed file or plot holds the position of a blurred or hidden record. The script
-removes those positions as it reads each record, so they never reach the tables, the map
-or `data/processed/`. The test `tests/test_p1_observations.py` checks this.
+A blurred record keeps the point its source published in `published_latitude` and
+`published_longitude`. That point is shifted or rounded, so the record never gets a
+`latitude`, a 500 m square or a dot on the map. The test `tests/test_p1_observations.py`
+checks this.
+
+## Timing finds from blurred and rounded records
+
+Issue #16. Weather changes over kilometres, so a find with a day and a rough area can
+still show when porcini come up. The script now keeps records that fail only because
+the position is blurred or the position error is above 1 km. Each one keeps its rough
+point and gets a coarse square that shows how rough the point is:
+
+- 10 km for a position error up to 5 km. This covers the Swiss databank records rounded
+  to 5 km.
+- 30 km for a blurred iNaturalist find or a position error from 5 to 30 km.
+
+Records with a larger or unknown error are left out, and so are records that fail any
+other filter. The table is `timing_finds.parquet` under `data/processed/p1_observations/`,
+with columns described in `docs/data_formats.md`. Run record:
+`reports/runs/p1_observations/20261011T075009Z-796984.json`. The run took 159 seconds.
+
+| | Home | Pistoia | Comparison |
+|---|---:|---:|---:|
+| Reliable finds, from above | 85 | 10 | 4,747 |
+| Timing finds | 34 | 2 | 5,347 |
+| From iNaturalist | 34 | 2 | 362 |
+| From GBIF datasets other than iNaturalist | 0 | 0 | 4,985 |
+| Blurred, with a 30 km square | 16 | | 236 |
+| Blurred, with a 10 km square | 0 | | 4,966 |
+| Position error above 1 km | 18 | | 145 |
+| Separate coarse squares | 26 | | 482 |
+| Separate square and day pairs | 33 | | 4,344 |
+
+- **Home.** The home area gains 34 timing finds, all from iNaturalist. 30 are from 2019
+  or later. 23 are from autumn and 10 from summer. Seven more blurred or vague home
+  records were left out because the community had not confirmed the species.
+- **Comparison.** The comparison area more than doubles its usable finds. Almost all of
+  the gain is the Swiss databank, whose rounded records now count with a 10 km square.
+  This fills the gap in Switzerland noted above.
+- Counts by year, season and source are in `reports/p1_counts.csv`, at the stage
+  `timing`.
+
+The home area gains fewer than 50 timing finds, which is the stop rule of issue #16.
+Home now has 119 dated finds in total, still too few to learn timing from. Timing should
+be learned in Switzerland and Austria and from P1c, issue #17, and the home finds used only to
+check the result.
 
 ## Do finds sit near roads and paths
 

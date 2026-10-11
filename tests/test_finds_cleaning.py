@@ -4,7 +4,12 @@ from typing import Any
 
 import pytest
 
-from micometeo.finds.cleaning import apply_filters, first_failed_filter, mark_duplicates
+from micometeo.finds.cleaning import (
+    apply_filters,
+    first_failed_filter,
+    mark_duplicates,
+    mark_timing_finds,
+)
 from micometeo.finds.counts import accuracy_class, count_table, dropped_table
 
 FILTERS = {
@@ -12,6 +17,12 @@ FILTERS = {
     "earliest_date": "1990-01-01",
     "max_uncertainty_m": 1000,
     "bad_gbif_issues": ["ZERO_COORDINATE", "COUNTRY_COORDINATE_MISMATCH"],
+    "timing": {
+        "small_square_m": 10000,
+        "small_square_max_uncertainty_m": 5000,
+        "large_square_m": 30000,
+        "large_square_max_uncertainty_m": 30000,
+    },
     "area_boxes": {
         "home": {"west": 9.5, "south": 42.2, "east": 12.9, "north": 44.5},
         "comparison": {"west": 5.9, "south": 45.8, "east": 17.2, "north": 49.1},
@@ -72,6 +83,7 @@ def test_blurred_gbif_copy_blurs_the_kept_inat_record() -> None:
     assert inat["coordinates_obscured"] is True
     assert inat["latitude"] is None
     assert inat["cell_id"] == ""
+    assert (inat["published_latitude"], inat["published_longitude"]) == (44.0, 10.9)
 
 
 @pytest.mark.parametrize(
@@ -160,6 +172,7 @@ def cleaned_records() -> list[dict[str, Any]]:
     ]
     mark_duplicates(records=records, max_distance_m=100)
     apply_filters(records=records, filters=FILTERS, download_date=DOWNLOAD_DATE)
+    mark_timing_finds(records=records, filters=FILTERS)
     return records
 
 
@@ -172,12 +185,15 @@ def test_count_table_totals_per_area_and_stage() -> None:
         ("home", "all"): 3,
         ("home", "after_duplicates"): 2,
         ("home", "eligible"): 1,
+        ("home", "timing"): 0,
         ("pistoia", "all"): 1,
         ("pistoia", "after_duplicates"): 1,
         ("pistoia", "eligible"): 1,
+        ("pistoia", "timing"): 0,
         ("comparison", "all"): 1,
         ("comparison", "after_duplicates"): 1,
         ("comparison", "eligible"): 1,
+        ("comparison", "timing"): 0,
     }
     dimensions = {row["dimension"] for row in rows}
     assert dimensions == {
@@ -198,3 +214,84 @@ def test_dropped_table_counts_each_rule_and_filter() -> None:
     assert home["gbif_inat_overlap"] == 1
     assert home["weak_identification"] == 1
     assert home["blurred"] == 0
+
+
+def timing_square(**values: Any) -> tuple[str, int | None]:
+    values.setdefault("published_latitude", 44.0)
+    values.setdefault("published_longitude", 10.9)
+    record = find(**values)
+    records = [record]
+    mark_duplicates(records=records, max_distance_m=100)
+    apply_filters(records=records, filters=FILTERS, download_date=DOWNLOAD_DATE)
+    mark_timing_finds(records=records, filters=FILTERS)
+    assert record["published_latitude"] == values["published_latitude"]
+    if record["square_id"] and record["coordinates_obscured"]:
+        assert (record["rough_latitude"], record["rough_longitude"]) == (
+            values["published_latitude"],
+            values["published_longitude"],
+        )
+    return record["square_id"], record["square_size_m"]
+
+
+BLURRED = {"coordinates_obscured": True, "latitude": None, "longitude": None}
+
+
+@pytest.mark.parametrize(
+    ("values", "size"),
+    [
+        (BLURRED | {"coordinate_uncertainty_m": 20.0}, 30000),
+        (BLURRED | {"source": "GBIF", "coordinate_uncertainty_m": 3535.0}, 10000),
+        (BLURRED | {"source": "GBIF", "coordinate_uncertainty_m": 5000.0}, 10000),
+        (BLURRED | {"source": "GBIF", "coordinate_uncertainty_m": 5001.0}, 30000),
+        (BLURRED | {"source": "GBIF", "coordinate_uncertainty_m": 30000.0}, 30000),
+        (BLURRED | {"source": "GBIF", "coordinate_uncertainty_m": 30001.0}, None),
+        (BLURRED | {"source": "GBIF", "coordinate_uncertainty_m": None}, None),
+        ({"coordinate_uncertainty_m": 1500.0}, 10000),
+        ({"coordinate_uncertainty_m": 12000.0}, 30000),
+        ({"coordinate_uncertainty_m": 40000.0}, None),
+        ({"coordinate_uncertainty_m": 20.0}, None),
+    ],
+)
+def test_timing_find_square_size_follows_the_rules(
+    values: dict[str, Any], size: int | None
+) -> None:
+    square_id, square_size = timing_square(**values)
+    assert square_size == size
+    assert square_id.startswith(f"{size}m_E") if size else square_id == ""
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        BLURRED | {"identification_quality": "inat_needs_id"},
+        BLURRED
+        | {"source": "GBIF", "gbif_issues": "ZERO_COORDINATE", "coordinate_uncertainty_m": 3535.0},
+        BLURRED | {"published_latitude": 50.0},
+        BLURRED | {"published_latitude": None, "published_longitude": None},
+        BLURRED | {"event_date": "1985-09-01"},
+        {"coordinate_uncertainty_m": 1500.0, "identification_quality": "inat_casual"},
+    ],
+)
+def test_blurred_find_failing_another_check_is_not_a_timing_find(values: dict[str, Any]) -> None:
+    assert timing_square(**values) == ("", None)
+
+
+def test_duplicate_is_not_a_timing_find() -> None:
+    first = find(record_id="inat:1", inat_id="1")
+    copy = find(record_id="inat:1", inat_id="1", published_latitude=44.0, **BLURRED)
+    records = [first, copy]
+    mark_duplicates(records=records, max_distance_m=100)
+    apply_filters(records=records, filters=FILTERS, download_date=DOWNLOAD_DATE)
+    mark_timing_finds(records=records, filters=FILTERS)
+    assert copy["square_id"] == ""
+
+
+def test_merged_inat_original_keeps_its_point_for_the_large_square() -> None:
+    inat = find(published_latitude=None, published_longitude=None)
+    copy = find(record_id="gbif:9", source="GBIF", **BLURRED)
+    records = [inat, copy]
+    mark_duplicates(records=records, max_distance_m=100)
+    apply_filters(records=records, filters=FILTERS, download_date=DOWNLOAD_DATE)
+    mark_timing_finds(records=records, filters=FILTERS)
+    assert inat["square_size_m"] == 30000
+    assert copy["square_id"] == ""

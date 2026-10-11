@@ -39,6 +39,8 @@ One row per reported find.
 | event_date | date | Day of the find in Italian time, `YYYY-MM-DD`. |
 | latitude | float | WGS84 latitude in decimal degrees. |
 | longitude | float | WGS84 longitude in decimal degrees. |
+| published_latitude | float | For a blurred record, the latitude the source published. It is shifted or rounded, so latitude stays empty. |
+| published_longitude | float | For a blurred record, the longitude the source published. |
 | coordinate_uncertainty_m | float | Reported position error in metres, empty if unknown. |
 | coordinates_obscured | boolean | True if the source hid the exact position. |
 | identification_quality | string | How the species was confirmed, for example photo checked by an expert. |
@@ -48,7 +50,39 @@ One row per reported find.
 | retrieved_at | timestamp | When we downloaded the record, UTC. |
 | duplicate_of | string | `record_id` of the record this one repeats, empty if not a duplicate. |
 
-Obscured coordinates are never published.
+A blurred record keeps its published point only in published_latitude and published_longitude, so it never counts as an exact find.
+
+## Timing finds
+
+One row per find that has a day and a species but a blurred position or a position error above 1 km. Each row holds a coarse square of 10 or 30 km and the rough point it was built from. That is enough to match a find with the weather around it, but not with habitat at 500 m.
+
+| Column | Type | Meaning |
+|---|---|---|
+| record_id | string | `record_id` of the find record. |
+| source | string | Name of the data source. |
+| area | string | `home` or `comparison`. |
+| in_pistoia | boolean | True if the find lies in Pistoia province. |
+| event_date | date | Day of the find, `YYYY-MM-DD`. |
+| year | integer | Year of the find. |
+| season | string | Season of the find. |
+| species_group | string | Always `porcini`, see decision D3. |
+| taxon_name | string | Scientific name as reported. |
+| square_id | string | ID of the coarse square in the same format as `cell_id`, for example `10000m_E4321000_N3210000`. |
+| square_size_m | integer | Side of the square in metres, 10000 or 30000. |
+| rough_latitude | float | Latitude the source published. The find lies somewhere near it, within about the square size. |
+| rough_longitude | float | Longitude the source published. |
+| failed_filter | string | Why the find is not an exact find, `blurred` or `low_accuracy`. |
+| identification_quality | string | How the species was confirmed. |
+| licence | string | Licence of the record. |
+
+The square size follows the position error:
+
+- A blurred iNaturalist find gets the 30 km square.
+- A find with a position error up to 5 km gets the 10 km square. This includes GBIF records rounded to the Swiss 5 km grid, which report 3535 m.
+- A find with a position error from 5 km up to 30 km gets the 30 km square.
+- A find with a larger or unknown error is dropped.
+
+The square holds the rough point. Duplicates, weakly identified finds, bad GBIF issues and points outside the area box are dropped as for exact finds.
 
 ## File formats
 

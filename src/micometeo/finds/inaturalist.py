@@ -76,13 +76,21 @@ def parse_observation(
     settings: dict[str, Any],
     retrieved_at: str,
 ) -> dict[str, Any]:
-    """Turn one iNaturalist observation into a find record, removing blurred positions."""
+    """Turn one iNaturalist observation into a find record.
+
+    A blurred position goes to published_latitude and published_longitude, not latitude and longitude.
+    """
     observed_on = observation.get("observed_on") or ""
     obscured = is_blurred(observation=observation)
     latitude, longitude = None, None
+    published_latitude, published_longitude = None, None
     location = observation.get("location")
-    if location and not obscured:
-        latitude, longitude = (float(part) for part in location.split(","))
+    if location:
+        point = tuple(float(part) for part in location.split(","))
+        if obscured:
+            published_latitude, published_longitude = point
+        else:
+            latitude, longitude = point
     taxon = observation.get("taxon") or {}
     user = (observation.get("user") or {}).get("login", "")
     accuracy = observation.get("public_positional_accuracy")
@@ -120,6 +128,8 @@ def parse_observation(
         "basis_of_record": "HUMAN_OBSERVATION",
         "gbif_issues": "",
         "inat_id": str(observation["id"]),
+        "published_latitude": published_latitude,
+        "published_longitude": published_longitude,
     }
 
 

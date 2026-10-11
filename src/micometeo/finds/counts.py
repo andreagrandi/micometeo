@@ -8,7 +8,7 @@ from typing import Any
 from micometeo.finds.cleaning import DUPLICATE_RULES, FILTERS
 
 AREAS = ["home", "pistoia", "comparison"]
-STAGES = ["all", "after_duplicates", "eligible"]
+STAGES = ["all", "after_duplicates", "eligible", "timing"]
 DIMENSIONS = [
     "year",
     "season",
@@ -55,6 +55,8 @@ def in_stage(*, record: dict[str, Any], stage: str) -> bool:
         return True
     if stage == "after_duplicates":
         return not record["duplicate_rule"]
+    if stage == "timing":
+        return not record["duplicate_rule"] and bool(record.get("square_id"))
     return not record["duplicate_rule"] and not record["failed_filter"]
 
 

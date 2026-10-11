@@ -278,6 +278,11 @@ def test_cell_id_matches_epsg_3035_grid() -> None:
     assert cell_id(latitude=52.0, longitude=10.0) == "500m_E4321000_N3210000"
 
 
+def test_cell_id_builds_larger_squares_with_the_same_format() -> None:
+    assert cell_id(latitude=52.0, longitude=10.0, size_m=10000) == "10000m_E4320000_N3210000"
+    assert cell_id(latitude=52.0, longitude=10.0, size_m=30000) == "30000m_E4320000_N3210000"
+
+
 @pytest.mark.parametrize(
     ("value", "expected"),
     [

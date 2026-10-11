@@ -39,6 +39,15 @@ bad_gbif_issues = [
     "PRESUMED_SWAPPED_COORDINATE",
 ]
 
+# Finds that fail only on a blurred or vague position are kept for timing, with a coarse
+# square instead of a point. A position error up to the small limit gives the small square.
+# A position error up to the large limit, or any blurred iNaturalist find, gives the large one.
+[settings.filters.timing]
+small_square_m = 10000
+small_square_max_uncertainty_m = 5000
+large_square_m = 30000
+large_square_max_uncertainty_m = 30000
+
 # A point outside its area box counts as an odd place.
 [settings.filters.area_boxes.home]
 west = 9.5

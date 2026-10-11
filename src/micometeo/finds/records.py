@@ -12,6 +12,8 @@ FIND_COLUMNS = [
     "event_date",
     "latitude",
     "longitude",
+    "published_latitude",
+    "published_longitude",
     "coordinate_uncertainty_m",
     "coordinates_obscured",
     "identification_quality",

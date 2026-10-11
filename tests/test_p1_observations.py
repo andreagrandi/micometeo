@@ -19,6 +19,15 @@ from micometeo.finds import gbif, inaturalist, roads
 ROOT = Path(__file__).resolve().parent.parent
 BLURRED_LATITUDE = 43.1234567
 BLURRED_LONGITUDE = 11.7654321
+# Published positions of three blurred records. They must never count as exact points.
+HIDDEN_VALUES = [
+    BLURRED_LATITUDE,
+    BLURRED_LONGITUDE,
+    43.5678,
+    10.2345,
+    47.3456789,
+    8.654321,
+]
 GBIF_COLUMNS = [
     "gbifID",
     "datasetKey",
@@ -82,6 +91,21 @@ def fake_inat_download(
                 location=f"{BLURRED_LATITUDE},{BLURRED_LONGITUDE}",
             ),
             observation(3, quality_grade="needs_id"),
+            observation(
+                5,
+                observed_on="2021-06-10",
+                location="44.05,10.9",
+                public_positional_accuracy=2500,
+                place_ids=[13073, 33195],
+            ),
+            observation(
+                6,
+                obscured=True,
+                geoprivacy="obscured",
+                quality_grade="needs_id",
+                location="43.5678,10.2345",
+            ),
+            observation(7, location="44.06,10.9", public_positional_accuracy=40000),
         ]
     if place_name == "switzerland":
         results = [observation(4, location="46.8,8.2")]
@@ -127,6 +151,20 @@ def fake_gbif_fetch(*, key: str, raw_dir: Path) -> tuple[Path, dict[str, Any]]:
             "countryCode": "CH",
         },
     ]
+    rows.append(
+        {
+            "gbifID": "14",
+            "datasetKey": "swiss-fungi",
+            "year": "2017",
+            "month": "5",
+            "day": "4",
+            "decimalLatitude": "47.3456789",
+            "decimalLongitude": "8.6543210",
+            "coordinateUncertaintyInMeters": "3535",
+            "informationWithheld": "Coordinates rounded to the 5 km grid",
+            "countryCode": "CH",
+        }
+    )
     lines = ["\t".join(GBIF_COLUMNS)]
     lines += ["\t".join(row.get(column, "") for column in GBIF_COLUMNS) for row in rows]
     zip_path = raw_dir / f"gbif_{key}.zip"
@@ -187,8 +225,8 @@ def test_run_records_gbif_key_doi_and_inat_query(finished_run: dict[str, Any]) -
     assert gbif_source["query"]["predicate"]["type"] == "and"
     inat_source = next(source for source in sources if source["name"].endswith("tuscany"))
     assert inat_source["query"]["place_id"] == 13073
-    assert json.loads(inat_source["licence"]) == {"CC-BY-NC": 3}
-    assert len(finished_run["state"]["outputs"]) == 6
+    assert json.loads(inat_source["licence"]) == {"CC-BY-NC": 6}
+    assert len(finished_run["state"]["outputs"]) == 7
     names = [source["name"] for source in sources]
     assert "OpenStreetMap extract italy/centro from Geofabrik" in names
     osm_source = next(source for source in sources if source["name"].endswith("austria from Geofabrik"))
@@ -219,29 +257,93 @@ def test_run_counts_and_filters(finished_run: dict[str, Any]) -> None:
             for row in csv.DictReader(handle)
             if row["dimension"] == "total"
         }
-    assert totals[("home", "all")] == 5
-    assert totals[("home", "after_duplicates")] == 4
+    assert totals[("home", "all")] == 8
+    assert totals[("home", "after_duplicates")] == 7
     assert totals[("home", "eligible")] == 1
     assert totals[("pistoia", "eligible")] == 1
     assert totals[("comparison", "eligible")] == 2
+    assert totals[("home", "timing")] == 2
+    assert totals[("pistoia", "timing")] == 1
+    assert totals[("comparison", "timing")] == 1
     with (reports / "p1_dropped.csv").open(encoding="utf-8") as handle:
         home = {row["step"]: int(row["records"]) for row in csv.DictReader(handle) if row["area"] == "home"}
     assert home["gbif_inat_overlap"] == 1
-    assert home["blurred"] == 2
+    assert home["blurred"] == 3
+    assert home["low_accuracy"] == 2
     assert home["weak_identification"] == 1
     assert (reports / "p1_map.png").stat().st_size > 0
 
 
-def test_no_output_holds_a_blurred_position(finished_run: dict[str, Any]) -> None:
+def test_timing_table_has_squares_and_rough_points(finished_run: dict[str, Any]) -> None:
+    table = pq.read_table(finished_run["tmp_path"] / "processed" / "timing_finds.parquet")
+    assert table.column_names == [
+        "record_id",
+        "source",
+        "area",
+        "in_pistoia",
+        "event_date",
+        "year",
+        "season",
+        "species_group",
+        "taxon_name",
+        "square_id",
+        "square_size_m",
+        "rough_latitude",
+        "rough_longitude",
+        "failed_filter",
+        "identification_quality",
+        "licence",
+    ]
+    rows = {row["record_id"]: row for row in table.to_pylist()}
+    assert sorted(rows) == ["gbif:14", "inat:2", "inat:5"]
+    assert rows["inat:2"]["square_size_m"] == 30000
+    assert rows["inat:2"]["square_id"].startswith("30000m_E")
+    assert rows["inat:2"]["failed_filter"] == "blurred"
+    assert rows["inat:2"]["rough_latitude"] == pytest.approx(BLURRED_LATITUDE)
+    assert rows["inat:2"]["rough_longitude"] == pytest.approx(BLURRED_LONGITUDE)
+    assert rows["inat:5"]["rough_latitude"] == pytest.approx(44.05)
+    assert rows["gbif:14"]["rough_latitude"] == pytest.approx(47.3456789)
+    assert rows["inat:5"]["square_size_m"] == 10000
+    assert rows["inat:5"]["square_id"].startswith("10000m_E")
+    assert rows["inat:5"]["failed_filter"] == "low_accuracy"
+    assert rows["inat:5"]["in_pistoia"] is True
+    assert rows["gbif:14"]["square_size_m"] == 10000
+    assert rows["gbif:14"]["area"] == "comparison"
+    assert {row["species_group"] for row in rows.values()} == {"porcini"}
+
+
+def test_counts_hold_timing_finds_by_year_and_season(finished_run: dict[str, Any]) -> None:
+    with (finished_run["tmp_path"] / "reports" / "p1_counts.csv").open(encoding="utf-8") as handle:
+        rows = [row for row in csv.DictReader(handle) if row["stage"] == "timing"]
+    counts = {
+        (row["area"], row["dimension"], row["value"]): int(row["records"]) for row in rows
+    }
+    assert counts[("home", "year", "2020")] == 1
+    assert counts[("home", "year", "2021")] == 1
+    assert counts[("home", "season", "autumn")] == 1
+    assert counts[("home", "season", "summer")] == 1
+    assert counts[("pistoia", "year", "2021")] == 1
+    assert counts[("comparison", "year", "2017")] == 1
+    assert counts[("comparison", "season", "spring")] == 1
+
+
+def test_all_records_hold_square_columns(finished_run: dict[str, Any]) -> None:
+    table = pq.read_table(finished_run["tmp_path"] / "processed" / "all_records.parquet")
+    rows = {row["record_id"]: row for row in table.to_pylist()}
+    assert rows["inat:2"]["square_size_m"] == 30000
+    assert rows["inat:6"]["square_id"] == ""
+    assert rows["inat:7"]["square_size_m"] is None
+    assert rows["inat:2"]["latitude"] is None
+    assert rows["inat:2"]["published_latitude"] == pytest.approx(BLURRED_LATITUDE)
+    assert rows["inat:2"]["published_longitude"] == pytest.approx(BLURRED_LONGITUDE)
+
+
+def test_blurred_point_never_counts_as_an_exact_position(finished_run: dict[str, Any]) -> None:
     tmp_path = finished_run["tmp_path"]
     for name in ("all_records.parquet", "finds.parquet"):
         table = pq.read_table(tmp_path / "processed" / name).to_pylist()
-        for row in table:
-            assert row["latitude"] != pytest.approx(BLURRED_LATITUDE)
-            assert row["longitude"] != pytest.approx(BLURRED_LONGITUDE)
         blurred = [row for row in table if row["coordinates_obscured"]]
         assert all(row["latitude"] is None and row["cell_id"] == "" for row in blurred)
-    for path in [*(tmp_path / "reports").iterdir(), tmp_path / "state.json"]:
-        text = path.read_bytes().decode("utf-8", errors="ignore")
-        assert "43.123" not in text
-        assert "11.765" not in text
+        for row in table:
+            assert all(row["latitude"] != pytest.approx(hidden) for hidden in HIDDEN_VALUES)
+            assert all(row["longitude"] != pytest.approx(hidden) for hidden in HIDDEN_VALUES)
