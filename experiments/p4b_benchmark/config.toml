@@ -18,7 +18,7 @@ download_workers = 10
 allow_missing_weather = false
 redraws = 1000
 # The final and home final sets are scored once, at the end. Keep false until the model is named.
-score_final = false
+score_final = true
 reports_dir = "reports"
 
 # Hand-written rules from published knowledge of porcini, decision D8. A square or day scores one point for each condition it meets.

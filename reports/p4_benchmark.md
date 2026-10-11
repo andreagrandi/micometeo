@@ -211,6 +211,20 @@ Use hand-written rules from published studies, not machine learning on finds.
   the app should show where conditions match published knowledge, not a chance
   of finding porcini.
 
+## Models named for the final set
+
+Named on 11 October 2026, before the final set was scored:
+
+- Place test: logistic regression with weather and habitat, the only model
+  that met S1 and S2 on the test set. A5 status follows its S1 and S2 result.
+- Timing test: rain of the last 14 days, chosen on the tuning set, for T1 and
+  T2.
+- The weather rules from published studies, the recommendation of this report,
+  are reported next to them.
+
+All other scores of the run are reported too, but none of them can change the
+named models after the final scores are seen.
+
 ## Status of A5
 
 INCONCLUSIVE.
