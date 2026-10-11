@@ -1,0 +1,11 @@
+area,set,point_kind,cases_with_points,points,cases_without_known_spots
+comparison,final,forest,772,77200,0
+comparison,final,known_spot,772,38600,0
+comparison,test,forest,1504,150400,0
+comparison,test,known_spot,1504,75200,0
+comparison,tuning,forest,1319,131900,0
+comparison,tuning,known_spot,1319,65950,0
+home,home_final,forest,11,1100,0
+home,home_final,known_spot,0,0,11
+home,home_test,forest,70,7000,0
+home,home_test,known_spot,70,3500,0

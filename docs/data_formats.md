@@ -84,6 +84,40 @@ The square size follows the position error:
 
 The square holds the rough point. Duplicates, weakly identified finds, bad GBIF issues and points outside the area box are dropped as for exact finds.
 
+## Test cases
+
+`cases.parquet` from `experiments/p4_test_rules/`. One row per 500 m square and day with at least one reliable find. The rules are in `docs/test_rules.md`.
+
+| Column | Type | Meaning |
+|---|---|---|
+| case_id | string | `cell_id` and day, for example `500m_E4465500_N2301000_2016-10-01`. |
+| area | string | `home` or `comparison`. |
+| cell_id | string | The 500 m square. |
+| assessment_date | date | Day of the finds, `YYYY-MM-DD`. |
+| year | integer | Year of the day. |
+| block_id | string | 100 km block that holds the square's lower-left corner, for example `100km_E4300000_N2600000`. |
+| block_group | string | `tuning`, `test` or `final` for the comparison area, `home` for the home area. |
+| set | string | `tuning`, `test`, `final`, `buffer`, `home_test` or `home_final`. Cases marked `buffer` are left out. |
+| record_ids | list of strings | `record_id` of each find in the case. |
+| find_count | integer | Number of finds in the case. |
+| latitude | float | Latitude of the square's centre. |
+| longitude | float | Longitude of the square's centre. |
+
+## Comparison points
+
+`comparison_points.parquet` from `experiments/p4_test_rules/`. One row per random place matched to a test case. Nobody reported a find there on that day.
+
+| Column | Type | Meaning |
+|---|---|---|
+| case_id | string | The case the point belongs to. |
+| set | string | Set of the case. |
+| area | string | Area of the case. |
+| point_kind | string | `forest` for a random forest square, `known_spot` for a square with a find on another day. |
+| cell_id | string | The 500 m square of the point. |
+| latitude | float | Latitude of the square's centre. |
+| longitude | float | Longitude of the square's centre. |
+| assessment_date | date | Day of the case. |
+
 ## File formats
 
 | Use | Format |

@@ -1,0 +1,31 @@
+description = "P4a: split find days into tuning, test and final sets by 100 km blocks and years, so no test day sits near a tuning day."
+seed = 42
+time_limit_minutes = 30
+
+[settings]
+# Finds from the P1 run. Only rows with area home or comparison are in this file.
+finds_path = "data/processed/p1_observations/20261011T075009Z-796984/finds.parquet"
+# Size of the blocks that keep the sets apart, in metres, in EPSG:3035.
+block_size_m = 100000
+# Share of comparison cases that go to tuning, then to test. The rest is final.
+tuning_share = 0.6
+test_share = 0.2
+# Comparison cases from this year on are final, and from test_from_year on are test.
+final_from_year = 2025
+test_from_year = 2022
+# Tuning cases must stay this far from every test or final block, in metres.
+buffer_m = 25000
+# Forest map from the EEA image service: 100 m pixels, at most this many pixels per tile side.
+pixel_m = 100
+tile_pixels = 4000
+# A 500 m square is forest when at least this share of its usable pixels are forest.
+forest_from_share = 0.10
+# Points per case. A case with fewer than min_known_spots known spots gets none.
+forest_points_per_case = 100
+known_spots_per_case = 50
+min_known_spots = 20
+# Area outlines come from the P1 run. They are read, not downloaded again.
+p1_config_path = "experiments/p1_observations/config.toml"
+p1_raw_dir = "data/raw/p1_observations"
+# Folder for the small CSV files that people read.
+reports_dir = "reports"
