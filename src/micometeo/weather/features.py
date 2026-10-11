@@ -14,6 +14,12 @@ ERA5 = "era5_seamless"
 IFS = "ecmwf_ifs"
 # Open-Meteo has no ecmwf_ifs values before this UTC day, so earlier requests would come back empty.
 IFS_FIRST_DAY = date(2017, 1, 1)
+FORECAST_MODEL = "ecmwf_ifs"
+# The Single Runs API has no runs before this moment.
+FORECAST_FIRST_RUN = datetime(2024, 3, 14, 0, tzinfo=UTC)
+MAX_DAYS_AHEAD = 7
+# The 06 and 18 UTC runs are often missing, so only these hours are used.
+FORECAST_RUN_HOURS = (0, 12)
 # Hourly name, daily column, and how the hours of a day combine.
 DAILY_VARIABLES = (
     ("precipitation", "rain_mm", "sum"),
@@ -40,6 +46,21 @@ OUTPUT_COLUMNS = [
     "complete_days",
     "reconstructed_days",
     "model_days",
+    "forecast_days",
+    "forecast_model",
+    "forecast_run_time",
+    "forecast_published_at",
+]
+FORECAST_VALUE_COLUMNS = [
+    "record_id",
+    "area",
+    "assessment_date",
+    "forecast_date",
+    "days_ahead",
+    "model",
+    "run_time",
+    "published_at",
+    *VALUE_COLUMNS,
 ]
 
 DailyValues = dict[date, dict[str, float | None]]
@@ -87,7 +108,47 @@ ON_THE_MORNING_FROM_FORECAST_API = ViewSpec(
     recent_is_model=True,
     old_is_model=True,
 )
+FORECAST = ViewSpec(
+    name="forecast",
+    source="Open-Meteo Historical Weather API and Single Runs API",
+    dataset=f"{ERA5}, {IFS}, single runs {FORECAST_MODEL}",
+    value_kind="reconstructed past weather, model values for past hours and a forecast published in the past",
+    old_dataset=ERA5,
+    recent_dataset=IFS,
+    recent_is_model=True,
+)
 DEFAULT_VIEWS = (LOOK_BACK, ON_THE_MORNING)
+
+
+@dataclass(frozen=True)
+class ForecastRun:
+    """One stored model run, with the Italian days it forecast."""
+
+    model: str
+    run_time: datetime
+    published_at: datetime
+    daily: DailyValues
+
+
+def day_start(*, day: date) -> datetime:
+    """Return midnight Europe/Rome at the start of the day, as a UTC time."""
+    return datetime.combine(day, time(0), tzinfo=ROME).astimezone(UTC)
+
+
+def latest_run_before(*, assessment_date: date, publication_delay_hours: int) -> datetime:
+    """Return the latest run that was published before the assessment day started in Italy.
+
+    A run counts as published its start time plus the delay.
+    """
+    cutoff = day_start(day=assessment_date)
+    delay = timedelta(hours=publication_delay_hours)
+    for back in range(0, 10):
+        run_day = cutoff.date() - timedelta(days=back)
+        for hour in sorted(FORECAST_RUN_HOURS, reverse=True):
+            run_time = datetime.combine(run_day, time(hour), tzinfo=UTC)
+            if run_time + delay <= cutoff:
+                return run_time
+    raise ValueError(f"No run found before {assessment_date.isoformat()}")
 
 
 def hours_in_local_day(*, day: date) -> int:
@@ -140,6 +201,19 @@ def check_before(*, days: list[date], assessment_date: date) -> None:
         )
 
 
+def check_forecast(*, place: dict[str, Any], forecast: ForecastRun | None) -> ForecastRun:
+    """Raise unless the forecast was published before the assessment day started in Italy."""
+    if forecast is None:
+        raise ValueError(f"No forecast for {place['record_id']}")
+    start = day_start(day=place["assessment_date"])
+    if forecast.published_at > start:
+        raise ValueError(
+            f"Forecast for {place['record_id']} was published at {forecast.published_at.isoformat()}, "
+            f"after the assessment day started at {start.isoformat()}"
+        )
+    return forecast
+
+
 def window_row(
     *,
     place: dict[str, Any],
@@ -147,19 +221,38 @@ def window_row(
     window_days: int,
     reconstructed_missing_days: int,
     daily_by_dataset: dict[str, dict[str, DailyValues]],
+    forecast: ForecastRun | None = None,
 ) -> dict[str, Any]:
-    """Return the totals of one place, view and window."""
+    """Return the totals of one place, view and window.
+
+    With a forecast, the window ends the day before the target date. Days before the assessment date
+    come from the archive and the later days come only from the forecast.
+    """
     assessment_date: date = place["assessment_date"]
-    days = window_dates(assessment_date=assessment_date, window_days=window_days)
-    check_before(days=days, assessment_date=assessment_date)
+    target_date: date = place["target_date"]
+    use_forecast = place["days_ahead"] > 0
+    if use_forecast:
+        forecast = check_forecast(place=place, forecast=forecast)
+    days = window_dates(assessment_date=target_date, window_days=window_days)
+    check_before(days=days, assessment_date=target_date)
     last_old_day = assessment_date - timedelta(days=1 + reconstructed_missing_days)
     chosen: list[dict[str, float | None]] = []
     model_days = 0
+    forecast_days = 0
     for day in days:
+        if day >= assessment_date:
+            # These days come only from the stored forecast, never from the archive.
+            if forecast is None or not use_forecast:
+                raise ValueError(f"Day {day.isoformat()} is not before {assessment_date.isoformat()}")
+            if day not in forecast.daily:
+                raise ValueError(f"Forecast for {place['record_id']} has no values for {day.isoformat()}")
+            forecast_days += 1
+            chosen.append(forecast.daily[day])
+            continue
         is_recent = day > last_old_day
         dataset = spec.recent_dataset if is_recent else spec.old_dataset
         model_days += int(spec.recent_is_model if is_recent else spec.old_is_model)
-        # Only days before the assessment date are looked up, never anything later.
+        # Archive days are looked up only before the assessment date.
         chosen.append(daily_by_dataset.get(dataset, {}).get(place["record_id"], {}).get(day, {}))
     row: dict[str, Any] = {
         "record_id": place["record_id"],
@@ -167,7 +260,7 @@ def window_row(
         "latitude": place["latitude"],
         "longitude": place["longitude"],
         "assessment_date": assessment_date.isoformat(),
-        "target_date": place["target_date"].isoformat(),
+        "target_date": target_date.isoformat(),
         "days_ahead": place["days_ahead"],
         "view": spec.name,
         "window_days": window_days,
@@ -184,8 +277,12 @@ def window_row(
         else:
             row[column] = round(sum(series) / len(series), 3)
     row["complete_days"] = sum(values.get("rain_mm") is not None for values in chosen)
-    row["reconstructed_days"] = window_days - model_days
+    row["reconstructed_days"] = window_days - model_days - forecast_days
     row["model_days"] = model_days
+    row["forecast_days"] = forecast_days
+    row["forecast_model"] = forecast.model if use_forecast and forecast else None
+    row["forecast_run_time"] = forecast.run_time.isoformat() if use_forecast and forecast else None
+    row["forecast_published_at"] = forecast.published_at.isoformat() if use_forecast and forecast else None
     return row
 
 
@@ -196,11 +293,19 @@ def build_weather_features(
     windows: tuple[int, ...] = DEFAULT_WINDOWS,
     reconstructed_missing_days: int,
     views: tuple[ViewSpec, ...] = DEFAULT_VIEWS,
+    forecasts: dict[str, ForecastRun] | None = None,
 ) -> list[dict[str, Any]]:
     """Return one row per place, view and window, using only days before the assessment date.
 
-    The daily values are already fetched, by dataset name and then place id.
+    The daily values are already fetched, by dataset name and then place id. Places with days_ahead above 0
+    get only the forecast view, and need a forecast published before the assessment day.
     """
+    for place in places:
+        days_ahead = place["days_ahead"]
+        if not 0 <= days_ahead <= MAX_DAYS_AHEAD:
+            raise ValueError(f"days_ahead {days_ahead} of {place['record_id']} is not between 0 and {MAX_DAYS_AHEAD}")
+        if place["target_date"] != place["assessment_date"] + timedelta(days=days_ahead):
+            raise ValueError(f"target_date of {place['record_id']} is not the assessment date plus days_ahead")
     cleaned: dict[str, dict[str, DailyValues]] = {}
     for dataset, by_place in daily_by_dataset.items():
         cleaned[dataset] = {}
@@ -209,18 +314,52 @@ def build_weather_features(
             cleaned[dataset][place["record_id"]] = {
                 day: values for day, values in days.items() if day < place["assessment_date"]
             }
-    return [
-        window_row(
-            place=place,
-            spec=spec,
-            window_days=window_days,
-            reconstructed_missing_days=reconstructed_missing_days,
-            daily_by_dataset=cleaned,
+    rows: list[dict[str, Any]] = []
+    for place in places:
+        forecast = (forecasts or {}).get(place["record_id"])
+        specs = (FORECAST,) if place["days_ahead"] > 0 else views
+        for spec in specs:
+            for window_days in windows:
+                rows.append(
+                    window_row(
+                        place=place,
+                        spec=spec,
+                        window_days=window_days,
+                        reconstructed_missing_days=reconstructed_missing_days,
+                        daily_by_dataset=cleaned,
+                        forecast=forecast,
+                    )
+                )
+    return rows
+
+
+def forecast_value_rows(*, place: dict[str, Any], forecast: ForecastRun) -> list[dict[str, Any]]:
+    """Return the stored forecast values for the 7 Italian days from the assessment date.
+
+    Days without a full set of values are left out. Raises if the forecast was published too late.
+    """
+    check_forecast(place=place, forecast=forecast)
+    published_day = forecast.published_at.astimezone(ROME).date()
+    rows: list[dict[str, Any]] = []
+    for offset in range(MAX_DAYS_AHEAD):
+        day = place["assessment_date"] + timedelta(days=offset)
+        values = forecast.daily.get(day)
+        if not values or any(values.get(column) is None for column in VALUE_COLUMNS):
+            continue
+        rows.append(
+            {
+                "record_id": place["record_id"],
+                "area": place["area"],
+                "assessment_date": place["assessment_date"].isoformat(),
+                "forecast_date": day.isoformat(),
+                "days_ahead": (day - published_day).days,
+                "model": forecast.model,
+                "run_time": forecast.run_time.isoformat(),
+                "published_at": forecast.published_at.isoformat(),
+                **{column: values[column] for column in VALUE_COLUMNS},
+            }
         )
-        for place in places
-        for spec in views
-        for window_days in windows
-    ]
+    return rows
 
 
 def fetch_daily_values(
