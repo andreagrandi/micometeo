@@ -128,6 +128,78 @@ docker compose exec database psql \
 `docker compose down --volumes` removes the local database contents and is only
 needed for a deliberate reset.
 
+## Checks
+
+Run these checks from the repository root. The commands use the locked Python
+environment, so run `uv sync --locked` before the first check. The investigation
+checks need GDAL, GEOS and PROJ. The Clean setup section lists the macOS
+packages. On Linux, install `gdal-bin`, `libgdal-dev`, `libgeos-dev` and
+`libproj-dev` with the system package manager.
+
+Network access is needed to install uv and Python, resolve PyPI packages, fetch
+the pre-commit hook repositories and pull the PostGIS image. The checks do not
+use that network access for provider calls.
+
+### File and investigation checks without a database
+
+These commands match the file and investigation jobs in GitHub Actions:
+
+```sh
+uv sync --locked
+uv run pre-commit run --all-files
+uv run pre-commit run gitleaks-history --hook-stage manual --all-files
+uv run pytest --ignore=tests/app
+```
+
+The normal gitleaks hook scans files during the usual staged-file checks. The
+manual hook scans repository history, so run it explicitly when that check is
+needed. The `pytest-socket` guard blocks Python socket calls made while pytest
+is running outside `127.0.0.1`, `127.0.1.1` and `::1`. It does not cover module
+initialisation, native geographic libraries or subprocesses. Provider fixtures
+must patch the function that opens the external request and return a small
+fixed or generated answer. Worker tests use the local database, and the demo
+API test uses a loopback server. These checks do not need weather, observation
+or hosting credentials and do not download national data.
+
+### Application and worker checks with PostGIS
+
+The application checks require the local PostGIS service and the native
+geographic libraries. Start the service, check the configuration and
+migrations, apply migrations, then run the application and worker tests:
+
+```sh
+docker compose up --wait database
+uv run python apps/application/manage.py check
+uv run python apps/application/manage.py makemigrations --check --dry-run
+uv run python apps/application/manage.py migrate --noinput
+uv run pytest tests/app
+```
+
+The first command starts or reuses the local service, while the `pytest-django`
+plugin creates and drops a fresh test database for each run. Do not add
+`--reuse-db`.
+The configured database user needs permission to create databases. PostGIS is
+required. A missing service or native geographic library fails these checks
+instead of skipping geographic behavior or using SQLite. The Django task
+backend remains the database backend in these tests.
+
+These commands are local checks. GitHub Actions runs the same three jobs on
+pull requests and pushes to `master`. A local pass does not report a remote CI
+pass. Check the workflow result after an authorized publication.
+
+Provider tests use fixed or generated responses. Later national acceptance with
+real weather and observation downloads belongs to #61 and needs its own data
+and credentials. Issue #55 will add the real CSS, translation and browser
+checks when that work exists.
+
+### Full local suite
+
+After the two focused groups pass with PostGIS running, run the combined suite:
+
+```sh
+uv run pytest
+```
+
 ## Phone access through Tailscale
 
 The application works on the laptop without Tailscale. Tailscale Serve gives a

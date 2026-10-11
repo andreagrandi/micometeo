@@ -1,0 +1,104 @@
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  file-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Set up uv
+        uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9
+        with:
+          enable-cache: true
+          python-version: "3.14"
+      - name: Install locked environment
+        run: uv sync --locked
+      - name: Run file checks
+        run: uv run pre-commit run --all-files
+      - name: Scan repository history for secrets
+        run: uv run pre-commit run gitleaks-history --hook-stage manual --all-files
+
+  investigation-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install geographic libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            gdal-bin \
+            libgdal-dev \
+            libgeos-dev \
+            libproj-dev
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up uv
+        uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9
+        with:
+          enable-cache: true
+          python-version: "3.14"
+      - name: Install locked environment
+        run: uv sync --locked
+      - name: Run investigation tests
+        run: uv run pytest --ignore=tests/app
+
+  application-tests:
+    runs-on: ubuntu-latest
+    services:
+      database:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_DB: micometeo
+          POSTGRES_USER: micometeo
+          POSTGRES_PASSWORD: replace-with-a-ci-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U micometeo -d micometeo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+          --health-start-period 5s
+    env:
+      MICOMETEO_DJANGO_SECRET_KEY: django-insecure-ci-placeholder
+      MICOMETEO_DB_NAME: micometeo
+      MICOMETEO_DB_USER: micometeo
+      MICOMETEO_DB_PASSWORD: replace-with-a-ci-password
+      MICOMETEO_DB_HOST: 127.0.0.1
+      MICOMETEO_DB_PORT: "5432"
+    steps:
+      - name: Install geographic libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            gdal-bin \
+            libgdal-dev \
+            libgeos-dev \
+            libproj-dev
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up uv
+        uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9
+        with:
+          enable-cache: true
+          python-version: "3.14"
+      - name: Install locked environment
+        run: uv sync --locked
+      - name: Check Django configuration
+        run: uv run python apps/application/manage.py check
+      - name: Check migrations
+        run: uv run python apps/application/manage.py makemigrations --check --dry-run
+      - name: Apply migrations to the fresh database
+        run: uv run python apps/application/manage.py migrate --noinput
+      - name: Run application and worker tests
+        run: uv run pytest tests/app

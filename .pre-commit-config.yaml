@@ -3,6 +3,13 @@ repos:
     rev: v8.30.0
     hooks:
       - id: gitleaks
+      - id: gitleaks
+        alias: gitleaks-history
+        name: Detect hardcoded secrets in repository history
+        entry: gitleaks git --redact --verbose
+        pass_filenames: false
+        stages: [manual]
+        always_run: true
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
