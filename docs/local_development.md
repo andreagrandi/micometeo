@@ -183,9 +183,177 @@ when the check is complete:
 tailscale serve --https=443 off
 ```
 
+## Background jobs
+
+Django stores queued work in PostgreSQL through `django-tasks-db`. Run the
+worker in another terminal after applying migrations:
+
+```sh
+uv run python apps/application/manage.py migrate
+uv run python apps/application/manage.py run_background_worker
+```
+
+Enqueueing a job returns control to the caller. The worker reads the persisted
+input and performs the work in its own process. Normal development settings
+always use the database queue. Tests that need immediate execution select
+that backend explicitly.
+
+Each logical job has a stable key and a persisted input ID. The queue receives
+only an attempt ID. Do not put geographic datasets or file contents in queue
+arguments. A retry creates a new attempt and retains the original failure,
+start time and end time. Completed jobs do not run again when a worker restarts.
+
+The worker takes a PostgreSQL lock before claiming a queued job and holds it
+until it records the result. Starting another worker cannot take that job's
+protected work while the lock is held.
+Worker startup checks interrupted attempts through the same lock. It leaves
+work owned by a live worker alone and records abandoned work as failed.
+Interrupted work requires an explicit retry.
+
+### Enqueue and inspect a job
+
+Create a small persisted input. This example doubles 21 without downloading
+anything:
+
+```sh
+INPUT_ID="$(uv run python apps/application/manage.py shell --verbosity 0 -c \
+  'from background_jobs.services import create_representative_input; print(create_representative_input(value=21).id)')"
+uv run python apps/application/manage.py enqueue_representative_job "$INPUT_ID" \
+  --logical-key local-worker-check
+uv run python apps/application/manage.py background_job_status local-worker-check
+```
+
+The enqueue command prints the job, attempt and queue task IDs. With the worker
+stopped, the state remains `waiting`. Start the worker in a separate terminal,
+or process the current queue once:
+
+```sh
+uv run python apps/application/manage.py run_background_worker --batch
+uv run python apps/application/manage.py background_job_status local-worker-check
+```
+
+The state becomes `completed`. Repeating the enqueue command with the same
+input and logical key returns the same attempt. It does not repeat the work.
+Use a new logical key for another independent run.
+
+### Failure, retry and restart
+
+Create an input whose first attempt fails deliberately:
+
+```sh
+FAILURE_INPUT_ID="$(uv run python apps/application/manage.py shell --verbosity 0 -c \
+  'from background_jobs.services import create_representative_input; print(create_representative_input(value=3, fail_first_attempt=True).id)')"
+uv run python apps/application/manage.py enqueue_representative_job "$FAILURE_INPUT_ID" \
+  --logical-key local-retry-check
+uv run python apps/application/manage.py run_background_worker --batch
+uv run python apps/application/manage.py background_job_status local-retry-check
+```
+
+Copy the printed failed `attempt_id` into the command below:
+
+```sh
+FAILED_ATTEMPT_ID=replace-with-the-failed-attempt-id
+uv run python apps/application/manage.py retry_background_job "$FAILED_ATTEMPT_ID"
+uv run python apps/application/manage.py run_background_worker --batch
+uv run python apps/application/manage.py background_job_status local-retry-check
+uv run python apps/application/manage.py background_job_status "$FAILED_ATTEMPT_ID"
+```
+
+The new attempt completes with a result of 6. The old attempt still shows its
+failure reason and timestamps. Retrying a waiting, running, completed or older
+attempt fails rather than creating overlapping work.
+
+Stop a worker with `Ctrl+C` and let its current task finish. Queued tasks stay
+in PostgreSQL. Start `run_background_worker` again to resume them. If a worker
+was killed before finishing, startup records its abandoned attempt as failed
+with `Worker stopped before the job completed.` Inspect it and use the retry
+command when it is safe to repeat the work. A failed job does not stop the
+worker from processing the next queued job.
+
+### Daily schedule on macOS
+
+This example uses a user LaunchAgent at 03:00 every day. The Mac system
+timezone must be `Europe/Rome`. Check it before installing the schedule:
+
+```sh
+readlink /etc/localtime
+command -v direnv
+command -v uv
+```
+
+The timezone path must end with `/Europe/Rome`. The schedule follows Italy's
+summer and winter clock changes. Use the paths printed by `command -v` in the
+example below. Replace `/path/to/micometeo` and `replace-with-input-uuid` with
+the repository path and an input ID created without forced failure. Store this
+file as `~/Library/LaunchAgents/it.micometeo.daily-job.plist`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>it.micometeo.daily-job</string>
+  <key>WorkingDirectory</key><string>/path/to/micometeo</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/direnv</string>
+    <string>exec</string><string>/path/to/micometeo</string>
+    <string>/opt/homebrew/bin/uv</string><string>run</string>
+    <string>python</string><string>apps/application/manage.py</string>
+    <string>enqueue_representative_job</string><string>replace-with-input-uuid</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>
+  <key>StandardOutPath</key><string>/tmp/micometeo-daily-job.log</string>
+  <key>StandardErrorPath</key><string>/tmp/micometeo-daily-job-error.log</string>
+</dict>
+</plist>
+```
+
+Allow the repository's `.envrc` through direnv before installing the schedule.
+Validate, load and manually trigger the LaunchAgent:
+
+```sh
+plutil -lint ~/Library/LaunchAgents/it.micometeo.daily-job.plist
+launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/it.micometeo.daily-job.plist
+launchctl kickstart "gui/$(id -u)/it.micometeo.daily-job"
+```
+
+This schedules enqueueing only. PostgreSQL must be running when it fires.
+The worker must run to process queued work. The schedule runs as the logged-in
+user and does not start Docker or keep the laptop awake.
+
+If the laptop sleeps through 03:00, launchd invokes the command once after it
+wakes. Several missed sleep-time invocations become one invocation using the
+current Italian date. If the laptop is powered off, the run is missed until
+the next scheduled time. These rules follow Apple's
+[timed job documentation](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/ScheduledJobs.html).
+
+Run a missed date explicitly after waking or starting the laptop:
+
+```sh
+uv run python apps/application/manage.py enqueue_representative_job "$INPUT_ID" \
+  --job-date 2026-10-11
+uv run python apps/application/manage.py run_background_worker --batch
+```
+
+Replace the example date with the missed date. The default key is
+`representative:<input UUID>:<Italian date>`, so repeating that invocation does
+not repeat a completed logical job. Disable the schedule with:
+
+```sh
+launchctl bootout "gui/$(id -u)" ~/Library/LaunchAgents/it.micometeo.daily-job.plist
+```
+
+Issue #46 can follow the same pattern with its own job name and persisted
+input ID. Include the assessment date and any input version in the logical key
+when they identify different work. It owns the weather and cleanup rules.
+This representative job does not implement them.
+
 ## Shutdown
 
-Stop Django with `Ctrl+C` in its terminal. Turn off this application's Tailscale
+Stop Django and the worker with `Ctrl+C` in their terminals. Let the worker
+finish its current job before exiting. Turn off this application's Tailscale
 Serve route if it is active, then stop PostGIS:
 
 ```sh
@@ -199,6 +367,7 @@ The database volume remains available for the next `docker compose up --wait dat
 ```text
 apps/application/manage.py       Django command entry point
 apps/application/config/          settings, API, URLs and server entry points
+apps/application/background_jobs/ queued jobs, attempts and operator commands
 apps/api/                         P5 synthetic API experiment
 apps/web/                         P5 static demonstration
 src/micometeo/                    experiment package and CLI
@@ -226,9 +395,14 @@ database mapping. Change `MICOMETEO_DB_PORT` before starting Compose if 5542 is
 occupied. Choose another `runserver` port if 8010 is occupied, then update the
 local trusted origins and Tailscale forwarding target to match.
 
-The application stays separate from the existing P5 directories. This local setup has no worker,
-production tables, account system, frontend build, deployment job or hosting
-credentials.
+The worker follows Book Corners `libraries/tasks.py` and `Procfile` by accepting
+persisted input IDs and running a separate database worker. Micometeo adds
+logical job keys, attempt history and interruption recovery. The worker uses
+the same host environment as Django.
+
+The application stays separate from the existing P5 directories. This setup
+has no product data tables, account system, frontend build, deployment job or
+hosting credentials.
 
 ## Recorded walkthrough
 
@@ -245,3 +419,11 @@ available. Recreating the container restored HTTP 200 and retained the same
 migration row, including its original timestamp. Private HTTPS through
 Tailscale Serve returned HTTP 200 with a valid
 certificate. The owner confirmed the requested phone health check worked.
+
+The worker walkthrough ran on the same date. With no worker running, enqueueing
+returned a waiting attempt. A separate worker completed it with a result of 42.
+A deliberately failed attempt retained its reason and timestamps after an
+explicit retry completed with a result of 6. Repeating a completed logical key
+returned the original attempt. A manual enqueue for 2026-10-10 also completed.
+The LaunchAgent example passed plist parsing and calendar checks. No persistent
+LaunchAgent was installed during this walkthrough.

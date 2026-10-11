@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_tasks_db",
+    "background_jobs",
 ]
 
 MIDDLEWARE = [
@@ -93,6 +95,12 @@ DATABASES = {
         "CONN_MAX_AGE": 0,
         "OPTIONS": {"connect_timeout": 5},
     }
+}
+
+TASKS = {
+    "default": {
+        "BACKEND": "django_tasks_db.backend.DatabaseBackend",
+    },
 }
 
 LANGUAGE_CODE = "en-us"

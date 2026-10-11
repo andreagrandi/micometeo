@@ -297,6 +297,33 @@ wheels = [
 ]
 
 [[package]]
+name = "django-stubs-ext"
+version = "6.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d9/62/de532d58736d671b9ac0c0467909a9429758ae579d636e868ce74519566b/django_stubs_ext-6.1.2.tar.gz", hash = "sha256:2142da7fffbbe897ccecf9b4c97e09ea1a2e9291760b0a824b4c402b375ce6f9", size = 7221, upload-time = "2026-10-05T06:46:43.717Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/21/bb/393c3c1e24aaf37d62918ea50f3ea22e30d5f3162fc62f4c3bf3275e5ed3/django_stubs_ext-6.1.2-py3-none-any.whl", hash = "sha256:7334e687ab6dc78a6c3da90ab1ccb0e412efd827ea11de8d3f85adbad948abb1", size = 10850, upload-time = "2026-10-05T06:46:42.647Z" },
+]
+
+[[package]]
+name = "django-tasks-db"
+version = "0.13.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "django-stubs-ext" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6c/e9/fd12dc51bb25c52658bbf329a6f2454b215d063fca8c8342458a474dae16/django_tasks_db-0.13.0.tar.gz", hash = "sha256:09630d417cf722b07e1439b837403e18e86455908ba532fa6795b0d23dc3ff23", size = 29608, upload-time = "2026-08-28T15:05:32.098Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/30/d2/8b10117fca37a2d1f2e45f4878ffa07cf6c0c8df1920e250db30e2228b9e/django_tasks_db-0.13.0-py3-none-any.whl", hash = "sha256:a3a47250b09d40e9b289851d2a550d840d29e59ee3e7115129831e291bb35576", size = 31991, upload-time = "2026-08-28T15:05:30.767Z" },
+]
+
+[[package]]
 name = "ecmwf-datastores-client"
 version = "0.5.3"
 source = { registry = "https://pypi.org/simple" }
@@ -529,6 +556,7 @@ dependencies = [
     { name = "cdsapi" },
     { name = "django" },
     { name = "django-ninja" },
+    { name = "django-tasks-db" },
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "osmium" },
@@ -551,8 +579,9 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cdsapi", specifier = ">=0.7.7" },
-    { name = "django", specifier = ">=5.2.6" },
+    { name = "django", specifier = ">=6.0" },
     { name = "django-ninja", specifier = ">=1.4.3" },
+    { name = "django-tasks-db", specifier = ">=0.13,<0.14" },
     { name = "matplotlib", specifier = ">=3.11.2" },
     { name = "numpy", specifier = ">=2.5.3" },
     { name = "osmium", specifier = ">=4.3.1" },
