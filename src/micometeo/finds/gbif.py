@@ -157,7 +157,10 @@ def _area(row: dict[str, str], settings: dict[str, Any]) -> str:
 def parse_row(
     *, row: dict[str, str], settings: dict[str, Any], retrieved_at: str
 ) -> dict[str, Any]:
-    """Turn one occurrence.txt row into a find record, removing blurred positions."""
+    """Turn one occurrence.txt row into a find record.
+
+    A blurred position goes to published_latitude and published_longitude, not latitude and longitude.
+    """
     year = int(_text(row, "year")) if _text(row, "year") else None
     month = int(_text(row, "month")) if _text(row, "month") else None
     day = int(_text(row, "day")) if _text(row, "day") else None
@@ -173,7 +176,9 @@ def parse_row(
     obscured = bool(_text(row, "informationWithheld") or _text(row, "dataGeneralizations"))
     latitude = float(_text(row, "decimalLatitude")) if _text(row, "decimalLatitude") else None
     longitude = float(_text(row, "decimalLongitude")) if _text(row, "decimalLongitude") else None
+    published_latitude, published_longitude = None, None
     if obscured:
+        published_latitude, published_longitude = latitude, longitude
         latitude, longitude = None, None
     uncertainty = _text(row, "coordinateUncertaintyInMeters")
     dataset_key = _text(row, "datasetKey")
@@ -212,6 +217,8 @@ def parse_row(
         "basis_of_record": _text(row, "basisOfRecord"),
         "gbif_issues": _text(row, "issue"),
         "inat_id": inat_id_from_url(url=_text(row, "occurrenceID")),
+        "published_latitude": published_latitude,
+        "published_longitude": published_longitude,
     }
 
 

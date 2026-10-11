@@ -4,6 +4,8 @@ import math
 from collections import defaultdict
 from typing import Any
 
+from micometeo.finds.grid import cell_id
+
 DUPLICATE_RULES = ["repeated_download", "gbif_inat_overlap", "same_find_gbif", "same_find_inat"]
 FILTERS = [
     "not_a_find",
@@ -86,6 +88,8 @@ def mark_duplicates(*, records: list[dict[str, Any]], max_distance_m: float) -> 
             _mark(record, "gbif_inat_overlap", original)
             if record["coordinates_obscured"] and not original["coordinates_obscured"]:
                 original["coordinates_obscured"] = True
+                original["published_latitude"] = original["latitude"]
+                original["published_longitude"] = original["longitude"]
                 original["latitude"], original["longitude"], original["cell_id"] = None, None, ""
 
     _same_find(records, "GBIF", "same_find_gbif", max_distance_m)
@@ -137,3 +141,58 @@ def apply_filters(
             if record["duplicate_rule"]
             else first_failed_filter(record=record, filters=filters, download_date=download_date)
         )
+
+
+def _square_size_m(*, record: dict[str, Any], timing: dict[str, Any]) -> int | None:
+    """Return the size of the coarse square for a record, or None if its position is too vague."""
+    if record["source"] == "iNaturalist" and record["coordinates_obscured"]:
+        return timing["large_square_m"]
+    uncertainty = record["coordinate_uncertainty_m"]
+    if uncertainty is None:
+        return None
+    if uncertainty <= timing["small_square_max_uncertainty_m"]:
+        return timing["small_square_m"]
+    if uncertainty <= timing["large_square_max_uncertainty_m"]:
+        return timing["large_square_m"]
+    return None
+
+
+def _point(record: dict[str, Any]) -> tuple[float | None, float | None]:
+    if record["failed_filter"] == "blurred":
+        return record.get("published_latitude"), record.get("published_longitude")
+    return record["latitude"], record["longitude"]
+
+
+def _is_timing_find(*, record: dict[str, Any], filters: dict[str, Any]) -> bool:
+    if record["duplicate_rule"] or record["failed_filter"] not in ("blurred", "low_accuracy"):
+        return False
+    latitude, longitude = _point(record)
+    if latitude is None or longitude is None:
+        return False
+    issues = set(filter(None, (record["gbif_issues"] or "").split(";")))
+    box = filters["area_boxes"][record["area"]]
+    return (
+        not issues & set(filters["bad_gbif_issues"])
+        and _inside({"latitude": latitude, "longitude": longitude}, box)
+        and record["identification_quality"] not in WEAK_IDENTIFICATION
+    )
+
+
+def mark_timing_finds(*, records: list[dict[str, Any]], filters: dict[str, Any]) -> None:
+    """Fill the coarse square and rough point on finds kept only for their timing.
+
+    A timing find has a day and a species but a blurred or vague position. The published
+    point of a blurred record or the vague point of any other record becomes the rough point.
+    """
+    timing = filters["timing"]
+    for record in records:
+        record["square_id"] = ""
+        record["square_size_m"] = None
+        record["rough_latitude"], record["rough_longitude"] = None, None
+        if _is_timing_find(record=record, filters=filters):
+            size = _square_size_m(record=record, timing=timing)
+            if size is not None:
+                latitude, longitude = _point(record)
+                record["square_id"] = cell_id(latitude=latitude, longitude=longitude, size_m=size)
+                record["square_size_m"] = size
+                record["rough_latitude"], record["rough_longitude"] = latitude, longitude

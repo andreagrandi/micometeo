@@ -16,7 +16,7 @@ import pyarrow.parquet as pq
 
 from micometeo.context import RunContext
 from micometeo.finds import gbif, inaturalist, roads
-from micometeo.finds.cleaning import apply_filters, mark_duplicates
+from micometeo.finds.cleaning import apply_filters, mark_duplicates, mark_timing_finds
 from micometeo.finds.counts import (
     COUNT_COLUMNS,
     DROPPED_COLUMNS,
@@ -29,7 +29,25 @@ from micometeo.finds.records import FIND_COLUMNS
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 REPORTS_DIR = ROOT / "reports"
-RECORD_COLUMNS = FIND_COLUMNS + ["duplicate_rule", "failed_filter"]
+RECORD_COLUMNS = FIND_COLUMNS + ["duplicate_rule", "failed_filter", "square_id", "square_size_m"]
+TIMING_COLUMNS = [
+    "record_id",
+    "source",
+    "area",
+    "in_pistoia",
+    "event_date",
+    "year",
+    "season",
+    "species_group",
+    "taxon_name",
+    "square_id",
+    "square_size_m",
+    "rough_latitude",
+    "rough_longitude",
+    "failed_filter",
+    "identification_quality",
+    "licence",
+]
 
 
 def now_utc() -> str:
@@ -107,6 +125,27 @@ def write_parquet(*, records: list[dict[str, Any]], path: Path) -> None:
     """Write records to a Parquet table with the shared find columns."""
     table = pa.Table.from_pylist(
         [{column: record.get(column) for column in RECORD_COLUMNS} for record in records]
+    )
+    pq.write_table(table, path)
+
+
+def write_timing_parquet(*, records: list[dict[str, Any]], path: Path) -> None:
+    """Write timing finds with their coarse square and rough point."""
+    rows = [
+        {**record, "species_group": "porcini"}
+        for record in records
+        if in_stage(record=record, stage="timing")
+    ]
+    types = {
+        "in_pistoia": pa.bool_(),
+        "year": pa.int64(),
+        "square_size_m": pa.int64(),
+        "rough_latitude": pa.float64(),
+        "rough_longitude": pa.float64(),
+    }
+    schema = pa.schema([(column, types.get(column, pa.string())) for column in TIMING_COLUMNS])
+    table = pa.Table.from_pylist(
+        [{column: row.get(column) for column in TIMING_COLUMNS} for row in rows], schema=schema
     )
     pq.write_table(table, path)
 
@@ -219,6 +258,7 @@ def run(context: RunContext) -> None:
     filters = settings["filters"]
     mark_duplicates(records=records, max_distance_m=filters["duplicate_distance_m"])
     apply_filters(records=records, filters=filters, download_date=download_date)
+    mark_timing_finds(records=records, filters=filters)
 
     all_path = context.output_dir / "all_records.parquet"
     write_parquet(records=records, path=all_path)
@@ -227,6 +267,9 @@ def run(context: RunContext) -> None:
         records=[record for record in records if in_stage(record=record, stage="eligible")],
         path=finds_path,
     )
+
+    timing_path = context.output_dir / "timing_finds.parquet"
+    write_timing_parquet(records=records, path=timing_path)
 
     reports_dir = Path(settings.get("reports_dir") or REPORTS_DIR)
     reports_dir.mkdir(parents=True, exist_ok=True)
@@ -241,5 +284,5 @@ def run(context: RunContext) -> None:
     road_rows = road_check(context=context, settings=settings, records=records)
     write_csv(rows=road_rows, columns=list(road_rows[0]), path=road_path)
 
-    for path in (all_path, finds_path, counts_path, dropped_path, map_path, road_path):
+    for path in (all_path, finds_path, timing_path, counts_path, dropped_path, map_path, road_path):
         context.add_output(path)
