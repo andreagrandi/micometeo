@@ -1,0 +1,105 @@
+"""Checks for the local Django and PostGIS foundation."""
+
+from collections.abc import Iterator
+from pathlib import Path
+from unittest.mock import patch
+
+import pytest
+from django.conf import settings
+from django.contrib.gis.db import models
+from django.contrib.gis.geos import Point
+from django.db import DatabaseError, connection
+from django.test import Client
+from django.utils import timezone
+import pyarrow as pa
+import pyarrow.parquet as pq
+
+
+class GeometrySample(models.Model):
+    """Temporary geometry model used only by the integration check."""
+
+    location = models.PointField(srid=4326)
+
+    class Meta:
+        app_label = "application_setup_test"
+        managed = False
+
+
+@pytest.fixture
+def geometry_table() -> Iterator[None]:
+    with connection.schema_editor() as schema_editor:
+        schema_editor.create_model(model=GeometrySample)
+    try:
+        yield
+    finally:
+        with connection.schema_editor() as schema_editor:
+            schema_editor.delete_model(model=GeometrySample)
+
+
+@pytest.mark.django_db
+def test_health_endpoint_reports_available_application_and_database() -> None:
+    response = Client().get(path="/api/v1/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"application": "available", "database": "available"}
+
+
+@pytest.mark.django_db
+def test_health_endpoint_hides_database_error_details() -> None:
+    fake_secret = "password=health-test-secret"
+    with patch(
+        target="config.api.connection.cursor",
+        side_effect=DatabaseError(fake_secret),
+    ):
+        response = Client().get(path="/api/v1/health")
+
+    assert response.status_code == 503
+    assert response.json() == {"application": "available", "database": "unavailable"}
+    assert fake_secret not in response.content.decode("utf-8")
+
+
+@pytest.mark.django_db
+def test_postgis_version_is_available() -> None:
+    with connection.cursor() as cursor:
+        cursor.execute(sql="SELECT PostGIS_Version()")
+        version = cursor.fetchone()[0]
+
+    assert isinstance(version, str)
+    assert version
+
+
+@pytest.mark.django_db(transaction=True)
+def test_postgis_stores_wgs84_geometry_with_coordinate_system(
+    geometry_table: None,
+) -> None:
+    sample = GeometrySample.objects.create(
+        location=Point(x=11.2558, y=43.7696, srid=4326),
+    )
+    stored = GeometrySample.objects.get(pk=sample.pk)
+
+    assert stored.location.srid == 4326
+    assert stored.location.x == pytest.approx(11.2558)
+    assert stored.location.y == pytest.approx(43.7696)
+
+
+@pytest.mark.django_db
+def test_database_connection_uses_utc_while_product_dates_use_rome() -> None:
+    assert settings.TIME_ZONE == "Europe/Rome"
+    assert settings.USE_TZ is True
+    assert timezone.is_aware(timezone.now())
+
+    with connection.cursor() as cursor:
+        cursor.execute(sql="SELECT current_setting('TIMEZONE')")
+        database_timezone = cursor.fetchone()[0]
+
+    assert database_timezone == "UTC"
+
+
+def test_parquet_round_trip_works_after_geodjango_native_loading(tmp_path: Path) -> None:
+    table = pa.table({"cell_id": ["500m_E4321500_N2345000"], "score": [0.75]})
+    parquet_path = tmp_path / "native-library-compatibility.parquet"
+
+    pq.write_table(table=table, where=parquet_path)
+    stored = pq.read_table(source=parquet_path)
+
+    assert stored.to_pydict() == {"cell_id": ["500m_E4321500_N2345000"], "score": [0.75]}

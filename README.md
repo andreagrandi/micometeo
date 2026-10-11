@@ -21,6 +21,14 @@ work after Epic 1, start with
    experiment needs and run `direnv allow`. Open-Meteo needs no login.
 4. Install the secret scanner hook with `uv run pre-commit install`.
 
+## Local application
+
+The Django application and its local PostGIS database use the commands in
+[the local development guide](docs/local_development.md). The database listens
+on `127.0.0.1:5542`, and the development server listens on
+`127.0.0.1:8010`. PostgreSQL data stays in the named Docker volume
+`micometeo_pgdata`, so stopping and starting the service keeps local rows.
+
 ## Run an experiment
 
 ```

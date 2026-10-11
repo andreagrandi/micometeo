@@ -1,0 +1,21 @@
+services:
+  database:
+    image: postgis/postgis:17-3.5
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: ${MICOMETEO_DB_NAME:-micometeo}
+      POSTGRES_USER: ${MICOMETEO_DB_USER:-micometeo}
+      POSTGRES_PASSWORD: ${MICOMETEO_DB_PASSWORD:-replace-with-a-local-password}
+    ports:
+      - "127.0.0.1:${MICOMETEO_DB_PORT:-5542}:5432"
+    volumes:
+      - micometeo_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+
+volumes:
+  micometeo_pgdata:

@@ -6,10 +6,13 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "cdsapi>=0.7.7",
+    "django>=5.2.6",
+    "django-ninja>=1.4.3",
     "matplotlib>=3.11.2",
     "numpy>=2.5.3",
     "osmium>=4.3.1",
     "pyarrow>=26.0.0",
+    "psycopg[binary]>=3.2.10",
     "pyproj>=3.8.0",
     "pyshp>=3.1.6",
     "rasterio>=1.5.2",
@@ -24,6 +27,7 @@ micometeo = "micometeo.cli:main"
 dev = [
     "pre-commit>=4.0",
     "pytest>=8.0",
+    "pytest-django>=4.11",
 ]
 
 [build-system]
@@ -34,5 +38,6 @@ build-backend = "hatchling.build"
 packages = ["src/micometeo"]
 
 [tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
 testpaths = ["tests"]
-pythonpath = ["src", "apps/api"]
+pythonpath = ["src", "apps/api", "apps/application"]

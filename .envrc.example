@@ -5,3 +5,21 @@ export GBIF_USERNAME=
 export GBIF_PASSWORD=
 export GBIF_EMAIL=
 # Open-Meteo needs no login for the free API.
+
+# Local Micometeo Django and PostGIS settings. Keep these values local.
+export MICOMETEO_DJANGO_SECRET_KEY=replace-with-a-local-secret
+export MICOMETEO_DEBUG=false
+export MICOMETEO_DB_NAME=micometeo
+export MICOMETEO_DB_USER=micometeo
+export MICOMETEO_DB_PASSWORD=replace-with-a-local-password
+export MICOMETEO_DB_HOST=127.0.0.1
+export MICOMETEO_DB_PORT=5542
+export MICOMETEO_ALLOWED_HOSTS=127.0.0.1,localhost
+export MICOMETEO_CSRF_TRUSTED_ORIGINS=http://127.0.0.1:8010,http://localhost:8010
+# Add the laptop Tailscale hostname after checking `tailscale status`.
+# export MICOMETEO_ALLOWED_HOSTS=127.0.0.1,localhost,laptop.tailnet-name.ts.net
+# export MICOMETEO_CSRF_TRUSTED_ORIGINS=https://laptop.tailnet-name.ts.net
+
+# macOS uses Rasterio's bundled GDAL to avoid a second Arrow library.
+# Use MICOMETEO_GDAL_LIBRARY_PATH only for a compatible custom GDAL build.
+# export GEOS_LIBRARY_PATH=/opt/homebrew/opt/geos/lib/libgeos_c.dylib
