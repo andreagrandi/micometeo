@@ -9,12 +9,15 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
+SINGLE_RUNS_URL = "https://single-runs-api.open-meteo.com/v1/forecast"
+PREVIOUS_RUNS_URL = "https://previous-runs-api.open-meteo.com/v1/forecast"
+HISTORICAL_FORECAST_URL = "https://historical-forecast-api.open-meteo.com/v1/forecast"
 LICENCE = "CC BY 4.0"
 USER_AGENT = "micometeo-experiments/0.1 (research prototype)"
 TIMEOUT_SECONDS = 60
@@ -163,4 +166,78 @@ class OpenMeteo:
             start=today - timedelta(days=past_days),
             end=today,
         )
+        return answer["hourly"]
+
+    def _request_or_refusal(self, *, url: str) -> dict[str, Any]:
+        """Return the answer, or an error dict when the API refuses with HTTP 400."""
+        try:
+            return self._request(url=url)
+        except urllib.error.HTTPError as error:
+            if error.code != 400:
+                raise
+            try:
+                reason = json.loads(error.read()).get("reason", "")
+            except (ValueError, OSError, AttributeError):
+                reason = ""
+            return {"error": True, "reason": reason}
+
+    def probe(self, *, url: str, query: dict[str, Any], cache_key: str) -> dict[str, Any]:
+        """Make one cached request and return the answer, or an error dict for HTTP 400."""
+        path = None
+        if self.cache_dir is not None:
+            path = self.cache_dir / "probe" / (cache_key.replace("/", "_") + ".json")
+            if path.exists():
+                self.metrics.cache_hits += 1
+                return json.loads(path.read_text(encoding="utf-8"))
+        variables = len(str(query.get("hourly", "")).split(",")) if query.get("hourly") else 1
+        if "forecast_days" in query:
+            days = int(query["forecast_days"])
+        elif "start_date" in query and "end_date" in query:
+            days = (date.fromisoformat(query["end_date"]) - date.fromisoformat(query["start_date"])).days + 1
+        else:
+            days = int(query.get("past_days", 0)) + 1
+        self.metrics.quota_calls += quota_weight(variables=variables, days=days)
+        answer = self._request_or_refusal(url=url + "?" + urllib.parse.urlencode(query))
+        if path is not None:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(answer), encoding="utf-8")
+        return answer
+
+    def single_run_hourly(
+        self,
+        *,
+        model: str,
+        latitude: float,
+        longitude: float,
+        run_time: datetime,
+        forecast_days: int,
+    ) -> dict[str, Any] | None:
+        """Return the hourly part of one model run, or None when that run is not available."""
+        run = run_time.astimezone(UTC)
+        stamp = run.strftime("%Y-%m-%dT%H:%M")
+        path = None
+        if self.cache_dir is not None:
+            name = f"{latitude:.4f}_{longitude:.4f}_{run.strftime('%Y-%m-%dT%H%M')}_{forecast_days}d.json"
+            path = self.cache_dir / f"single_runs_{model}" / name
+            if path.exists():
+                self.metrics.cache_hits += 1
+                return json.loads(path.read_text(encoding="utf-8"))["hourly"]
+        query = {
+            "latitude": round(latitude, 4),
+            "longitude": round(longitude, 4),
+            "hourly": ",".join(HOURLY_VARIABLES),
+            "models": model,
+            "run": stamp,
+            "forecast_days": forecast_days,
+            "timezone": "GMT",
+        }
+        self.metrics.quota_calls += quota_weight(variables=len(HOURLY_VARIABLES), days=forecast_days)
+        answer = self._request_or_refusal(url=SINGLE_RUNS_URL + "?" + urllib.parse.urlencode(query))
+        if answer.get("error"):
+            if "not available" in str(answer.get("reason", "")):
+                return None
+            raise RuntimeError(f"Open-Meteo refused the request: {answer.get('reason')}")
+        if path is not None:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(answer), encoding="utf-8")
         return answer["hourly"]

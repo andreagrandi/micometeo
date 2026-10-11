@@ -264,3 +264,205 @@ Three findings shape how later experiments use it:
 - A find from the last 6 days before a run gets incomplete reconstructed
   values, and the cache keeps them. Delete its cache file to fetch it again.
 - The sample is 300 finds. The free plan would allow a larger one.
+
+## Forecasts published in the past
+
+Issue #7, experiment P3b.
+
+### Question
+
+Can we test a 7-day forecast using only forecasts that were published before
+the date they predict?
+
+### Answer
+
+Yes, for finds from 14 March 2024 onwards. The Open-Meteo Single Runs API keeps
+every ECMWF IFS 9 km run since 14 March 2024 at 00:00 UTC, with the time the run
+started. That covers 765 of the 4,832 P1 finds: 36 of 85 in Tuscany and 729 of
+4,747 in Switzerland and Austria. All of them are from 2024, 2025 and 2026. No
+API keeps forecasts with their run time for the finds from 1990 to 2023, so
+those can only be tested with weather that happened.
+
+For 100 finds, each forecast published 1, 3 and 7 days before the find was
+compared with the reconstructed rain that later fell on the same days. Rain a
+single day ahead is close. Rain 6 or 7 days ahead has a weak link to what fell.
+
+### Rule for an honest forecast
+
+- The assessment date is an Italian day. A forecast counts only when it was
+  published before that day started at midnight Europe/Rome.
+- A run counts as published 6 hours after it starts. Open-Meteo says global
+  models appear 4 to 6 hours after the start. Only the 00 and 12 UTC runs are
+  used, because the 06 and 18 UTC runs are missing on some days. In practice
+  the run is the 12 UTC run of the day before the assessment date.
+- `days_ahead` of a find is the target date minus the assessment date. The
+  weather windows still end the day before the target date. Days before the
+  assessment date come from past weather, as in the on the morning view above.
+  Days from the assessment date on come only from the stored forecast.
+- `days_ahead` of a stored forecast value is its date minus the Italian date
+  the run was published. With the usual run, the assessment date itself is 1
+  day ahead.
+- If no forecast was published in time, or the forecast lacks a day,
+  `build_weather_features` raises an error. It never uses weather that
+  happened later instead. Tests in `tests/test_forecasts.py` put 9999 mm of
+  rain into the past weather for every day on and after the assessment date
+  and check that it never reaches a row.
+
+### What each API offers for the study area
+
+Checked at 44.05 N, 10.8 E in the Pistoia sample area on 11 October 2026.
+The first day comes from a search between 1 January 2016 and 11 September
+2026, which assumes data continues once it starts. "Days ahead" is the
+furthest day with a full day of rain. `p3b_forecast_sources.csv` has the
+full table.
+
+| API | Model | First day | Days ahead | Values | Run time known |
+|---|---|---|---|---|---|
+| Single Runs | ecmwf_ifs, 9 km | 2024-03-14 | 15 | rain, temperature, evaporation, soil moisture, soil temperature | yes |
+| Single Runs | ecmwf_ifs025 | 2026-04-02 | 15 | all five | yes |
+| Single Runs | icon_seamless | 2026-04-02 | 7.5 | rain, temperature, evaporation | yes |
+| Single Runs | gfs_seamless | 2026-04-02 | 16 | rain, temperature, evaporation | yes |
+| Previous Runs | best_match | 2024-01-20 | 7 | rain, temperature, evaporation | no |
+| Previous Runs | ecmwf_ifs025 | 2024-02-04 | 7 | rain, temperature, evaporation | no |
+| Previous Runs | gfs_seamless | 2024-01-20 | 7 | rain, temperature, evaporation | no |
+| Previous Runs | icon_seamless | 2024-01-20 | 6 | rain, temperature, evaporation | no |
+| Previous Runs | icon_eu | 2024-01-20 | 4 | rain, temperature, evaporation | no |
+| Previous Runs | meteofrance_seamless | 2024-01-20 | 3 | rain, temperature, evaporation | no |
+| Previous Runs | ukmo_seamless | 2024-08-09 | 6 | rain, temperature, evaporation | no |
+| Previous Runs | ecmwf_aifs025_single | 2025-02-18 | 7 | rain, temperature, evaporation | no |
+| Previous Runs | italia_meteo_arpae_icon_2i | 2025-04-14 | 2 | rain, temperature, evaporation | no |
+| Previous Runs | ecmwf_ifs | 2025-10-01 | 7 | rain, temperature, evaporation | no |
+| Historical Forecast | ecmwf_ifs | 2017-01-01 | 0 | all five | no |
+| Historical Forecast | gfs_seamless | 2021-03-24 | 0 | rain, temperature, evaporation | no |
+| Historical Forecast | icon_seamless | 2022-11-14 | 0 | rain, temperature, evaporation | no |
+
+- The Single Runs API returns one whole run. It is the only API that says when
+  each forecast was made, so it is the one used for the test.
+- The Previous Runs API gives, for each hour, the value forecast 1 to 7 days
+  earlier. It does not give the run time, and it has no soil values. Its
+  history starts in January 2024, almost the same as the Single Runs API, so
+  it adds no finds.
+- The Historical Forecast API joins the first hours of each run into one
+  series. It holds no forecasts for later days, so it cannot test days ahead.
+  It is the same kind of value as the on the morning view above.
+
+### Finds that could be tested
+
+`p3b_testable_finds.csv` counts the P1 finds per area and year whose
+assessment date 7 days before the find has a stored run.
+
+| Area | Finds | Testable 7 days ahead |
+|---|---|---|
+| Tuscany | 85 | 36 |
+| Switzerland and Austria | 4,747 | 729 |
+| All | 4,832 | 765 |
+
+Every find from 2024, 2025 and 2026 is testable, and none from earlier years.
+The Previous Runs API gives the same 765.
+
+### Forecast rain compared with the rain that fell
+
+The sample is all 36 testable Tuscan finds and 64 Swiss and Austrian finds
+drawn with seed 42. The forecasts are compared with reconstructed past weather,
+ERA5, for the same days. All numbers are for the 100 finds together.
+`p3b_forecast_rain.csv` splits them by area.
+
+Rain on one day, by days ahead, from the runs published 7 days before each find:
+
+| Days ahead | Median rain that fell, mm | Median gap, mm | One in ten gaps above, mm | Correlation |
+|---|---|---|---|---|
+| 1 | 0.85 | 0.65 | 6.9 | 0.78 |
+| 2 | 0.9 | 1.0 | 9.2 | 0.67 |
+| 3 | 0.5 | 0.7 | 8.9 | 0.85 |
+| 4 | 1.65 | 1.4 | 12.3 | 0.72 |
+| 5 | 0.9 | 1.1 | 10.5 | 0.51 |
+| 6 | 1.3 | 2.1 | 14.8 | 0.20 |
+| 7 | 0.8 | 1.2 | 13.1 | 0.38 |
+
+Correlation runs from 1 for a perfect match to 0 for no link.
+
+Total rain over all forecast days of a find:
+
+| Days ahead | Finds | Median rain that fell, mm | Median gap, mm | One in ten gaps above, mm | Correlation |
+|---|---|---|---|---|---|
+| 1 | 96 | 1.05 | 0.8 | 6.7 | 0.69 |
+| 3 | 94 | 7.7 | 3.3 | 21.5 | 0.77 |
+| 7 | 100 | 26.8 | 8.6 | 42.7 | 0.63 |
+
+Rain total of the window before the find, forecast row against the look back
+row:
+
+| Days ahead | 7 days, median gap mm | 14 days, median gap mm | 30 days, median gap mm | 30 days, correlation |
+|---|---|---|---|---|
+| 1 | 5.75 | 5.75 | 5.75 | 0.98 |
+| 3 | 7.3 | 9.1 | 9.1 | 0.96 |
+| 7 | 8.6 | 14.3 | 14.3 | 0.90 |
+
+- The window gap at 1 day ahead is mostly the 6 days of weather model values
+  before the assessment date, not the forecast. The same swap gave a 4.5 mm
+  median gap in P3a.
+- Up to 3 days ahead, the forecast follows the rain that fell closely. From 5
+  days ahead the link on a single day is weak. Over a 30-day window the
+  forecast part is small, so the totals still agree well at 7 days ahead.
+- The Tuscan sample is 36 finds. Its numbers move a lot from one row to the
+  next, so read them as rough.
+- 10 of the 300 stored runs lack some hours: the 12 UTC runs of 4 and 6 August
+  2025 and of 26 August 2026. The affected rows are left empty and dropped from
+  the comparison. Nothing is filled in from weather that happened later.
+
+### Licence and cost, for #11
+
+- The data is under CC BY 4.0, which allows any use with credit to Open-Meteo.
+- The free plan is for non-commercial use: a free app with no subscriptions
+  and no ads qualifies. It allows 600 calls a minute, 5,000 an hour and 10,000
+  a day.
+- Commercial use needs a paid plan. The Single Runs, Previous Runs and
+  Historical Forecast APIs need the Professional plan or higher. The pricing
+  page gives no amounts. An Open-Meteo blog post gives 29 dollars a month for
+  Standard and 99 for Professional.
+- These APIs are needed only to test past predictions. A free app would need
+  only the Forecast API, which gives the past 7 days and the next days in one
+  request on the free plan.
+- If the free plan ever stops fitting, the Open-Meteo server is open source and
+  can run on our own machine. It reads the free open data that ECMWF and the
+  German weather service publish.
+- This run made 737 requests in 12.4 minutes, about 860 free plan calls: 237
+  for the survey and 500 for the 100 finds, 5 per find. A second run from the
+  cache made none.
+
+### How to rebuild P3b
+
+```
+uv run micometeo run p3b_forecasts
+```
+
+Run records:
+
+- [first run, no cache](runs/p3b_forecasts/20261011T070425Z-d61547.json)
+- [second run, from cache, same results](runs/p3b_forecasts/20261011T071746Z-ec7399.json)
+
+`weather_windows.parquet` holds the forecast rows with `forecast_model`,
+`forecast_run_time` and `forecast_published_at`. `forecast_values.parquet`
+holds every stored daily forecast value with `model`, `run_time`,
+`published_at` and `days_ahead`. Both are in the run output folder.
+
+### What this means for A4
+
+A4 says a forecast 7 days ahead can be tested without knowing the outcome.
+This holds for the 765 finds since March 2024. Each forecast value records its
+model, run time, assumed publication time and days ahead, and the code refuses
+any forecast published too late. For older finds no stored forecast exists,
+so a test there would have to use weather that happened later. P4 must not do
+that.
+
+### Limits of P3b
+
+- The publication time is the run start plus 6 hours, from the Open-Meteo
+  documentation. Open-Meteo does not record when each run went online. The 12
+  UTC run used here counts as out 4 to 5 hours before the cutoff.
+- Days just before the assessment date come from the archive's weather model
+  values, as in P3a. At midnight the last hours of the day before were not yet
+  known.
+- Only one model, ECMWF IFS 9 km, has runs before April 2026. Other models
+  cannot be compared on the finds.
+- Rain is compared with ERA5, which has a 25 km rain grid, not with stations.
