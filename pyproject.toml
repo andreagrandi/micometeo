@@ -3,7 +3,7 @@ name = "micometeo"
 version = "0.1.0"
 description = "Epic 1 validation experiments for Micometeo."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
     "cdsapi>=0.7.7",
     "matplotlib>=3.11.2",

@@ -225,3 +225,6 @@ data/processed/
 .cache/
 cache/
 !.envrc.example
+
+# Track the Python version here, despite the global ignore
+!.python-version

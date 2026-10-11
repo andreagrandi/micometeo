@@ -5,13 +5,13 @@ This is a small local API for the phone map page. It serves made-up scores for
 describe real mushrooms or real weather. Every JSON body says so in the fields
 `demo_data` and `notice`.
 
-The API uses only the Python standard library. It needs Python 3.10 or newer.
+The API uses only the Python standard library. It needs Python 3.14.
 
 ## Run locally
 
 ```bash
 cd apps/api
-python3 -m micometeo_api
+python3.14 -m micometeo_api
 ```
 
 The server listens on `127.0.0.1:8080`. Set `MICOMETEO_API_HOST` and
