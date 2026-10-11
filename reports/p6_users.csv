@@ -1,0 +1,4 @@
+active_users,sessions_per_day,api_requests_per_day,api_mb_per_day,page_mb_per_day,api_requests_per_month,transfer_gb_per_month,kind
+10,20,240,1.4,1.1,7200,0.08,estimated
+50,100,1200,7.2,5.6,36000,0.38,estimated
+100,200,2400,14.5,11.2,72000,0.75,estimated
