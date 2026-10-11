@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Micometeo demo map</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="map"></div>
+
+  <header id="top">
+    <p id="notice"><strong>Made-up demo data.</strong> <span id="notice-text">All scores on this page are made up and do not describe real mushrooms.</span></p>
+    <div id="controls">
+      <label>Species
+        <select id="species" aria-label="Species"></select>
+      </label>
+      <label>Assessment date
+        <select id="assessment-date" aria-label="Assessment date"></select>
+      </label>
+      <label>Target date
+        <select id="days-ahead" aria-label="Target date"></select>
+      </label>
+    </div>
+    <p id="hint" hidden></p>
+  </header>
+
+  <div id="legend" aria-label="Score legend">
+    <span class="legend-title">Score</span>
+    <span class="legend-row"><i style="background:#fff3b0"></i>0 to 19</span>
+    <span class="legend-row"><i style="background:#ffd166"></i>20 to 39</span>
+    <span class="legend-row"><i style="background:#f4a259"></i>40 to 59</span>
+    <span class="legend-row"><i style="background:#e0603c"></i>60 to 79</span>
+    <span class="legend-row"><i style="background:#9b1d20"></i>80 to 100</span>
+  </div>
+
+  <section id="sheet" hidden aria-live="polite">
+    <button id="sheet-close" type="button" aria-label="Close">&times;</button>
+    <h2 id="sheet-title"></h2>
+    <dl id="sheet-body"></dl>
+    <p class="sheet-demo">Made-up demo data</p>
+  </section>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
