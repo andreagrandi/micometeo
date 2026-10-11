@@ -8,12 +8,15 @@ Can someone comfortably explore ready-made scores on a phone?
 
 ## Answer
 
-Not yet. Serving the scores is cheap, but the map froze on a real phone.
+Yes. Serving ready-made scores to a phone is fast and cheap. The prototype
+page has one known bug on the iPhone.
 
-On an iPhone 15 with Safari the page opened quickly. Moving the map was slow,
-got slower with each move and then froze. The API answered all 9 square
-requests of that session with 200, and the views were small, so the freeze
-happened in the page on the phone. The cause is not known yet.
+On an iPhone 15 with Safari the page opened quickly, text was readable and
+squares were easy to tap. Moving the map got slower with each move and then
+froze. The API answered all 9 square requests of that session with 200, and
+the views were small, so the freeze is a bug in this prototype page, not a
+limit of serving the data. Its cause was not looked for, because the page is
+a throwaway prototype.
 
 In a phone-sized Chromium window the page is usable 0.9 to 3.5 seconds after
 it opens, and 2.5 to 3.8 seconds with a slowed connection and a 4 times slower
@@ -161,7 +164,7 @@ them proven:
 - MapLibre GL JS 4.7.1 and Safari on iOS may use up graphics memory together.
 - Each move replaces the whole set of squares on the map.
 
-The next check is to load the page on the iPhone three ways: without the
+If the page is reused, the first check is to load it on the iPhone three ways: without the
 background map, with a simple background of ready-made images, and without the
 squares. The one that does not freeze shows the cause.
 
