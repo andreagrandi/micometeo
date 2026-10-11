@@ -1,0 +1,50 @@
+description = "P6a: measure the size of the home area grid, the daily work and the stored data, and estimate requests for 10, 50 and 100 users."
+seed = 42
+time_limit_minutes = 10
+
+[settings]
+reports_dir = "reports"
+square_size_m = 500
+tuscany_gid = "ITA.16_1"
+
+# The Apennine strip of Emilia-Romagna in the home area, decision D4.
+[settings.emilia_apennines]
+gid = "ITA.6_1"
+west = 9.0
+south = 43.5
+east = 13.0
+north = 44.3
+
+# Weather cells of 0.25 degrees match ERA5 rain, about 25 km.
+# Cells of 0.1 degrees match the ECMWF IFS 9 km model of the Open-Meteo Forecast API.
+[settings.weather]
+cell_degrees = [0.25, 0.1]
+species = 1
+days_ahead = 8
+# Open-Meteo counts a request with more than 10 variables or more than 14 days as several calls.
+variables = 8
+days_per_request = 37
+
+# Days kept online for the app, and days of scores kept in the archive.
+[settings.storage]
+days_online = 14
+days_archived = 365
+
+# Zoom levels at which the squares could be served as ready-made map images.
+[settings.tiles]
+zooms = [11, 12, 13, 14]
+
+# Assumptions for the user estimates, see reports/p6_cost_licence.md.
+[settings.users]
+active_users = [10, 50, 100]
+sessions_per_user_per_day = 2
+# The iPhone session in P5 sent 9 square requests in 25 seconds.
+square_requests_per_session = 10
+# Health and info requests per session.
+other_requests_per_session = 2
+# Compressed size of a full phone screen at the starting zoom, P5.
+square_request_kb = 7.4
+# Compressed size of the page and the map library, P5.
+page_kb = 230
+# Share of sessions that load the page with an empty browser cache.
+cold_load_share = 0.25

@@ -1,0 +1,165 @@
+{
+  "experiment": "p6_costs",
+  "run_id": "20261011T142322Z-4fe9ea",
+  "command": "micometeo run p6_costs",
+  "status": "completed",
+  "error": null,
+  "started_at": "2026-10-11T14:23:22Z",
+  "finished_at": "2026-10-11T14:23:24Z",
+  "duration_seconds": 2.198,
+  "time_limit_seconds": 600,
+  "cpu_seconds": 0.803,
+  "peak_memory_bytes": 145620992,
+  "seed": 42,
+  "config": {
+    "description": "P6a: measure the size of the home area grid, the daily work and the stored data, and estimate requests for 10, 50 and 100 users.",
+    "seed": 42,
+    "time_limit_minutes": 10,
+    "settings": {
+      "reports_dir": "reports",
+      "square_size_m": 500,
+      "tuscany_gid": "ITA.16_1",
+      "emilia_apennines": {
+        "gid": "ITA.6_1",
+        "west": 9.0,
+        "south": 43.5,
+        "east": 13.0,
+        "north": 44.3
+      },
+      "weather": {
+        "cell_degrees": [
+          0.25,
+          0.1
+        ],
+        "species": 1,
+        "days_ahead": 8,
+        "variables": 8,
+        "days_per_request": 37
+      },
+      "storage": {
+        "days_online": 14,
+        "days_archived": 365
+      },
+      "tiles": {
+        "zooms": [
+          11,
+          12,
+          13,
+          14
+        ]
+      },
+      "users": {
+        "active_users": [
+          10,
+          50,
+          100
+        ],
+        "sessions_per_user_per_day": 2,
+        "square_requests_per_session": 10,
+        "other_requests_per_session": 2,
+        "square_request_kb": 7.4,
+        "page_kb": 230,
+        "cold_load_share": 0.25
+      }
+    }
+  },
+  "git": {
+    "commit": "1dd5c2297e895d740e4d27602f544c06375edb14",
+    "uncommitted_changes": true
+  },
+  "versions": {
+    "python": "3.13.1",
+    "micometeo": "0.1.0",
+    "packages": {
+      "affine": "3.0.1",
+      "attrs": "26.1.0",
+      "cdsapi": "0.7.7",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "click": "8.5.0",
+      "cloudpickle": "3.1.2",
+      "contourpy": "1.4.0",
+      "cycler": "0.12.1",
+      "distlib": "0.4.3",
+      "ecmwf-datastores-client": "0.5.3",
+      "filelock": "4.1.0",
+      "fonttools": "4.66.1",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.1",
+      "joblib": "1.6.0",
+      "kiwisolver": "1.5.1",
+      "matplotlib": "3.11.2",
+      "micometeo": "0.1.0",
+      "multiurl": "0.3.9",
+      "narwhals": "2.27.1",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "osmium": "4.3.1",
+      "packaging": "26.3",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.4",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "pyarrow": "26.0.0",
+      "Pygments": "2.21.0",
+      "pyparsing": "3.3.3",
+      "pyproj": "3.8.0",
+      "pyshp": "3.1.6",
+      "pytest": "9.1.1",
+      "python-dateutil": "2.9.0.post0",
+      "python-discovery": "1.6.2",
+      "pytz": "2026.5",
+      "PyYAML": "6.0.3",
+      "rasterio": "1.5.2",
+      "requests": "2.34.2",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "shapely": "2.2.0",
+      "six": "1.17.0",
+      "threadpoolctl": "3.7.0",
+      "tqdm": "4.70.1",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.6"
+    }
+  },
+  "computer": {
+    "os": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "cpu_count": 10,
+    "processor": "arm",
+    "total_ram_bytes": 34359738368
+  },
+  "inputs": [],
+  "sources": [
+    {
+      "name": "GADM 4.1 area outlines",
+      "url": "https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_ITA_1.json.zip",
+      "licence": "GADM licence, free for non-commercial use",
+      "version": "4.1",
+      "downloaded_at": "2026-10-11T14:23:24Z",
+      "query": {
+        "files": [
+          "ITA_1"
+        ],
+        "home": [
+          "ITA.16_1",
+          {
+            "gid": "ITA.6_1",
+            "west": 9.0,
+            "south": 43.5,
+            "east": 13.0,
+            "north": 44.3
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": [
+    "data/processed/p6_costs/20261011T142322Z-4fe9ea/scores_one_day.parquet",
+    "reports/p6_sizes.csv",
+    "reports/p6_users.csv"
+  ]
+}

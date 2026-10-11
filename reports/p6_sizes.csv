@@ -1,0 +1,17 @@
+item,value,unit,kind,source
+home area,28205,km2,measured,"GADM 4.1 outline, decision D4"
+500 m squares in the home area,112814,squares,measured,square centres inside the outline
+weather cells of 0.25 degrees,83,cells,measured,cells that touch the outline
+"Open-Meteo calls per day, cells of 0.25 degrees",219,calls,estimated,"one request per cell, Open-Meteo counts 37 days as 37/14 calls"
+weather cells of 0.1 degrees,392,cells,measured,cells that touch the outline
+"Open-Meteo calls per day, cells of 0.1 degrees",1036,calls,estimated,"one request per cell, Open-Meteo counts 37 days as 37/14 calls"
+scores per day,902512,values,measured,"112814 squares, 8 days from today to 7 days ahead, 1 species"
+time to score one day with the D8 rules,0.03,seconds,measured,"numpy on made-up weather, laptop in the run record"
+time to write one day of scores,0.08,seconds,measured,Parquet with zstd compression
+one day of scores on disk,0.3,MB,measured,"Parquet with zstd compression, made-up scores"
+"scores kept online, 14 days",4.2,MB,estimated,one day on disk times days kept
+"scores archive, 365 days",0.11,GB,estimated,one day on disk times days kept
+map images of 512 px at zoom 11,198,images,measured,images that touch the outline
+map images of 512 px at zoom 12,676,images,measured,images that touch the outline
+map images of 512 px at zoom 13,2457,images,measured,images that touch the outline
+map images of 512 px at zoom 14,9430,images,measured,images that touch the outline
