@@ -1,5 +1,9 @@
 # MVP issue plan
 
+The original publication drafts below have been superseded by the detailed
+[issue specifications](issues/mvp/README.md). Use those specifications for
+implementation. The originals remain here as a record of the first plan.
+
 This plan follows `docs/product_prd.md` and the owner's instruction to create the issues. All MVP acceptance is local. The owner must accept the complete product before public deployment or hosting investment.
 
 The issues have been published. Their URLs and verified native relationships

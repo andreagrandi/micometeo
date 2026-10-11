@@ -4,7 +4,7 @@ Published and verified on 11 October 2026 using the gh-issue skill.
 
 [Micometeo project](https://github.com/users/andreagrandi/projects/9).
 
-The [product PRD](product_prd.md) defines the scope. The [issue plan](mvp_issue_plan.md) retains the drafted bodies and classifications. GitHub now contains seven MVP epics, 26 native sub-issues and one later epic named "Features Roadmap". All new project items are in Todo.
+The [product PRD](product_prd.md) defines the scope. The [detailed issue specifications](issues/mvp/README.md) contain the implementation instructions and evidence for each MVP issue. The [original issue plan](mvp_issue_plan.md) retains the first publication drafts and classifications as history. GitHub contains seven MVP epics, 26 native sub-issues and one later epic named "Features Roadmap".
 
 ## Local acceptance before hosting
 
@@ -75,7 +75,7 @@ Their descriptions also match Draft Omen. Priority uses red for High, yellow for
 
 Area retains Micometeo's names and uses the shared palette. Observations is blue, Habitat green, Weather yellow, Modeling purple, Web pink, Operations orange and Research grey. Updating options changed their IDs. Existing assignments were restored by name, and the new IDs are recorded in the [issue reference](../.agents/skills/gh-issue/REFERENCE.md).
 
-## Verification
+## Original publication verification
 
 One final GraphQL query checked the published bodies, titles, state, exact labels, four project fields, native parents, native children, native blockers, repository label colors and project option colors. It found no mismatches against the drafted plan.
 
@@ -86,3 +86,35 @@ One final GraphQL query checked the published bodies, titles, state, exact label
 - All 15 existing project items retained their Priority, Area, Status and Size values.
 
 There were 117 explicit `gh api` calls. Four failed to connect before the user requested another attempt. Two reference lookups returned HTTP 404. One large project-field assignment returned HTTP 504 after partially completing. A targeted read identified the three remaining assignments, which were restored. Subsequent project-field assignments used smaller batches to avoid another timeout. The final verification confirmed the complete result. The final GraphQL response reported 4972 points remaining in its rate allowance.
+
+## Description revision
+
+On 11 October 2026, the descriptions of all seven MVP epics and 26 child
+issues were rewritten from the product requirements, experiment reports and
+existing code. Their complete bodies are in the
+[issue specifications](issues/mvp/README.md). They now include the relevant
+research findings, reusable files, input and output contracts, failure cases,
+implementation boundaries and named verification commands or report sections.
+
+The rewrite also identifies decisions owned by implementation tickets, such
+as the national weather request plan and the exact experimental percentage
+formula. It does not describe those decisions as results already established
+by Epic 1. The owner-selected MVP, mockup comparison and local acceptance
+requirements remain in force.
+
+Verification found no mismatches:
+
+- All 33 GitHub bodies exactly match their numbered specification files.
+- Titles, open states, labels and project fields match the pre-edit snapshot.
+- All 26 native parent-child links and 37 direct blockers are unchanged.
+- Features Roadmap retains its original body and has no children or blockers.
+- All 53 repository source links in the specifications resolve to existing
+  local source files. Proposed deliverables and tests are identified as work
+  to create during implementation.
+- The documentation passed secret scanning, whitespace, final-newline and
+  large-file checks. `git diff --check` passed. No application code changed.
+
+The correction used 37 authenticated GitHub CLI calls: one issue-list read,
+one relationship snapshot, one pre-edit change check, 33 sequential body
+updates and one final verification query. The final query reported 4986
+points remaining. No issue classification or relationship mutation was sent.
