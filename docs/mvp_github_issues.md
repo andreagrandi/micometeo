@@ -39,11 +39,11 @@ Each issue has exactly its type label and its size label. Parent and blocker lin
 | [#41](https://github.com/andreagrandi/micometeo/issues/41) | Build a repeatable 500 m grid for all Italy | enhancement | High | Habitat | M | High | [#31](https://github.com/andreagrandi/micometeo/issues/31) | [#38](https://github.com/andreagrandi/micometeo/issues/38) |
 | [#42](https://github.com/andreagrandi/micometeo/issues/42) | Attach national terrain information to the grid | enhancement | High | Habitat | M | High | [#31](https://github.com/andreagrandi/micometeo/issues/31) | [#41](https://github.com/andreagrandi/micometeo/issues/41) |
 | [#43](https://github.com/andreagrandi/micometeo/issues/43) | Attach forest information and report habitat coverage | enhancement | High | Habitat | M | High | [#31](https://github.com/andreagrandi/micometeo/issues/31) | [#41](https://github.com/andreagrandi/micometeo/issues/41) |
-| [#44](https://github.com/andreagrandi/micometeo/issues/44) | Fetch weather by shared cells and account for the free allowance | enhancement | High | Weather | M | High | [#32](https://github.com/andreagrandi/micometeo/issues/32) | [#41](https://github.com/andreagrandi/micometeo/issues/41) |
+| [#44](https://github.com/andreagrandi/micometeo/issues/44) | Fetch weather by shared cells and account for the free allowance | enhancement | High | Weather | M | High | [#32](https://github.com/andreagrandi/micometeo/issues/32) | [#43](https://github.com/andreagrandi/micometeo/issues/43) |
 | [#45](https://github.com/andreagrandi/micometeo/issues/45) | Build dated weather summaries for today and seven days ahead | enhancement | High | Weather | M | High | [#32](https://github.com/andreagrandi/micometeo/issues/32) | [#44](https://github.com/andreagrandi/micometeo/issues/44) |
-| [#46](https://github.com/andreagrandi/micometeo/issues/46) | Schedule a daily weather update and retain complete batches | enhancement | High | Weather | M | High | [#32](https://github.com/andreagrandi/micometeo/issues/32) | [#45](https://github.com/andreagrandi/micometeo/issues/45), [#39](https://github.com/andreagrandi/micometeo/issues/39) |
-| [#47](https://github.com/andreagrandi/micometeo/issues/47) | Define and implement the experimental growing-probability method | enhancement | High | Modeling | M | High | [#33](https://github.com/andreagrandi/micometeo/issues/33) | [#42](https://github.com/andreagrandi/micometeo/issues/42), [#43](https://github.com/andreagrandi/micometeo/issues/43), [#45](https://github.com/andreagrandi/micometeo/issues/45) |
-| [#48](https://github.com/andreagrandi/micometeo/issues/48) | Calculate and publish one complete eight-date estimate update | enhancement | High | Modeling | M | High | [#33](https://github.com/andreagrandi/micometeo/issues/33) | [#47](https://github.com/andreagrandi/micometeo/issues/47), [#46](https://github.com/andreagrandi/micometeo/issues/46) |
+| [#46](https://github.com/andreagrandi/micometeo/issues/46) | Fetch and store an area's weather the first time it is requested each day | enhancement | High | Weather | M | High | [#32](https://github.com/andreagrandi/micometeo/issues/32) | [#45](https://github.com/andreagrandi/micometeo/issues/45), [#39](https://github.com/andreagrandi/micometeo/issues/39) |
+| [#47](https://github.com/andreagrandi/micometeo/issues/47) | Define and implement the experimental growing-probability method | enhancement | High | Modeling | M | High | [#33](https://github.com/andreagrandi/micometeo/issues/33) | [#42](https://github.com/andreagrandi/micometeo/issues/42), [#45](https://github.com/andreagrandi/micometeo/issues/45) |
+| [#48](https://github.com/andreagrandi/micometeo/issues/48) | Calculate and store eight-date estimates for each fetched area | enhancement | High | Modeling | M | High | [#33](https://github.com/andreagrandi/micometeo/issues/33) | [#47](https://github.com/andreagrandi/micometeo/issues/47), [#46](https://github.com/andreagrandi/micometeo/issues/46) |
 | [#49](https://github.com/andreagrandi/micometeo/issues/49) | Serve map estimates by date and visible area | enhancement | High | Web | M | High | [#33](https://github.com/andreagrandi/micometeo/issues/33) | [#48](https://github.com/andreagrandi/micometeo/issues/48) |
 | [#50](https://github.com/andreagrandi/micometeo/issues/50) | Serve area explanations, weather and source details | enhancement | High | Web | M | High | [#33](https://github.com/andreagrandi/micometeo/issues/33) | [#48](https://github.com/andreagrandi/micometeo/issues/48) |
 | [#51](https://github.com/andreagrandi/micometeo/issues/51) | Write the shared mockup brief and Google Stitch prompt | documentation | High | Web | S | Normal | [#34](https://github.com/andreagrandi/micometeo/issues/34) | None |
@@ -56,7 +56,7 @@ Each issue has exactly its type label and its size label. Parent and blocker lin
 | [#58](https://github.com/andreagrandi/micometeo/issues/58) | Show the selected area's estimate, weather and explanation | enhancement | High | Web | M | High | [#35](https://github.com/andreagrandi/micometeo/issues/35) | [#56](https://github.com/andreagrandi/micometeo/issues/56), [#50](https://github.com/andreagrandi/micometeo/issues/50) |
 | [#59](https://github.com/andreagrandi/micometeo/issues/59) | Save and manage private favorites in the current browser | enhancement | Medium | Web | M | Normal | [#35](https://github.com/andreagrandi/micometeo/issues/35) | [#58](https://github.com/andreagrandi/micometeo/issues/58) |
 | [#60](https://github.com/andreagrandi/micometeo/issues/60) | Open the selected destination in an external navigation app | enhancement | Medium | Web | S | Normal | [#35](https://github.com/andreagrandi/micometeo/issues/35) | [#58](https://github.com/andreagrandi/micometeo/issues/58) |
-| [#61](https://github.com/andreagrandi/micometeo/issues/61) | Verify the national data and update flow on the local machine | enhancement | High | Operations | M | High | [#36](https://github.com/andreagrandi/micometeo/issues/36) | [#40](https://github.com/andreagrandi/micometeo/issues/40), [#49](https://github.com/andreagrandi/micometeo/issues/49), [#50](https://github.com/andreagrandi/micometeo/issues/50) |
+| [#61](https://github.com/andreagrandi/micometeo/issues/61) | Verify national habitat data and on-demand weather on the local machine | enhancement | High | Operations | M | High | [#36](https://github.com/andreagrandi/micometeo/issues/36) | [#40](https://github.com/andreagrandi/micometeo/issues/40), [#49](https://github.com/andreagrandi/micometeo/issues/49), [#50](https://github.com/andreagrandi/micometeo/issues/50) |
 | [#62](https://github.com/andreagrandi/micometeo/issues/62) | Verify the complete bilingual journey and sustained phone-map use | enhancement | High | Web | M | High | [#36](https://github.com/andreagrandi/micometeo/issues/36) | [#61](https://github.com/andreagrandi/micometeo/issues/61), [#57](https://github.com/andreagrandi/micometeo/issues/57), [#59](https://github.com/andreagrandi/micometeo/issues/59), [#60](https://github.com/andreagrandi/micometeo/issues/60) |
 | [#63](https://github.com/andreagrandi/micometeo/issues/63) | Record the owner's acceptance of the complete local MVP | documentation | High | Operations | S | Normal | [#36](https://github.com/andreagrandi/micometeo/issues/36) | [#62](https://github.com/andreagrandi/micometeo/issues/62) |
 
@@ -124,9 +124,6 @@ points remaining. No issue classification or relationship mutation was sent.
 On 11 October 2026, a review of the MVP issues changed 17 bodies. The
 specification files and GitHub bodies match again after the change.
 
-- A zoomed-out map shows 10 km block summaries instead of an empty map with
-  a zoom-in prompt. #48 stores them, #49 serves them, #56 draws them, and
-  #51, #61 and #62 check them.
 - #38 sets up phone access to the laptop through Tailscale, with an HTTPS
   address that #57 and #62 use for the location check on a real phone.
 - #55 adds Playwright browser tests in Chromium and WebKit, and shared date,
@@ -136,3 +133,24 @@ specification files and GitHub bodies match again after the change.
   quotes the P4 scores correctly.
 
 Epic 1, #1, was closed because all its sub-issues were closed.
+
+## On-demand weather
+
+Later on 11 October 2026, the owner chose on-demand weather and the related
+decisions D15 to D20 in [decisions.md](decisions.md). The 10 km block
+summaries added in the review were removed again.
+
+- Weather is fetched the first time an area is requested each day and stored
+  for every later visitor. #32, #44, #46 and #49 describe the fetch, the
+  limits and the waiting visitor.
+- Weather cells are 0.1 degrees. Only squares with at least 10 percent forest
+  get weather and estimates. #43 marks them and builds a forest layer for the
+  zoomed-out map.
+- The weather window is 21 days back and 7 days ahead. #45, #47, #50, #51 and
+  #58 use rain totals for 7, 14 and 21 days.
+- Zoomed out, the map shows only forests. Estimates appear when the view is
+  about 40 to 60 km across or closer.
+- #48 stores one row per forest square holding all 8 dates and keeps only the
+  current and previous estimates of each area.
+- #46, #48 and #61 have new titles. #44 is now blocked by #43 instead of #41,
+  and the link from #47 to #43 was removed because it follows through #44.

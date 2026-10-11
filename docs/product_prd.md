@@ -20,6 +20,8 @@ Epic 1 investigated technical possibilities. Its experiments and reports supply 
 
 In particular, the MVP covers all Italy rather than the investigation's home area. It presents experimental growing-probability estimates. Validation against field observations is not a release condition. The historical reports and their results remain unchanged.
 
+Decisions D15 to D20 in [decisions.md](decisions.md) were made after this interview and replace the matching parts of this document. Weather is fetched on demand for each area. Weather cells are 0.1 degrees. Only squares with at least 10 percent forest get estimates. The weather window is 21 days back and 7 days ahead. The zoomed-out map shows only forests. Estimates are stored compactly and only the current and previous ones are kept.
+
 | Interview decision | Agreed requirement |
 |---|---|
 | Meaning of the percentage | The estimated chance that porcini are growing in the selected area on the selected day. |
@@ -91,9 +93,9 @@ Use the same calculation and input requirements across Italy. National coverage 
 
 Use Italian local days in Europe/Rome. Language selection must not change which dates a forecast represents. The date control includes today and days one through seven ahead. Each selected area shows its target date and the time its estimate was produced.
 
-Plan one automatic refresh each day, shared across users. Keep the recent weather needed by the method and obtain the upcoming forecast. Retain usable recent weather between runs so that the service does not repeatedly download the same full history without need.
+Fetch weather on demand, as decided in D15. The first request for an area on an Italian day fetches the weather of its weather cells once, and every later visitor that day uses the stored result. Keep the 21 previous days the method needs and the upcoming forecast. Retain usable recent weather between fetches so that the service never downloads the same days again without need.
 
-Publish a completed update consistently across the map and area details. A failed refresh must not erase the last completed update. Mark older results with their actual date and update time. Never relabel yesterday's estimate as today's estimate or present a past run's seventh day as a forecast for a later date.
+Show a completed update consistently across the map and area details. A failed fetch must not erase an area's last stored estimates. Mark older results with their actual date and update time. Never relabel yesterday's estimate as today's estimate or present a past run's seventh day as a forecast for a later date.
 
 When required inputs are missing, show that no estimate is available and explain why. Missing data is not a zero percent prediction. A lack of past sightings is not evidence that porcini cannot grow there.
 
@@ -103,7 +105,7 @@ National coverage requires an input-coverage check across the country. Genuine s
 
 The selected-area details must connect the percentage to the actual inputs used by that calculation. Explain relevant recent rain, temperature and habitat factors in plain language. Avoid generic explanations that remain unchanged when the inputs change.
 
-Provide recent rain totals for 7, 14 and 30 completed days as the initial period choices. Keep those totals separate from predicted rain. Show the selected day's weather with its date. Identify modelled weather as such rather than presenting it as a measurement at the clicked point.
+Provide recent rain totals for 7, 14 and 21 completed days as the initial period choices. Keep those totals separate from predicted rain. Show the selected day's weather with its date. Identify modelled weather as such rather than presenting it as a measurement at the clicked point.
 
 Show temperature and any supported drying, frost or hail information from the selected sources. Missing optional weather information must not turn into an invented value. Acquiring a separate hail or weather-station service is not required by this row.
 
@@ -119,7 +121,7 @@ F14 includes switching between at least two readable background styles based on 
 
 Use the providers and restrictions already assessed in P6. Do not assume that permission to use OpenStreetMap data also grants unlimited use of the standard openstreetmap.org map server.
 
-Large map views must limit or summarize the drawn areas so that national browsing stays usable. At closer zoom levels, show the local areas and allow selection. Panning, zooming, changing dates and changing backgrounds must not leave mismatched results on the screen.
+Zoomed out, the map shows only where forests are and no estimates, as decided in D19. Estimates appear when the visible map is about 40 to 60 km across or closer, and the local areas can then be selected. Panning, zooming, changing dates and changing backgrounds must not leave mismatched results on the screen.
 
 ### Favorites and external navigation
 
@@ -162,13 +164,13 @@ Use [Book Corners](https://github.com/andreagrandi/book-corners) as the implemen
 | Pages and interaction | Django templates and HTMX. Keep map interactions in the map component. |
 | Styling | Tailwind CSS and daisyUI as implementation tools for the selected design. Their default appearance does not satisfy F81 by itself. |
 | Map rendering | Start from Book Corners' Leaflet approach. Use the P5 work as evidence about serving cells and phone limits. Document a concrete rendering need if another map library is required. |
-| Background work | Reuse the Django background-task and scheduled-job patterns for weather updates and prediction calculation. |
+| Background work | Reuse the Django background-task and scheduled-job patterns for habitat builds and the nightly cleanup of old weather and estimates. |
 | Languages | Reuse Django's translation patterns from Book Corners. |
 | Development and checks | Reuse Docker Compose, application process and GitHub Actions check patterns. Keep Micometeo configuration separate. Do not copy automatic deployment jobs or require VPS credentials. |
 
 Reuse useful Micometeo data processing code and the established grid and date conventions. P5's demonstration API and page are experiments, not a requirement to retain their production architecture. Book Corners' account dependencies are unnecessary while F77 is deferred.
 
-Compute results in background work and serve stored results to visitors. Map browsing must not trigger one Open-Meteo request per visitor or per 500 m square. Nearby squares can share the weather that actually covers them while retaining their separate habitat inputs.
+Compute an area's results when it is first requested each day, store them and serve the stored results to every later visitor. Map browsing must not trigger one Open-Meteo request per visitor or per 500 m square. Nearby squares can share the weather that actually covers them while retaining their separate habitat inputs.
 
 Keep the method version, input sources, source dates and calculation time with each published update. This supports explanations and later changes to the method without requiring an automatic learning system in the MVP.
 
@@ -204,7 +206,7 @@ The implementation tickets must turn these requirements into concrete checks aga
 | Dates | All eight dates use Europe/Rome correctly, including date rollover and daylight-saving changes. Weather and percentages refer to the selected date. |
 | Calculation | Real inputs produce repeatable estimates. Invalid or missing inputs cannot create made-up percentages. The calculation and method version are recorded. |
 | Experimental status | The legend and area details explain that probability accuracy has not been validated. No screen claims validated accuracy or guaranteed finds. |
-| Updates | A scheduled run can publish a complete update. Failed updates retain correctly dated previous results and show their age. |
+| Updates | The first request for an area each day fetches and stores its weather and estimates, and later requests read them. Failed fetches keep correctly dated previous results and show their age. |
 | Favorites | Names, colors and locations persist across a reload in the same browser. Rename and removal work. No account or public submission is created. |
 | Map behavior | Repeated panning, zooming, date changes and background changes remain usable on an actual iPhone with Safari and an Android phone browser, plus desktop browsers. |
 | Known phone failure | Repeat a sustained map interaction comparable to P5, including at least 25 moves. The production page must not repeat the progressive slowdown and freeze reported there. |

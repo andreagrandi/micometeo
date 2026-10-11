@@ -18,11 +18,11 @@ describe files to create during implementation, not files already present.
 |---|---|
 | [#30 Local application foundation](30.md) | [#38 Application](38.md), [#39 Worker](39.md), [#40 Checks](40.md) |
 | [#31 National terrain and habitat](31.md) | [#41 Grid](41.md), [#42 Terrain](42.md), [#43 Forest](43.md) |
-| [#32 Daily weather](32.md) | [#44 Requests and allowance](44.md), [#45 Dated summaries](45.md), [#46 Complete weather updates](46.md) |
-| [#33 Experimental estimates](33.md) | [#47 Method](47.md), [#48 Result updates](48.md), [#49 Map API](49.md), [#50 Detail API](50.md) |
+| [#32 On-demand weather](32.md) | [#44 Requests and allowance](44.md), [#45 Dated summaries](45.md), [#46 Fetch on first request](46.md) |
+| [#33 Experimental estimates](33.md) | [#47 Method](47.md), [#48 Stored estimates per area](48.md), [#49 Map API](49.md), [#50 Detail API](50.md) |
 | [#34 Mockup comparison](34.md) | [#51 Brief](51.md), [#52 Stitch mockup](52.md), [#53 Agent mockup](53.md), [#54 Owner design choice](54.md) |
 | [#35 Bilingual website](35.md) | [#55 Layout and language](55.md), [#56 Map](56.md), [#57 Search and location](57.md), [#58 Area details](58.md), [#59 Favorites](59.md), [#60 Navigation](60.md) |
-| [#36 Local acceptance](36.md) | [#61 National data checks](61.md), [#62 Browser and phone checks](62.md), [#63 Owner acceptance](63.md) |
+| [#36 Local acceptance](36.md) | [#61 National data and on-demand checks](61.md), [#62 Browser and phone checks](62.md), [#63 Owner acceptance](63.md) |
 
 [Features Roadmap #37](https://github.com/andreagrandi/micometeo/issues/37)
 retains its 66 grouped deferred features and has no sub-tickets. This revision
@@ -51,12 +51,12 @@ is complete, rather than silently inherited from a prototype.
 | Ticket | Required decision or measurement |
 |---|---|
 | #41 | Exact redistributable boundary file and national cell coverage. |
-| #44 | National weather-cell mapping, temperature handling, cache policy and measured request budget. P6 pricing is already assessed. |
+| #44 | Forest weather-cell mapping, temperature handling, request rules and the worst-case budget. P6 pricing is already assessed, and D15 to D18 settle on-demand fetching, cell size, forest squares and the weather window. |
 | #45 | Explicit stored periods and distinction between live retrieval time and the historical experiment's midnight cutoff. |
 | #47 | Exact experimental formula, parameters, national season/altitude treatment and worked examples. Research did not establish a calibrated formula. |
 | #54 | Owner-selected design and required adjustments. |
 | #56 | Compatible map provider/styles and measured renderer behavior using Book Corners as the starting point. |
-| #57 | Free geocoder, its request policy and a local secure-context method for physical-phone geolocation checks. |
+| #57 | Free geocoder and its request policy. Physical-phone location checks use the Tailscale HTTPS address from #38. |
 
 ## GitHub update call graph
 
