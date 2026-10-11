@@ -1,0 +1,196 @@
+{
+  "experiment": "p4_test_rules",
+  "run_id": "20261011T082136Z-06759a",
+  "command": "micometeo run p4_test_rules",
+  "status": "completed",
+  "error": null,
+  "started_at": "2026-10-11T08:21:36Z",
+  "finished_at": "2026-10-11T08:21:52Z",
+  "duration_seconds": 16.871,
+  "time_limit_seconds": 1800,
+  "seed": 42,
+  "config": {
+    "description": "P4a: split find days into tuning, test and final sets by 100 km blocks and years, so no test day sits near a tuning day.",
+    "seed": 42,
+    "time_limit_minutes": 30,
+    "settings": {
+      "finds_path": "data/processed/p1_observations/20261011T075009Z-796984/finds.parquet",
+      "block_size_m": 100000,
+      "tuning_share": 0.6,
+      "test_share": 0.2,
+      "final_from_year": 2025,
+      "test_from_year": 2022,
+      "buffer_m": 25000,
+      "pixel_m": 100,
+      "tile_pixels": 4000,
+      "forest_from_share": 0.1,
+      "forest_points_per_case": 100,
+      "known_spots_per_case": 50,
+      "min_known_spots": 20,
+      "p1_config_path": "experiments/p1_observations/config.toml",
+      "p1_raw_dir": "data/raw/p1_observations",
+      "reports_dir": "reports"
+    }
+  },
+  "git": {
+    "commit": "b221ab66fc9d2879c3540e82d72cb7a650b990e5",
+    "uncommitted_changes": true
+  },
+  "versions": {
+    "python": "3.13.1",
+    "micometeo": "0.1.0",
+    "packages": {
+      "affine": "3.0.1",
+      "attrs": "26.1.0",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "click": "8.5.0",
+      "contourpy": "1.4.0",
+      "cycler": "0.12.1",
+      "distlib": "0.4.3",
+      "filelock": "4.1.0",
+      "fonttools": "4.66.1",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.1",
+      "kiwisolver": "1.5.1",
+      "matplotlib": "3.11.2",
+      "micometeo": "0.1.0",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "osmium": "4.3.1",
+      "packaging": "26.3",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.4",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "pyarrow": "26.0.0",
+      "Pygments": "2.21.0",
+      "pyparsing": "3.3.3",
+      "pyproj": "3.8.0",
+      "pyshp": "3.1.6",
+      "pytest": "9.1.1",
+      "python-dateutil": "2.9.0.post0",
+      "python-discovery": "1.6.2",
+      "PyYAML": "6.0.3",
+      "rasterio": "1.5.2",
+      "requests": "2.34.2",
+      "shapely": "2.2.0",
+      "six": "1.17.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.6"
+    }
+  },
+  "computer": {
+    "os": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "cpu_count": 10,
+    "processor": "arm",
+    "total_ram_bytes": 34359738368
+  },
+  "inputs": [
+    {
+      "path": "data/processed/p1_observations/20261011T075009Z-796984/finds.parquet",
+      "sha256": "076ae91d77e6015d67dd6e0cde0bb2bfea7252d60a261f94c0c3b807f8469115",
+      "size_bytes": 247890
+    },
+    {
+      "path": "data/raw/p4_test_rules/forest_type_2018_100m_E4295000_N2125500_E4549500_N2378000.tif",
+      "sha256": "7a89a77660be8b2e9ca62d328e6752eea3e8fa13b0065502baa405708372b5e2",
+      "size_bytes": 6557142
+    },
+    {
+      "path": "data/raw/p4_test_rules/forest_type_2018_100m_E4006000_N2522500_E4406000_N2904500.tif",
+      "sha256": "b2cb5025076b96ee3f4f087b4c7c58b3c1e1b51673cdb07b2974aeaefda20e53",
+      "size_bytes": 15735542
+    },
+    {
+      "path": "data/raw/p4_test_rules/forest_type_2018_100m_E4406000_N2522500_E4806000_N2904500.tif",
+      "sha256": "2a5ff92baac9fe903a2659c38ba47b50d1d0e0a854a4a0df74bea5c8a4b3d991",
+      "size_bytes": 15735542
+    },
+    {
+      "path": "data/raw/p4_test_rules/forest_type_2018_100m_E4806000_N2522500_E4877500_N2904500.tif",
+      "sha256": "18b2dfa2d5642ec3689c8b2014e30c4c3518fb4e2cafc1d02e43da208cc710b9",
+      "size_bytes": 2951342
+    }
+  ],
+  "sources": [
+    {
+      "name": "Copernicus forest type 2018 tile",
+      "url": "https://image.discomap.eea.europa.eu/arcgis/rest/services/GioLandPublic/HRL_ForestType_2018/ImageServer/exportImage",
+      "licence": "Copernicus Land Monitoring Service data, free and open access under EU Regulation 1159/2013. Credit: \u00a9 European Union, Copernicus Land Monitoring Service 2018, European Environment Agency",
+      "version": "Forest type 2018 from the EEA image service",
+      "downloaded_at": "2026-10-11T08:21:40Z",
+      "query": {
+        "bbox": "4295000,2125500,4549500,2378000",
+        "bboxSR": 3035,
+        "imageSR": 3035,
+        "size": "2545,2525",
+        "format": "tiff",
+        "pixelType": "U8",
+        "interpolation": "RSP_NearestNeighbor",
+        "f": "image"
+      }
+    },
+    {
+      "name": "Copernicus forest type 2018 tile",
+      "url": "https://image.discomap.eea.europa.eu/arcgis/rest/services/GioLandPublic/HRL_ForestType_2018/ImageServer/exportImage",
+      "licence": "Copernicus Land Monitoring Service data, free and open access under EU Regulation 1159/2013. Credit: \u00a9 European Union, Copernicus Land Monitoring Service 2018, European Environment Agency",
+      "version": "Forest type 2018 from the EEA image service",
+      "downloaded_at": "2026-10-11T08:21:45Z",
+      "query": {
+        "bbox": "4006000,2522500,4406000,2904500",
+        "bboxSR": 3035,
+        "imageSR": 3035,
+        "size": "4000,3820",
+        "format": "tiff",
+        "pixelType": "U8",
+        "interpolation": "RSP_NearestNeighbor",
+        "f": "image"
+      }
+    },
+    {
+      "name": "Copernicus forest type 2018 tile",
+      "url": "https://image.discomap.eea.europa.eu/arcgis/rest/services/GioLandPublic/HRL_ForestType_2018/ImageServer/exportImage",
+      "licence": "Copernicus Land Monitoring Service data, free and open access under EU Regulation 1159/2013. Credit: \u00a9 European Union, Copernicus Land Monitoring Service 2018, European Environment Agency",
+      "version": "Forest type 2018 from the EEA image service",
+      "downloaded_at": "2026-10-11T08:21:49Z",
+      "query": {
+        "bbox": "4406000,2522500,4806000,2904500",
+        "bboxSR": 3035,
+        "imageSR": 3035,
+        "size": "4000,3820",
+        "format": "tiff",
+        "pixelType": "U8",
+        "interpolation": "RSP_NearestNeighbor",
+        "f": "image"
+      }
+    },
+    {
+      "name": "Copernicus forest type 2018 tile",
+      "url": "https://image.discomap.eea.europa.eu/arcgis/rest/services/GioLandPublic/HRL_ForestType_2018/ImageServer/exportImage",
+      "licence": "Copernicus Land Monitoring Service data, free and open access under EU Regulation 1159/2013. Credit: \u00a9 European Union, Copernicus Land Monitoring Service 2018, European Environment Agency",
+      "version": "Forest type 2018 from the EEA image service",
+      "downloaded_at": "2026-10-11T08:21:50Z",
+      "query": {
+        "bbox": "4806000,2522500,4877500,2904500",
+        "bboxSR": 3035,
+        "imageSR": 3035,
+        "size": "715,3820",
+        "format": "tiff",
+        "pixelType": "U8",
+        "interpolation": "RSP_NearestNeighbor",
+        "f": "image"
+      }
+    }
+  ],
+  "outputs": [
+    "data/processed/p4_test_rules/20261011T082136Z-06759a/cases.parquet",
+    "data/processed/p4_test_rules/20261011T082136Z-06759a/blocks.csv",
+    "reports/p4a_split_counts.csv",
+    "data/processed/p4_test_rules/20261011T082136Z-06759a/comparison_points.parquet",
+    "reports/p4a_point_counts.csv"
+  ]
+}

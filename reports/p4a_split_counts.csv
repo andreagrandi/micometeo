@@ -1,0 +1,17 @@
+area,set,year_band,cases,finds
+comparison,buffer,all,920,939
+comparison,buffer,before 2022,920,939
+comparison,final,2022 to 2024,189,201
+comparison,final,2025 and later,394,459
+comparison,final,all,772,854
+comparison,final,before 2022,189,194
+comparison,test,2022 to 2024,463,539
+comparison,test,all,1504,1596
+comparison,test,before 2022,1041,1057
+comparison,tuning,all,1319,1358
+comparison,tuning,before 2022,1319,1358
+home,home_final,2025 and later,11,12
+home,home_final,all,11,12
+home,home_test,2022 to 2024,45,47
+home,home_test,all,70,73
+home,home_test,before 2022,25,26
