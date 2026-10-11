@@ -1,0 +1,24 @@
+description = "P4b: check the hand-written weather rules on ten years of daily porcini counts from a German beech forest, including days with none."
+seed = 42
+time_limit_minutes = 30
+
+[settings]
+# Zenodo record 20591123, Brejon Lamartiniere and Hoffman, CC BY 4.0.
+data_url = "https://zenodo.org/records/20591123/files/ebrejonl/Boletus_fruiting_triggers-V1.2.zip?download=1"
+data_file = "Environmental_fruiting_data_jun8.csv"
+# Counts of the site called All, which holds both forest sites together.
+site = "All"
+# Study area centre, from the preprint methods.
+latitude = 52.0617
+longitude = 8.4509
+# The preprint's own window of each year, as month and day.
+season_start = "08-05"
+season_end = "11-21"
+# Our own ERA5 weather for the cell of the study area. It starts early enough for the 30 day window of 5 August 2015.
+weather_dir = "data/raw/p4b_weather/era5_timeseries"
+weather_start_date = "2015-06-01"
+weather_end_date = "2024-12-31"
+# The rules are the ones of the main P4b experiment.
+rules_config = "experiments/p4b_benchmark/config.toml"
+redraws = 1000
+reports_dir = "reports"

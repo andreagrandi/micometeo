@@ -5,6 +5,7 @@ description = "Epic 1 validation experiments for Micometeo."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "cdsapi>=0.7.7",
     "matplotlib>=3.11.2",
     "numpy>=2.5.3",
     "osmium>=4.3.1",
@@ -12,6 +13,7 @@ dependencies = [
     "pyproj>=3.8.0",
     "pyshp>=3.1.6",
     "rasterio>=1.5.2",
+    "scikit-learn>=1.9.1",
     "shapely>=2.2.0",
 ]
 

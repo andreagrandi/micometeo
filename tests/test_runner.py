@@ -96,6 +96,9 @@ def test_completed_run_records_everything(make_experiment) -> None:
     assert not Path(record["outputs"][0]).is_absolute()
     assert (root / record["outputs"][0]).is_file()
     assert record["duration_seconds"] > 0
+    assert record["cpu_seconds"] > 0
+    # Any Python child process needs more than 10 MB.
+    assert record["peak_memory_bytes"] > 10_000_000
     assert record["started_at"].endswith("Z")
     assert record["finished_at"].endswith("Z")
     assert record["computer"]["cpu_count"]

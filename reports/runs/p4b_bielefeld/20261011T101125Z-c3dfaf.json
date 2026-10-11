@@ -1,0 +1,147 @@
+{
+  "experiment": "p4b_bielefeld",
+  "run_id": "20261011T101125Z-c3dfaf",
+  "command": "micometeo run p4b_bielefeld",
+  "status": "completed",
+  "error": null,
+  "started_at": "2026-10-11T10:11:25Z",
+  "finished_at": "2026-10-11T10:12:49Z",
+  "duration_seconds": 83.889,
+  "time_limit_seconds": 1800,
+  "cpu_seconds": 1.693,
+  "peak_memory_bytes": 211337216,
+  "seed": 42,
+  "config": {
+    "description": "P4b: check the hand-written weather rules on ten years of daily porcini counts from a German beech forest, including days with none.",
+    "seed": 42,
+    "time_limit_minutes": 30,
+    "settings": {
+      "data_url": "https://zenodo.org/records/20591123/files/ebrejonl/Boletus_fruiting_triggers-V1.2.zip?download=1",
+      "data_file": "Environmental_fruiting_data_jun8.csv",
+      "site": "All",
+      "latitude": 52.0617,
+      "longitude": 8.4509,
+      "season_start": "08-05",
+      "season_end": "11-21",
+      "weather_dir": "data/raw/p4b_weather/era5_timeseries",
+      "weather_start_date": "2015-06-01",
+      "weather_end_date": "2024-12-31",
+      "rules_config": "experiments/p4b_benchmark/config.toml",
+      "redraws": 1000,
+      "reports_dir": "reports"
+    }
+  },
+  "git": {
+    "commit": "ae9c20d8464230899bbc3e02d77e83a37df9b2f4",
+    "uncommitted_changes": true
+  },
+  "versions": {
+    "python": "3.13.1",
+    "micometeo": "0.1.0",
+    "packages": {
+      "affine": "3.0.1",
+      "attrs": "26.1.0",
+      "cdsapi": "0.7.7",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "click": "8.5.0",
+      "cloudpickle": "3.1.2",
+      "contourpy": "1.4.0",
+      "cycler": "0.12.1",
+      "distlib": "0.4.3",
+      "ecmwf-datastores-client": "0.5.3",
+      "filelock": "4.1.0",
+      "fonttools": "4.66.1",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.1",
+      "joblib": "1.6.0",
+      "kiwisolver": "1.5.1",
+      "matplotlib": "3.11.2",
+      "micometeo": "0.1.0",
+      "multiurl": "0.3.9",
+      "narwhals": "2.27.1",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "osmium": "4.3.1",
+      "packaging": "26.3",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.4",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "pyarrow": "26.0.0",
+      "Pygments": "2.21.0",
+      "pyparsing": "3.3.3",
+      "pyproj": "3.8.0",
+      "pyshp": "3.1.6",
+      "pytest": "9.1.1",
+      "python-dateutil": "2.9.0.post0",
+      "python-discovery": "1.6.2",
+      "pytz": "2026.5",
+      "PyYAML": "6.0.3",
+      "rasterio": "1.5.2",
+      "requests": "2.34.2",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "shapely": "2.2.0",
+      "six": "1.17.0",
+      "threadpoolctl": "3.7.0",
+      "tqdm": "4.70.1",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.6"
+    }
+  },
+  "computer": {
+    "os": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "cpu_count": 10,
+    "processor": "arm",
+    "total_ram_bytes": 34359738368
+  },
+  "inputs": [
+    {
+      "path": "data/raw/p4b_bielefeld/Boletus_fruiting_triggers-V1.2.zip",
+      "sha256": "ee19dfc414676cbcd4993eca75ea77a9fd1607d18bc4e0bdb7094a4ab07ee07a",
+      "size_bytes": 712920
+    }
+  ],
+  "sources": [
+    {
+      "name": "Daily porcini counts, Brejon Lamartiniere and Hoffman",
+      "url": "https://zenodo.org/records/20591123/files/ebrejonl/Boletus_fruiting_triggers-V1.2.zip?download=1",
+      "licence": "CC BY 4.0",
+      "version": "Zenodo record 20591123, V1.2",
+      "downloaded_at": "2026-10-11T10:11:27Z",
+      "query": {
+        "record": "20591123"
+      }
+    },
+    {
+      "name": "ERA5 hourly time series era5_lat52.00_lon8.50.zip",
+      "url": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-timeseries",
+      "licence": "Copernicus licence for ERA5, free and open under CC-BY 4.0. Credit: Generated using Copernicus Climate Change Service information 2026, Hersbach et al.",
+      "version": "ERA5 reconstructed past weather, hourly, one 0.25 degree cell",
+      "downloaded_at": "2026-10-11T10:12:48Z",
+      "query": {
+        "variable": [
+          "2m_temperature",
+          "total_precipitation"
+        ],
+        "location": {
+          "latitude": 52.0,
+          "longitude": 8.5
+        },
+        "date": [
+          "2015-06-01/2024-12-31"
+        ],
+        "data_format": "csv"
+      }
+    }
+  ],
+  "outputs": [
+    "reports/p4b_bielefeld_scores.csv",
+    "reports/p4b_bielefeld_rules.csv"
+  ]
+}

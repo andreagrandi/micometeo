@@ -1,0 +1,25 @@
+set,family,check,value,lower_end,passed
+home_test,rules,S1,0.305,0.198,False
+home_test,rules,S2,-0.091,-0.228,False
+home_test,rules,S3,0.091,-0.011,False
+home_test,rules,S1 known spots weather,0.252,0.166,False
+home_test,logistic,S1,0.159,0.08,False
+home_test,logistic,S2,-0.238,-0.439,False
+home_test,logistic,S3,0.0,-0.072,False
+home_test,logistic,S1 known spots weather,0.19,0.109,False
+test,rules,S1,0.218,0.183,False
+test,rules,S2,0.024,-0.03,False
+test,rules,S3,0.012,-0.023,False
+test,rules,S1 known spots weather,0.235,0.199,False
+test,logistic,S1,0.37,0.294,True
+test,logistic,S2,0.176,0.054,True
+test,logistic,S3,0.001,-0.019,False
+test,logistic,S1 known spots weather,0.222,0.137,False
+tuning,rules,S1,0.207,0.154,False
+tuning,rules,S2,0.079,0.016,True
+tuning,rules,S3,0.002,-0.051,False
+tuning,rules,S1 known spots weather,0.241,0.182,False
+tuning,logistic,S1,0.481,0.384,True
+tuning,logistic,S2,0.353,0.221,True
+tuning,logistic,S3,0.075,0.007,True
+tuning,logistic,S1 known spots weather,0.148,0.082,False
