@@ -17,8 +17,9 @@ download_workers = 10
 # Set to true only to run on the weather files that exist. Rows in missing cells are then dropped.
 allow_missing_weather = false
 redraws = 1000
-# The final and home final sets are scored once, at the end. Keep false until the model is named.
-score_final = true
+# The final and home final sets are scored once, at the end. They were scored on 11 October 2026
+# in run 20261011T105039Z-5950ac, see reports/p4_benchmark.md. Keep false.
+score_final = false
 reports_dir = "reports"
 
 # Hand-written rules from published knowledge of porcini, decision D8. A square or day scores one point for each condition it meets.

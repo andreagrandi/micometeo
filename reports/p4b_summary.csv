@@ -1,8 +1,8 @@
 name,value
-dropped_cases_total,1192
-dropped_cases_dropped,20
-dropped_points_total,178800
-dropped_points_dropped,4810
+dropped_cases_total,1859
+dropped_cases_dropped,34
+dropped_points_total,278300
+dropped_points_dropped,7569
 leave_one_block_out_logistic_weather_top10,0.023
 leave_one_block_out_logistic_weather_top20,0.047
 leave_one_block_out_logistic_weather_n_cases,385
@@ -12,8 +12,8 @@ leave_one_block_out_logistic_habitat_n_cases,385
 leave_one_block_out_logistic_both_top10,0.109
 leave_one_block_out_logistic_both_top20,0.265
 leave_one_block_out_logistic_both_n_cases,385
-seconds_features,17.1
-seconds_models,0.6
-seconds_scores,0.5
-seconds_timing,2.7
-seconds_leave_one_block_out,2.1
+seconds_features,19.0
+seconds_models,0.9
+seconds_scores,0.8
+seconds_timing,3.5
+seconds_leave_one_block_out,3.0

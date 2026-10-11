@@ -26,6 +26,10 @@ not yet point to where.
 - The only model that passed the place test learned habitat from the finds.
   Its strongest input is flat ground, where roads and paths run. It most
   likely learned where people walk, not where porcini grow.
+- On the final set of 2025 and 2026, scored once at the end, that model fell
+  to 24 percent and failed. The weather rules from published studies reached
+  27 percent, and rain of the last 30 days put 41 percent of find days in the
+  top fifth.
 
 A5 is INCONCLUSIVE. See the last section.
 
@@ -35,7 +39,7 @@ A5 is INCONCLUSIVE. See the last section.
 |---|---|
 | Finds | P1 reliable finds, from 2017 on, decision D6 |
 | Test cases | 1,192: tuning 2017 to 2021 with 392, test 2022 to 2024 with 737, Tuscany 2017 to 2024 with 63 |
-| Final cases | 667 from 2025 and 2026, not used, see the last section |
+| Final cases | 667 from 2025 and 2026, scored once at the end |
 | Comparison places | 100 random forest squares and up to 50 known spots per case, drawn by P4a |
 | Weather | ERA5 reconstructed past weather, hourly, 380 cells of 25 km, summed into Italian days |
 | Habitat | Forest share and broadleaf share from the Copernicus 2018 forest map at 100 m, altitude and slope from the Copernicus 90 m elevation map |
@@ -162,8 +166,8 @@ in 10 years in one forest, so the ranges are wide.
 - The first habitat rule took its altitude band from tuning finds, which
   follows where people search. It was replaced, decision D8.
 - Rules, thresholds and the timing test were changed after test scores had been
-  seen. Each change is in `docs/decisions.md` with its reason. The final set has
-  not been seen.
+  seen. Each change is in `docs/decisions.md` with its reason. The final set was
+  scored once, after all of them.
 - Finds are blurred to about 1 km and record only where someone looked. No
   data here can check a prediction for a 50 m patch.
 - Gradient-boosted trees were not scored, decision D6: 392 tuning cases from 5
@@ -183,7 +187,8 @@ weather files take 296 MB in `data/raw/p4b_weather/`.
 
 Run records:
 
-- [p4b_benchmark 20261011T100307Z-c88cd0](runs/p4b_benchmark/20261011T100307Z-c88cd0.json), the results above.
+- [p4b_benchmark 20261011T105039Z-5950ac](runs/p4b_benchmark/20261011T105039Z-5950ac.json), the final run. The score tables in `reports/` come from it and hold the tuning, test and final rows.
+- [p4b_benchmark 20261011T100307Z-c88cd0](runs/p4b_benchmark/20261011T100307Z-c88cd0.json), the same settings without the final set. Its tuning and test scores match the final run.
 - [p4b_bielefeld 20261011T101125Z-c3dfaf](runs/p4b_bielefeld/20261011T101125Z-c3dfaf.json).
 - Earlier runs of the same day, before D8, D9 and D10:
   [094728Z-384ff4](runs/p4b_benchmark/20261011T094728Z-384ff4.json),
@@ -225,18 +230,55 @@ Named on 11 October 2026, before the final set was scored:
 All other scores of the run are reported too, but none of them can change the
 named models after the final scores are seen.
 
+## Final set, first and only use
+
+Run [20261011T105039Z-5950ac](runs/p4b_benchmark/20261011T105039Z-5950ac.json),
+from commit d82bb09 with `score_final = true`. The record marks uncommitted
+changes because two run records of earlier issues lay untracked in
+`reports/runs/`. Every setting of this run was committed. 642 of the 656
+comparison final cases were scored, in 64 groups. 14 cases from the last days
+before 9 October 2026 had no complete weather. The 11 Tuscan final cases are
+too few to read and are left out here.
+
+Place test, top 20 percent:
+
+| Prediction | Forest squares | Known spots |
+|---|---:|---:|
+| Random ranking | 20%, 16 to 22 | 21%, 19 to 24 |
+| Logistic regression, both, named | 24%, 19 to 28 | 23%, 19 to 27 |
+| Rules, weather | 27%, 24 to 31 | 26%, 23 to 30 |
+| Rules, weather and habitat | 28%, 25 to 31 | 26%, 23 to 30 |
+
+Timing test, top 20 percent:
+
+| Prediction | Find days |
+|---|---:|
+| Random ranking | 21%, 17 to 23 |
+| Rain of the last 14 days, named | 25%, 21 to 29 |
+| Rules, weather | 27%, 24 to 30 |
+| Rain of the last 30 days | 41%, 36 to 46 |
+
+- The named place model fails S1 on the final set: 24 percent, lower end 19.
+  What it learned from the 2017 to 2021 finds did not hold in 2025 and 2026.
+- The named timing choice fails T1 again, 25 percent, and passes T2.
+- The weather rules from published studies beat a random ranking in every
+  final column, with lower ends of 23 to 24 percent. They miss the 30 percent
+  bar of S1. Among known spots, where people already search, they reach 26
+  percent against 21, the first weather signal there.
+- Rain of the last 30 days puts 41 percent of find days in the top fifth. It
+  was not the named choice, so it counts only as a pointer for later work.
+
 ## Status of A5
 
-INCONCLUSIVE.
+INCONCLUSIVE, by the rule written in advance: a model met S1 and S2 on the test
+set but not on the final set.
 
-- By the written thresholds, logistic regression with weather and habitat meets
-  S1 and S2 on the test set. Its gain comes from habitat that follows where
-  people walk, it fails S3, and it stays near random among known spots. It does
-  not show that habitat points to porcini.
-- Weather does point to when. Rain of the last 30 days doubles the share of
-  porcini days in the top fifth at Bielefeld, and raises it from 21 to 30
-  percent in Switzerland and Austria. The rain of 14 days chosen in advance
-  misses the 30 percent bar of T1.
-- The final set of 2025 and 2026 was not used. Scoring it would test a model
-  that we already think measures search effort. It stays unseen for a later
-  test of rules built from published knowledge.
+- Logistic regression with weather and habitat met S1 and S2 on the test set
+  and failed S1 on the final set. Its gain came from habitat that follows where
+  people walk.
+- Weather points to when. Rain of the last 30 days doubles the share of
+  porcini days in the top fifth at Bielefeld, and puts 30 percent of find days
+  in the top fifth in the test set and 41 percent in the final set, against
+  about 20 for a random ranking.
+- The weather rules from published studies stay above a random ranking on
+  every set that was never used to set them, but below the 30 percent bar.
