@@ -1,0 +1,73 @@
+description = "P4b: score simple guesses, hand-written rules and logistic regression on the P4a test cases, with weather of the last 7 to 30 days and habitat."
+seed = 42
+time_limit_minutes = 30
+
+[settings]
+# Folder of the P4a run that holds cases.parquet and comparison_points.parquet.
+p4a_run_dir = "data/processed/p4_test_rules/20261011T082136Z-06759a"
+# Hourly weather files, one per 0.25 degree cell, and the 90 m elevation tiles.
+weather_dir = "data/raw/p4b_weather/era5_timeseries"
+dem_dir = "data/raw/p4b_weather/dem_glo90"
+# ERA5 ground height of each weather cell, used to move temperatures to the height of each square.
+orography_path = "data/raw/p4b_weather/era5_orography/era5_geopotential.grib"
+# Forest type map tiles that P4a downloaded.
+forest_tiles = "data/raw/p4_test_rules/forest_type_2018_100m_*.tif"
+weather_end_date = "2026-10-09"
+download_workers = 10
+# Set to true only to run on the weather files that exist. Rows in missing cells are then dropped.
+allow_missing_weather = false
+redraws = 1000
+# The final and home final sets are scored once, at the end. Keep false until the model is named.
+score_final = false
+reports_dir = "reports"
+
+# Hand-written rules from published knowledge of porcini, decision D8. A square or day scores one point for each condition it meets.
+# Piemonte sheets: Regione Piemonte, "Funghi & tartufi risorse del bosco", species sheets for Boletus edulis and Boletus aereus, 2019.
+# Preprint: Brejon Lamartiniere and Hoffman 2026, bioRxiv doi 10.64898/2025.12.12.693895, ten years of daily porcini counts in a German beech forest, not peer reviewed.
+[[settings.rules_weather]]
+column = "rain_8_30d_mm"
+op = ">="
+value = 30.0
+reason = "Piemonte sheet for B. edulis: at least 30 mm of rain, then porcini come up 12 to 15 days later. Rain from 30 to 8 days before covers that delay and the days the flush lasts."
+
+[[settings.rules_weather]]
+column = "temp_drop_c"
+op = ">="
+value = 1.0
+reason = "Piemonte sheets for B. edulis and B. aereus: fruiting needs a sudden cooling of the soil after a warm period. The sheet gives no number. 1 degree cooler over the last 7 days than over the last 30 is a stated choice, above day to day noise in a 7-day mean."
+
+[[settings.rules_weather]]
+column = "temp_14d_c"
+op = ">="
+value = 10.0
+reason = "Preprint: fruiting was concentrated at a 20-day mean temperature of 10 to 15 degrees, peak near 13. 14 days is the closest window in this table."
+
+[[settings.rules_weather]]
+column = "temp_14d_c"
+op = "<="
+value = 15.0
+reason = "Preprint, upper end of the 10 to 15 degree range."
+
+[[settings.rules_weather]]
+column = "day_of_year"
+op = ">="
+value = 166.0
+reason = "Piemonte sheet for B. edulis: from the second half of June. Day 166 is 15 June, 16 June in a leap year."
+
+[[settings.rules_weather]]
+column = "day_of_year"
+op = "<="
+value = 319.0
+reason = "Piemonte sheets: the season lasts until the end of October and exceptionally into November. Buentgen and others 2013, Global Change Biology 19, Swiss fruiting came about 12 days later after 1991. Day 319 is 15 November."
+
+[[settings.rules_habitat]]
+column = "altitude_m"
+op = ">="
+value = 200.0
+reason = "Piemonte sheet for B. aereus: from 200 m. B. edulis starts at 300 m."
+
+[[settings.rules_habitat]]
+column = "altitude_m"
+op = "<="
+value = 2000.0
+reason = "Piemonte sheet for B. edulis: up to the tree line, about 2,000 m. Acid, well-drained soil also matters, but P2 found the soil maps too uncertain to use."

@@ -1,0 +1,7 @@
+rule,porcini_days_meeting,other_days_meeting
+rain_8_30d_mm >= 30,0.948,0.776
+temp_drop_c >= 1,0.542,0.561
+temp_14d_c >= 10,0.91,0.803
+temp_14d_c <= 15,0.645,0.519
+day_of_year >= 166,1.0,1.0
+day_of_year <= 319,0.981,0.936

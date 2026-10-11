@@ -6,6 +6,7 @@ import json
 import multiprocessing
 import os
 import platform
+import resource
 import secrets
 import shutil
 import subprocess
@@ -124,6 +125,21 @@ def _computer() -> dict[str, Any]:
     }
 
 
+def _child_usage(*, before: resource.struct_rusage) -> dict[str, Any]:
+    """Return CPU seconds used by child processes since before, and their peak memory.
+
+    The peak is the largest child so far, which is the experiment process.
+    """
+    after = resource.getrusage(resource.RUSAGE_CHILDREN)
+    cpu = (after.ru_utime - before.ru_utime) + (after.ru_stime - before.ru_stime)
+    # macOS reports the peak in bytes, Linux in kilobytes.
+    unit = 1 if platform.system() == "Darwin" else 1024
+    return {
+        "cpu_seconds": round(cpu, 3),
+        "peak_memory_bytes": after.ru_maxrss * unit,
+    }
+
+
 def _stop(process: multiprocessing.process.BaseProcess) -> None:
     process.terminate()
     process.join(timeout=KILL_GRACE_SECONDS)
@@ -158,6 +174,7 @@ def run_experiment(
     state_path = temp_dir / "state.json"
     started = datetime.now(UTC)
     clock = time.monotonic()
+    usage_before = resource.getrusage(resource.RUSAGE_CHILDREN)
     ctx = multiprocessing.get_context("spawn")
     process = ctx.Process(
         target=_child_main,
@@ -181,6 +198,7 @@ def run_experiment(
         status = "timed_out"
         error = f"Run stopped after the time limit of {limit} seconds"
     finished = datetime.now(UTC)
+    usage = _child_usage(before=usage_before)
 
     state: dict[str, Any] = {}
     if state_path.is_file():
@@ -199,6 +217,7 @@ def run_experiment(
         "finished_at": _iso(finished),
         "duration_seconds": round(duration, 3),
         "time_limit_seconds": limit,
+        **usage,
         "seed": config.seed,
         "config": config.as_dict(),
         "git": git,

@@ -1,0 +1,689 @@
+{
+  "experiment": "p4b_benchmark",
+  "run_id": "20261011T094728Z-384ff4",
+  "command": "micometeo run p4b_benchmark",
+  "status": "completed",
+  "error": null,
+  "started_at": "2026-10-11T09:47:28Z",
+  "finished_at": "2026-10-11T09:47:52Z",
+  "duration_seconds": 23.866,
+  "time_limit_seconds": 1800,
+  "cpu_seconds": 28.675,
+  "peak_memory_bytes": 1164345344,
+  "seed": 42,
+  "config": {
+    "description": "P4b: score simple guesses, hand-written rules and logistic regression on the P4a test cases, with weather of the last 7 to 30 days and habitat.",
+    "seed": 42,
+    "time_limit_minutes": 30,
+    "settings": {
+      "p4a_run_dir": "data/processed/p4_test_rules/20261011T082136Z-06759a",
+      "weather_dir": "data/raw/p4b_weather/era5_timeseries",
+      "dem_dir": "data/raw/p4b_weather/dem_glo90",
+      "forest_tiles": "data/raw/p4_test_rules/forest_type_2018_100m_*.tif",
+      "weather_end_date": "2026-10-09",
+      "download_workers": 10,
+      "allow_missing_weather": false,
+      "redraws": 1000,
+      "score_final": false,
+      "reports_dir": "reports",
+      "rules_weather": [
+        {
+          "column": "rain_30d_mm",
+          "op": ">=",
+          "value": 60.0,
+          "reason": "Brejon Lamartiniere and Hoffman 2026, bioRxiv preprint doi 10.64898/2025.12.12.693895, not peer reviewed: porcini fruiting in a German beech forest was concentrated at 2 to 4 mm of rain a day over the previous weeks. 2 mm a day over 30 days is 60 mm."
+        },
+        {
+          "column": "temp_14d_c",
+          "op": ">=",
+          "value": 10.0,
+          "reason": "Same preprint: fruiting was concentrated at a 20-day mean temperature of 10 to 15 degrees. 14 days is the closest window in this table."
+        },
+        {
+          "column": "temp_14d_c",
+          "op": "<=",
+          "value": 15.0,
+          "reason": "Same preprint, upper end of the 10 to 15 degree range."
+        }
+      ],
+      "rules_habitat": [
+        {
+          "column": "altitude_m",
+          "op": ">=",
+          "value": 455.0,
+          "reason": "10th percentile of the altitude of tuning finds."
+        },
+        {
+          "column": "altitude_m",
+          "op": "<=",
+          "value": 1557.0,
+          "reason": "90th percentile of the altitude of tuning finds. Forest share is left out: tuning finds have less forest than random forest squares, median 0.56 against 0.68."
+        }
+      ]
+    }
+  },
+  "git": {
+    "commit": "ae9c20d8464230899bbc3e02d77e83a37df9b2f4",
+    "uncommitted_changes": true
+  },
+  "versions": {
+    "python": "3.13.1",
+    "micometeo": "0.1.0",
+    "packages": {
+      "affine": "3.0.1",
+      "attrs": "26.1.0",
+      "cdsapi": "0.7.7",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "click": "8.5.0",
+      "cloudpickle": "3.1.2",
+      "contourpy": "1.4.0",
+      "cycler": "0.12.1",
+      "distlib": "0.4.3",
+      "ecmwf-datastores-client": "0.5.3",
+      "filelock": "4.1.0",
+      "fonttools": "4.66.1",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.1",
+      "joblib": "1.6.0",
+      "kiwisolver": "1.5.1",
+      "matplotlib": "3.11.2",
+      "micometeo": "0.1.0",
+      "multiurl": "0.3.9",
+      "narwhals": "2.27.1",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "osmium": "4.3.1",
+      "packaging": "26.3",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.4",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "pyarrow": "26.0.0",
+      "Pygments": "2.21.0",
+      "pyparsing": "3.3.3",
+      "pyproj": "3.8.0",
+      "pyshp": "3.1.6",
+      "pytest": "9.1.1",
+      "python-dateutil": "2.9.0.post0",
+      "python-discovery": "1.6.2",
+      "pytz": "2026.5",
+      "PyYAML": "6.0.3",
+      "rasterio": "1.5.2",
+      "requests": "2.34.2",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "shapely": "2.2.0",
+      "six": "1.17.0",
+      "threadpoolctl": "3.7.0",
+      "tqdm": "4.70.1",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.6"
+    }
+  },
+  "computer": {
+    "os": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "cpu_count": 10,
+    "processor": "arm",
+    "total_ram_bytes": 34359738368
+  },
+  "inputs": [
+    {
+      "path": "data/processed/p4_test_rules/20261011T082136Z-06759a/cases.parquet",
+      "sha256": "560600ad3fce9a47ac93c57157a5ad3c287c3f864a34e121113806ae176e1a47",
+      "size_bytes": 207181
+    },
+    {
+      "path": "data/processed/p4_test_rules/20261011T082136Z-06759a/comparison_points.parquet",
+      "sha256": "82304f5c1d78f870dee905def1b90eaac8593d2d43225ad47ac3403978aaf4f1",
+      "size_bytes": 12163445
+    }
+  ],
+  "sources": [
+    {
+      "name": "Copernicus forest type 2018 tile",
+      "url": "https://image.discomap.eea.europa.eu/arcgis/rest/services/GioLandPublic/HRL_ForestType_2018/ImageServer/exportImage",
+      "licence": "Copernicus Land Monitoring Service data, free and open access under EU Regulation 1159/2013. Credit: \u00a9 European Union, Copernicus Land Monitoring Service 2018, European Environment Agency",
+      "version": "Forest type 2018 from the EEA image service",
+      "downloaded_at": "2026-10-11T08:21:45Z",
+      "query": {
+        "bbox": "4006000,2522500,4406000,2904500",
+        "bboxSR": 3035,
+        "imageSR": 3035,
+        "size": "4000,3820",
+        "format": "tiff",
+        "pixelType": "U8",
+        "interpolation": "RSP_NearestNeighbor",
+        "f": "image"
+      }
+    },
+    {
+      "name": "Copernicus forest type 2018 tile",
+      "url": "https://image.discomap.eea.europa.eu/arcgis/rest/services/GioLandPublic/HRL_ForestType_2018/ImageServer/exportImage",
+      "licence": "Copernicus Land Monitoring Service data, free and open access under EU Regulation 1159/2013. Credit: \u00a9 European Union, Copernicus Land Monitoring Service 2018, European Environment Agency",
+      "version": "Forest type 2018 from the EEA image service",
+      "downloaded_at": "2026-10-11T08:21:40Z",
+      "query": {
+        "bbox": "4295000,2125500,4549500,2378000",
+        "bboxSR": 3035,
+        "imageSR": 3035,
+        "size": "2545,2525",
+        "format": "tiff",
+        "pixelType": "U8",
+        "interpolation": "RSP_NearestNeighbor",
+        "f": "image"
+      }
+    },
+    {
+      "name": "Copernicus forest type 2018 tile",
+      "url": "https://image.discomap.eea.europa.eu/arcgis/rest/services/GioLandPublic/HRL_ForestType_2018/ImageServer/exportImage",
+      "licence": "Copernicus Land Monitoring Service data, free and open access under EU Regulation 1159/2013. Credit: \u00a9 European Union, Copernicus Land Monitoring Service 2018, European Environment Agency",
+      "version": "Forest type 2018 from the EEA image service",
+      "downloaded_at": "2026-10-11T08:21:49Z",
+      "query": {
+        "bbox": "4406000,2522500,4806000,2904500",
+        "bboxSR": 3035,
+        "imageSR": 3035,
+        "size": "4000,3820",
+        "format": "tiff",
+        "pixelType": "U8",
+        "interpolation": "RSP_NearestNeighbor",
+        "f": "image"
+      }
+    },
+    {
+      "name": "Copernicus forest type 2018 tile",
+      "url": "https://image.discomap.eea.europa.eu/arcgis/rest/services/GioLandPublic/HRL_ForestType_2018/ImageServer/exportImage",
+      "licence": "Copernicus Land Monitoring Service data, free and open access under EU Regulation 1159/2013. Credit: \u00a9 European Union, Copernicus Land Monitoring Service 2018, European Environment Agency",
+      "version": "Forest type 2018 from the EEA image service",
+      "downloaded_at": "2026-10-11T08:21:50Z",
+      "query": {
+        "bbox": "4806000,2522500,4877500,2904500",
+        "bboxSR": 3035,
+        "imageSR": 3035,
+        "size": "715,3820",
+        "format": "tiff",
+        "pixelType": "U8",
+        "interpolation": "RSP_NearestNeighbor",
+        "f": "image"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N42_00_E010_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N42_00_E010_00_DEM/Copernicus_DSM_COG_30_N42_00_E010_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:30Z",
+      "query": {
+        "tile": "N42_00_E010_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N42_00_E011_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N42_00_E011_00_DEM/Copernicus_DSM_COG_30_N42_00_E011_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:31Z",
+      "query": {
+        "tile": "N42_00_E011_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N43_00_E010_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N43_00_E010_00_DEM/Copernicus_DSM_COG_30_N43_00_E010_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:31Z",
+      "query": {
+        "tile": "N43_00_E010_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N43_00_E011_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N43_00_E011_00_DEM/Copernicus_DSM_COG_30_N43_00_E011_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:32Z",
+      "query": {
+        "tile": "N43_00_E011_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N43_00_E012_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N43_00_E012_00_DEM/Copernicus_DSM_COG_30_N43_00_E012_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:33Z",
+      "query": {
+        "tile": "N43_00_E012_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N44_00_E009_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N44_00_E009_00_DEM/Copernicus_DSM_COG_30_N44_00_E009_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:33Z",
+      "query": {
+        "tile": "N44_00_E009_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N44_00_E010_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N44_00_E010_00_DEM/Copernicus_DSM_COG_30_N44_00_E010_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:34Z",
+      "query": {
+        "tile": "N44_00_E010_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N44_00_E011_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N44_00_E011_00_DEM/Copernicus_DSM_COG_30_N44_00_E011_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:35Z",
+      "query": {
+        "tile": "N44_00_E011_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N44_00_E012_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N44_00_E012_00_DEM/Copernicus_DSM_COG_30_N44_00_E012_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:35Z",
+      "query": {
+        "tile": "N44_00_E012_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N45_00_E007_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N45_00_E007_00_DEM/Copernicus_DSM_COG_30_N45_00_E007_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:36Z",
+      "query": {
+        "tile": "N45_00_E007_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N45_00_E008_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N45_00_E008_00_DEM/Copernicus_DSM_COG_30_N45_00_E008_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:37Z",
+      "query": {
+        "tile": "N45_00_E008_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N45_00_E009_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N45_00_E009_00_DEM/Copernicus_DSM_COG_30_N45_00_E009_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:38Z",
+      "query": {
+        "tile": "N45_00_E009_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N46_00_E005_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N46_00_E005_00_DEM/Copernicus_DSM_COG_30_N46_00_E005_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:39Z",
+      "query": {
+        "tile": "N46_00_E005_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N46_00_E006_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N46_00_E006_00_DEM/Copernicus_DSM_COG_30_N46_00_E006_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:39Z",
+      "query": {
+        "tile": "N46_00_E006_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N46_00_E007_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N46_00_E007_00_DEM/Copernicus_DSM_COG_30_N46_00_E007_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:40Z",
+      "query": {
+        "tile": "N46_00_E007_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N46_00_E008_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N46_00_E008_00_DEM/Copernicus_DSM_COG_30_N46_00_E008_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:41Z",
+      "query": {
+        "tile": "N46_00_E008_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N46_00_E009_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N46_00_E009_00_DEM/Copernicus_DSM_COG_30_N46_00_E009_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:42Z",
+      "query": {
+        "tile": "N46_00_E009_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N46_00_E010_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N46_00_E010_00_DEM/Copernicus_DSM_COG_30_N46_00_E010_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:42Z",
+      "query": {
+        "tile": "N46_00_E010_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N46_00_E011_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N46_00_E011_00_DEM/Copernicus_DSM_COG_30_N46_00_E011_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:43Z",
+      "query": {
+        "tile": "N46_00_E011_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N46_00_E012_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N46_00_E012_00_DEM/Copernicus_DSM_COG_30_N46_00_E012_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:44Z",
+      "query": {
+        "tile": "N46_00_E012_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N46_00_E013_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N46_00_E013_00_DEM/Copernicus_DSM_COG_30_N46_00_E013_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:45Z",
+      "query": {
+        "tile": "N46_00_E013_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N46_00_E014_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N46_00_E014_00_DEM/Copernicus_DSM_COG_30_N46_00_E014_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:46Z",
+      "query": {
+        "tile": "N46_00_E014_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N46_00_E015_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N46_00_E015_00_DEM/Copernicus_DSM_COG_30_N46_00_E015_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:46Z",
+      "query": {
+        "tile": "N46_00_E015_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N46_00_E016_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N46_00_E016_00_DEM/Copernicus_DSM_COG_30_N46_00_E016_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:47Z",
+      "query": {
+        "tile": "N46_00_E016_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N47_00_E006_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N47_00_E006_00_DEM/Copernicus_DSM_COG_30_N47_00_E006_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:48Z",
+      "query": {
+        "tile": "N47_00_E006_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N47_00_E007_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N47_00_E007_00_DEM/Copernicus_DSM_COG_30_N47_00_E007_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:49Z",
+      "query": {
+        "tile": "N47_00_E007_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N47_00_E008_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N47_00_E008_00_DEM/Copernicus_DSM_COG_30_N47_00_E008_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:49Z",
+      "query": {
+        "tile": "N47_00_E008_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N47_00_E009_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N47_00_E009_00_DEM/Copernicus_DSM_COG_30_N47_00_E009_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:50Z",
+      "query": {
+        "tile": "N47_00_E009_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N47_00_E010_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N47_00_E010_00_DEM/Copernicus_DSM_COG_30_N47_00_E010_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:51Z",
+      "query": {
+        "tile": "N47_00_E010_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N47_00_E011_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N47_00_E011_00_DEM/Copernicus_DSM_COG_30_N47_00_E011_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:52Z",
+      "query": {
+        "tile": "N47_00_E011_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N47_00_E012_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N47_00_E012_00_DEM/Copernicus_DSM_COG_30_N47_00_E012_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:52Z",
+      "query": {
+        "tile": "N47_00_E012_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N47_00_E013_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N47_00_E013_00_DEM/Copernicus_DSM_COG_30_N47_00_E013_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:53Z",
+      "query": {
+        "tile": "N47_00_E013_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N47_00_E014_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N47_00_E014_00_DEM/Copernicus_DSM_COG_30_N47_00_E014_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:54Z",
+      "query": {
+        "tile": "N47_00_E014_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N47_00_E015_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N47_00_E015_00_DEM/Copernicus_DSM_COG_30_N47_00_E015_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:55Z",
+      "query": {
+        "tile": "N47_00_E015_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N47_00_E016_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N47_00_E016_00_DEM/Copernicus_DSM_COG_30_N47_00_E016_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:56Z",
+      "query": {
+        "tile": "N47_00_E016_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N47_00_E017_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N47_00_E017_00_DEM/Copernicus_DSM_COG_30_N47_00_E017_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:56Z",
+      "query": {
+        "tile": "N47_00_E017_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N48_00_E012_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N48_00_E012_00_DEM/Copernicus_DSM_COG_30_N48_00_E012_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:57Z",
+      "query": {
+        "tile": "N48_00_E012_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N48_00_E013_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N48_00_E013_00_DEM/Copernicus_DSM_COG_30_N48_00_E013_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:58Z",
+      "query": {
+        "tile": "N48_00_E013_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N48_00_E014_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N48_00_E014_00_DEM/Copernicus_DSM_COG_30_N48_00_E014_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:59Z",
+      "query": {
+        "tile": "N48_00_E014_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N48_00_E015_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N48_00_E015_00_DEM/Copernicus_DSM_COG_30_N48_00_E015_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:58:59Z",
+      "query": {
+        "tile": "N48_00_E015_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N48_00_E016_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N48_00_E016_00_DEM/Copernicus_DSM_COG_30_N48_00_E016_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:59:00Z",
+      "query": {
+        "tile": "N48_00_E016_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N48_00_E017_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N48_00_E017_00_DEM/Copernicus_DSM_COG_30_N48_00_E017_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:59:01Z",
+      "query": {
+        "tile": "N48_00_E017_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N49_00_E014_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N49_00_E014_00_DEM/Copernicus_DSM_COG_30_N49_00_E014_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:59:02Z",
+      "query": {
+        "tile": "N49_00_E014_00"
+      }
+    },
+    {
+      "name": "Copernicus DEM GLO-90 tile copernicus_dem_glo90_N49_00_E015_00",
+      "url": "https://copernicus-dem-90m.s3.amazonaws.com/Copernicus_DSM_COG_30_N49_00_E015_00_DEM/Copernicus_DSM_COG_30_N49_00_E015_00_DEM.tif",
+      "licence": "Copernicus WorldDEM-90 licence, free of charge and worldwide. Derived data must say: produced using Copernicus WorldDEM-90 \u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "version": "Copernicus DEM GLO-90, 3 arc second",
+      "downloaded_at": "2026-10-11T08:59:02Z",
+      "query": {
+        "tile": "N49_00_E015_00"
+      }
+    },
+    {
+      "name": "ERA5 hourly time series, 380 cells of 0.25 degrees",
+      "url": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-timeseries",
+      "licence": "Copernicus licence for ERA5, free and open under CC-BY 4.0. Credit: Generated using Copernicus Climate Change Service information 2026, Hersbach et al.",
+      "version": "ERA5 reconstructed past weather, hourly, one 0.25 degree cell",
+      "downloaded_at": "2026-10-11T09:35:38+00:00",
+      "query": {
+        "example_request": {
+          "variable": [
+            "2m_temperature",
+            "total_precipitation"
+          ],
+          "location": {
+            "latitude": 42.25,
+            "longitude": 11.0
+          },
+          "date": [
+            "2016-12-01/2026-10-09"
+          ],
+          "data_format": "csv"
+        },
+        "cells": 380
+      }
+    }
+  ],
+  "outputs": [
+    "data/processed/p4b_benchmark/20261011T094728Z-384ff4/features.parquet",
+    "reports/p4b_scores.csv",
+    "reports/p4b_checks.csv",
+    "reports/p4b_timing_scores.csv",
+    "reports/p4b_timing_checks.csv",
+    "reports/p4b_coefficients.csv",
+    "reports/p4b_summary.csv"
+  ]
+}

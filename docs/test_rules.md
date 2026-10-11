@@ -73,6 +73,23 @@ Porcini seasons end before winter, so a season never runs across two sets.
 Forecasts published in the past exist from March 2024, see issue #7. So the
 7-day forecast test has 2024 in the test set and 2025 to 2026 in the final set.
 
+### Only cases from 2017 on are scored
+
+Decision D6 of 11 October 2026, before any prediction was scored. Issue #9
+scores only cases from 2017 on. Tuning uses 2017 to 2021, test 2022 to 2024 and
+final 2025 and 2026. The split of blocks and the comparison points stay as the
+script drew them. Cases before 2017 are not scored.
+
+- P3 found that the weather values a real morning needs exist only from 2017.
+  A test from 2017 uses the kind of weather the app could see.
+- Weather for every comparison point comes from about 380 cells of 25 km. Each
+  cell is one download, and ten years keep the download short.
+- The test and final sets keep 737 and 656 cases, well above the 200 and 100
+  below which A5 is INCONCLUSIVE.
+- Tuning drops to 392 cases from 5 seasons. That is enough to set the
+  thresholds of hand-written rules and to fit logistic regression, but not a
+  more flexible model, see the end of "Success thresholds".
+
 ## Which set a case belongs to
 
 The first rule that matches wins.
@@ -180,6 +197,12 @@ comparison point. The rank position of the case is the share of comparison
 points with a higher value, counting ties as half. A rank position of 0 means
 the find's square came first.
 
+Decision D9: when the find ties with other places, the top 10 and top 20
+percent scores count the tie as a random tie break. A find tied with 40 percent
+of the places, with none above, counts as half a hit for the top 20 percent.
+Counting a tie as half the span would put it at 0.20, never inside. Models
+with continuous values do not tie, so only the hand-written rules change.
+
 The main scores, for each set and each kind of comparison point:
 
 - Top 10 percent: the share of cases with a rank position below 0.10.
@@ -198,8 +221,9 @@ between two predictions is computed on the same redrawn groups.
 The simple guesses are:
 
 - A random ranking.
-- Where it rained most in the 7 days before the case's day. Issue #9 picks the
-  window and writes it down before scoring.
+- Where it rained most in the 7 days before the case's day. The window is the 7
+  days that end the day before, from reconstructed past weather, fixed before
+  scoring.
 - Best habitat only, if the P2 values support it.
 
 ## Success thresholds
@@ -232,12 +256,11 @@ anything on top of habitat. The home test and home final scores are reported
 with their ranges. They do not change the status of A5. With about 40 cases a
 set, they show at most whether a model clearly fails at home.
 
-Issue #9 may score gradient-boosted trees, LightGBM, only when all of these
-hold:
-
-- Logistic regression meets S1 on the comparison test set.
-- The tuning set has at least 1,000 cases.
-- Tuning and scoring fit in one 30 minute run on a laptop CPU.
+Issue #9 does not score gradient-boosted trees, LightGBM, a more flexible
+machine learning model. Decision D6 replaced the earlier conditions. With 392
+tuning cases from 5 seasons, such a model would learn the quirks of those
+seasons rather than a rule that holds in other years. Hand-written rules and
+logistic regression fit the size of the data.
 
 ## Tuning
 
@@ -249,6 +272,35 @@ hold:
   setting after a test score has been seen goes in `docs/decisions.md`.
 - Before the final run, the report of issue #9 names the one model that will be
   scored on the final set.
+
+## Timing test
+
+Decision D7 of 11 October 2026, added after the first test scores and before
+any timing score was seen. The comparison above ranks places on one day. Every
+find day is already a day after rain in most of the region, and rain comes in
+cells of 25 km, so that comparison cannot show whether rain decides when
+porcini appear. The timing test asks that question.
+
+- For each case, the comparison days are every other day from 45 days before to
+  45 days after the case's day, in the same square. A day with a find in the
+  same square is never a comparison day. Days without complete weather are
+  left out.
+- The find day is ranked among those days, with the same rank position, top
+  10 and top 20 percent scores and uncertainty ranges as above.
+- Simple guesses: a random ranking, and a calendar guess that ranks a day
+  higher the closer it is to the middle day of the year of tuning finds. Rain
+  must beat the calendar, or it only shows the season.
+- Weather predictions: rain of the last 7, 14 and 30 days on their own, the
+  hand-written weather rules, and logistic regression on the six weather
+  values, fitted on tuning find days against their comparison days.
+- T1: the best weather prediction, chosen on the tuning set, has a top 20
+  percent score of at least 30 percent on the test set, with the lower end of
+  its range above 20 percent.
+- T2: it beats the calendar guess by at least 5 points, with the lower end of
+  the range of the difference above 0.
+
+People also search more after rain, so a timing signal is partly a signal of
+when people go out. The report says so next to the result.
 
 ## The final set
 
