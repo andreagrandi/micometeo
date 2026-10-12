@@ -163,6 +163,26 @@ They cover missing source pixels, mixed classes, exact threshold decisions,
 repeat identity, interrupted downloads, source metadata, unchanged chunk
 layouts and atomic publication of the simplified layer.
 
+## Phone drawing measurement
+
+On 12 October 2026, the owner tested the unchanged 2 km forest layer on an
+iPhone 15 using Safari 27.0.1 over the same Wi-Fi as the serving laptop.
+The three initial loads took 4,858, 5,127 and 5,202 ms. Drawing alone took
+4,321, 4,610 and 4,559 ms. The owner described the initial load as a bit slow
+but found it acceptable for the whole Italy map. All three loads exceeded
+the three-second target in #69.
+
+The owner expects normal use to start zoomed in around the user's area.
+This national overview check does not measure that local starting view.
+Keep the current layer and assess normal loading in the application before
+changing its geometry or file format.
+
+The layer still contains 74,047 polygons, with 22,169,307 raw bytes and
+3,377,975 gzip bytes. It contains forest fractions only, with no estimates.
+The [API measurement record](../../docs/api.md#national-forest-measurement)
+contains the command, download and reading times, device details and report
+checksum. No forest artifact change has been made.
+
 ## Redistribution and credit
 
 The source is available under the Copernicus free and open access terms in
