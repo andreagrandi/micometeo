@@ -1,0 +1,8 @@
+{
+  "name": "micometeo-map-checks",
+  "private": true,
+  "dependencies": {
+    "maplibre-gl": "4.7.1",
+    "playwright": "1.64.0"
+  }
+}

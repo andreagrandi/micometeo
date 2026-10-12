@@ -222,6 +222,7 @@ __marimo__/
 # Micometeo project
 data/raw/
 data/processed/
+tools/map_checks/node_modules/
 .cache/
 cache/
 !.envrc.example
