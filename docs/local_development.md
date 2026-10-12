@@ -140,14 +140,20 @@ Network access is needed to install uv and Python, resolve PyPI packages, fetch
 the pre-commit hook repositories and pull the PostGIS image. The checks do not
 use that network access for provider calls.
 
-### File and investigation checks without a database
+### File checks without a database
 
-These commands match the file and investigation jobs in GitHub Actions:
+These commands match the file checks job in GitHub Actions:
 
 ```sh
 uv sync --locked
 uv run pre-commit run --all-files
 uv run pre-commit run gitleaks-history --hook-stage manual --all-files
+```
+
+The Epic 1 experiment tests do not run in GitHub Actions. The experiments are
+finished research code. Run them by hand only when you change that code:
+
+```sh
 uv run pytest --ignore=tests/app
 ```
 
