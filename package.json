@@ -1,0 +1,16 @@
+{
+  "name": "micometeo-web-ui",
+  "private": true,
+  "scripts": {
+    "build:css": "npm run build:map-css && npm run build:landing-css",
+    "build:map-css": "postcss assets/css/input.css --no-map -o apps/application/web_ui/static/web_ui/app.css",
+    "build:landing-css": "tailwindcss -c tailwind.landing.config.cjs -i assets/css/landing.css -o apps/application/web_ui/static/web_ui/landing.css"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.6",
+    "postcss-cli": "^12.0.0",
+    "postcss-import": "^17.0.0",
+    "tailwindcss": "^3.4.19"
+  }
+}

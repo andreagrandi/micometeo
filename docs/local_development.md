@@ -30,7 +30,7 @@ shell. The lockfile uses Python 3.14, which `uv sync` installs if needed.
 Install the native libraries that GeoDjango uses on macOS:
 
 ```sh
-brew install gdal geos proj libpq
+brew install gdal geos proj libpq gettext
 ```
 
 Copy the environment template only when `.envrc` does not exist. This keeps an
@@ -320,8 +320,32 @@ pass. Check the workflow result after an authorized publication.
 
 Provider tests use fixed or generated responses. Later national acceptance with
 real weather and observation downloads belongs to #61 and needs its own data
-and credentials. Issue #55 will add the real CSS, translation and browser
-checks when that work exists.
+and credentials. The web UI serves `/` and `/map/`. Fixture pages are disabled
+by default and are enabled with `MICOMETEO_UI_FIXTURE_PAGES=true` for browser
+checks.
+
+### Web UI checks
+
+```sh
+uv sync --locked
+npm ci
+npm run build:css
+git diff --exit-code -- apps/application/web_ui/static/web_ui/app.css apps/application/web_ui/static/web_ui/landing.css
+msgfmt --check apps/application/web_ui/locale/it/LC_MESSAGES/django.po
+msgfmt --check apps/application/web_ui/locale/en/LC_MESSAGES/django.po
+msgfmt --check apps/application/web_ui/landing_locale/it/LC_MESSAGES/django.po
+uv run python apps/application/manage.py compilemessages --ignore .venv --locale it --locale en
+uv run playwright install chromium webkit
+uv run pytest tests/e2e
+```
+
+The e2e fixture starts Django on a free loopback port with
+`MICOMETEO_UI_FIXTURE_PAGES=true`. Set `MICOMETEO_BASE_URL` to reuse an
+existing local server. The fixture routes contain labelled sample states and
+values for checks only. The normal map shell does not copy mockup data into the
+product page. The e2e server is a subprocess and does not use pytest-django's
+test database, so running it with the full suite does not create a second test
+database.
 
 ### Full local suite
 

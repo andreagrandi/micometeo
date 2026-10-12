@@ -10,6 +10,30 @@ permissions:
   contents: read
 
 jobs:
+  frontend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install translation tools
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y gettext
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Build CSS
+        run: npm run build:css
+      - name: Check generated CSS is committed
+        run: git diff --exit-code -- apps/application/web_ui/static/web_ui/app.css apps/application/web_ui/static/web_ui/landing.css
+      - name: Check translation catalogs
+        run: |
+          msgfmt --check apps/application/web_ui/locale/it/LC_MESSAGES/django.po
+          msgfmt --check apps/application/web_ui/locale/en/LC_MESSAGES/django.po
+          msgfmt --check apps/application/web_ui/landing_locale/it/LC_MESSAGES/django.po
+
   file-checks:
     runs-on: ubuntu-latest
     steps:
@@ -61,7 +85,8 @@ jobs:
             gdal-bin \
             libgdal-dev \
             libgeos-dev \
-            libproj-dev
+            libproj-dev \
+            gettext
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up uv
@@ -71,6 +96,8 @@ jobs:
           python-version: "3.14"
       - name: Install locked environment
         run: uv sync --locked
+      - name: Compile translation catalogs
+        run: uv run python apps/application/manage.py compilemessages --ignore .venv --locale it --locale en
       - name: Check Django configuration
         run: uv run python apps/application/manage.py check
       - name: Check migrations
@@ -79,3 +106,52 @@ jobs:
         run: uv run python apps/application/manage.py migrate --noinput
       - name: Run application and worker tests
         run: uv run pytest tests/app
+
+  browser-tests:
+    runs-on: ubuntu-latest
+    services:
+      database:
+        image: imresamu/postgis:17-3.5-bookworm@sha256:35fe7dceda62bfe7d2965b0ba78d915ff9f901b5e0466d633ecc58421b5b5210
+        env:
+          POSTGRES_DB: micometeo
+          POSTGRES_USER: micometeo
+          POSTGRES_PASSWORD: replace-with-a-ci-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U micometeo -d micometeo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      MICOMETEO_DJANGO_SECRET_KEY: django-insecure-ci-placeholder
+      MICOMETEO_DB_NAME: micometeo
+      MICOMETEO_DB_USER: micometeo
+      MICOMETEO_DB_PASSWORD: replace-with-a-ci-password
+      MICOMETEO_DB_HOST: 127.0.0.1
+      MICOMETEO_DB_PORT: "5432"
+      MICOMETEO_UI_FIXTURE_PAGES: "true"
+      MICOMETEO_DEBUG: "true"
+      MICOMETEO_BASE_URL: "http://127.0.0.1:8010"
+    steps:
+      - name: Install geographic libraries
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y gdal-bin libgdal-dev libgeos-dev libproj-dev gettext
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up uv
+        uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9
+        with:
+          enable-cache: true
+          python-version: "3.14"
+      - name: Install locked environment
+        run: uv sync --locked
+      - name: Compile translation catalogs
+        run: uv run python apps/application/manage.py compilemessages --ignore .venv --locale it --locale en
+      - name: Install browsers
+        run: uv run playwright install --with-deps chromium webkit
+      - name: Apply migrations
+        run: uv run python apps/application/manage.py migrate --noinput
+      - name: Start application
+        run: uv run python apps/application/manage.py runserver 127.0.0.1:8010 --noreload &
+      - name: Run browser checks
+        run: uv run pytest tests/e2e

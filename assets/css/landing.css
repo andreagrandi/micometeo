@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  .landing-page {
+    background: #fff9ed;
+    color: #1d1b15;
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .landing-page *,
+  .landing-page *::before,
+  .landing-page *::after {
+    box-sizing: border-box;
+  }
+
+  .landing-page a {
+    text-decoration: none;
+  }
+
+  .landing-page .num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .landing-page .language-switch {
+    align-items: center;
+    display: flex;
+    gap: 0.25rem;
+    white-space: nowrap;
+  }
+
+  .landing-page .language-switch button {
+    background: transparent;
+    border: 0;
+    color: inherit;
+    padding: 0.25rem 0.125rem;
+  }
+
+  .landing-page .language-switch button.is-current {
+    font-weight: 700;
+  }
+
+  .landing-page .language-icon {
+    display: inline-flex;
+    flex: 0 0 20px;
+    height: 20px;
+    width: 20px;
+  }
+}

@@ -30,6 +30,7 @@ dev = [
     "pytest>=8.0",
     "pytest-django>=4.11",
     "pytest-socket>=0.7.0",
+    "pytest-playwright>=0.7.1",
 ]
 
 [build-system]
@@ -41,6 +42,10 @@ packages = ["src/micometeo"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
-addopts = ["--allow-hosts=127.0.0.1,127.0.1.1,::1"]
+addopts = [
+    "--allow-hosts=127.0.0.1,127.0.1.1,::1",
+    "--browser=chromium",
+    "--browser=webkit",
+]
 testpaths = ["tests"]
 pythonpath = ["src", "apps/api", "apps/application"]
