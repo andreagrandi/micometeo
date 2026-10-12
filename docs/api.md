@@ -84,6 +84,20 @@ A missing old-rain input has `state: "unavailable"` and
 normally produces values from 5 through 95. The storage and API contracts
 still preserve a valid stored zero.
 
+When no saved estimate exists and weather is still unavailable, `reason` and
+`unavailable_reason` use the same public value. The service maps both
+`fetch_pending` and `fetch_running` to `pending`.
+
+| Reason | Message key | Retry guidance |
+| --- | --- | --- |
+| `pending` | `estimate.result_not_ready` | The fetch is queued or running. Reload after a short delay. |
+| `visitor_limit` | `estimate.visitor_limit` | Wait at least 60 seconds before trying again. |
+| `quota_exhausted` | `estimate.quota_exhausted` | Do not poll automatically. Try later after the provider allowance is available. |
+| `provider_unavailable` | `estimate.provider_unavailable` | Reload later. The worker applies its existing delayed retry when appropriate. |
+| `provider_refused` | `estimate.provider_refused` | Do not poll automatically. Reload later. Some refusals need the server to reopen the request, and a 429 retry can use this reason. |
+
+An unknown weather reason uses `pending` and `estimate.result_not_ready`.
+
 The provisional view limit is 60 km on each axis and 16,000 squares. Bounds
 must be finite numbers in coordinate range, with west before east and south
 before north. A broader view returns HTTP 400 before any weather work:
@@ -108,11 +122,12 @@ The map waits at most three seconds for weather. It reads stored estimate
 rows after that lookup. Calculation happens in the worker.
 
 The server cache includes the date, bounds, forest build, weather state,
-snapshot identities and estimate update UUIDs. Responses support gzip.
-Map and forest-layer responses use `Cache-Control: no-cache`, so a browser
-must revalidate them. Their ETags change with the selected update or artifact.
-Full weather histories and contributing facts belong to details and do not
-repeat for every polygon.
+weather reason, snapshot identities and estimate update UUIDs. A changed
+reason for a never-fetched cell produces a new response and ETag. Responses
+support gzip. Map and forest-layer responses use `Cache-Control: no-cache`,
+so a browser must revalidate them. Their ETags change with the selected update
+or artifact. Full weather histories and contributing facts belong to details
+and do not repeat for every polygon.
 
 ## Selected-area details
 
