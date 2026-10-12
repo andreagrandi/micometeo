@@ -6,6 +6,8 @@ from django.http import HttpRequest
 from django.db import DatabaseError, connection
 from ninja import NinjaAPI, Schema, Status
 
+from map_api.api import router as map_router
+
 
 class HealthResponse(Schema):
     """Report whether the application and database can answer requests."""
@@ -27,3 +29,6 @@ def health(request: HttpRequest) -> HealthResponse | Status[HealthResponse]:
     except DatabaseError:
         return Status(503, HealthResponse(application="available", database="unavailable"))
     return HealthResponse(application="available", database="available")
+
+
+api.add_router("", map_router)

@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "weather_summaries",
     "weather_on_demand",
     "estimate_updates",
+    "map_api",
 ]
 
 MICOMETEO_TERRAIN_BUILD_VERSION = os.getenv(
@@ -68,8 +69,16 @@ MICOMETEO_FOREST_BUILD_VERSION = os.getenv(
     "MICOMETEO_FOREST_BUILD_VERSION", "italy-forest-copernicus-2018-v1"
 )
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "micometeo-api",
+    }
+}
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
