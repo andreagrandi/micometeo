@@ -30,12 +30,17 @@ curl --compressed http://127.0.0.1:8010/api/v1/forest-layer
 The metadata supplies `today`, `target_dates`, `coverage`,
 `forest_build_version`, `max_width_km`, `max_height_km`, `max_squares` and
 `forest_layer`. The layer descriptor contains its URL, SHA-256 and compressed
-and uncompressed sizes. Coverage is the national grid's bounding box, not a
-promise that every point inside the box is Italian land.
+and uncompressed sizes. The `attributions` list contains the ISTAT boundaries,
+Copernicus forest, Copernicus terrain when its configured completed build uses
+the same grid, and Open-Meteo. Each item has `name`, `credit`, `licence` and
+`url`. The website shows each `credit` and `licence` and links source text to
+`url`. Missing values are `null` when an older build did not store that field.
+Coverage is the national grid's bounding box, not a promise that every point
+inside the box is Italian land.
 
 The forest layer is the immutable artifact recorded by the completed forest
 build. Its only per-polygon value is `forest_share`. The endpoint checks its
-checksum and sizes. Neither metadata nor the forest layer calls the weather
+checksum and sizes. The info and forest-layer endpoints do not call the weather
 provider.
 
 ## Map squares
@@ -152,7 +157,7 @@ It never invents an update or silently chooses the newest one.
 | `estimate` | State, `whole_percentage`, unavailable reason, calculation time, method version, `experimental_unvalidated`, availability translation key and `experimental_explanation_key`. |
 | `facts` | Actual method inputs and derived factors, units, inclusive periods, source IDs, completed and forecast day counts and translation keys. |
 | `weather` | Selected-day values, rain totals for the previous 7, 14 and 21 completed days, source metadata, missing values and limitations. |
-| `sources` | Exact forest, terrain and weather source records, release dates, retrieval dates, checksums, real source detail, credits and gaps. |
+| `sources` | Exact ISTAT grid, forest, terrain and weather source records, release dates, retrieval dates, checksums, real source detail, credits and gaps. |
 
 `selection.representative_coordinates` identifies the selected square. Use it
 for favorites and navigation. Do not replace it with the current map centre.
@@ -173,9 +178,20 @@ The generated schema types timestamps as `date-time` and defines the nested
 fact periods, source identities, gaps, terrain tiles and weather attribution.
 
 Weather attribution includes the exact credit `Weather data by Open-Meteo.com`,
-the link `https://open-meteo.com/` and `CC BY 4.0`. The website must show the
-applicable credits with the data. Forest and terrain records retain their
-dataset-specific attribution and source dates.
+the link `https://open-meteo.com/` and `CC BY 4.0`. The area page reads ISTAT
+attribution for the requested update's grid from `sources.grid.credit`,
+`sources.grid.licence` and `sources.grid.url`. It reads
+forest attribution from `sources.forest.credit`, `sources.forest.licence` and
+`sources.forest.catalogue_url`. It reads terrain attribution from
+`sources.terrain.credit`, `sources.terrain.licence` and
+`sources.terrain.catalogue_url`. That terrain link is the recorded dataset
+link, while `sources.terrain.service_url` retains the recorded source link when
+one exists. It reads weather attribution from `sources.weather.credit.text`,
+`sources.weather.credit.licence` and `sources.weather.credit.url`. The website
+shows the applicable credits with the data. Forest and terrain records retain
+their dataset-specific attribution and source dates. A missing terrain cell
+still returns its source record and gap, while `/info` omits terrain when
+the configured terrain build is absent, unfinished or uses another grid.
 
 For an assessment on 12 October, the recent seven-day period is 5 through
 11 October. The 14-day period starts on 28 September and the 21-day period on

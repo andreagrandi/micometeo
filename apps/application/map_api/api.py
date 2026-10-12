@@ -30,6 +30,7 @@ from estimate_updates.models import EstimateResult, EstimateUpdate
 from national_forest.layer import validate_layer
 from national_forest.models import ForestBuild, ForestCell
 from national_grid.models import GridBuildCell
+from national_terrain.models import TerrainBuild
 from weather_on_demand import services as weather_services
 from weather_requests.eligibility import WeatherCell, weather_cell
 
@@ -73,6 +74,15 @@ class LayerInfoSchema(Schema):
     raw_bytes: int | None = None
 
 
+class AttributionSchema(Schema):
+    """Describe one map data source and its attribution."""
+
+    name: str
+    credit: str | None = None
+    licence: str | None = None
+    url: str | None = None
+
+
 class InfoResponse(Schema):
     """Describe dates, coverage and limits for map reads."""
 
@@ -84,6 +94,7 @@ class InfoResponse(Schema):
     max_height_km: float
     max_squares: int
     forest_layer: LayerInfoSchema
+    attributions: list[AttributionSchema]
 
 
 class SquarePropertiesSchema(Schema):
@@ -149,10 +160,74 @@ def _configured_build() -> ForestBuild | None:
     version = str(getattr(settings, "MICOMETEO_FOREST_BUILD_VERSION", ""))
     if not version:
         return None
-    return ForestBuild.objects.filter(
+    return (
+        ForestBuild.objects.select_related("grid_build")
+        .filter(
+            version=version,
+            status=ForestBuild.Status.COMPLETED,
+        )
+        .first()
+    )
+
+
+def _configured_terrain(*, grid_build_id: UUID) -> TerrainBuild | None:
+    """Return the configured completed terrain build for one grid."""
+    version = str(getattr(settings, "MICOMETEO_TERRAIN_BUILD_VERSION", ""))
+    if not version:
+        return None
+    return TerrainBuild.objects.filter(
         version=version,
-        status=ForestBuild.Status.COMPLETED,
+        status=TerrainBuild.Status.COMPLETED,
+        grid_build_id=grid_build_id,
     ).first()
+
+
+def _source_text(*, value: object) -> str | None:
+    """Return one non-empty stored source value."""
+    return value if isinstance(value, str) and value else None
+
+
+def _attributions(*, build: ForestBuild) -> list[AttributionSchema]:
+    """Return ordered attributions from the configured build records."""
+    grid_metadata = dict(build.grid_build.source_metadata or {})
+    attributions = [
+        AttributionSchema(
+            name="ISTAT boundaries",
+            credit=_source_text(value=grid_metadata.get("credit")),
+            licence=_source_text(value=grid_metadata.get("license")),
+            url=_source_text(value=grid_metadata.get("license_url")),
+        ),
+        AttributionSchema(
+            name="Copernicus forest",
+            credit=build.credit or None,
+            licence=build.licence or None,
+            url=build.catalogue_url or None,
+        ),
+    ]
+    terrain = _configured_terrain(grid_build_id=build.grid_build_id)
+    if terrain is not None:
+        terrain_metadata = dict(terrain.source_metadata or {})
+        terrain_credit = _source_text(value=terrain_metadata.get("credit"))
+        attributions.append(
+            AttributionSchema(
+                name="Copernicus terrain",
+                credit=terrain_credit,
+                licence=terrain_credit,
+                url=_source_text(
+                    value=terrain_metadata.get("source_dataset")
+                    or terrain_metadata.get("source_url")
+                ),
+            )
+        )
+    attributions.append(
+        AttributionSchema(
+            name="Open-Meteo",
+            credit="Weather data by Open-Meteo.com",
+            licence="CC BY 4.0",
+            url="https://open-meteo.com/",
+        )
+    )
+    return attributions
 
 
 def _build_error(*, status: int = 503) -> JsonResponse:
@@ -565,6 +640,7 @@ def info(request: HttpRequest) -> InfoResponse | HttpResponse:
         "max_height_km": MAX_VIEW_HEIGHT_M / 1_000,
         "max_squares": MAX_SQUARES,
         "forest_layer": _layer_info(build=build).dict(),
+        "attributions": [attribution.dict() for attribution in _attributions(build=build)],
     }
 
 

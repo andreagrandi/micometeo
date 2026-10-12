@@ -137,6 +137,16 @@ def map_fixture(tmp_path: Path) -> dict[str, object]:
         version=f"map-grid-{suffix}",
         fingerprint="a" * 64,
         status=GridBuild.Status.COMPLETED,
+        source_metadata={
+            "dataset": "Fixture ISTAT boundaries",
+            "version": "fixture-2026",
+            "archive_sha256": "1" * 64,
+            "source_url": "https://example.test/istat-source",
+            "source_page": "https://example.test/istat-page",
+            "license": "Fixture ISTAT licence",
+            "license_url": "https://example.test/istat-license",
+            "credit": "Fixture ISTAT credit",
+        },
         planned_chunk_count=1,
         completed_chunk_count=1,
         cell_count=5,
@@ -182,6 +192,9 @@ def map_fixture(tmp_path: Path) -> dict[str, object]:
         grid_build=grid,
         fingerprint="b" * 64,
         status=ForestBuild.Status.COMPLETED,
+        licence="Fixture forest licence",
+        credit="Fixture forest credit",
+        catalogue_url="https://example.test/forest-catalogue",
         planned_chunk_count=1,
         completed_chunk_count=1,
         cell_count=5,
@@ -297,6 +310,12 @@ def map_fixture(tmp_path: Path) -> dict[str, object]:
         grid_build=grid,
         fingerprint="c" * 64,
         grid_fingerprint=grid.fingerprint,
+        source_metadata={
+            "release": "Fixture Copernicus terrain",
+            "source_url": "https://example.test/terrain-source",
+            "source_dataset": "https://example.test/terrain-dataset",
+            "credit": "Fixture terrain licence",
+        },
         status=TerrainBuild.Status.COMPLETED,
     )
     snapshot = WeatherSnapshot.objects.create(
@@ -336,6 +355,7 @@ def map_fixture(tmp_path: Path) -> dict[str, object]:
     )
     return {
         "build": forest,
+        "terrain": terrain,
         "cells": forest_cells,
         "snapshot": snapshot,
         "old_update": old_update,
@@ -601,10 +621,16 @@ def test_info_and_forest_layer_routes_expose_contract_and_revalidate(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     build = map_fixture["build"]
+    terrain = map_fixture["terrain"]
+    assert isinstance(build, ForestBuild)
+    assert isinstance(terrain, TerrainBuild)
     monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
     cache.clear()
 
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
+    with override_settings(
+        MICOMETEO_FOREST_BUILD_VERSION=build.version,
+        MICOMETEO_TERRAIN_BUILD_VERSION=terrain.version,
+    ):
         client = Client()
         info_response = client.get("/api/v1/info")
         assert info_response.status_code == 200
@@ -619,6 +645,32 @@ def test_info_and_forest_layer_routes_expose_contract_and_revalidate(
         assert info_body["max_height_km"] == 60
         assert info_body["max_squares"] == 16_000
         assert info_body["forest_build_version"] == build.version
+        assert info_body["attributions"] == [
+            {
+                "name": "ISTAT boundaries",
+                "credit": "Fixture ISTAT credit",
+                "licence": "Fixture ISTAT licence",
+                "url": "https://example.test/istat-license",
+            },
+            {
+                "name": "Copernicus forest",
+                "credit": "Fixture forest credit",
+                "licence": "Fixture forest licence",
+                "url": "https://example.test/forest-catalogue",
+            },
+            {
+                "name": "Copernicus terrain",
+                "credit": "Fixture terrain licence",
+                "licence": "Fixture terrain licence",
+                "url": "https://example.test/terrain-dataset",
+            },
+            {
+                "name": "Open-Meteo",
+                "credit": "Weather data by Open-Meteo.com",
+                "licence": "CC BY 4.0",
+                "url": "https://open-meteo.com/",
+            },
+        ]
 
         plain_response = client.get("/api/v1/forest-layer")
         assert plain_response.status_code == 200
@@ -665,6 +717,41 @@ def test_info_target_dates_follow_an_explicit_clock_advance(
     assert next_response.json()["today"] == next_day.isoformat()
     assert first_response.json()["target_dates"][0] == first_day.isoformat()
     assert next_response.json()["target_dates"][0] == next_day.isoformat()
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize("terrain_case", ["unfinished", "wrong_grid"])
+def test_info_omits_unavailable_configured_terrain_attribution(
+    map_fixture: dict[str, object], terrain_case: str
+) -> None:
+    build = map_fixture["build"]
+    terrain = map_fixture["terrain"]
+    assert isinstance(build, ForestBuild)
+    assert isinstance(terrain, TerrainBuild)
+    if terrain_case == "unfinished":
+        terrain.status = TerrainBuild.Status.RUNNING
+        terrain.save(update_fields=["status", "updated_at"])
+    else:
+        other_grid = GridBuild.objects.create(
+            version=f"other-map-grid-{uuid4().hex[:10]}",
+            fingerprint="e" * 64,
+            status=GridBuild.Status.COMPLETED,
+        )
+        terrain.grid_build = other_grid
+        terrain.save(update_fields=["grid_build", "updated_at"])
+
+    with override_settings(
+        MICOMETEO_FOREST_BUILD_VERSION=build.version,
+        MICOMETEO_TERRAIN_BUILD_VERSION=terrain.version,
+    ):
+        response = Client().get("/api/v1/info")
+
+    assert response.status_code == 200
+    assert [item["name"] for item in response.json()["attributions"]] == [
+        "ISTAT boundaries",
+        "Copernicus forest",
+        "Open-Meteo",
+    ]
 
 
 @pytest.mark.django_db(transaction=True)
