@@ -31,6 +31,10 @@ claim that this design has been chosen.
   square is 500 m. This difference does not prove accuracy.
 - Show the selected estimate, weather, habitat facts, sources and update time.
 - Offer two readable OpenStreetMap backgrounds, visibility and opacity controls.
+- Draw the estimate squares over the OpenStreetMap background, never on an
+  empty map. Colour them from warm white for low percentages to warm light
+  brown for high ones, and keep roads and place names readable through them.
+  Squares without forest or without an estimate use a look outside that scale.
 - Save private browser favorites with a name and optional color. Allow rename,
   recolor, reopen and remove.
 - Open the selected representative point in an external navigation app.
