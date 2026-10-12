@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Micometeo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="landing.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="landing.html" data-lang-link>
+        <span class="brand-name">Micometeo</span>
+        <span class="brand-line" data-i18n="tagline"></span>
+      </a>
+      <div class="lang-switch" role="group" aria-label="Language / Lingua">
+        <button type="button" class="lang-button" data-lang="it" lang="it">Italiano</button>
+        <button type="button" class="lang-button" data-lang="en" lang="en">English</button>
+      </div>
+      <a class="btn btn-main topbar-open" href="app.html" data-app-link data-i18n="openMap"></a>
+    </div>
+  </header>
+
+  <div class="container">
+    <p class="notice-sample page-notice"><strong data-i18n="sampleLabel"></strong> <span data-i18n="sampleText"></span></p>
+  </div>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-text">
+          <h1 data-i18n="heroTitle"></h1>
+          <p class="lead" data-i18n="heroText"></p>
+          <p><a class="btn btn-main btn-large" href="app.html" data-app-link data-i18n="openMap"></a></p>
+        </div>
+        <div class="hero-example">
+          <div id="preview-map" class="preview-map" role="img" data-i18n-label="mapLabel" hidden></div>
+          <p class="map-caption" id="preview-caption" data-i18n="mapCaption" hidden></p>
+          <div class="sample-card">
+            <h2 class="sample-place" data-i18n="samplePlace"></h2>
+            <dl class="sample-rows">
+              <div class="sample-row">
+                <dt data-i18n="sampleToday"></dt>
+                <dd>42%</dd>
+              </div>
+              <div class="sample-row">
+                <dt data-i18n="sampleLater"></dt>
+                <dd>48%</dd>
+              </div>
+            </dl>
+            <p class="notice-experimental"><strong data-i18n="noteLabel"></strong> <span data-i18n="noteText"></span></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="meaning" aria-labelledby="meaning-title">
+      <div class="container two-col">
+        <div>
+          <h2 id="meaning-title" data-i18n="meaningTitle"></h2>
+          <p class="lead" data-i18n="meaningLead"></p>
+          <p data-i18n="meaningMissing"></p>
+        </div>
+        <div class="stack">
+          <div class="card">
+            <h3 data-i18n="meansTitle"></h3>
+            <ul class="tick-list">
+              <li data-i18n="means1"></li>
+              <li data-i18n="means2"></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3 data-i18n="notTitle"></h3>
+            <ul class="cross-list">
+              <li data-i18n="not1"></li>
+              <li data-i18n="not2"></li>
+              <li data-i18n="not3"></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band band-sunk" id="method" aria-labelledby="method-title">
+      <div class="container two-col">
+        <div>
+          <h2 id="method-title" data-i18n="methodTitle"></h2>
+          <p data-i18n="methodIntro"></p>
+          <ol class="step-list">
+            <li><strong data-i18n="methodRainTitle"></strong> <span data-i18n="methodRain"></span></li>
+            <li><strong data-i18n="methodWeatherTitle"></strong> <span data-i18n="methodWeather"></span></li>
+            <li><strong data-i18n="methodForestTitle"></strong> <span data-i18n="methodForest"></span></li>
+          </ol>
+          <p data-i18n="methodGrid"></p>
+          <p data-i18n="methodShared"></p>
+        </div>
+        <figure class="card diagram">
+          <svg viewBox="0 0 440 320" role="img" data-i18n-label="diagramLabel" class="diagram-svg">
+            <defs>
+              <pattern id="grid-cell" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="none" stroke="rgba(28,35,38,0.14)" stroke-width="1"></rect>
+              </pattern>
+            </defs>
+            <rect x="0" y="0" width="440" height="320" fill="#FFF8EC" stroke="#55605F" stroke-width="2" stroke-dasharray="8 5"></rect>
+            <rect x="0" y="0" width="440" height="320" fill="url(#grid-cell)"></rect>
+            <rect x="240" y="120" width="20" height="20" fill="#E9C99A" stroke="#1F4E79" stroke-width="3"></rect>
+          </svg>
+          <figcaption>
+            <ul class="key-list">
+              <li><span class="key-swatch key-area"></span><span data-i18n="diagramArea"></span></li>
+              <li><span class="key-swatch key-square"></span><span data-i18n="diagramSquare"></span></li>
+            </ul>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="band" id="features" aria-labelledby="features-title">
+      <div class="container two-col">
+        <div>
+          <h2 id="features-title" data-i18n="featuresTitle"></h2>
+          <ul class="feature-list">
+            <li data-i18n="feature1"></li>
+            <li data-i18n="feature2"></li>
+            <li data-i18n="feature3"></li>
+            <li data-i18n="feature4"></li>
+            <li data-i18n="feature5"></li>
+            <li data-i18n="feature6"></li>
+          </ul>
+        </div>
+        <div class="stack" aria-hidden="true">
+          <div class="card">
+            <p class="fragment-title" data-i18n="fragmentDates"></p>
+            <ul class="chip-row" id="chip-row"></ul>
+          </div>
+          <div class="card">
+            <p class="fragment-title" data-i18n="fragmentLegend"></p>
+            <ul class="legend" id="legend"></ul>
+          </div>
+          <div class="card">
+            <p class="fragment-title" data-i18n="fragmentLayers"></p>
+            <div class="layer-demo">
+              <span class="layer-option layer-option-on" data-i18n="layerLight"></span>
+              <span class="layer-option" data-i18n="layerContrast"></span>
+            </div>
+            <div class="slider-demo">
+              <span data-i18n="layerOpacity"></span>
+              <span class="slider-track"><span class="slider-fill"></span></span>
+              <span class="slider-value">60%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band band-sunk" id="private" aria-labelledby="private-title">
+      <div class="container two-col">
+        <div>
+          <h2 id="private-title" data-i18n="privateTitle"></h2>
+          <p class="lead" data-i18n="privateLead"></p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="favoritesTitle"></h3>
+          <p data-i18n="favoritesText"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="sources" aria-labelledby="sources-title">
+      <div class="container two-col">
+        <div>
+          <h2 id="sources-title" data-i18n="sourcesTitle"></h2>
+          <ul class="source-list">
+            <li><strong data-i18n="source1Name"></strong> <span data-i18n="source1Use"></span></li>
+            <li><strong data-i18n="source2Name"></strong> <span data-i18n="source2Use"></span></li>
+            <li><strong data-i18n="source3Name"></strong> <span data-i18n="source3Use"></span></li>
+          </ul>
+        </div>
+        <div class="card card-reminder">
+          <h2 data-i18n="rulesTitle"></h2>
+          <p data-i18n="rulesText"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing band-sunk" aria-labelledby="closing-title">
+      <div class="container closing-inner">
+        <h2 id="closing-title" data-i18n="closingTitle"></h2>
+        <p><a class="btn btn-main btn-large" href="app.html" data-app-link data-i18n="openMap"></a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p class="notice-sample"><strong data-i18n="sampleLabel"></strong> <span data-i18n="sampleText"></span></p>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="assets/sample_squares.js"></script>
+  <script src="landing.js"></script>
+</body>
+</html>
