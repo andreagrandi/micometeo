@@ -12,34 +12,64 @@ from django_tasks_db.models import DBTaskResult
 from django_tasks_db.utils import exclusive_transaction, is_locked_database_exception
 
 from .models import BackgroundJobAttempt
-from .services import logical_job_lock
+from .services import logical_job_locks
 
 
 logger = logging.getLogger("django_tasks_db")
 
 
 REPRESENTATIVE_TASK_PATH = "background_jobs.tasks.representative_job_task"
+WEATHER_FETCH_TASK_PATH = "weather_on_demand.tasks.weather_fetch_task"
+WEATHER_CLEANUP_TASK_PATH = "weather_on_demand.tasks.weather_cleanup_task"
 
 
 class MicometeoWorker(DatabaseWorker):
-    """Claim representative tasks while holding their logical job lock."""
+    """Claim Micometeo tasks while holding each logical job lock."""
+
+    def _logical_lock_keys_for_task(self, task_result: DBTaskResult) -> tuple[str, ...]:
+        kwargs = task_result.args_kwargs.get("kwargs", {})
+        if task_result.task_path == REPRESENTATIVE_TASK_PATH:
+            attempt_id = kwargs.get("attempt_id")
+            if attempt_id is None:
+                return ()
+            try:
+                parsed_attempt_id = uuid.UUID(str(attempt_id))
+            except ValueError:
+                return ()
+            attempt = (
+                BackgroundJobAttempt.objects.select_related("job")
+                .filter(id=parsed_attempt_id)
+                .first()
+            )
+            return (attempt.job.logical_key,) if attempt is not None else ()
+        if task_result.task_path == WEATHER_FETCH_TASK_PATH:
+            batch_id = kwargs.get("batch_id")
+            if batch_id is None:
+                return ()
+            try:
+                parsed_batch_id = uuid.UUID(str(batch_id))
+            except ValueError:
+                return ()
+            from weather_on_demand.services import weather_task_lock_keys
+
+            return weather_task_lock_keys(batch_id=parsed_batch_id)
+        if task_result.task_path == WEATHER_CLEANUP_TASK_PATH:
+            job_id = kwargs.get("job_id")
+            if job_id is None:
+                return ()
+            try:
+                parsed_job_id = uuid.UUID(str(job_id))
+            except ValueError:
+                return ()
+            from weather_on_demand.services import weather_cleanup_task_lock_keys
+
+            return weather_cleanup_task_lock_keys(job_id=parsed_job_id)
+        return ()
 
     def _logical_key_for_task(self, task_result: DBTaskResult) -> str | None:
-        if task_result.task_path != REPRESENTATIVE_TASK_PATH:
-            return None
-        attempt_id = task_result.args_kwargs.get("kwargs", {}).get("attempt_id")
-        if attempt_id is None:
-            return None
-        try:
-            parsed_attempt_id = uuid.UUID(str(attempt_id))
-        except ValueError:
-            return None
-        attempt = (
-            BackgroundJobAttempt.objects.select_related("job")
-            .filter(id=parsed_attempt_id)
-            .first()
-        )
-        return attempt.job.logical_key if attempt is not None else None
+        """Return the first lock key for compatibility with worker callers."""
+        keys = self._logical_lock_keys_for_task(task_result)
+        return keys[0] if keys else None
 
     def _claim_task(
         self,
@@ -52,10 +82,10 @@ class MicometeoWorker(DatabaseWorker):
             return None, True
 
         for candidate in candidates:
-            logical_key = self._logical_key_for_task(candidate)
+            logical_keys = self._logical_lock_keys_for_task(candidate)
             lock_context = (
-                logical_job_lock(logical_key=logical_key, wait=False)
-                if logical_key is not None
+                logical_job_locks(logical_keys=logical_keys, wait=False)
+                if logical_keys
                 else nullcontext(True)
             )
             with lock_context as acquired:

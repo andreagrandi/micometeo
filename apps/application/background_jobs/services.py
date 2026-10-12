@@ -1,9 +1,10 @@
 import hashlib
 import uuid
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import date
 
+from django.apps import apps
 from django.db import IntegrityError, connection, transaction
 from django_tasks_db.models import DBTaskResult
 from django.utils import timezone
@@ -51,27 +52,46 @@ def advisory_lock_key(*, logical_key: str) -> int:
 
 
 @contextmanager
-def logical_job_lock(*, logical_key: str, wait: bool) -> Iterator[bool]:
-    """Hold a PostgreSQL session lock for one logical job."""
+def logical_job_locks(*, logical_keys: Iterable[str], wait: bool) -> Iterator[bool]:
+    """Hold sorted PostgreSQL session locks for one task's logical keys."""
 
-    lock_id = advisory_lock_key(logical_key=logical_key)
-    with connection.cursor() as cursor:
-        if wait:
-            cursor.execute("SELECT pg_advisory_lock(%s)", [lock_id])
-            acquired = True
-        else:
-            cursor.execute("SELECT pg_try_advisory_lock(%s)", [lock_id])
-            acquired = bool(cursor.fetchone()[0])
-
-    if not acquired:
-        yield False
-        return
-
+    keys = tuple(sorted(set(logical_keys)))
+    if any(not key or len(key) > 255 for key in keys):
+        raise ValueError("Logical task lock keys must be non-empty and at most 255 characters.")
+    lock_ids = [advisory_lock_key(logical_key=key) for key in keys]
+    acquired: list[int] = []
     try:
+        with connection.cursor() as cursor:
+            for lock_id in lock_ids:
+                if wait:
+                    cursor.execute("SELECT pg_advisory_lock(%s)", [lock_id])
+                    locked = True
+                else:
+                    cursor.execute("SELECT pg_try_advisory_lock(%s)", [lock_id])
+                    locked = bool(cursor.fetchone()[0])
+                if not locked:
+                    break
+                acquired.append(lock_id)
+        if len(acquired) != len(lock_ids):
+            with connection.cursor() as cursor:
+                for lock_id in reversed(acquired):
+                    cursor.execute("SELECT pg_advisory_unlock(%s)", [lock_id])
+            yield False
+            return
         yield True
     finally:
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT pg_advisory_unlock(%s)", [lock_id])
+        if acquired and len(acquired) == len(lock_ids):
+            with connection.cursor() as cursor:
+                for lock_id in reversed(acquired):
+                    cursor.execute("SELECT pg_advisory_unlock(%s)", [lock_id])
+
+
+@contextmanager
+def logical_job_lock(*, logical_key: str, wait: bool) -> Iterator[bool]:
+    """Hold one PostgreSQL session lock for a logical job."""
+
+    with logical_job_locks(logical_keys=[logical_key], wait=wait) as acquired:
+        yield acquired
 
 
 def create_representative_input(
@@ -406,4 +426,12 @@ def recover_interrupted_jobs() -> int:
                     attempt.save(update_fields=["state", "ended_at", "failure_reason"])
                     recovered += 1
 
+    if apps.is_installed("weather_on_demand"):
+        from weather_on_demand.services import recover_weather_fetches
+
+        recovered += recover_weather_fetches()
+    if apps.is_installed("estimate_updates"):
+        from estimate_updates.services import recover_estimate_tasks
+
+        recovered += recover_estimate_tasks()
     return recovered
