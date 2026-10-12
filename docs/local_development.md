@@ -150,13 +150,6 @@ uv run pre-commit run --all-files
 uv run pre-commit run gitleaks-history --hook-stage manual --all-files
 ```
 
-The Epic 1 experiment tests do not run in GitHub Actions. The experiments are
-finished research code. Run them by hand only when you change that code:
-
-```sh
-uv run pytest --ignore=tests/app
-```
-
 The normal gitleaks hook scans files during the usual staged-file checks. The
 manual hook scans repository history, so run it explicitly when that check is
 needed. The `pytest-socket` guard blocks Python socket calls made while pytest
