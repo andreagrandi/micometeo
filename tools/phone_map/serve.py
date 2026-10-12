@@ -17,7 +17,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8769)
-    parser.add_argument("--data-dir", type=Path, default=Path("/tmp/agents"))
+    parser.add_argument("--data-dir", type=Path, default=Path("data/processed/map_checks"))
     parser.add_argument(
         "--forest-layer", type=Path,
         help="Measure this gzip forest layer instead of the three estimate views.",

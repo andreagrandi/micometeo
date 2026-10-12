@@ -253,13 +253,50 @@ coordinates 44.149982, 10.645727 and reference elevation 1,319 m.
 A repeated map request and the detail request made no further provider call.
 An Italy-wide request returned `view_too_large` and created no weather fetch.
 This checks the live data path and identity agreement, not prediction accuracy.
-The local evidence is `/tmp/agents/micometeo-live-pipeline-verified.json`.
+The ignored local evidence is `data/processed/map_checks/micometeo-live-pipeline-verified.json`.
 
-The normal worker command used for this check was:
+Repeat the live check from the repository root with the local application
+database. Use the current Italian date in `--assessment-date` for a fresh
+provider check. The queue command makes the normal API request and leaves
+provider work for the background worker. Queue mode refuses past dates. Verify
+mode accepts a retained historical date:
 
 ```sh
+live_assessment_date="$(uv run python -c 'from datetime import datetime; from zoneinfo import ZoneInfo; print(datetime.now(ZoneInfo("Europe/Rome")).date())')"
+uv run python tools/map_checks/check_live_pipeline.py queue \
+  --database-name micometeo \
+  --assessment-date "$live_assessment_date" \
+  --bbox "10.653,44.137,10.661,44.143" \
+  --output data/processed/map_checks/micometeo-live-pipeline-queued.json
 uv run python apps/application/manage.py run_background_worker \
   --batch --no-startup-delay --no-reload --max-tasks 10
+```
+
+After the worker has stored the snapshot and estimate, verify the exact saved
+records without making another provider request:
+
+```sh
+uv run python tools/map_checks/check_live_pipeline.py verify \
+  --database-name micometeo \
+  --assessment-date "$live_assessment_date" \
+  --bbox "10.653,44.137,10.661,44.143" \
+  --output data/processed/map_checks/micometeo-live-pipeline-verified.json
+```
+
+Queue mode reports the map response and request counters. It does not claim
+that the worker ran. Verify mode reads saved weather and checks its 29 daily
+rows, eight summaries, estimate rows and agreement between map and detail.
+It also checks repeated reads and the broad-view guard without fetching weather.
+
+To inspect the retained historical evidence from 12 October 2026 without
+queueing work, run verify with its fixed assessment date:
+
+```sh
+uv run python tools/map_checks/check_live_pipeline.py verify \
+  --database-name micometeo \
+  --assessment-date 2026-10-12 \
+  --bbox "10.653,44.137,10.661,44.143" \
+  --output data/processed/map_checks/micometeo-live-pipeline-verified-20261012.json
 ```
 
 ### National response and desktop drawing costs
@@ -304,20 +341,48 @@ These desktop results are separate from the physical-phone measurements
 recorded below for [#64](https://github.com/andreagrandi/micometeo/issues/64).
 Any closer starting view needs the owner's agreement, as required by #49.
 
-The local measurement artifacts are under `/tmp/agents/` on the development
-laptop. `micometeo-map-measurements.json` records response sizes and timings.
-`micometeo-map-drawing-measurements.json` records browser timings.
-`micometeo-map-drawing.html` draws the saved response files. To repeat the
-desktop drawing measurement with those artifacts:
+The repeatable measurement tools and page are under `tools/map_checks/`.
+The ignored local files under `data/processed/map_checks/` contain the three
+saved responses and the two measurement reports. To repeat the response size
+and timing measurement from the repository root, use the disposable benchmark
+database and completed national grid, terrain and forest data described in
+[the estimate benchmark](estimate_updates.md). Those builds and benchmark
+rows are local inputs and are not included in a clean checkout:
 
 ```sh
-python3 -m http.server 8769 --bind 127.0.0.1 --directory /tmp/agents
-node /tmp/agents/measure_micometeo_drawing.cjs
+uv run python tools/map_checks/measure_responses.py \
+  --database-name micometeo_estimate_benchmark_20261012 \
+  --assessment-date 2026-10-13 \
+  --output-dir data/processed/map_checks
 ```
 
-The temporary scripts and responses are local measurement artifacts, not a
-product frontend. For a fresh dataset, request the documented views from the
-application and save each GeoJSON response before running the drawing page.
+The script replaces weather lookup with saved snapshots for the chosen date,
+so it makes no provider request. To repeat the visible desktop drawing
+measurement, install the pinned Node packages and matching Chromium binary:
+
+```sh
+npm --prefix tools/map_checks ci
+npm --prefix tools/map_checks exec -- playwright install chromium
+node tools/map_checks/measure_drawing.cjs \
+  --data-dir data/processed/map_checks \
+  --output data/processed/map_checks/micometeo-map-drawing-measurements.json \
+  --profile-dir data/processed/map_checks/browser-profile
+```
+
+MapLibre 4.7.1 matches the historical measurement. The npm audit command reports
+a critical advisory for this version, GHSA-jrc7-96c5-q579.
+
+The drawing script starts a bounded local server for the page, MapLibre assets
+and three named GeoJSON files. It uses a visible 1,440 by 900 browser window,
+two device pixels per CSS pixel and a persistent profile. The report records
+the browser and library versions, viewport, headed state and
+`physical_phone: false`. For a fresh dataset, request the documented views
+from the application and save each GeoJSON response before running the drawing
+measurement.
+
+The response and drawing tables above quote the 12 October 2026 run. New
+commands write ignored reports under `data/processed/map_checks/`; they do not
+replace those recorded numbers.
 
 For API contract checks, run:
 
@@ -336,7 +401,7 @@ Start the local measurement page with the saved national responses:
 
 ```sh
 uv run python tools/phone_map/serve.py --host 0.0.0.0 --port 8769 \
-  --data-dir /tmp/agents
+  --data-dir data/processed/map_checks
 ```
 
 Open the laptop's local network address on a phone using the same Wi-Fi.
@@ -360,7 +425,7 @@ The physical-phone checkbox records the operator's device declaration.
 Desktop verification must clear it. A report marked as a desktop test or with
 the page hidden during measurement does not satisfy #64. Stop the server with
 Ctrl+C after collecting the phone results. It serves only the measurement
-page, manifest and three named responses, not the other files in `/tmp/agents`.
+page, manifest and three named responses.
 
 ### Physical-phone results
 

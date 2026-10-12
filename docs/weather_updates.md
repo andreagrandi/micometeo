@@ -57,6 +57,7 @@ provider call. An Italy-wide view created no weather fetch. The source attempt
 was `b4d638f5-fef5-4561-891b-3fcd40a343ac` and the snapshot was
 `c98dd3ba-6290-4711-a791-b84113ffed79`.
 
-The local evidence is `/tmp/agents/micometeo-live-pipeline-verified.json`.
+The ignored local evidence is
+`data/processed/map_checks/micometeo-live-pipeline-verified.json`.
 This bounded check used real provider data for one weather cell. The separate
 national estimate benchmark used synthetic weather and made no HTTP requests.
