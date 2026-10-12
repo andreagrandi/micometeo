@@ -3,6 +3,24 @@
 This guide runs the Micometeo Django application on the laptop and a PostGIS
 database in Docker. It needs no public domain, hosting account or paid service.
 
+## Database image and volume
+
+Compose and GitHub Actions use the pinned `imresamu/postgis` community image.
+It is a free experimental image with native `linux/arm64` and `linux/amd64`
+support. The image contains PostgreSQL 17.6 and PostGIS 3.5.3. The previous
+`postgis/postgis:17-3.5` image used PostgreSQL 17.5 and PostGIS 3.5.2 and ran
+through AMD64 emulation on Apple Silicon.
+
+Docker must choose the native image on Apple Silicon. Remove any
+`DOCKER_DEFAULT_PLATFORM=linux/amd64` setting from `.envrc` and run
+`unset DOCKER_DEFAULT_PLATFORM` after loading the environment.
+
+The service now uses the `micometeo_pgdata_native` Compose volume. With the
+default project name, Docker names it
+`micometeo_micometeo_pgdata_native`. The old physical volume
+`micometeo_micometeo_pgdata` remains available. Compose does not copy data
+between these volumes.
+
 ## Clean setup
 
 Run these commands from the repository root. Install `uv`, Docker with Compose,
@@ -43,6 +61,7 @@ Load the environment and install the locked Python environment:
 
 ```sh
 direnv allow
+unset DOCKER_DEFAULT_PLATFORM
 uv sync --locked
 ```
 
@@ -108,7 +127,7 @@ docker compose up --wait database
 curl --fail-with-body --silent --show-error http://127.0.0.1:8010/api/v1/health
 ```
 
-The named `micometeo_pgdata` volume keeps database contents across service
+The named `micometeo_pgdata_native` volume keeps database contents across service
 restarts. Compare a migration row before and after recreating the container:
 
 ```sh
@@ -127,6 +146,119 @@ docker compose exec database psql \
 `docker compose down` removes the container but keeps the named volume.
 `docker compose down --volumes` removes the local database contents and is only
 needed for a deliberate reset.
+
+## Optional copy of existing development data
+
+The new volume starts empty. Run migrations and rebuild the local data for a
+fresh development setup. There is no user-data migration required.
+The old physical volume `micometeo_micometeo_pgdata` stays in place.
+The optional commands below keep existing development and benchmark data
+without rebuilding it. Stop application writers while taking the dumps.
+These commands use the default Compose project name.
+
+When the old database container still exists, record it before the first new
+`docker compose up`:
+
+```sh
+set -eu
+OLD_CONTAINER="$(docker compose ps -q database)"
+test -n "$OLD_CONTAINER"
+test "$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/var/lib/postgresql/data"}}{{.Name}}{{end}}{{end}}' "$OLD_CONTAINER")" = micometeo_micometeo_pgdata
+```
+
+Create custom dumps for the databases to keep. Add another dump command for
+each database that the new volume must contain:
+
+```sh
+set -eu
+MIGRATION_DIR=/tmp/micometeo-db-migration
+mkdir -p "$MIGRATION_DIR"
+docker exec "$OLD_CONTAINER" pg_dump \
+  --format=custom --no-owner --no-acl \
+  --username="${MICOMETEO_DB_USER:-micometeo}" \
+  --dbname=micometeo \
+  > "$MIGRATION_DIR/micometeo.dump"
+docker exec "$OLD_CONTAINER" pg_dump \
+  --format=custom --no-owner --no-acl \
+  --username="${MICOMETEO_DB_USER:-micometeo}" \
+  --dbname=micometeo_estimate_benchmark_20261012 \
+  > "$MIGRATION_DIR/micometeo_estimate_benchmark_20261012.dump"
+```
+
+Stop the old service, start the new volume, restore the application dump into
+a new database made from `template0`, then restore the benchmark dump into a
+separate database:
+
+```sh
+set -eu
+docker compose stop database
+docker compose up --wait database
+docker compose exec -T database createdb \
+  --username="${MICOMETEO_DB_USER:-micometeo}" \
+  --template=template0 \
+  micometeo_native
+docker compose exec -T database pg_restore \
+  --no-owner --no-acl --exit-on-error \
+  --username="${MICOMETEO_DB_USER:-micometeo}" \
+  --dbname=micometeo_native \
+  < "$MIGRATION_DIR/micometeo.dump"
+docker compose exec -T database createdb \
+  --username="${MICOMETEO_DB_USER:-micometeo}" \
+  --template=template0 \
+  micometeo_estimate_benchmark_20261012
+docker compose exec -T database pg_restore \
+  --no-owner --no-acl --exit-on-error \
+  --username="${MICOMETEO_DB_USER:-micometeo}" \
+  --dbname=micometeo_estimate_benchmark_20261012 \
+  < "$MIGRATION_DIR/micometeo_estimate_benchmark_20261012.dump"
+export MICOMETEO_DB_NAME=micometeo_native
+uv run python apps/application/manage.py migrate --noinput
+```
+
+The new Compose volume keeps its initialized `micometeo` database. The
+restored application database uses `micometeo_native`, so no initialized
+database or PostGIS extension is removed. Set `MICOMETEO_DB_NAME=micometeo_native`
+in `.envrc` as well when the restored database should be the default for later
+shells. The dump options restore data without depending on source ownership
+or access-control rows. The old database remains available on its old volume.
+
+If the old container was already replaced, stop the new service and start a
+temporary old-image container on the preserved physical volume:
+
+```sh
+docker compose stop database
+docker run --rm --detach --name micometeo-old-volume-recovery \
+  --platform linux/amd64 \
+  --mount source=micometeo_micometeo_pgdata,target=/var/lib/postgresql/data \
+  --publish 127.0.0.1:5543:5432 \
+  --env POSTGRES_DB="${MICOMETEO_DB_NAME:-micometeo}" \
+  --env POSTGRES_USER="${MICOMETEO_DB_USER:-micometeo}" \
+  --env POSTGRES_PASSWORD="${MICOMETEO_DB_PASSWORD:-replace-with-a-local-password}" \
+  postgis/postgis:17-3.5
+until docker exec micometeo-old-volume-recovery pg_isready \
+  --username="${MICOMETEO_DB_USER:-micometeo}" --dbname=postgres; do sleep 1; done
+OLD_CONTAINER=micometeo-old-volume-recovery
+```
+
+Run the dump block above after setting `OLD_CONTAINER`, then run the restore
+block. Stop the temporary container after the restore with
+`docker stop micometeo-old-volume-recovery`. The `--rm` option removes that
+temporary container only. It does not remove either database volume.
+
+If the benchmark database does not exist in the old volume, skip its dump and
+restore commands. Keep the application dump and restore commands.
+
+If the old data is disposable, use the new empty volume instead:
+
+```sh
+docker compose up --wait database
+uv run python apps/application/manage.py migrate --noinput
+```
+
+Then rerun the documented [national grid](#national-grid),
+[national terrain](#national-terrain) and [national forest](#national-forest-build)
+builds. Recreate the disposable estimate database with the
+[local benchmark](estimate_updates.md#local-benchmark) command.
 
 ## Checks
 
@@ -508,7 +640,8 @@ Book Corners installs geographic libraries in its `Dockerfile`. Micometeo
 uses host libraries because Django runs on the host through `uv`. On macOS,
 Rasterio supplies GDAL and Homebrew supplies GEOS.
 It keeps one lockfile for the application and experiments. Only PostGIS runs
-in Compose, using AMD64 emulation on Apple Silicon for the selected image.
+in Compose. The pinned image selects ARM64 on Apple Silicon and AMD64 on
+x86-64 hosts without architecture emulation.
 
 Book Corners discovers dynamically assigned ports through `scripts/local_env.py`.
 Micometeo uses fixed ports 8010 and 5542, and `docker compose port` reports the
