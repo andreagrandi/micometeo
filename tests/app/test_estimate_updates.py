@@ -51,6 +51,75 @@ from estimate_updates.services import (
 )
 
 
+@pytest.mark.django_db(transaction=True)
+def test_tree_cache_reads_only_requested_squares_and_reuses_values(
+    complete_estimate_fixture, monkeypatch,
+) -> None:
+    from estimate_updates.host_trees import tree_inputs_for_area
+    from estimate_updates.models import HostTreeCache
+    from micometeo.forecast_method import HostTrees
+
+    forest_cell = complete_estimate_fixture["forest_cell"]
+    source = {"source_year": 2006, "resolution_m": 1000}
+    monkeypatch.setattr("estimate_updates.host_trees.read_manifest", lambda **kwargs: (source, "a" * 64))
+    calls = []
+
+    def sample(**kwargs):
+        if kwargs["centres"]:
+            calls.append(kwargs["centres"])
+        return {key: HostTrees(values=(0.8, 0.0, None, 0.0, 0.0), source_id="jrc:test", source_year=2006, resolution_m=1000)
+                for key in kwargs["centres"]}
+
+    monkeypatch.setattr("estimate_updates.host_trees.sample_squares", sample)
+    first = tree_inputs_for_area(forest_cells=[forest_cell])
+    second = tree_inputs_for_area(forest_cells=[forest_cell])
+    assert first == second
+    assert first["cells"][str(forest_cell.id)] == [0.8, 0.0, None, 0.0, 0.0]
+    assert len(calls) == 1
+    assert len(calls[0]) == 1
+    assert HostTreeCache.objects.count() == 1
+    monkeypatch.setattr("estimate_updates.host_trees.read_manifest", lambda **kwargs: (source, "b" * 64))
+    third = tree_inputs_for_area(forest_cells=[forest_cell])
+    assert third["source"]["source_id"] != first["source"]["source_id"]
+    assert HostTreeCache.objects.count() == 2
+    assert len(calls) == 2
+
+
+@pytest.mark.django_db(transaction=True)
+def test_tree_source_failure_uses_disclosed_fallback_without_caching_zero(
+    complete_estimate_fixture, monkeypatch,
+) -> None:
+    from estimate_updates.host_trees import tree_inputs_for_area
+    from estimate_updates.models import HostTreeCache
+
+    monkeypatch.setattr("estimate_updates.host_trees.read_manifest", lambda **kwargs: ({}, "a" * 64))
+
+    def fail(**kwargs):
+        raise OSError("local file unavailable")
+
+    monkeypatch.setattr("estimate_updates.host_trees.sample_squares", fail)
+    result = tree_inputs_for_area(forest_cells=[complete_estimate_fixture["forest_cell"]])
+    assert result == {}
+    assert HostTreeCache.objects.count() == 0
+
+
+@pytest.mark.django_db(transaction=True)
+def test_new_tree_source_queues_a_new_task_for_the_same_weather(complete_estimate_fixture, monkeypatch, settings) -> None:
+    snapshot = complete_estimate_fixture["snapshot"]
+    forest = complete_estimate_fixture["forest"]
+    settings.MICOMETEO_TERRAIN_BUILD_VERSION = complete_estimate_fixture["terrain"].version
+    monkeypatch.setattr("estimate_updates.services._schedule_estimate_task", lambda **kwargs: False)
+    monkeypatch.setattr("estimate_updates.services.calculation_version", lambda: "a" * 64)
+    kwargs = dict(snapshot_id=snapshot.id, cell_key=snapshot.cell_key,
+                  assessment_date=snapshot.assessment_date, forest_build_version=forest.version)
+    first = enqueue_estimate_update(**kwargs)
+    assert enqueue_estimate_update(**kwargs).id == first.id
+    monkeypatch.setattr("estimate_updates.services.calculation_version", lambda: "b" * 64)
+    second = enqueue_estimate_update(**kwargs)
+    assert first.id != second.id
+    assert first.calculation_version != second.calculation_version
+
+
 def test_result_bytes_store_eight_percentages_and_unavailable_reasons() -> None:
     values = encode_result_bytes(
         percentages=[0, 5, 95, None, 42, None, 100, 1],
@@ -535,7 +604,7 @@ def _create_followup_snapshot(
 
 
 @pytest.mark.django_db(transaction=True)
-def test_default_method_stores_v2_with_twenty_day_temperatures(
+def test_default_method_stores_v3_with_twenty_day_temperatures(
     complete_estimate_fixture: dict[str, object],
 ) -> None:
     snapshot = complete_estimate_fixture["snapshot"]
@@ -563,8 +632,8 @@ def test_default_method_stores_v2_with_twenty_day_temperatures(
         terrain_build_version=terrain.version,
     )
 
-    assert prepared.method_version == "porcini-experimental-v2"
-    assert default_prepared.method_version == "porcini-experimental-v2"
+    assert prepared.method_version == "porcini-experimental-v3"
+    assert default_prepared.method_version == "porcini-experimental-v3"
     assert len(calculated_inputs) == 8
     for days_ahead, inputs in enumerate(calculated_inputs):
         record = inputs.period_temperatures

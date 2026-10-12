@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 import uuid
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -25,8 +26,10 @@ from micometeo.forecast_method import (
     ForecastInputs,
     ForecastMethodConfig,
     ForecastMethodV2Config,
+    ForecastMethodV3Config,
     ForecastResult,
     NumericInput,
+    HostTrees,
     calculate_forecast,
 )
 from national_forest.models import ForestBuild, ForestCell
@@ -42,6 +45,7 @@ from .contracts import (
     encode_result_bytes,
 )
 from .models import EstimateResult, EstimateTask, EstimateUpdate
+from .host_trees import calculation_version, saved_host_trees, tree_inputs_for_area
 
 
 METHOD_VERSION = CURRENT_METHOD.version
@@ -80,6 +84,8 @@ class PreparedEstimateUpdate:
     calculated_at: datetime
     rows: tuple[PreparedEstimateRow, ...]
     input_fingerprint: str
+    tree_inputs: dict = field(default_factory=dict)
+    tree_fingerprint: str = ""
 
     @property
     def row_count(self) -> int:
@@ -104,6 +110,7 @@ def input_fingerprint(
     forest_build_id: uuid.UUID,
     terrain_build_id: uuid.UUID,
     method_version: str,
+    tree_fingerprint: str = "",
 ) -> str:
     """Return the stable identity for one immutable input tuple."""
     value = "|".join(
@@ -116,6 +123,8 @@ def input_fingerprint(
             method_version,
         )
     )
+    if tree_fingerprint:
+        value += "|" + tree_fingerprint
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
@@ -285,6 +294,7 @@ def _forecast_inputs(
     terrain_cell: TerrainCell | None,
     terrain_build_id: uuid.UUID,
     daily_rows: Mapping[date, Any],
+    host_trees: HostTrees | None = None,
 ) -> ForecastInputs:
     assessment_date = snapshot.assessment_date
     target_date = summary.target_date
@@ -372,6 +382,7 @@ def _forecast_inputs(
             completed_day_count=1,
             forecast_day_count=0,
         ),
+        host_trees=host_trees,
         forest_share=_numeric_input(
             value=forest_cell.forest_share,
             unit="fraction",
@@ -508,6 +519,11 @@ def calculate_estimate_update(
         .order_by("id")
         .iterator(chunk_size=batch_size)
     }
+    tree_inputs = tree_inputs_for_area(forest_cells=forest_cells) if isinstance(method, ForecastMethodV3Config) else {}
+    tree_fingerprint = (
+        hashlib.sha256(json.dumps(tree_inputs, sort_keys=True).encode()).hexdigest()
+        if isinstance(method, ForecastMethodV3Config) else ""
+    )
     expected_ids = [row.id for row in forest_cells]
     prepared_rows: list[PreparedEstimateRow] = []
     for forest_cell in forest_cells:
@@ -522,6 +538,7 @@ def calculate_estimate_update(
                 terrain_cell=terrain_cell,
                 terrain_build_id=terrain_build.id,
                 daily_rows=daily_rows,
+                host_trees=saved_host_trees(tree_inputs=tree_inputs, forest_cell_id=forest_cell.id),
             )
             try:
                 if calculator is None:
@@ -563,6 +580,7 @@ def calculate_estimate_update(
         forest_build_id=forest_build.id,
         terrain_build_id=terrain_build.id,
         method_version=method.version,
+        tree_fingerprint=tree_fingerprint,
     )
     return PreparedEstimateUpdate(
         cell_key=cell_key,
@@ -574,6 +592,8 @@ def calculate_estimate_update(
         calculated_at=when,
         rows=rows,
         input_fingerprint=fingerprint,
+        tree_inputs=tree_inputs,
+        tree_fingerprint=tree_fingerprint,
     )
 
 
@@ -615,6 +635,8 @@ def publish_estimate_update(*, prepared: PreparedEstimateUpdate) -> PublishedEst
                 method_version=prepared.method_version,
                 row_count=prepared.row_count,
                 input_fingerprint=prepared.input_fingerprint,
+                tree_inputs=prepared.tree_inputs,
+                tree_fingerprint=prepared.tree_fingerprint,
             )
             EstimateResult.objects.bulk_create(
                 [
@@ -642,6 +664,7 @@ def _task_input_fingerprint(
     assessment_date: date,
     forest_build_version: str,
     terrain_build_version: str,
+    calculation: str,
 ) -> str:
     return hashlib.sha256(
         "|".join(
@@ -651,6 +674,7 @@ def _task_input_fingerprint(
                 assessment_date.isoformat(),
                 forest_build_version,
                 terrain_build_version,
+                calculation,
             )
         ).encode("utf-8")
     ).hexdigest()
@@ -713,6 +737,7 @@ def enqueue_estimate_update(
 ) -> EstimateTask:
     """Persist and queue one estimate task after weather commits."""
     terrain_build_version = _terrain_build_version()
+    calculation = calculation_version()
     parsed_snapshot_id = uuid.UUID(str(snapshot_id))
     assessment_date = _require_date(assessment_date, name="assessment_date")
     fingerprint = _task_input_fingerprint(
@@ -721,6 +746,7 @@ def enqueue_estimate_update(
         assessment_date=assessment_date,
         forest_build_version=forest_build_version,
         terrain_build_version=terrain_build_version,
+        calculation=calculation,
     )
     with transaction.atomic():
         try:
@@ -736,6 +762,7 @@ def enqueue_estimate_update(
                         assessment_date=assessment_date,
                         forest_build_version=forest_build_version,
                         terrain_build_version=terrain_build_version,
+                        calculation_version=calculation,
                         input_fingerprint=fingerprint,
                     )
             except IntegrityError:
@@ -782,6 +809,8 @@ def process_estimate_task(*, task_id: uuid.UUID | str) -> PublishedEstimate:
         task_row.started_at = timezone.now()
         task_row.save(update_fields=["state", "attempt_count", "started_at", "updated_at"])
     try:
+        if task_row.calculation_version and task_row.calculation_version != calculation_version():
+            raise EstimateUpdateError("Tree source or method changed after this task was queued.")
         published = calculate_and_publish_estimates(
             snapshot_id=task_row.snapshot_id,
             cell_key=task_row.cell_key,
@@ -1074,6 +1103,8 @@ def facts_for_estimate(*, update_id: uuid.UUID | str, forest_cell_id: int, targe
             terrain_cell=terrain_cell,
             terrain_build_id=update.terrain_build_id,
             daily_rows=_snapshot_daily_rows(snapshot=update.snapshot),
+            host_trees=saved_host_trees(tree_inputs=update.tree_inputs, forest_cell_id=forest_cell.id)
+            if isinstance(method, ForecastMethodV3Config) else None,
         ),
         method=method,
     )

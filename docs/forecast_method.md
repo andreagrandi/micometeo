@@ -1,19 +1,105 @@
 # Experimental porcini forecast method
 
-This document defines `porcini-experimental-v2` in
+This document defines `porcini-experimental-v3` in
 `src/micometeo/forecast_method.py`. It calculates one whole percentage for one
 500 m square and one Italian local date. The percentage is an experimental,
 unvalidated estimate. It is not a measured probability and it is not a chance
 that a visitor will find a mushroom.
 
-New estimate updates use v2. The code keeps `porcini-experimental-v1` so that
-updates already stored with v1 still recalculate the same facts when an area is
-read. The last section of this document describes v1 and why v2 replaced it.
+New estimate updates use v3. The code keeps v1 and v2 so saved updates retain
+their original percentages and explanations. v3 adds host-tree information
+to the unchanged v2 weather and forest calculation described below.
 
 The event is visible fruiting bodies from the four-species porcini group,
 *Boletus edulis*, *B. aereus*, *B. reticulatus* and *B. pinophilus*, somewhere
 in the selected 500 m square on the Italian local target date. The event key is
 `visible_porcini_fruiting_bodies_in_500m_cell_on_italian_date`.
+
+## Host trees in v3
+
+JRC provides modelled relative occurrence for individual trees on a 1 km grid.
+The selected release describes 2006. The loader samples the native pixel at
+the centre of each requested 500 m square. Adjacent squares can share a value.
+The values do not measure forest cover or identify the dominant tree.
+
+The source set contains beech, chestnut, seven oaks, seven pines, Norway spruce
+and silver fir. `GROUP_SPECIES` in `src/micometeo/host_trees.py` lists all 18
+species. Every selected dataset's JRC catalogue title was checked for the
+2006 date and C-SMFAv0-3-2 release. The
+[source assessment](../reports/mvp/tree_species_coverage.md) records the choice
+and limitations. Each local manifest records file checksums, download dates,
+source URLs and credit. Zero remains a valid value; the raster's negative
+missing marker stays missing. A live check also found -1 pixels outside the
+declared mask. The loader treats every negative value as missing, never zero.
+
+For each host group, take the maximum occurrence among its selected species.
+A group is missing if any selected species in it is missing. If all five
+groups are available, apply this formula before rounding the percentage:
+
+```text
+h = max(beech, chestnut, oaks, pines, spruce_fir)
+host_multiplier = 0.50 + 0.50 * h
+score_v3 = score_v2 * host_multiplier
+whole_percentage = ROUND_HALF_UP(5 + 90 * score_v3)
+```
+
+The maximum, equal treatment of the five groups, and 0.50 coefficients are
+project choices. They are not fitted weights or a probability that any host
+is present. Adding probabilities would count overlapping species more than
+once. Taking their maximum is a simple experimental rule, not a validated
+way to compare differently calibrated tree maps. The selected groups do not
+include every possible host. Low scores reduce the estimate without excluding
+the square.
+
+If the source is unavailable or any group is missing, v3 uses `score_v2`
+without a tree penalty. The `host_tree_factor` fact records a multiplier of
+1 and quality `forest_only_missing_host_data`. Known group facts remain
+visible; unknown group facts have a null value. Missing tree data are never
+converted to zero. Other missing required inputs still make the estimate
+unavailable as described below.
+
+With ideal v2 weather and full forest cover, `score_v2` is 1:
+
+| Tree inputs | Multiplier | Percentage |
+| --- | ---: | ---: |
+| Beech or chestnut equals 1, other groups equal 0 | 1.00 | 95 |
+| Highest complete group equals 0.8 | 0.90 | 86 |
+| All five groups equal 0 | 0.50 | 50 |
+| Any group missing | 1.00, disclosed fallback | 95 |
+
+The fallback can score higher than a complete low-host record. This is an
+explicit limitation of keeping the existing estimate when tree evidence is
+unavailable. For dry or frozen conditions, the v2 score is already zero and
+all these cases remain at 5.
+
+### Host evidence
+
+The references support host associations, not the numerical weights above.
+The four porcini species need not use every listed host group equally.
+
+| Group | Published support |
+| --- | --- |
+| Beech | Beugelsdijk and colleagues list Fagus among B. edulis hosts. |
+| Chestnut | The 2023 chestnut-orchard study measures B. edulis and B. reticulatus mycelium. |
+| Oaks | Beugelsdijk and colleagues link Quercus with B. aereus, B. reticulatus and B. edulis. |
+| Pines | Their study links B. pinophilus mainly with Pinus and also discusses pine-associated B. edulis. |
+| Spruce and fir | Their host tables include Picea and Abies within B. edulis and B. pinophilus descriptions. |
+
+Sources are [Beugelsdijk et al., 2008](https://pmc.ncbi.nlm.nih.gov/articles/PMC2865352/)
+and the [2023 chestnut study](https://www.frontiersin.org/journals/soil-science/articles/10.3389/fsoil.2023.1159793/full).
+Independent Italian observations have not validated this v3 modifier.
+
+### Cache and saved explanations
+
+The setup command downloads files once. Workers sample only requested areas
+and store the five group values in `HostTreeCache`, keyed by stable square ID
+and manifest fingerprint. There are no provider calls in runtime sampling.
+Each estimate update saves its tree inputs and source metadata. The update
+fingerprint includes those inputs, so changed tree values create a distinct
+update. Area details read saved inputs even if local files or cache rows change.
+Queue identities include the method and source version, so installing a source
+does not reuse a completed forest-only task for the same weather snapshot.
+Old v1 and v2 updates ignore tree data entirely.
 
 ## Public records
 
@@ -38,11 +124,11 @@ temperatures at the Open-Meteo reference altitude, in `deg_c`.
 `ForecastInputs` contains `assessment_date`, `target_date`, the numeric inputs
 `old_rain`, `recent_rain`, `target_temperature`, `reference_altitude`,
 `square_altitude` and `forest_share`, and the daily record
-`period_temperatures`. v2 reads `period_temperatures` and ignores
+`period_temperatures`, plus optional `host_trees`. v2 and v3 read `period_temperatures` and ignore
 `target_temperature`. v1 reads `target_temperature` and ignores
 `period_temperatures`.
 
-`calculate_forecast` takes the inputs and a method, which defaults to v2. It
+`calculate_forecast` takes the inputs and a method, which defaults to v3. It
 returns a frozen `ForecastResult` with these fields:
 
 | Field | Meaning |
@@ -84,7 +170,8 @@ before the assessment date and the 7 days after it, so the 20 days ending on
 any target date are always inside the snapshot.
 
 Terrain and forest values use the assessment date as their build date. A
-regional tree value is optional and is not an input to this method.
+regional tree value is not used. v3 accepts the optional JRC `HostTrees` record
+with five occurrence values, source ID, year, resolution and source metadata.
 
 The method rejects wrong units, dates in the wrong period, inconsistent day
 counts, daily lists of the wrong length, negative rain, non-finite numbers and
@@ -92,7 +179,7 @@ forest shares outside zero through one. It accepts finite low and high
 altitudes. It rejects temperatures without the canonical reference-altitude
 semantic, because it applies the altitude adjustment once itself.
 
-## Formula
+## Weather and forest formula shared with v2
 
 ```text
 lapse = 0.0065 * (square_altitude - reference_altitude)
@@ -210,7 +297,11 @@ The v2 order is:
 | `forest_share` | Original forest fraction and `f`. |
 
 The two derived facts name the temperature, reference altitude and square
-altitude sources. Facts for missing values do not appear.
+altitude sources. Missing weather facts do not appear. v3 adds `host_beech`,
+`host_chestnut`, `host_oaks`, `host_pines`, `host_spruce_fir` and the multiplier
+when tree records exist. Group facts describe the source year, with zero
+weather-day counts. The multiplier fact always appears, including a disclosed
+fallback. The area API includes credit and resolution in `source_metadata`.
 
 ## Missing results
 
@@ -311,7 +402,7 @@ The method follows local decisions D17 and D18 and the limits in [P2](../reports
 [P3](../reports/p3_weather.md) and [P4](../reports/p4_benchmark.md). P4's
 rain share is evidence for a useful input, not a 95 percent chance. P4's
 failed place learner and P5's synthetic map numbers do not enter this method.
-The formula does not use soil, slope, aspect, tree species, a cooling rule, a
+The formula does not use soil, slope, aspect, a cooling rule, a
 season rule or visitor finding records as absence evidence.
 
 The [Open-Meteo documentation](https://open-meteo.com/en/docs) describes the

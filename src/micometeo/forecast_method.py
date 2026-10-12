@@ -1,6 +1,6 @@
 """Calculate the experimental porcini growth estimate for one 500 m square."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 import math
@@ -9,7 +9,8 @@ from numbers import Real
 
 METHOD_VERSION_V1 = "porcini-experimental-v1"
 METHOD_VERSION_V2 = "porcini-experimental-v2"
-METHOD_VERSION = METHOD_VERSION_V2
+METHOD_VERSION_V3 = "porcini-experimental-v3"
+METHOD_VERSION = METHOD_VERSION_V3
 EVENT_KEY = "visible_porcini_fruiting_bodies_in_500m_cell_on_italian_date"
 
 OLD_RAIN_KEY = "older_rain"
@@ -23,6 +24,21 @@ FOREST_SHARE_KEY = "forest_share"
 
 _TEMPERATURE_SEMANTICS = {"temperature_at_reference_altitude"}
 TEMPERATURE_PERIOD_DAYS = 20
+HOST_GROUPS = ("beech", "chestnut", "oaks", "pines", "spruce_fir")
+
+
+@dataclass(frozen=True)
+class HostTrees:
+    """Keep modelled host occurrence separate from forest cover.
+
+    Missing group values remain unknown, including in saved explanations.
+    """
+
+    values: tuple[float | None, ...]
+    source_id: str
+    source_year: int
+    resolution_m: int
+    metadata: dict = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -69,6 +85,7 @@ class ForecastInputs:
     square_altitude: NumericInput | None
     forest_share: NumericInput | None
     period_temperatures: DailyTemperatures | None = None
+    host_trees: HostTrees | None = None
 
 
 @dataclass(frozen=True)
@@ -115,13 +132,24 @@ class ForecastMethodV2Config:
     maximum_percentage: int = 95
 
 
+@dataclass(frozen=True)
+class ForecastMethodV3Config(ForecastMethodV2Config):
+    """Add an experimental host multiplier to the unchanged v2 factors."""
+
+    version: str = METHOD_VERSION_V3
+    host_base: float = 0.5
+    host_weight: float = 0.5
+
+
 METHOD_V1 = ForecastMethodConfig()
 METHOD_V2 = ForecastMethodV2Config()
+METHOD_V3 = ForecastMethodV3Config()
 METHODS_BY_VERSION: dict[str, ForecastMethodConfig | ForecastMethodV2Config] = {
     METHOD_V1.version: METHOD_V1,
     METHOD_V2.version: METHOD_V2,
+    METHOD_V3.version: METHOD_V3,
 }
-CURRENT_METHOD = METHOD_V2
+CURRENT_METHOD = METHOD_V3
 
 
 @dataclass(frozen=True)
@@ -129,7 +157,7 @@ class ForecastFact:
     """One input or derived value used by the experimental calculation."""
 
     role_key: str
-    original_value: float
+    original_value: float | None
     unit: str
     source_id: str
     source_ids: tuple[str, ...]
@@ -140,6 +168,7 @@ class ForecastFact:
     normalized_factor: float | None
     translation_key: str
     quality: str | None = None
+    source_metadata: dict = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -166,6 +195,10 @@ def _validate_date(*, value: object, name: str) -> date:
 
 
 def _validate_method(*, method: ForecastMethodConfig | ForecastMethodV2Config) -> None:
+    if isinstance(method, ForecastMethodV3Config):
+        if method != METHOD_V3:
+            raise ValueError(f"{METHOD_VERSION_V3} parameters are frozen")
+        return
     if isinstance(method, ForecastMethodV2Config):
         if method.version != METHOD_VERSION_V2:
             raise ValueError(f"unsupported method version: {method.version}")
@@ -642,6 +675,48 @@ def _facts_and_factors_v2(
     return tuple(facts), factors
 
 
+def _host_facts(
+    *, inputs: ForecastInputs, method: ForecastMethodV3Config
+) -> tuple[tuple[ForecastFact, ...], float]:
+    trees = inputs.host_trees
+    facts: list[ForecastFact] = []
+    if trees is not None:
+        if not isinstance(trees, HostTrees) or not isinstance(trees.values, tuple) or len(trees.values) != len(HOST_GROUPS):
+            raise ValueError("host_trees must contain the five host groups")
+        if not isinstance(trees.source_id, str) or not trees.source_id or type(trees.source_year) is not int:
+            raise ValueError("host_trees must identify the source and year")
+        if not 1 <= trees.source_year <= inputs.assessment_date.year or type(trees.resolution_m) is not int or trees.resolution_m <= 0:
+            raise ValueError("host_trees has an invalid year or resolution")
+        for group, value in zip(HOST_GROUPS, trees.values, strict=True):
+            if value is not None and (
+                isinstance(value, bool) or not isinstance(value, Real)
+                or not math.isfinite(value) or not 0 <= value <= 1
+            ):
+                raise ValueError("host occurrence must be finite and between zero and one")
+            facts.append(ForecastFact(
+                role_key=f"host_{group}", original_value=value, unit="relative_occurrence",
+                source_id=trees.source_id, source_ids=(trees.source_id,),
+                period_start=date(trees.source_year, 1, 1),
+                period_end=date(trees.source_year, 12, 31),
+                completed_day_count=0, forecast_day_count=0, normalized_factor=None,
+                translation_key=f"forecast.fact.host_{group}",
+                quality="missing" if value is None else "modelled_1km_not_tree_cover",
+                source_metadata={**trees.metadata, "resolution_m": trees.resolution_m},
+            ))
+    complete = trees is not None and all(value is not None for value in trees.values)
+    multiplier = method.host_base + method.host_weight * max(trees.values) if complete else 1.0
+    facts.append(ForecastFact(
+        role_key="host_tree_factor", original_value=multiplier, unit="multiplier",
+        source_id="derived:host_tree_factor",
+        source_ids=(trees.source_id,) if trees is not None else ("unavailable:host_trees",),
+        period_start=inputs.assessment_date, period_end=inputs.assessment_date,
+        completed_day_count=0, forecast_day_count=0, normalized_factor=multiplier,
+        translation_key="forecast.fact.host_tree_factor",
+        quality="experimental_project_weight" if complete else "forest_only_missing_host_data",
+    ))
+    return tuple(facts), multiplier
+
+
 def calculate_forecast(
     *,
     inputs: ForecastInputs,
@@ -754,6 +829,10 @@ def calculate_forecast(
             )
             if item is None or item.value is None
         )
+    host_multiplier = 1.0
+    if isinstance(method, ForecastMethodV3Config):
+        host_facts, host_multiplier = _host_facts(inputs=inputs, method=method)
+        facts += host_facts
     forest_value = None if inputs.forest_share is None else inputs.forest_share.value
     if forest_value is None:
         reason = "missing_forest_data"
@@ -792,6 +871,7 @@ def calculate_forecast(
             )
             * (method.forest_base + method.forest_weight * factors[FOREST_SHARE_KEY])
         )
+    score *= host_multiplier
     if not math.isfinite(score) or not 0 <= score <= 1:
         raise ValueError("calculation score must stay from zero to one")
     raw_percentage = Decimal("5") + Decimal("90") * Decimal(str(score))
