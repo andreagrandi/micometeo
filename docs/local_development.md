@@ -140,15 +140,14 @@ Network access is needed to install uv and Python, resolve PyPI packages, fetch
 the pre-commit hook repositories and pull the PostGIS image. The checks do not
 use that network access for provider calls.
 
-### File and investigation checks without a database
+### File checks without a database
 
-These commands match the file and investigation jobs in GitHub Actions:
+These commands match the file checks job in GitHub Actions:
 
 ```sh
 uv sync --locked
 uv run pre-commit run --all-files
 uv run pre-commit run gitleaks-history --hook-stage manual --all-files
-uv run pytest --ignore=tests/app
 ```
 
 The normal gitleaks hook scans files during the usual staged-file checks. The
