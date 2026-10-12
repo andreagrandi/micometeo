@@ -14,7 +14,7 @@
   </head>
   <body class="{{ body_class|default:'' }}">
     {% block content %}{% endblock %}
-    <script src="{% static 'web_ui/app.js' %}" defer></script>
+    {% block app_script %}<script src="{% static 'web_ui/app.js' %}" defer></script>{% endblock %}
     {% block scripts %}{% endblock %}
   </body>
 </html>

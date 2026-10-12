@@ -1,4 +1,8 @@
 {% extends "web_ui/base.html" %}
+{% load static %}
+{% block head %}
+  <link rel="stylesheet" href="{% static 'maplibre-gl.css' %}">
+{% endblock %}
 {% block title %}Micometeo{% endblock %}
 {% block content %}
 <div class="app{% if details_open %} details-open{% endif %}" id="app" data-map-app data-language="{{ language }}" data-fixture="{{ fixture|default:'' }}" data-selected-square="{{ selected_square }}" data-target-date="{{ target_date|default:dates.0.iso }}" data-assessment-date="{{ assessment_date.isoformat }}" data-update-id="{{ update_id }}" data-result-id="{{ result_id|default:'' }}" data-map-center="{{ map_center }}" data-map-zoom="{{ map_zoom }}" data-panel="" data-details-open="{% if details_open %}true{% else %}false{% endif %}">
@@ -9,8 +13,8 @@
       <section class="panel" id="legend-panel" data-fold-card="legend" aria-labelledby="legend-heading">
         <div class="panel-head"><h2 id="legend-heading"><span class="h-phone">{{ labels.legend }}</span><span class="h-desk">{{ labels.legend_scale_short }}</span></h2><button class="btn btn-quiet panel-close" type="button" data-close-panel="legend"><span>{{ labels.close }}</span></button><button class="fold-btn" type="button" data-fold="legend" aria-expanded="true" aria-controls="legend-body" aria-label="{{ labels.close }}">⌃</button></div>
         <div id="legend-body">
-          <div class="lg-full"><div class="legend-group"><p class="legend-title">{{ labels.legend_scale }}</p><div class="legend-row"><span class="sw sw-selected"></span><span>{{ labels.selected_square }}</span></div><div class="legend-row"><span class="sw sw-area"></span><span>{{ labels.weather_area }}</span></div><div class="legend-row"><span class="sw sw-forest"></span><span>{{ labels.forest }}</span></div></div><div class="legend-group"><p class="legend-title">{{ labels.status }}</p><div class="legend-row"><span class="sw sw-missing"></span><span>{{ labels.legend_missing }}</span></div><div class="legend-row"><span class="sw sw-less"></span><span>{{ labels.legend_less_forest }}</span></div></div><p class="legend-note">{{ labels.legend_note }}</p></div>
-          <div class="lg-compact"><div class="lg-scale"><span class="lg-chip"><i style="background:var(--scale-0)"></i>0</span><span class="lg-chip"><i style="background:var(--scale-1)"></i>20</span><span class="lg-chip"><i style="background:var(--scale-2)"></i>40</span><span class="lg-chip"><i style="background:var(--scale-3)"></i>60</span><span class="lg-chip"><i style="background:var(--scale-4)"></i>80+</span></div><div class="lg-pair"><div class="lg-item"><span class="sw sw-missing"></span>{{ labels.legend_missing }}</div><div class="lg-item"><span class="sw sw-less"></span>{{ labels.legend_less_forest }}</div></div><button class="lg-toggle" type="button" data-legend-more>+ {{ labels.legend_more }}</button><div class="lg-extra" hidden><div class="legend-row"><span class="sw sw-selected"></span>{{ labels.selected_square }}</div><div class="legend-row"><span class="sw sw-area"></span>{{ labels.weather_area }}</div><p class="legend-note">{{ labels.legend_note }}</p></div></div>
+          <div class="lg-full"><div class="legend-group"><p class="legend-title">{{ labels.legend_scale }}</p><div class="legend-row"><span class="sw sw-selected"></span><span>{{ labels.selected_square }}</span></div><div class="legend-row"><span class="sw sw-area"></span><span>{{ labels.weather_area }}</span></div><div class="legend-row"><span class="sw sw-forest"></span><span>{{ labels.forest }}</span></div></div><div class="legend-group"><p class="legend-title">{{ labels.status }}</p><div class="legend-row"><span class="sw sw-missing"></span><span>{{ labels.legend_missing }}</span></div><div class="legend-row"><span class="sw sw-less"></span><span>{{ labels.legend_less_forest }}</span></div></div><p class="legend-note">{% if fixture %}{{ labels.legend_note }}{% else %}{{ labels.legend_live_note }}{% endif %}</p></div>
+          <div class="lg-compact"><div class="lg-scale"><span class="lg-chip"><i style="background:var(--scale-0)"></i>0</span><span class="lg-chip"><i style="background:var(--scale-1)"></i>20</span><span class="lg-chip"><i style="background:var(--scale-2)"></i>40</span><span class="lg-chip"><i style="background:var(--scale-3)"></i>60</span><span class="lg-chip"><i style="background:var(--scale-4)"></i>80+</span></div><div class="lg-pair"><div class="lg-item"><span class="sw sw-missing"></span>{{ labels.legend_missing }}</div><div class="lg-item"><span class="sw sw-less"></span>{{ labels.legend_less_forest }}</div></div><button class="lg-toggle" type="button" data-legend-more>+ {{ labels.legend_more }}</button><div class="lg-extra" hidden><div class="legend-row"><span class="sw sw-selected"></span>{{ labels.selected_square }}</div><div class="legend-row"><span class="sw sw-area"></span>{{ labels.weather_area }}</div><p class="legend-note">{% if fixture %}{{ labels.legend_note }}{% else %}{{ labels.legend_live_note }}{% endif %}</p></div></div>
         </div>
       </section>
       {% include "web_ui/components/date-strip.html" %}
@@ -20,14 +24,28 @@
       <div class="zoombox"><button class="btn-zoom" type="button" data-zoom="in" aria-label="{{ labels.zoom_in }}"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><button class="btn-zoom" type="button" data-zoom="out" aria-label="{{ labels.zoom_out }}"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button></div>
     </div>
     <div class="mapcell">
-      <div id="map" tabindex="0" role="region" aria-label="{{ labels.map_label }}" class="{% if fixture %}illustrative-map{% endif %}"><span class="map-boundary-label">{% if fixture %}{{ labels.illustrative_map }}{% else %}{{ labels.map_placeholder }}{% endif %}</span>{% if fixture %}<span class="map-place map-place-one">{{ labels.illustrative_area }}</span><span class="map-place map-place-two">{{ labels.illustrative_square }}</span>{% endif %}</div>
+      <div id="map" tabindex="0" role="region" aria-label="{{ labels.map_label }}" class="{% if fixture %}illustrative-map{% endif %}" data-map-container><span class="map-boundary-label">{% if fixture %}{{ labels.illustrative_map }}{% else %}{{ labels.map_placeholder }}{% endif %}</span>{% if fixture %}<span class="map-place map-place-one">{{ labels.illustrative_area }}</span><span class="map-place map-place-two">{{ labels.illustrative_square }}</span>{% endif %}</div>
       {% if fixture_state == 'loading' %}<div class="progress" id="progress"><span></span></div>{% endif %}
       <div class="maptop"><div class="mapmsgs" id="mapmsgs" aria-live="polite">{% include "web_ui/components/state.html" %}</div><button class="btn btn-secondary map-centre" id="centre-btn" type="button"{% if not details_open %} hidden{% endif %} data-center-select><span>{{ labels.select_center }}</span></button></div>
     </div>
-    <footer class="mapfoot">{% include "web_ui/components/language.html" %}<p class="attribution">{% if fixture %}{{ labels.illustrative_map }}{% else %}{{ labels.map_placeholder }}{% endif %}</p></footer>
+    <footer class="mapfoot">{% include "web_ui/components/language.html" %}<div class="attribution" data-map-attribution><span class="attribution-map"><a href="https://www.openstreetmap.org/copyright" rel="noreferrer">OpenStreetMap</a> · <a href="https://openmaptiles.org" rel="noreferrer">OpenMapTiles</a> · <a href="https://openfreemap.org" rel="noreferrer">OpenFreeMap</a></span></div></footer>
     <div class="sheetwrap" id="sheetwrap"><div class="floatbtns"><button class="btn btn-float" type="button" data-open-panel="layers" aria-expanded="false" aria-controls="layers-panel"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg><span>{{ labels.layers_button }}</span></button><button class="btn btn-float" type="button" data-open-panel="legend" aria-expanded="false" aria-controls="legend-panel"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h1M3 12h1M3 18h1"/></svg><span>{{ labels.legend_button }}</span></button></div>{% if details_open %}{% include "web_ui/components/details.html" %}{% endif %}</div>
   </main>
 </div>
 <div class="toast" data-toast role="status" aria-live="polite"></div>
 {{ labels|json_script:"ui-labels" }}
+{% endblock %}
+{% block app_script %}{% if fixture %}<script src="{% static 'web_ui/app.js' %}" defer></script>{% endif %}{% endblock %}
+{% block scripts %}
+  {% if not fixture %}
+  <script type="module">
+    try {
+      const maplibregl = await import("{% static 'maplibre-gl.mjs' %}");
+      window.maplibregl = maplibregl;
+    } catch (error) {
+      window.maplibreLoadFailed = true;
+    }
+    await import("{% static 'web_ui/app.js' %}");
+  </script>
+  {% endif %}
 {% endblock %}

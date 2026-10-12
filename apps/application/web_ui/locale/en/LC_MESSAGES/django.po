@@ -12,3 +12,93 @@ msgstr "Loading the estimate"
 
 msgid "Search a place"
 msgstr "Search a place"
+
+msgid "Loading the map data."
+msgstr "Loading the map data."
+
+msgid "The map data could not be loaded. Try again."
+msgstr "The map data could not be loaded. Try again."
+
+msgid "The forest view could not be loaded. Try again."
+msgstr "The forest view could not be loaded. Try again."
+
+msgid "Zoom in until the map is about 50 km wide to see estimates."
+msgstr "Zoom in until the map is about 50 km wide to see estimates."
+
+msgid "Loading estimates for {date}."
+msgstr "Loading estimates for {date}."
+
+msgid "No estimates are stored in this view."
+msgstr "No estimates are stored in this view."
+
+msgid "The estimates could not be loaded. Try again."
+msgstr "The estimates could not be loaded. Try again."
+
+msgid "This view is outside the available map data."
+msgstr "This view is outside the available map data."
+
+msgid "The first weather update for this area is still pending."
+msgstr "The first weather update for this area is still pending."
+
+msgid "Selected square"
+msgstr "Selected square"
+
+msgid "Target date"
+msgstr "Target date"
+
+msgid "Assessment date"
+msgstr "Assessment date"
+
+msgid "Update"
+msgstr "Update"
+
+msgid "multiple source dates"
+msgstr "multiple source dates"
+
+msgid "Calculated"
+msgstr "Calculated"
+
+msgid "Unavailable"
+msgstr "Unavailable"
+
+msgid "Stored estimate for {target} uses assessment {assessment}; calculated {calculated}."
+msgstr "Stored estimate for {target} uses assessment {assessment}; calculated {calculated}."
+
+msgid "Less than 10% forest. No estimate."
+msgstr "Less than 10% forest. No estimate."
+
+msgid "Estimate unavailable because required data is missing."
+msgstr "Estimate unavailable because required data is missing."
+
+msgid "This estimate is outside the stored update dates."
+msgstr "This estimate is outside the stored update dates."
+
+msgid "The visitor weather limit is reached. Try again later."
+msgstr "The visitor weather limit is reached. Try again later."
+
+msgid "The weather service quota is exhausted. Try again later."
+msgstr "The weather service quota is exhausted. Try again later."
+
+msgid "The weather service refused this request. Try again later."
+msgstr "The weather service refused this request. Try again later."
+
+msgid "The weather service is unavailable. Try again later."
+msgstr "The weather service is unavailable. Try again later."
+
+msgid "The interactive map library could not be loaded. Try again."
+msgstr "The interactive map library could not be loaded. Try again."
+
+msgid "The map background could not be loaded. Your current map is still available. Try again."
+msgstr "The map background could not be loaded. Your current map is still available. Try again."
+
+msgid "Map data OpenStreetMap contributors · OpenFreeMap"
+msgstr "Map data OpenStreetMap contributors · OpenFreeMap"
+
+msgid "Estimate data credits"
+msgstr "Estimate data credits"
+
+msgid "Try again"
+msgstr "Try again"
+
+msgid "The map shows experimental estimates from stored forest and weather data. The percentage has not been validated and is not your personal chance of finding porcini."
+msgstr "The map shows experimental estimates from stored forest and weather data. The percentage has not been validated and is not your personal chance of finding porcini."

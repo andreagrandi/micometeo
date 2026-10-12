@@ -869,25 +869,36 @@ def test_squares_route_uses_newest_publication_and_preserves_all_square_states(
     assert by_cell_id[cells[0].grid_build_cell.cell.cell_id]["update_id"] == str(
         new_update.public_id
     )
+    assert by_cell_id[cells[0].grid_build_cell.cell.cell_id]["weather_cell"] == {
+        "latitude": 44.0,
+        "longitude": 11.0,
+    }
     assert by_cell_id[cells[0].grid_build_cell.cell.cell_id]["calculated_at"].startswith(
         "2026-10-12T09:00:00"
     )
     assert by_cell_id[cells[1].grid_build_cell.cell.cell_id]["state"] == "noforest"
     assert by_cell_id[cells[1].grid_build_cell.cell.cell_id]["percentage"] is None
     assert by_cell_id[cells[1].grid_build_cell.cell.cell_id]["update_id"] is None
+    assert by_cell_id[cells[1].grid_build_cell.cell.cell_id]["weather_cell"] is None
     assert (
         by_cell_id[cells[2].grid_build_cell.cell.cell_id]["unavailable_reason"]
         == "missing_forest_data"
     )
     assert by_cell_id[cells[2].grid_build_cell.cell.cell_id]["update_id"] is None
+    assert by_cell_id[cells[2].grid_build_cell.cell.cell_id]["weather_cell"] is None
     assert by_cell_id[cells[3].grid_build_cell.cell.cell_id]["state"] == "noresultyet"
     assert by_cell_id[cells[3].grid_build_cell.cell.cell_id]["unavailable_reason"] == "pending"
     assert by_cell_id[cells[3].grid_build_cell.cell.cell_id]["update_id"] is None
+    assert by_cell_id[cells[3].grid_build_cell.cell.cell_id]["weather_cell"] == {
+        "latitude": 44.1,
+        "longitude": 11.1,
+    }
     assert (
         by_cell_id[cells[4].grid_build_cell.cell.cell_id]["unavailable_reason"]
         == "missing_forest_data"
     )
     assert by_cell_id[cells[4].grid_build_cell.cell.cell_id]["update_id"] is None
+    assert by_cell_id[cells[4].grid_build_cell.cell.cell_id]["weather_cell"] is None
 
 
 @pytest.mark.django_db(transaction=True)

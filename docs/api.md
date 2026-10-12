@@ -65,7 +65,11 @@ an illustrative available-result excerpt:
   "assessment_date": "2026-10-12",
   "update_id": "550e8400-e29b-41d4-a716-446655440000",
   "calculated_at": "2026-10-12T08:30:00Z",
-  "message_key": "estimate.available"
+  "message_key": "estimate.available",
+  "weather_cell": {
+    "latitude": 44.0,
+    "longitude": 11.0
+  }
 }
 ```
 
@@ -73,6 +77,9 @@ The response also includes `cell_id`. Copy the feature ID, target date and
 update ID together when opening details. One view can contain updates from
 different assessment dates. An older estimate keeps its original dates and
 calculation time. It never gains a new eighth date when the clock advances.
+`weather_cell` contains the stored weather cell centre for the forest square.
+It is `null` when either coordinate is missing. Use these coordinates directly
+instead of deriving a centre from the displayed polygon.
 
 | State | Percentage | Meaning |
 | --- | --- | --- |
@@ -412,8 +419,10 @@ node tools/map_checks/measure_drawing.cjs \
   --profile-dir data/processed/map_checks/browser-profile
 ```
 
-MapLibre 4.7.1 matches the historical measurement. The npm audit command reports
-a critical advisory for this version, GHSA-jrc7-96c5-q579.
+The historical measurement used MapLibre 4.7.1. The local dependency now pins
+6.4.1, which fixes the critical attribution security advisory
+GHSA-jrc7-96c5-q579. New runs use the updated renderer and must record their
+own timings. They do not reproduce the historical library version.
 
 The drawing script starts a bounded local server for the page, MapLibre assets
 and three named GeoJSON files. It uses a visible 1,440 by 900 browser window,

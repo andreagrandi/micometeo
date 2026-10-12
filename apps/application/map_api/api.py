@@ -83,6 +83,13 @@ class AttributionSchema(Schema):
     url: str | None = None
 
 
+class WeatherCellSchema(Schema):
+    """Describe the stored weather cell centre for one square."""
+
+    latitude: float
+    longitude: float
+
+
 class InfoResponse(Schema):
     """Describe dates, coverage and limits for map reads."""
 
@@ -110,6 +117,7 @@ class SquarePropertiesSchema(Schema):
     update_id: UUID | None
     calculated_at: datetime | None
     message_key: str
+    weather_cell: WeatherCellSchema | None
 
 
 class SquareFeatureSchema(Schema):
@@ -409,6 +417,7 @@ def _square_properties(
     update_id: UUID | str | None,
     calculated_at: datetime | None,
     message_key: str,
+    weather_cell_coordinates: dict[str, float] | None,
 ) -> dict[str, Any]:
     """Return the stable public properties for one square."""
     public_update_id = str(update_id) if update_id is not None else None
@@ -423,6 +432,17 @@ def _square_properties(
         "update_id": public_update_id,
         "calculated_at": _json_value(calculated_at),
         "message_key": message_key,
+        "weather_cell": weather_cell_coordinates,
+    }
+
+
+def _weather_cell_coordinates(*, cell: ForestCell) -> dict[str, float] | None:
+    """Return the stored weather cell centre when both coordinates exist."""
+    if cell.weather_latitude is None or cell.weather_longitude is None:
+        return None
+    return {
+        "latitude": float(cell.weather_latitude),
+        "longitude": float(cell.weather_longitude),
     }
 
 
@@ -461,7 +481,7 @@ def _cache_key(
     digest = hashlib.sha256(
         json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
-    return f"micometeo-map-v1:{digest}"
+    return f"micometeo-map-v2:{digest}"
 
 
 def _weather_identity(
@@ -512,6 +532,7 @@ def _result_properties(
 ) -> dict[str, Any]:
     """Resolve one stored row from bulk identities and bytes."""
     cell_id = cell.grid_build_cell.cell.cell_id
+    weather_cell_coordinates = _weather_cell_coordinates(cell=cell)
     if cell.is_forest is None or cell.forest_share is None:
         return _square_properties(
             cell_id=cell_id,
@@ -523,6 +544,7 @@ def _result_properties(
             update_id=None,
             calculated_at=None,
             message_key="estimate.missing_forest",
+            weather_cell_coordinates=weather_cell_coordinates,
         )
     if cell.is_forest is False or cell.forest_share < 0.1:
         return _square_properties(
@@ -535,6 +557,7 @@ def _result_properties(
             update_id=None,
             calculated_at=None,
             message_key="estimate.no_forest",
+            weather_cell_coordinates=weather_cell_coordinates,
         )
 
     state = str(getattr(weather_result, "state", "not_available_yet"))
@@ -563,6 +586,7 @@ def _result_properties(
             update_id=None,
             calculated_at=None,
             message_key=message_key,
+            weather_cell_coordinates=weather_cell_coordinates,
         )
     offset = (target_date - update.assessment_date).days
     if offset < 0 or offset > MAX_DAYS_AHEAD or estimate_result is None:
@@ -580,6 +604,7 @@ def _result_properties(
                 if offset < 0 or offset > MAX_DAYS_AHEAD
                 else "estimate.result_not_ready"
             ),
+            weather_cell_coordinates=weather_cell_coordinates,
         )
     try:
         decoded = decode_result_bytes(values=estimate_result.values)
@@ -595,6 +620,7 @@ def _result_properties(
             update_id=update.public_id,
             calculated_at=update.calculated_at,
             message_key="estimate.required_gap",
+            weather_cell_coordinates=weather_cell_coordinates,
         )
     if isinstance(value, int):
         return _square_properties(
@@ -607,6 +633,7 @@ def _result_properties(
             update_id=update.public_id,
             calculated_at=update.calculated_at,
             message_key="estimate.available",
+            weather_cell_coordinates=weather_cell_coordinates,
         )
     return _square_properties(
         cell_id=cell_id,
@@ -618,6 +645,7 @@ def _result_properties(
         update_id=update.public_id,
         calculated_at=update.calculated_at,
         message_key="estimate.unavailable",
+        weather_cell_coordinates=weather_cell_coordinates,
     )
 
 

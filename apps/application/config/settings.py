@@ -140,6 +140,9 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = [
+    BASE_DIR.parent.parent / "tools/map_checks/node_modules/maplibre-gl/dist",
+]
 LOCALE_PATHS = [BASE_DIR / "web_ui" / "locale", BASE_DIR / "web_ui" / "landing_locale"]
 MICOMETEO_UI_FIXTURE_PAGES = _env_bool(name="MICOMETEO_UI_FIXTURE_PAGES", default=False)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
