@@ -6,6 +6,7 @@ from django.http import HttpRequest
 from django.db import DatabaseError, connection
 from ninja import NinjaAPI, Schema, Status
 
+from area_api.router import router as area_router
 from map_api.api import router as map_router
 
 
@@ -31,4 +32,5 @@ def health(request: HttpRequest) -> HealthResponse | Status[HealthResponse]:
     return HealthResponse(application="available", database="available")
 
 
+api.add_router("", area_router)
 api.add_router("", map_router)

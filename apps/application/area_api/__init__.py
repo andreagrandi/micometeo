@@ -1,0 +1,1 @@
+"""Selected-square detail API."""

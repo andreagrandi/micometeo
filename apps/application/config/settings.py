@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "weather_summaries",
     "weather_on_demand",
     "estimate_updates",
+    "area_api",
     "map_api",
 ]
 
