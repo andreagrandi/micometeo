@@ -252,8 +252,8 @@ read populated the response cache, followed by two cached reads.
 
 Gzip length can differ by a few bytes because Django adds random padding.
 The broad Italy view returned `view_too_large` with zero weather calls.
-The 16,000-square limit allows these near-60-km national views. It remains
-provisional until drawing on a physical phone is measured. A desktop browser
+The 16,000-square limit allows these near-60-km national views. The physical
+phone measurements below check that limit on an iPhone 15. A desktop browser
 with a phone-sized window is not a physical-phone acceptance check.
 
 The same saved responses were drawn with MapLibre GL JS 4.7.1 in a visible
@@ -269,10 +269,9 @@ from a deployed server.
 | Alps | 309.2, 316.9 and 312.5 ms |
 | Calabria | 309.7, 312.0 and 312.4 ms |
 
-These results support retaining the provisional desktop limit. They do not
-establish a safe phone limit. [Follow-up #64](https://github.com/andreagrandi/micometeo/issues/64)
-tracks the physical-phone check required before closing #49. Any closer starting view needs the owner's
-agreement, as required by that ticket.
+These desktop results are separate from the physical-phone measurements
+recorded below for [#64](https://github.com/andreagrandi/micometeo/issues/64).
+Any closer starting view needs the owner's agreement, as required by #49.
 
 The local measurement artifacts are under `/tmp/agents/` on the development
 laptop. `micometeo-map-measurements.json` records response sizes and timings.
@@ -299,3 +298,74 @@ The fixtures cover saved values, unchanged previous updates, expired updates,
 rain periods, missing required and optional inputs, source credits, broad
 views, invalid bounds, date limits and cache identities. They replace external
 weather and never depend on a live provider.
+
+### Physical-phone measurement page
+
+Start the local measurement page with the saved national responses:
+
+```sh
+uv run python tools/phone_map/serve.py --host 0.0.0.0 --port 8769 \
+  --data-dir /tmp/agents
+```
+
+Open the laptop's local network address on a phone using the same Wi-Fi.
+Enter the phone model, operating-system and browser versions, and connection
+conditions. Keep the page visible and tap `Run measurements`. It runs three
+trials for each of the Northern Apennines, Alps and Calabria views, then sends
+the report to `data/processed/phone_map_checks/` on the laptop.
+
+The report separates data loading and JSON parsing, polygon drawing, and the
+total time from starting the data request until the map is drawn. It records
+the actual compressed body size, transfer size, viewport and device pixel
+ratio. These totals exclude loading the page and MapLibre from its CDN. The
+server compresses the saved responses itself, so its compressed size can
+differ from the application response. The map has an empty background and
+uses the same MapLibre version and synthetic weather as the desktop check.
+It loads a fixed saved area. Panning outside that area shows no more squares.
+Loading the newly visible area as the visitor pans belongs to the application
+map in #56, not this measurement page.
+
+The physical-phone checkbox records the operator's device declaration.
+Desktop verification must clear it. A report marked as a desktop test or with
+the page hidden during measurement does not satisfy #64. Stop the server with
+Ctrl+C after collecting the phone results. It serves only the measurement
+page, manifest and three named responses, not the other files in `/tmp/agents`.
+
+### Physical-phone results
+
+On 12 October 2026 at 08:13 CEST, the owner ran all nine checks on a physical
+iPhone 15. The owner reported iOS 27. The browser identified itself as Safari
+27.0.1. The phone and M2 Pro laptop used the same Wi-Fi. The page stayed visible
+throughout the run. The page loaded MapLibre GL JS 4.7.1 from its pinned CDN URL.
+
+The viewport was 393 CSS pixels wide and changed from 657 to 749 pixels high
+as the browser controls moved. The map canvas remained 393 by 555 CSS pixels,
+with a device pixel ratio of three. The views and their square counts match
+the largest-view desktop measurements above.
+
+| View | Gzip bytes | Three drawing times | Three times including data loading |
+| --- | ---: | --- | --- |
+| Northern Apennines | 805,201 | 1,128, 1,215 and 1,249 ms | 1,341, 1,402 and 1,538 ms |
+| Alps | 814,980 | 1,842, 1,880 and 1,974 ms | 2,022, 2,052 and 2,197 ms |
+| Calabria | 745,813 | 1,009, 1,205 and 1,095 ms | 1,179, 1,368 and 1,257 ms |
+
+Each reported encoded body size matched the server's gzip length. The browser
+reported 300 additional transfer bytes per response. Drawing time runs from
+adding the GeoJSON source to the first MapLibre idle event. The last column
+starts before fetching the response and includes JSON parsing, map creation
+and drawing. Neither column measures the initial HTML and library download,
+background tiles, a public server or a mobile data connection.
+
+The owner confirmed that panning felt usable and observed the fixed-area
+boundary. Keep the 60 km per-axis limit and the 16,000-square cap. No limit
+change is needed from this check. This result covers this phone, browser and
+connection. The largest saved view contains 14,286 squares; 16,000 remains
+the request guard, not a claim that this run rendered exactly 16,000 squares.
+The website still needs to load adjacent views as the map moves.
+
+The complete local report is
+`data/processed/phone_map_checks/069e21c7e60146bc9fe809946797895b.json`.
+Its SHA-256 is
+`805e6a8842506cd75f67b780815b3f4d75d057c389ae488983b96333626b3107`.
+The original report omitted the library-version property. The pinned script
+URL identifies version 4.7.1, and the measurement page now records it explicitly.

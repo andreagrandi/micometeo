@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Micometeo phone measurement</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<style>
+body {margin: 0; font: 16px system-ui; color: #17372b; background: #f5f6ee;}
+main {padding: 16px; max-width: 640px; margin: auto;}
+h1 {font-size: 24px;} label {display: block; margin: 12px 0;}
+input, button {font: inherit; padding: 10px; box-sizing: border-box;}
+input[type=text] {display: block; width: 100%;}
+button {background: #205d35; color: white; border: 0; border-radius: 6px;}
+button:disabled {opacity: .5;} #map {width: 100%; height: 70vh;}
+pre {white-space: pre-wrap; overflow-wrap: anywhere;}
+</style>
+<main>
+<h1>Micometeo phone measurement</h1>
+<p>This checks drawing speed for three large Italian map views. Each saved view has fixed edges. Panning beyond them shows empty space. The percentages are synthetic test data. Keep this page visible while the nine checks run.</p>
+<form id="form">
+<label>Phone model<input name="model" type="text" required placeholder="For example, iPhone 15"></label>
+<label>Operating system and browser versions<input name="software" type="text" required placeholder="For example, iOS 27.0, Safari 27.0"></label>
+<label>Connection<input name="connection" type="text" required value="Phone and laptop on the same Wi-Fi"></label>
+<label><input name="physical" type="checkbox" checked> I am using a physical phone</label>
+<button id="start" type="submit">Run measurements</button>
+</form>
+<p id="status" role="status">Ready.</p>
+<pre id="results"></pre>
+</main>
+<div id="map"></div>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+let currentMap;
+let hiddenDuringRun = false;
+document.addEventListener("visibilitychange", () => { if (document.hidden) hiddenDuringRun = true; });
+const status = document.getElementById("status");
+const output = document.getElementById("results");
+function eventOnce(map, event) {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => { cleanup(); reject(new Error(`Map ${event} timed out.`)); }, 60000);
+    const done = () => { cleanup(); resolve(); };
+    const failed = error => { cleanup(); reject(error.error || new Error("Map failed.")); };
+    function cleanup() { clearTimeout(timeout); map.off(event, done); map.off("error", failed); }
+    map.once(event, done); map.once("error", failed);
+  });
+}
+window.runMeasurement = async function(name, trial, sizes) {
+  if (currentMap) currentMap.remove();
+  performance.clearResourceTimings();
+  const start = performance.now();
+  const response = await fetch(`/${name}.geojson`, {cache: "no-store"});
+  if (!response.ok) throw new Error(`Map response ${response.status}`);
+  const data = await response.json();
+  const loaded = performance.now();
+  const bounds = new maplibregl.LngLatBounds();
+  for (const feature of data.features) for (const point of feature.geometry.coordinates[0]) bounds.extend(point);
+  currentMap = new maplibregl.Map({container: "map", attributionControl: false,
+    style: {version: 8, sources: {}, layers: [{id: "background", type: "background", paint: {"background-color": "#f3f1e8"}}]},
+    bounds, fitBoundsOptions: {padding: 10, duration: 0}, fadeDuration: 0});
+  await eventOnce(currentMap, "load");
+  const drawStart = performance.now();
+  const idle = eventOnce(currentMap, "idle");
+  currentMap.addSource("squares", {type: "geojson", data});
+  currentMap.addLayer({id: "squares", type: "fill", source: "squares", paint: {
+    "fill-color": ["case", ["==", ["get", "state"], "noforest"], "#ded8c4",
+      ["interpolate", ["linear"], ["coalesce", ["get", "percentage"], 0], 0, "#eff3db", 100, "#205d35"]], "fill-opacity": .8}});
+  await idle;
+  const done = performance.now();
+  const timing = performance.getEntriesByName(new URL(`/${name}.geojson`, location.href).href)[0];
+  return {name, trial, squares: data.features.length, ...sizes,
+    fetch_and_json_ms: loaded - start, source_to_idle_ms: done - drawStart, fetch_to_drawn_ms: done - start,
+    encoded_body_bytes: timing?.encodedBodySize ?? null, transfer_bytes: timing?.transferSize ?? null,
+    rendered_features: currentMap.queryRenderedFeatures({layers: ["squares"]}).length,
+    viewport: {width: innerWidth, height: innerHeight, device_pixel_ratio: devicePixelRatio,
+      map_width: document.getElementById("map").clientWidth, map_height: document.getElementById("map").clientHeight}};
+};
+document.getElementById("form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  document.getElementById("start").disabled = true;
+  hiddenDuringRun = false;
+  const report = {physical_phone: form.elements.physical.checked, model: form.elements.model.value,
+    software: form.elements.software.value, connection: form.elements.connection.value,
+    user_agent: navigator.userAgent, started_at: new Date().toISOString(),
+    synthetic_weather: true, maplibre_version: "4.7.1", results: []};
+  try {
+    if (!window.maplibregl) throw new Error("MapLibre did not load. Check the internet connection and reload.");
+    const manifest = await (await fetch("/manifest.json")).json();
+    for (const name of ["northern_apennines", "alps", "calabria"]) {
+      for (let trial = 1; trial <= 3; trial++) {
+        status.textContent = `Running ${name.replaceAll("_", " ")}, trial ${trial} of 3.`;
+        const result = await window.runMeasurement(name, trial, manifest[name]);
+        report.results.push(result);
+        output.textContent += `${name}, trial ${trial}: ${result.source_to_idle_ms.toFixed(0)} ms drawing, ${result.fetch_to_drawn_ms.toFixed(0)} ms including data loading.\n`;
+      }
+    }
+    report.hidden_during_run = hiddenDuringRun;
+    const saved = await fetch("/results", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(report)});
+    if (!saved.ok) throw new Error(`Saving failed: ${saved.status}. Results are still visible above.`);
+    status.textContent = "Done. Results saved on the laptop. Try panning within the saved area and report whether it feels usable. This test does not load more squares beyond its edges.";
+    window.measurementReport = report;
+  } catch (error) { status.textContent = `Check failed: ${error.message}`; }
+  finally { document.getElementById("start").disabled = false; }
+});
+</script>
+</html>
