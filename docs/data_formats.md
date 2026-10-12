@@ -207,7 +207,28 @@ the days when summer time starts and ends, which have 23 and 25 hours.
 - Column names are `assessment_date`, `target_date` and `days_ahead`.
 - The 7 days before an `assessment_date` are the 7 full days ending the day
   before it. The same holds for 14 and 30 days.
-- Only data that existed before midnight Italian time at the start of
-  `assessment_date` may be used. Weather published later is not used, even if
-  it describes earlier days.
-- Request Open-Meteo daily values with `timezone=Europe/Rome`.
+
+### Historical research
+
+Research comparisons use only data that existed before midnight Italian time
+at the start of `assessment_date`. Weather published later is not used, even
+if it describes earlier days. Research requests for Open-Meteo daily values
+use `timezone=Europe/Rome`.
+
+### Live application weather
+
+The application records the actual retrieval time of each response. It can
+fetch weather after the assessment date has started. That response is a live
+input and is not evidence that the same data existed before midnight.
+
+The application requests hourly GMT timestamps from Open-Meteo and groups
+them into Europe/Rome dates. Rain and evaporation hours end within the local
+day. Temperature and soil readings start within it. The closing midnight
+reading is requested so rain includes the whole last day. The aggregation
+keeps the 23-hour and 25-hour days at clock changes.
+
+Every saved day keeps its request, attempt, retrieval time and source units.
+An immutable weather snapshot identifies the exact saved days used in an
+assessment. Completed weather before that assessment and forecasts on or
+after it remain separate. Reusing a previous snapshot never turns its saved
+forecast into completed weather.
