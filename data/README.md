@@ -18,6 +18,12 @@ sidecars in `data/raw/mvp_terrain/`. PostGIS stores the terrain values and
 links each completed chunk to its source tiles. The committed
 `reports/mvp/terrain_coverage.md` records coverage and the required credit.
 
+The national forest command caches original Copernicus Forest Type 2018
+rasters and source metadata in `data/raw/mvp_forest/`. PostGIS stores each
+500 m square's fractions, missing reasons and weather-cell centre. The
+versioned `data/processed/mvp_forest/` directory holds the simplified forest
+layer. `reports/mvp/habitat_coverage.md` records coverage and attribution.
+
 `p2_layers.csv` lists every map layer of experiment P2 with provider, URL,
 licence, version, download date, file format, coordinate system and stated
 detail. `uv run micometeo run p2_habitat` rewrites it.

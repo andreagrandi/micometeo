@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "background_jobs",
     "national_grid",
     "national_terrain",
+    "national_forest",
 ]
 
 MIDDLEWARE = [

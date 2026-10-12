@@ -70,6 +70,25 @@ Chunk-to-source links preserve each tile URL, retrieval time and checksum.
 The source manifest has its own fingerprint. Missing source areas remain
 explicit and do not become zero altitude or flat slopes.
 
+## Application forest
+
+`ForestBuild` identifies one completed grid and Forest Type 2018 source
+release. Each `ForestCell` joins that build to a `GridBuildCell`, preserving
+the stable square ID. Fractions use the original 10 m classified pixels.
+`forest_share` divides forest pixels by valid pixels. `broadleaf_share`
+divides broadleaf pixels by forest pixels and stays null where none exist.
+
+`is_forest` is true at or above 10 percent forest, false below that threshold,
+and null when fewer than half the source pixels are valid. Valid zero forest
+therefore differs from missing classification. Weather coordinates are the
+centre of the containing 0.1 degree cell and exist only for eligible squares.
+Many squares share the same weather cell.
+
+Each completed chunk stores the original request, raster checksum, retrieval
+time, source release and actual coordinate description. The separate 2 km
+GeoJSON layer contains only `forest_share`. Its path and checksum belong to
+the forest build version. It contains no estimates or tree-species claims.
+
 ## Find records
 
 One row per reported find.

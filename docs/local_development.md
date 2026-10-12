@@ -533,6 +533,24 @@ The application stays separate from the existing P5 directories. This setup
 has no product data tables, account system, frontend build, deployment job or
 hosting credentials.
 
+## National forest build
+
+After the national grid completes, build the forest inputs with:
+
+```sh
+uv run python apps/application/manage.py build_national_forest \
+  --grid-build-version italy-500m-istat-2026-01-01-v1 \
+  --build-version italy-forest-copernicus-2018-v1 \
+  --cache-dir data/raw/mvp_forest \
+  --output-dir data/processed/mvp_forest \
+  --max-source-chunk-m 40000
+```
+
+Repeat the same command after an interruption. The version fixes the grid,
+source release and chunk layout. A completed repeat reuses the stored rows
+and source metadata. The national measurements and source gaps are in
+`reports/mvp/habitat_coverage.md`.
+
 ## Recorded walkthrough
 
 On 2026-10-11, the locked environment ran on macOS with Python 3.14.8 and
