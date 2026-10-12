@@ -3,9 +3,15 @@
 - `data/raw/` holds downloads exactly as received.
 - `data/processed/` holds files the experiments derive from them.
 
-Neither folder is committed. Every download must be recorded with
-`context.add_source`, so the run record shows where the data came from, under
-which licence and when it was downloaded.
+Neither folder is committed. Experiment downloads use `context.add_source`,
+so the run record shows where the data came from, under which licence and when
+it was downloaded. Application builds store the same source information with
+their versioned build in PostGIS.
+
+The national grid reads the original ISTAT archive from
+`data/raw/mvp_boundaries/`. Its build records the archive checksum, selected
+region file, source version, retrieval date, licence and attribution. Product
+grid geometry does not use the GADM files retained for historical experiments.
 
 `p2_layers.csv` lists every map layer of experiment P2 with provider, URL,
 licence, version, download date, file format, coordinate system and stated

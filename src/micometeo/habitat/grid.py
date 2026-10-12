@@ -16,7 +16,7 @@ from pyproj import Transformer
 from rasterio.transform import Affine, from_origin
 from rasterio.warp import Resampling, reproject, transform_bounds
 
-from micometeo.finds.grid import CELL_SIZE_M
+from micometeo.finds.grid import CELL_SIZE_M, format_cell_id
 
 PIXEL_SIZE_M = 25
 PIXELS_PER_SIDE = CELL_SIZE_M // PIXEL_SIZE_M
@@ -93,7 +93,7 @@ def square_rows(*, grid: SampleGrid) -> list[dict[str, Any]]:
         latitude, longitude = to_degrees(easting=corner_e + half, northing=corner_n + half)
         rows.append(
             {
-                "cell_id": f"{CELL_SIZE_M}m_E{corner_e}_N{corner_n}",
+                "cell_id": format_cell_id(corner_e=corner_e, corner_n=corner_n),
                 "corner_e": corner_e,
                 "corner_n": corner_n,
                 "centre_latitude": round(latitude, 6),

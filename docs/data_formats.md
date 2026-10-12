@@ -24,6 +24,36 @@ with that size as the prefix, for example `250m_...`. The change is recorded in
 A square never claims more detail than its coarsest input. If a source only
 knows an area of 1 km, the result for that area is not shown at 500 m.
 
+## Application national grid
+
+The application uses the 500 m square as its display and join convention.
+This is a stable way to join weather, habitat and find rows by `cell_id`.
+It does not mean that a source or prediction has 500 m accuracy. Each result
+keeps the source detail and its coverage information, and the application
+discloses when an input is coarser than the display square.
+
+The national build stores one full EPSG:3035 square in `grid_cell` and one
+Italian-land intersection in the build membership table. The full square is
+used for the map and the lower-left ID. The land geometry and `land_share`
+show which part of that square belongs to Italy. Lookup transforms these
+geometries to WGS84 when it returns map output. It does not store a second
+WGS84 copy.
+
+Each membership has one `owner_region`, chosen by the largest regional
+intersection area. An exact tie uses the lowest ISTAT code. The national
+count uses one row per `cell_id`, so border cells are counted once. Regional
+tables can join by `build_id`, `cell_id` and `owner_region`.
+
+Build records include the boundary source, archive hash, source and grid
+coordinate systems, cell and chunk sizes, inclusion rule, algorithm version,
+status and counts. Only completed builds are available to application
+lookups. A partial build can resume its unfinished chunks and must reconcile
+chunk counts before it becomes completed.
+
+The historical research rule remains in force for research outputs: a result
+must not be displayed at a finer detail than its coarsest input. The product
+500 m convention is a display and join choice and does not replace that rule.
+
 ## Find records
 
 One row per reported find.

@@ -422,6 +422,38 @@ input ID. Include the assessment date and any input version in the logical key
 when they identify different work. It owns the weather and cleanup rules.
 This representative job does not implement them.
 
+## National grid
+
+The application uses the detailed ISTAT boundaries for 1 January 2026. Keep
+the original archive outside Git and verify its checksum before building:
+
+```sh
+mkdir -p data/raw/mvp_boundaries
+curl --fail --location --output data/raw/mvp_boundaries/Limiti01012026.zip \
+  https://www.istat.it/storage/cartografia/confini_amministrativi/non_generalizzati/2026/Limiti01012026.zip
+shasum -a 256 data/raw/mvp_boundaries/Limiti01012026.zip
+uv run python apps/application/manage.py migrate --noinput
+uv run python apps/application/manage.py build_national_grid \
+  data/raw/mvp_boundaries/Limiti01012026.zip \
+  --build-version italy-500m-istat-2026-01-01-v1 \
+  --expected-sha256 a9075f8d839dcb2b409099703da7bdd37cc214f8967fa7372b32305875ad046f \
+  --downloaded-on 2026-10-12 \
+  --chunk-size-m 25000
+```
+
+Use your actual download date. Reuse an existing archive when its checksum
+matches. If ISTAT changes the archive, verify the new source and use a new
+build version rather than relabelling it as this build.
+
+The command processes bounded chunks and stores progress in PostGIS. Repeat
+the same command after an interruption to resume unfinished chunks. Lookups
+require a completed build. Repeating a completed build reuses its cells.
+
+Every included square has some Italian land, even if its centre lies at sea.
+The stored square remains 500 m across. Its Italian land geometry and share
+are separate values. The [grid coverage report](../reports/mvp/grid_coverage.md)
+records the measured national and regional counts, island checks and credits.
+
 ## Shutdown
 
 Stop Django and the worker with `Ctrl+C` in their terminals. Let the worker
@@ -440,6 +472,7 @@ The database volume remains available for the next `docker compose up --wait dat
 apps/application/manage.py       Django command entry point
 apps/application/config/          settings, API, URLs and server entry points
 apps/application/background_jobs/ queued jobs, attempts and operator commands
+apps/application/national_grid/   versioned national cells and build commands
 apps/api/                         P5 synthetic API experiment
 apps/web/                         P5 static demonstration
 src/micometeo/                    experiment package and CLI

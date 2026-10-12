@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_tasks_db",
     "background_jobs",
+    "national_grid",
 ]
 
 MIDDLEWARE = [
