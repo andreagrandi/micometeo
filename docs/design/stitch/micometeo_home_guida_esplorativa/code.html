@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+
+<html lang="it"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-primary-fixed": "#032017", "secondary-fixed-dim": "#ddc1ac", "surface-container": "#f3ede2", "surface-container-highest": "#e8e2d7", "surface-tint": "#486458", "on-tertiary-container": "#d78c4a", "primary-container": "#1e3a2f", "on-background": "#1d1b15", "surface": "#fff9ed", "surface-dim": "#dfd9cf", "on-surface": "#1d1b15", "on-tertiary-fixed": "#2e1500", "secondary": "#6f5a49", "on-surface-variant": "#424844", "outline": "#727974", "secondary-fixed": "#faddc7", "on-primary-container": "#86a496", "tertiary-fixed": "#ffdcc2", "surface-container-lowest": "#ffffff", "outline-variant": "#c1c8c3", "tertiary": "#341800", "surface-bright": "#fff9ed", "tertiary-container": "#532a00", "on-secondary-container": "#745f4d", "surface-container-low": "#f9f3e8", "on-error": "#ffffff", "primary-fixed": "#caeada", "primary": "#07241a", "secondary-container": "#f7dac4", "on-secondary": "#ffffff", "error": "#ba1a1a", "tertiary-fixed-dim": "#ffb77b", "on-tertiary": "#ffffff", "inverse-primary": "#aecebe", "on-secondary-fixed-variant": "#564333", "surface-container-high": "#ede7dd", "inverse-on-surface": "#f6f0e5", "on-secondary-fixed": "#27180b", "on-primary": "#ffffff", "on-error-container": "#93000a", "error-container": "#ffdad6", "surface-variant": "#e8e2d7", "primary-fixed-dim": "#aecebe", "background": "#fff9ed", "on-primary-fixed-variant": "#304c41", "inverse-surface": "#333029", "on-tertiary-fixed-variant": "#6d3a00" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "gutter-desktop": "1.5rem", "space-xl": "2rem", "gutter": "1rem", "margin-tablet": "1.5rem", "space-sm": "0.5rem", "margin-desktop": "2.5rem", "margin": "1rem", "space-xs": "0.25rem", "gutter-tablet": "1.25rem", "space-lg": "1.25rem", "space-md": "0.75rem" }, "fontFamily": { "body-sm": [ "DM Sans" ], "headline-md": [ "Newsreader" ], "title-md": [ "DM Sans" ], "headline-lg-mobile": [ "Newsreader" ], "display-lg": [ "Newsreader" ], "headline-lg": [ "Newsreader" ], "body-md": [ "DM Sans" ], "caption-topo": [ "DM Sans" ], "title-lg": [ "DM Sans" ], "label-sm": [ "DM Sans" ], "label-md": [ "DM Sans" ], "display-lg-mobile": [ "Newsreader" ], "body-lg": [ "DM Sans" ] }, "fontSize": { "body-sm": [ "12px", { "lineHeight": "16px", "fontWeight": "400" } ], "headline-md": [ "22px", { "lineHeight": "28px", "fontWeight": "400" } ], "title-md": [ "15px", { "lineHeight": "20px", "fontWeight": "600" } ], "headline-lg-mobile": [ "24px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "500" } ], "display-lg": [ "44px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "500" } ], "headline-lg": [ "30px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "500" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "caption-topo": [ "10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "600" } ], "title-lg": [ "18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "label-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "700" } ], "label-md": [ "13px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" } ], "display-lg-mobile": [ "32px", { "lineHeight": "38px", "letterSpacing": "-0.015em", "fontWeight": "500" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased"><header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><a class="flex items-center gap-space-sm group" data-path="home" href="#"><div class="w-9 h-9 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center transition-colors group-hover:bg-primary group-hover:text-on-primary"><span class="material-symbols-outlined text-[20px]">nature</span></div><span class="font-headline-md text-headline-md tracking-tight text-primary font-serif">Micometeo</span></a><span class="hidden xl:inline-flex items-center px-2 py-0.5 rounded-lg bg-surface-container-high text-on-surface-variant font-caption-topo text-caption-topo uppercase tracking-wider">100% Gratuito / No Ads</span></div><nav class="hidden lg:flex items-center gap-space-lg" data-active-classes="text-primary font-title-md relative after:content-[''] after:absolute after:-bottom-1.5 after:left-0 after:w-full after:h-[2px] after:bg-primary"><a aria-current="page" class="transition-colors text-primary font-title-md relative after:content-[''] after:absolute after:-bottom-1.5 after:left-0 after:w-full after:h-[2px] after:bg-primary" data-path="home" href="#">Home</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" data-path="mappa-esplora" href="#">Mappa / Esplora</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" data-path="come-funziona" href="#">Come Funziona</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" data-path="fattori-meteo" href="#">Fattori Meteo</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" data-path="etica-e-sicurezza" href="#">Etica e Sicurezza</a></nav><div class="flex items-center gap-space-md"><button class="flex items-center gap-1 px-space-xs py-1 text-on-surface-variant hover:text-on-surface font-label-md text-label-md uppercase tracking-wider rounded-lg transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">language</span><span class="text-primary font-bold">IT</span><span class="text-outline-variant">/</span><span>EN</span></button><a class="inline-flex items-center gap-space-xs px-space-md py-2 bg-primary text-on-primary font-title-md text-title-md rounded-lg shadow-sm hover:bg-primary-container hover:text-on-primary-container transition-all" data-path="mappa-esplora" href="#"><span class="hidden sm:inline">Apri la Mappa</span><span class="material-symbols-outlined text-[18px]">arrow_forward</span></a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-20 bg-background"><div class="flex flex-col w-full">
+<!-- SECTION 1: HERO & LIVE FIELD LOG SNAPSHOT -->
+<section class="relative w-full overflow-hidden px-6 lg:px-12 py-16 lg:py-24 bg-surface">
+<!-- Subtle Topographic Ambient Background Lines -->
+<div aria-hidden="true" class="absolute inset-0 opacity-[0.035] pointer-events-none select-none overflow-hidden">
+<svg class="w-full h-full object-cover" fill="none" viewbox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+<path class="text-primary" d="M-100 150 C 300 80, 600 240, 1300 120" stroke="currentColor" stroke-width="1.5"></path>
+<path class="text-primary" d="M-100 280 C 250 200, 700 380, 1300 230" stroke="currentColor" stroke-width="1.5"></path>
+<path class="text-primary" d="M-100 410 C 320 330, 620 490, 1300 360" stroke="currentColor" stroke-width="1.5"></path>
+<path class="text-primary" d="M-100 540 C 280 460, 750 610, 1300 490" stroke="currentColor" stroke-width="1.5"></path>
+<path class="text-primary" d="M-100 670 C 350 590, 650 730, 1300 620" stroke="currentColor" stroke-width="1.5"></path>
+</svg>
+</div>
+<div class="max-w-7xl mx-auto relative z-10">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+<!-- Left Column: Editorial Headline & Manifesto -->
+<div class="lg:col-span-7 space-y-6">
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-high text-primary font-caption-topo text-caption-topo uppercase tracking-wider shadow-sm">
+<span class="w-2 h-2 rounded-full bg-on-tertiary-container animate-pulse"></span>
+            Strumento Sperimentale Gratuito per i Boschi Italiani
+          </div>
+<h1 class="font-headline-lg text-headline-lg lg:text-[46px] lg:leading-[52px] tracking-tight text-primary font-serif">
+            Ascolta il respiro del bosco.<br class="hidden sm:inline"/>
+            Scopri dove le condizioni per i porcini sono favorevoli.
+          </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl leading-relaxed">
+            Micometeo incrocia i rilievi di copertura forestale satellitare ad altissima risoluzione <strong class="text-on-surface font-semibold">Copernicus</strong> con la modellazione micro-climatica <strong class="text-on-surface font-semibold">Open-Meteo</strong> per stimare la probabilità fenologica nei boschi d'Italia su micro-celle da 500 metri. Senza registrazione, senza pubblicità, 100% libero.
+          </p>
+<!-- Action Hub -->
+<div class="pt-2 flex flex-wrap items-center gap-4">
+<a class="inline-flex items-center gap-3 px-6 py-3.5 bg-primary text-on-primary font-title-md text-title-md rounded-lg shadow-md hover:bg-primary-container hover:text-on-primary-container transition-all group" data-path="mappa-esplora" href="#">
+<span class="material-symbols-outlined text-[20px] transition-transform group-hover:rotate-45">explore</span>
+<span>Esplora la Mappa Interattiva</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+<a class="inline-flex items-center gap-2 px-5 py-3.5 rounded-lg bg-surface-container-low text-primary font-title-md text-title-md hover:bg-surface-container transition-colors shadow-sm" href="#come-funziona-section">
+<span class="material-symbols-outlined text-[20px] text-primary">science</span>
+<span>Guarda come funziona</span>
+<span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+</a>
+</div>
+<!-- Quick Metrics Bar -->
+<div class="pt-6 grid grid-cols-3 gap-4 border-t border-surface-container-highest max-w-xl">
+<div>
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline">Risoluzione</p>
+<p class="font-title-lg text-title-lg text-primary font-mono mt-0.5">500 m</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Celle biometriche</p>
+</div>
+<div>
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline">Orizzonte</p>
+<p class="font-title-lg text-title-lg text-primary font-mono mt-0.5">8 Giorni</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Oggi + 7 futuri</p>
+</div>
+<div>
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline">Copertura</p>
+<p class="font-title-lg text-title-lg text-primary font-mono mt-0.5">20 Regioni</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Alpi &amp; Appennini</p>
+</div>
+</div>
+</div>
+<!-- Right Column: Tactile Field Telemetry Card (Abetone Simulation) -->
+<div class="lg:col-span-5">
+<div class="relative bg-surface-container-low rounded-xl p-6 lg:p-7 shadow-xl space-y-5">
+<!-- Header Tape & Geodetic Location -->
+<div class="flex items-start justify-between gap-4">
+<div class="space-y-1">
+<span class="inline-block px-2.5 py-0.5 rounded bg-tertiary-container/10 text-on-tertiary-container font-caption-topo text-caption-topo uppercase tracking-wider font-semibold">
+                  Esempio sul campo • Live Telemetria
+                </span>
+<h2 class="font-headline-md text-headline-md text-primary font-serif">Abetone, Val di Luce</h2>
+<p class="font-caption-topo text-caption-topo text-outline font-mono">44.1318° N • 10.6625° E • 1.388 m s.l.m.</p>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[22px]">forest</span>
+</div>
+</div>
+<!-- Probability Gauge Card -->
+<div class="p-4 rounded-lg bg-surface-container-lowest shadow-sm space-y-3">
+<div class="flex items-center justify-between text-on-surface">
+<span class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">calendar_today</span>
+                  Finestra di Fruttificazione
+                </span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">Oggi 12 Ott → Gio 15 Ott</span>
+</div>
+<!-- Comparative Twin Scores -->
+<div class="grid grid-cols-2 gap-3 pt-1">
+<div class="p-3 rounded bg-surface-container-low flex flex-col justify-between">
+<span class="font-caption-topo text-caption-topo uppercase text-outline">Oggi (12 Ott)</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-lg text-headline-lg font-mono text-primary">42</span>
+<span class="font-title-md text-title-md text-on-surface-variant">%</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-surface-container-highest mt-2 overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 42%;"></div>
+</div>
+</div>
+<div class="p-3 rounded bg-secondary-container/40 flex flex-col justify-between">
+<span class="font-caption-topo text-caption-topo uppercase text-secondary">Picco Stimato (15 Ott)</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-lg text-headline-lg font-mono text-on-tertiary-container">48</span>
+<span class="font-title-md text-title-md text-secondary">%</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-surface-container-highest mt-2 overflow-hidden">
+<div class="h-full bg-on-tertiary-container rounded-full" style="width: 48%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Telemetry Matrix Rows -->
+<div class="space-y-2.5 font-body-sm text-body-sm">
+<div class="flex items-center justify-between py-1.5 px-3 rounded bg-surface-container-lowest">
+<span class="text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">rainy</span>
+                  Pioggia cumulata (ultimi 7gg)
+                </span>
+<span class="font-mono font-medium text-primary">18 mm <span class="text-outline text-caption-topo font-normal">(ottimale)</span></span>
+</div>
+<div class="flex items-center justify-between py-1.5 px-3 rounded bg-surface-container-lowest">
+<span class="text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">park</span>
+                  Composizione forestale
+                </span>
+<span class="font-mono font-medium text-primary">68% <span class="text-outline text-caption-topo font-normal">Faggio / Abete bianco</span></span>
+</div>
+<div class="flex items-center justify-between py-1.5 px-3 rounded bg-surface-container-lowest">
+<span class="text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">device_thermostat</span>
+                  Escursione termica suolo
+                </span>
+<span class="font-mono font-medium text-primary">13°C <span class="text-outline text-caption-topo font-normal">(min 8°C • max 16°C)</span></span>
+</div>
+</div>
+<!-- Card Bottom CTA -->
+<div class="pt-2 flex items-center justify-between">
+<span class="font-caption-topo text-caption-topo uppercase text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">history</span>
+                Aggiornato: 2 ore fa
+              </span>
+<a class="font-title-md text-title-md text-primary hover:text-on-tertiary-container transition-colors inline-flex items-center gap-1 group" data-path="mappa-esplora" href="#">
+<span>Apri Abetone nella Mappa</span>
+<span class="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 2: KEY VALUE PROPOSITIONS (Perché Micometeo è Diverso) -->
+<section class="w-full px-6 lg:px-12 py-16 bg-surface-container-low">
+<div class="max-w-7xl mx-auto space-y-12">
+<div class="max-w-3xl space-y-3">
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline">Architettura Sperimentale Rigorosa</p>
+<h2 class="font-headline-lg text-headline-lg text-primary font-serif">Perché Micometeo è uno strumento differente</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Nessuna app a pagamento da scaricare, nessuna previsione miracolosa basata su credenze popolari. Un approccio agrometeorologico rigoroso che unisce telemetria europea e cartografia libera.
+        </p>
+</div>
+<!-- Bento Grid of 4 Core Pillars -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Feature 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="space-y-4">
+<div class="w-12 h-12 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">grid_goldenratio</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary">Risoluzione a 500 Metri</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+              Celle forestali calcolate solo dove la copertura arborea certificata supera il 10%, proiettate su mappa topografica nitida con curve di livello e dislivelli realistici.
+            </p>
+</div>
+<div class="pt-4 border-t border-surface-container-highest">
+<span class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider">Raster Copernicus HRL</span>
+</div>
+</div>
+<!-- Feature 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="space-y-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">water_drop</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary">Dati Meteo Rigorosi</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+              Accumuli di pioggia completati a 7, 14 e 21 giorni prima della data bersaglio. Valutazione continua del vento disseccante e del rischio gelate notturne a quota boschiva.
+            </p>
+</div>
+<div class="pt-4 border-t border-surface-container-highest">
+<span class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider">Open-Meteo High Resolution</span>
+</div>
+</div>
+<!-- Feature 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="space-y-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">lock</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary">Totale Rispetto della Privacy</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+              Nessun tracciamento GPS salvato sui nostri server. Nessun cookie commerciale o profilo pubblicitario. I tuoi boschi salvati nei preferiti rimangono esclusivamente nel tuo browser.
+            </p>
+</div>
+<div class="pt-4 border-t border-surface-container-highest">
+<span class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider">Zero Tracking • Local Storage</span>
+</div>
+</div>
+<!-- Feature 4 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="space-y-4">
+<div class="w-12 h-12 rounded-lg bg-secondary-container/60 text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">favorite</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary">100% Indipendente &amp; Libero</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+              Nessun abbonamento "pro" a pagamento e nessun paywall nascosto per consultare le stime di crescita. Dalle Alpi Giulie all'Etna, tutto il territorio è consultabile gratuitamente.
+            </p>
+</div>
+<div class="pt-4 border-t border-surface-container-highest">
+<span class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider">No-Profit Research Project</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 3: COME FUNZIONA IL MODELLO (La Scienza e il Metodo) -->
+<section class="w-full px-6 lg:px-12 py-16 lg:py-24 bg-surface" id="come-funziona-section">
+<div class="max-w-7xl mx-auto space-y-16">
+<div class="text-center max-w-3xl mx-auto space-y-3">
+<span class="inline-block px-3 py-1 rounded bg-surface-container-high text-primary font-caption-topo text-caption-topo uppercase tracking-wider">
+          Metodologia Fenologica
+        </span>
+<h2 class="font-headline-lg text-headline-lg text-primary font-serif">Come viene elaborata la probabilità</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          La nascita del carpophorus (il fungo) non è casuale: dipende da parametri biofisici stringenti. Ecco come Micometeo calcola ogni singola cella.
+        </p>
+</div>
+<!-- Step-by-Step Flow Graphic -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+<!-- Step 1 -->
+<div class="relative bg-surface-container-low rounded-xl p-6 shadow-sm space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-mono text-title-lg text-on-tertiary-container font-bold">01</span>
+<span class="material-symbols-outlined text-primary text-[24px]">satellite_alt</span>
+</div>
+<h3 class="font-title-md text-title-md text-primary">Rilevamento Forestale (Copernicus)</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+            Mappiamo densità fogliare e specie micorriziche: boschi di faggio montano, castagneti collinari, abetaie di abete rosso e querceti appenninici. Le celle non boscate vengono scartate a priori.
+          </p>
+<div class="pt-2">
+<span class="inline-flex items-center gap-1 font-caption-topo text-caption-topo uppercase text-outline">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Filtro &gt;10% Canopy
+            </span>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="relative bg-surface-container-low rounded-xl p-6 shadow-sm space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-mono text-title-lg text-on-tertiary-container font-bold">02</span>
+<span class="material-symbols-outlined text-primary text-[24px]">history_toggle_off</span>
+</div>
+<h3 class="font-title-md text-title-md text-primary">Storico Precipitazioni Reali</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+            Il micelio necessita di cicli precisi di imbibizione del suolo. Monitoriamo i mm di pioggia pregressi caduti a 7, 14 e 21 giorni (es. 18mm, 37mm, 54mm) escludendo temporali flash che defluiscono senza bagnare l'humus profondo.
+          </p>
+<div class="pt-2">
+<span class="inline-flex items-center gap-1 font-caption-topo text-caption-topo uppercase text-outline">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Ciclo Bagnatura 21gg
+            </span>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="relative bg-surface-container-low rounded-xl p-6 shadow-sm space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-mono text-title-lg text-on-tertiary-container font-bold">03</span>
+<span class="material-symbols-outlined text-primary text-[24px]">thermostat</span>
+</div>
+<h3 class="font-title-md text-title-md text-primary">Inerzia Termica &amp; Shock</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+            Rileviamo l'escursione termica giorno/notte (temperatura minima mai sotto i 6°C, media ideale tra 12°C e 18°C) e l'assenza di venti disseccanti (tramontana/foehn) che prosciugano il fungo all'origine.
+          </p>
+<div class="pt-2">
+<span class="inline-flex items-center gap-1 font-caption-topo text-caption-topo uppercase text-outline">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Indice Vento &amp; Gelo
+            </span>
+</div>
+</div>
+<!-- Step 4 -->
+<div class="relative bg-surface-container-low rounded-xl p-6 shadow-sm space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-mono text-title-lg text-on-tertiary-container font-bold">04</span>
+<span class="material-symbols-outlined text-primary text-[24px]">analytics</span>
+</div>
+<h3 class="font-title-md text-title-md text-primary">Stima su 8 Giorni</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+            Tutti i fattori alimentano un modello integrato che calcola una percentuale probabilistica per oggi e ciascuno dei prossimi 7 giorni, permettendo di pianificare l'uscita quando le condizioni toccano il picco.
+          </p>
+<div class="pt-2">
+<span class="inline-flex items-center gap-1 font-caption-topo text-caption-topo uppercase text-outline">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Finestra Dinamica
+            </span>
+</div>
+</div>
+</div>
+<!-- Live Interactive Comparison Bar Widget -->
+<div class="p-6 lg:p-8 rounded-xl bg-surface-container-high shadow-inner space-y-6">
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+<div>
+<h4 class="font-title-lg text-title-lg text-primary">Scala di Probabilità Micometeo</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Interpretazione visiva degli indici probabilistici sulla mappa cartografica</p>
+</div>
+<span class="font-caption-topo text-caption-topo px-3 py-1 bg-surface rounded text-outline uppercase font-mono">
+            Modello Aggiornato Ogni 6 Ore
+          </span>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+<div class="p-4 rounded-lg bg-surface space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-outline">0% – 25%</span>
+<span class="w-3 h-3 rounded-full bg-surface-dim"></span>
+</div>
+<p class="font-title-md text-title-md text-on-surface">Sfuggente / Secco</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Terreno arido o shock termico negativo presente.</p>
+</div>
+<div class="p-4 rounded-lg bg-surface space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-outline">26% – 40%</span>
+<span class="w-3 h-3 rounded-full bg-secondary-fixed-dim"></span>
+</div>
+<p class="font-title-md text-title-md text-on-surface">Condizioni Basali</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Inizio incubazione miceliare dopo le prime piogge.</p>
+</div>
+<div class="p-4 rounded-lg bg-surface space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-outline">41% – 60%</span>
+<span class="w-3 h-3 rounded-full bg-on-tertiary-container"></span>
+</div>
+<p class="font-title-md text-title-md text-primary font-semibold">Favorevole</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Finestra termica e accumulo idrico in equilibrio.</p>
+</div>
+<div class="p-4 rounded-lg bg-surface space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-outline">&gt; 60%</span>
+<span class="w-3 h-3 rounded-full bg-primary-container"></span>
+</div>
+<p class="font-title-md text-title-md text-primary font-bold">Altamente Propizio</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Condizioni climatiche e forestali ottimali.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 4: INTERACTIVE REGIONAL SPOTLIGHTS (Aree di Rilievo in Italia) -->
+<section class="w-full px-6 lg:px-12 py-16 bg-surface-container-low">
+<div class="max-w-7xl mx-auto space-y-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="space-y-3 max-w-2xl">
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline">Cartografia Regionale Selezionata</p>
+<h2 class="font-headline-lg text-headline-lg text-primary font-serif">Aree di Rilievo Boschivo in Italia</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+            Monitora i distretti forestali storicamente più reattivi ai cicli di buttata. Seleziona una zona per esplorarne le telemetrie in tempo reale.
+          </p>
+</div>
+<a class="inline-flex items-center gap-2 text-primary hover:text-on-tertiary-container font-title-md text-title-md transition-colors group" data-path="mappa-esplora" href="#">
+<span>Visualizza tutte le regioni italiane</span>
+<span class="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">arrow_forward</span>
+</a>
+</div>
+<!-- Spotlight Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Region 1: Appennino Tosco-Emiliano -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+<div class="p-5 space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">Toscana • Emilia</span>
+<div class="flex items-baseline gap-1">
+<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container">48%</span>
+<span class="font-caption-topo text-caption-topo text-outline">stima</span>
+</div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary">Appennino Tosco-Emiliano</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Abetone, Val di Luce, Passo della Cisa</p>
+</div>
+<div class="space-y-2 pt-2 border-t border-surface-container-highest font-body-sm text-body-sm">
+<div class="flex justify-between text-on-surface-variant">
+<span>Habitat primario</span>
+<span class="font-medium text-primary">Faggete e abetaie</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Quota ottimale</span>
+<span class="font-mono text-primary">1.100 – 1.550 m</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Pioggia 14gg</span>
+<span class="font-mono text-primary">42 mm</span>
+</div>
+</div>
+</div>
+<div class="p-5 pt-0">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-path="mappa-esplora" href="#">
+<span class="material-symbols-outlined text-[16px]">map</span>
+<span>Apri sulla Mappa</span>
+</a>
+</div>
+</div>
+<!-- Region 2: Alpi Orobie & Prealpi Lombarde -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+<div class="p-5 space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">Lombardia</span>
+<div class="flex items-baseline gap-1">
+<span class="font-title-lg text-title-lg font-mono font-bold text-primary">39%</span>
+<span class="font-caption-topo text-caption-topo text-outline">stima</span>
+</div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary">Alpi Orobie &amp; Prealpi</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Val Brembana, Val Seriana, Valsassina</p>
+</div>
+<div class="space-y-2 pt-2 border-t border-surface-container-highest font-body-sm text-body-sm">
+<div class="flex justify-between text-on-surface-variant">
+<span>Habitat primario</span>
+<span class="font-medium text-primary">Castagneti e conifere</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Quota ottimale</span>
+<span class="font-mono text-primary">800 – 1.400 m</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Pioggia 14gg</span>
+<span class="font-mono text-primary">28 mm</span>
+</div>
+</div>
+</div>
+<div class="p-5 pt-0">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-path="mappa-esplora" href="#">
+<span class="material-symbols-outlined text-[16px]">map</span>
+<span>Apri sulla Mappa</span>
+</a>
+</div>
+</div>
+<!-- Region 3: Foreste Casentinesi -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+<div class="p-5 space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">Romagna • Toscana</span>
+<div class="flex items-baseline gap-1">
+<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container">51%</span>
+<span class="font-caption-topo text-caption-topo text-outline">stima</span>
+</div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary">Foreste Casentinesi</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Badia Prataglia, Camaldoli, Campigna</p>
+</div>
+<div class="space-y-2 pt-2 border-t border-surface-container-highest font-body-sm text-body-sm">
+<div class="flex justify-between text-on-surface-variant">
+<span>Habitat primario</span>
+<span class="font-medium text-primary">Boschi vetusti di faggio</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Quota ottimale</span>
+<span class="font-mono text-primary">950 – 1.450 m</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Pioggia 14gg</span>
+<span class="font-mono text-primary">56 mm</span>
+</div>
+</div>
+</div>
+<div class="p-5 pt-0">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-path="mappa-esplora" href="#">
+<span class="material-symbols-outlined text-[16px]">map</span>
+<span>Apri sulla Mappa</span>
+</a>
+</div>
+</div>
+<!-- Region 4: Parco Nazionale della Sila -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+<div class="p-5 space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">Calabria</span>
+<div class="flex items-baseline gap-1">
+<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container">44%</span>
+<span class="font-caption-topo text-caption-topo text-outline">stima</span>
+</div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary">Parco Nazionale della Sila</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Sila Grande, Lorica, Camigliatello</p>
+</div>
+<div class="space-y-2 pt-2 border-t border-surface-container-highest font-body-sm text-body-sm">
+<div class="flex justify-between text-on-surface-variant">
+<span>Habitat primario</span>
+<span class="font-medium text-primary">Pino laricio e faggio</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Quota ottimale</span>
+<span class="font-mono text-primary">1.200 – 1.650 m</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Pioggia 14gg</span>
+<span class="font-mono text-primary">34 mm</span>
+</div>
+</div>
+</div>
+<div class="p-5 pt-0">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-path="mappa-esplora" href="#">
+<span class="material-symbols-outlined text-[16px]">map</span>
+<span>Apri sulla Mappa</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 5: ETICA, SICUREZZA & AVVISO SCIENTIFICO -->
+<section class="w-full px-6 lg:px-12 py-16 lg:py-20 bg-surface">
+<div class="max-w-7xl mx-auto space-y-10">
+<div class="max-w-3xl space-y-3">
+<span class="inline-block px-3 py-1 rounded bg-surface-container-high text-primary font-caption-topo text-caption-topo uppercase tracking-wider">
+          Responsabilità &amp; Tutela Forestale
+        </span>
+<h2 class="font-headline-lg text-headline-lg text-primary font-serif">Etica di Raccolta e Avviso Scientifico</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Il rispetto dell'ecosistema fungino e la prudenza in montagna sono presupposti fondamentali per chiunque frequenti i boschi.
+        </p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Left: Model Disclaimer Box -->
+<div class="lg:col-span-5 bg-surface-container-low rounded-xl p-6 lg:p-8 border-l-4 border-on-tertiary-container shadow-sm space-y-4">
+<div class="flex items-center gap-2.5 text-on-tertiary-container">
+<span class="material-symbols-outlined text-[24px]">info</span>
+<h3 class="font-title-lg text-title-lg text-primary">Avviso di Stima Sperimentale</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+            La percentuale calcolata da Micometeo è una <strong class="text-on-surface font-semibold">stima modellistica teorica e non convalidata sul campo</strong>. Non indica in alcun modo la certezza di trovare carpophori e non costituisce una garanzia di presenza fungina in una specifica coordinata.
+          </p>
+<p class="font-body-sm text-body-sm text-outline leading-relaxed">
+            La natura segue dinamiche complesse che nessun modello matematico può prevedere al 100%. Usa questa piattaforma come ausilio meteorologico per comprendere i cicli idrici e termici della montagna, non come mappa del tesoro.
+          </p>
+</div>
+<!-- Right: 4 Golden Rules for Responsible Foragers -->
+<div class="lg:col-span-7 bg-surface-container-lowest rounded-xl p-6 lg:p-8 shadow-sm space-y-6">
+<h3 class="font-title-lg text-title-lg text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">verified</span>
+            Le 4 Regole del Raccoglitore Responsabile
+          </h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+<!-- Rule 1 -->
+<div class="space-y-1.5">
+<div class="flex items-center gap-2 text-primary font-title-md text-title-md">
+<span class="material-symbols-outlined text-[18px]">badge</span>
+<span>Permessi e Tesserini</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                Verifica sempre le normative regionali, provinciali o comunali e munisciti dell'apposito permesso di raccolta prima di inoltrarti nel bosco.
+              </p>
+</div>
+<!-- Rule 2 -->
+<div class="space-y-1.5">
+<div class="flex items-center gap-2 text-primary font-title-md text-title-md">
+<span class="material-symbols-outlined text-[18px]">shopping_basket</span>
+<span>Cestino di Vimini Aerato</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                È vietato l'uso di sacchetti di plastica o contenitori ermetici. I cestini rigidi permettono la dispersione naturale delle spore durante il cammino.
+              </p>
+</div>
+<!-- Rule 3 -->
+<div class="space-y-1.5">
+<div class="flex items-center gap-2 text-primary font-title-md text-title-md">
+<span class="material-symbols-outlined text-[18px]">eco</span>
+<span>Rispetto della Biosfera</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                Non distruggere né scalciare funghi che non conosci o non commestibili. Ciascuna specie riveste un ruolo vitale per l'equilibrio del sottobosco.
+              </p>
+</div>
+<!-- Rule 4 -->
+<div class="space-y-1.5">
+<div class="flex items-center gap-2 text-primary font-title-md text-title-md">
+<span class="material-symbols-outlined text-[18px]">local_hospital</span>
+<span>Controllo ASL Gratuito</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                Fai sempre verificare la commestibilità del tuo raccolto presso gli ispettorati micologici gratuiti dell'ASL locale prima del consumo.
+              </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 6: FINAL HIGH-CONVERTING CALL TO ACTION -->
+<section class="w-full px-6 lg:px-12 py-16 lg:py-24 bg-primary text-on-primary relative overflow-hidden">
+<!-- Atmospheric decorative forest gradient ring -->
+<div aria-hidden="true" class="absolute -right-24 -bottom-24 w-96 h-96 rounded-full bg-primary-container opacity-40 blur-3xl pointer-events-none"></div>
+<div aria-hidden="true" class="absolute -left-24 -top-24 w-96 h-96 rounded-full bg-surface-tint opacity-20 blur-3xl pointer-events-none"></div>
+<div class="max-w-4xl mx-auto text-center relative z-10 space-y-8">
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-container text-on-primary-container font-caption-topo text-caption-topo uppercase tracking-wider">
+<span class="material-symbols-outlined text-[16px]">map</span>
+<span>Cartografia Telemetrica Aperta</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg lg:text-[44px] lg:leading-[52px] tracking-tight text-on-primary font-serif">
+        Pronto per la tua prossima uscita nel bosco?
+      </h2>
+<p class="font-body-lg text-body-lg text-on-primary-container max-w-2xl mx-auto leading-relaxed">
+        Controlla la pioggia dei giorni scorsi, la temperatura al suolo e la stima percentuale su oltre 200.000 ettari di bosco italiano. Gratuito, senza registrazione.
+      </p>
+<div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+<a class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-surface text-primary font-title-lg text-title-lg rounded-lg shadow-xl hover:bg-surface-container transition-all group" data-path="mappa-esplora" href="#">
+<span class="material-symbols-outlined text-[22px] text-primary transition-transform group-hover:scale-110">nature</span>
+<span>Avvia Micometeo Mappa</span>
+<span class="material-symbols-outlined text-[20px] text-primary">arrow_forward</span>
+</a>
+<a class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-4 rounded-lg bg-primary-container/80 text-on-primary hover:bg-primary-container transition-colors font-title-md text-title-md" data-path="come-funziona" href="#">
+<span class="material-symbols-outlined text-[18px]">menu_book</span>
+<span>Approfondisci la Metodologia</span>
+</a>
+</div>
+<!-- Trust Stamp Indicators -->
+<div class="pt-8 flex flex-wrap items-center justify-center gap-6 text-on-primary-container font-caption-topo text-caption-topo uppercase tracking-wider">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+          Nessuna App da Installare
+        </span>
+<span class="text-primary-container">•</span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+          Funziona su Qualsiasi Browser
+        </span>
+<span class="text-primary-container">•</span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+          100% Gratuito &amp; No Pubblicità
+        </span>
+</div>
+</div>
+</section>
+</div></main><footer class="w-full bg-surface-container-low pt-space-xl pb-space-lg text-on-surface-variant"><div class="max-w-7xl mx-auto px-6 lg:px-12"><div class="p-space-lg mb-space-xl rounded-xl bg-surface-container-high border-l-4 border-tertiary-container flex flex-col md:flex-row items-start gap-space-md"><span class="material-symbols-outlined text-on-tertiary-container text-[24px] shrink-0 mt-0.5">report_problem</span><div class="space-y-1"><h4 class="font-title-md text-title-md text-on-surface">Avvertenza Micologica e di Sicurezza in Quota</h4><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">I modelli di Micometeo generano stime probabilistiche basate su indicatori bioclimatici e telemetria satellitare: non costituiscono alcuna garanzia o certezza di fruttificazione del Boletus edulis o affini. L'ambiente montano e forestale comporta pericoli oggettivi. Raccogliete solo funghi la cui commestibilità sia stata certificata da ispettori micologici ASL autorizzati. Rispettate la biosfera e le normative regionali.</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-xl mb-space-xl"><div class="space-y-space-sm"><div class="flex items-center gap-space-sm"><div class="w-7 h-7 rounded bg-primary-container text-on-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-[18px]">nature</span></div><span class="font-headline-md text-headline-md tracking-tight text-primary font-serif">Micometeo</span></div><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">Osservatorio bioclimatico e cartografico per lo studio della fruttificazione micologica negli ecosistemi boschivi delle Alpi e degli Appennini.</p><p class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider">Progetto No-Profit • 100% Gratuito • Zero Tracciamento</p></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">Sorgenti Dati Telematici</h5><ul class="space-y-space-xs font-body-sm text-body-sm"><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary">satellite_alt</span><span class="text-on-surface">Copernicus High-Resolution Forest Layers</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary">cloudy_snowing</span><span class="text-on-surface">Open-Meteo Historic &amp; Realtime Telemetry</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary">map</span><span class="text-on-surface">OpenStreetMap Topo &amp; Elevation Contours</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary">thermostat</span><span class="text-on-surface">Stazioni Termiche e Idrometriche Alpine</span></li></ul></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">Navigazione &amp; Ricerca</h5><ul class="space-y-space-xs font-body-sm text-body-sm"><li><a class="hover:text-primary transition-colors" data-path="come-funziona" href="#">Metodologia e Modelli Fenologici</a></li><li><a class="hover:text-primary transition-colors" data-path="fattori-meteo" href="#">Cumulate di Pioggia &amp; Shock Termici</a></li><li><a class="hover:text-primary transition-colors" data-path="etica-e-sicurezza" href="#">Buone Pratiche di Raccolta Boschiva</a></li><li><a class="hover:text-primary transition-colors" data-path="mappa-esplora" href="#">Cartografia Forestale Interattiva</a></li></ul></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">Integrità &amp; Privacy</h5><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">Micometeo non raccoglie dati personali, non profila gli utenti e non impiega cookie di tracciamento commerciale o pubblicità di terze parti.</p><div class="pt-space-xs flex flex-wrap gap-space-xs"><a class="font-caption-topo text-caption-topo uppercase text-primary hover:underline" data-path="privacy-e-termini" href="#">Privacy Policy</a><span class="text-outline-variant">•</span><a class="font-caption-topo text-caption-topo uppercase text-primary hover:underline" data-path="metodologia-scientifica" href="#">Note Metodologiche</a></div></div></div><div class="pt-space-lg border-t border-surface-container-highest flex flex-col sm:flex-row items-center justify-between gap-space-sm font-caption-topo text-caption-topo uppercase tracking-wider text-outline"><p>© 2025 Micometeo — Ricerca Micologica Forestale Libera.</p><p>Sviluppato per la tutela e l'osservazione bioclimatica degli ecosistemi boschivi italiani.</p></div></div></footer></body></html>
