@@ -13,21 +13,16 @@ from types import SimpleNamespace
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
-from django.apps import apps
 from django.db import close_old_connections, connection
 
-
-if not apps.is_installed("weather_requests"):
-    pytest.skip("The parent application has not registered weather_requests yet.", allow_module_level=True)
-
-from weather_requests.eligibility import (  # noqa: E402
+from weather_requests.eligibility import (
     WeatherEligibilityError,
     weather_cell,
     weather_cell_key,
     weather_cells_for_forest_cells,
 )
-from weather_requests.models import WeatherRequest, WeatherRequestAttempt  # noqa: E402
-from weather_requests.planning import (  # noqa: E402
+from weather_requests.models import WeatherRequest, WeatherRequestAttempt
+from weather_requests.planning import (
     MAX_LOCATIONS,
     build_request_spec,
     combine_request_specs,
@@ -38,7 +33,7 @@ from weather_requests.planning import (  # noqa: E402
     reservation_weight,
     requested_hour_count,
 )
-from weather_requests.provider import (  # noqa: E402
+from weather_requests.provider import (
     CompletedRequestError,
     PendingRequestError,
     PermanentProviderError,
@@ -48,8 +43,8 @@ from weather_requests.provider import (  # noqa: E402
     fetch_weather,
     get_or_create_request,
 )
-from weather_requests.quota import check_quota, reserve_attempt  # noqa: E402
-from weather_requests.services import _budget_weights  # noqa: E402
+from weather_requests.quota import check_quota, reserve_attempt
+from weather_requests.services import _budget_weights
 
 
 def test_weather_cell_key_rounds_to_the_stored_two_decimal_centre() -> None:
