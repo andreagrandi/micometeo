@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "national_grid",
     "national_terrain",
     "national_forest",
+    "weather_requests",
 ]
 
 MIDDLEWARE = [
