@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Micometeo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&amp;display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+<a class="skip-link" href="#map" data-i18n="skip_to_map"></a>
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-name">Micometeo</span>
+      <span class="brand-line" data-i18n="tagline"></span>
+    </div>
+    <form class="search" id="search-form" role="search" autocomplete="off">
+      <div class="search-field">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="M15 15l6 6"/></svg>
+        <input id="search-input" type="text" enterkeyhint="search" data-i18n-aria="search" data-i18n-placeholder="search">
+      </div>
+      <button class="btn btn-secondary btn-location" id="location-btn" type="button">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+        <span class="btn-text" data-i18n="location"></span>
+      </button>
+      <div class="search-results" id="search-results" hidden></div>
+    </form>
+    <div class="actions">
+      <button class="btn btn-quiet btn-fav" id="fav-btn" type="button">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.2 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>
+        <span class="btn-text" data-i18n="favorites"></span>
+        <span class="count" id="fav-count"></span>
+      </button>
+      <div class="lang" role="group" data-i18n-aria="language">
+        <button type="button" data-lang="it" lang="it">Italiano</button>
+        <button type="button" data-lang="en" lang="en">English</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="notice-sample sample-band" id="sample-notice"><strong data-i18n="design_label"></strong> <span data-i18n="design_text"></span></div>
+
+  <main class="main" id="main">
+    <div class="leftcol">
+      <section class="datecol" id="datecol" aria-labelledby="dates-heading">
+        <h2 id="dates-heading" data-i18n="date_heading"></h2>
+        <p class="date-hint" id="date-hint" data-i18n="date_hint"></p>
+        <ol class="dates" id="dates"></ol>
+      </section>
+
+      <div class="tools">
+        <section class="panel" id="layers-panel" aria-labelledby="layers-heading">
+          <div class="panel-head">
+            <h2 id="layers-heading" data-i18n="layers_heading"></h2>
+            <button class="btn btn-quiet panel-close" type="button" data-close-panel="layers"><span data-i18n="close"></span></button>
+          </div>
+          <fieldset class="bg-choice">
+            <legend data-i18n="background"></legend>
+            <label class="choice"><input type="radio" name="background" value="light" checked><span data-i18n="bg_light"></span></label>
+            <label class="choice"><input type="radio" name="background" value="contrast"><span data-i18n="bg_contrast"></span></label>
+          </fieldset>
+          <button class="btn btn-secondary" id="overlay-toggle" type="button"></button>
+          <div class="slider-row">
+            <label for="opacity" data-i18n="opacity"></label>
+            <div class="slider-line">
+              <input id="opacity" type="range" min="0" max="100" step="5" value="60">
+              <output id="opacity-value" for="opacity">60%</output>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="legend-panel" aria-labelledby="legend-heading">
+          <div class="panel-head">
+            <h2 id="legend-heading" data-i18n="legend_heading"></h2>
+            <button class="btn btn-quiet panel-close" type="button" data-close-panel="legend"><span data-i18n="close"></span></button>
+          </div>
+          <div id="legend-body"></div>
+        </section>
+      </div>
+    </div>
+
+    <div class="mapcell">
+      <div id="map" tabindex="0" role="region" data-i18n-aria="map_label"></div>
+      <div class="progress" id="progress" hidden><span></span></div>
+      <div class="maptop">
+        <div class="mapmsgs" id="mapmsgs" aria-live="polite"></div>
+        <button class="btn btn-secondary map-centre" id="centre-btn" type="button" hidden><span data-i18n="select_centre"></span></button>
+      </div>
+    </div>
+
+    <div class="sheetwrap" id="sheetwrap">
+      <div class="floatbtns">
+        <button class="btn btn-float" id="layers-btn" type="button" aria-expanded="false" aria-controls="layers-panel">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>
+          <span data-i18n="layers_button"></span>
+        </button>
+        <button class="btn btn-float" id="legend-btn" type="button" aria-expanded="false" aria-controls="legend-panel">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h1M3 12h1M3 18h1"/></svg>
+          <span data-i18n="legend_button"></span>
+        </button>
+      </div>
+      <aside class="details" id="details" data-size="short" hidden></aside>
+    </div>
+  </main>
+</div>
+
+<div class="sr-only" id="live" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<dialog class="modal" id="fav-dialog" aria-labelledby="fav-heading"></dialog>
+<dialog class="modal" id="save-dialog" aria-labelledby="save-heading"></dialog>
+<dialog class="modal" id="nav-dialog" aria-labelledby="nav-heading"></dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="assets/sample_squares.js"></script>
+<script src="strings.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

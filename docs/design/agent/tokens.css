@@ -1,0 +1,92 @@
+/* Shared design tokens for the agent mockup. Rules are in DESIGN.md. */
+:root {
+  --paper: #FBFAF7;
+  --paper-raised: #FFFFFF;
+  --paper-sunk: #F1F0EB;
+  --ink: #1C2326;
+  --ink-muted: #55605F;
+  --line: #D8DAD3;
+  --lake: #1F4E79;
+  --lake-soft: #E4EDF5;
+  --note-bg: #FFF6DC;
+  --note-ink: #6B4A00;
+  --sample-bg: #EEF0F3;
+  --sample-ink: #3A4350;
+  --error-bg: #FCEBE8;
+  --error-ink: #9A2A1F;
+  --wait-ink: #1F4E79;
+  --forest: #3F7D4E;
+
+  --scale-0: #FFF8EC;
+  --scale-1: #F6E3C3;
+  --scale-2: #E9C99A;
+  --scale-3: #D9AE76;
+  --scale-4: #C8955A;
+  --square-border: rgba(28, 35, 38, 0.25);
+
+  --font: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --text-caption: 13px;
+  --text-body: 15px;
+  --text-label: 17px;
+  --text-section: 20px;
+  --text-page: 26px;
+  --text-percent: 44px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --radius-card: 12px;
+  --radius-control: 8px;
+  --touch: 44px;
+  --float-shadow: 0 2px 8px rgba(28, 35, 38, 0.18);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--text-body);
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 3px solid var(--lake);
+  outline-offset: 2px;
+}
+
+.notice-sample {
+  border: 1px dashed var(--sample-ink);
+  background: var(--sample-bg);
+  color: var(--sample-ink);
+  border-radius: var(--radius-control);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-caption);
+}
+
+.notice-sample strong {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: var(--space-1);
+}
+
+.notice-experimental {
+  border-left: 4px solid var(--note-ink);
+  background: var(--note-bg);
+  color: var(--note-ink);
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-caption);
+}
