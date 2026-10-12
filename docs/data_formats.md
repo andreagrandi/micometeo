@@ -54,6 +54,22 @@ The historical research rule remains in force for research outputs: a result
 must not be displayed at a finer detail than its coarsest input. The product
 500 m convention is a display and join choice and does not replace that rule.
 
+## Application terrain
+
+`national_terrain.TerrainCell` joins one national grid membership to one
+versioned terrain build. It stores altitude in metres, slope in degrees and
+slope direction clockwise from north. Direction is null on flat ground.
+Each value keeps its valid-pixel fraction and input quality. At least 95 percent
+valid pixels gives high quality, and 50 to 95 percent gives low quality. Below
+50 percent the value is null. Conflicting directions retain a low-quality
+indication. These labels describe the terrain input, not the mushroom estimate.
+
+The build records the Copernicus release, native and processing detail,
+resampling method, vertical reference, quality thresholds and credit.
+Chunk-to-source links preserve each tile URL, retrieval time and checksum.
+The source manifest has its own fingerprint. Missing source areas remain
+explicit and do not become zero altitude or flat slopes.
+
 ## Find records
 
 One row per reported find.

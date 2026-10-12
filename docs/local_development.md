@@ -454,6 +454,23 @@ The stored square remains 500 m across. Its Italian land geometry and share
 are separate values. The [grid coverage report](../reports/mvp/grid_coverage.md)
 records the measured national and regional counts, island checks and credits.
 
+## National terrain
+
+After the national grid has completed, build its terrain values:
+
+```sh
+uv run python apps/application/manage.py build_national_terrain \
+  --grid-build-version italy-500m-istat-2026-01-01-v1 \
+  --build-version italy-terrain-glo30-2021-v2 \
+  --cache-dir data/raw/mvp_terrain
+```
+
+Repeat the same command to resume unfinished chunks. Completed chunks retain
+their values and source references. `--max-chunks 1` limits a trial run to one
+unfinished chunk. Use a new version when source or processing inputs change.
+The [terrain coverage report](../reports/mvp/terrain_coverage.md) records the
+national measurements, source limitations and credit.
+
 ## Shutdown
 
 Stop Django and the worker with `Ctrl+C` in their terminals. Let the worker

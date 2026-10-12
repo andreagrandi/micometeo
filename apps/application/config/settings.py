@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "django_tasks_db",
     "background_jobs",
     "national_grid",
+    "national_terrain",
 ]
 
 MIDDLEWARE = [
