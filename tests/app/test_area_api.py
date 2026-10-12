@@ -49,6 +49,16 @@ def area_fixture() -> dict[str, object]:
         version=f"area-grid-{suffix}",
         fingerprint="a" * 64,
         status=GridBuild.Status.COMPLETED,
+        source_metadata={
+            "dataset": "Fixture ISTAT boundaries",
+            "version": "fixture-2026",
+            "archive_sha256": "1" * 64,
+            "source_url": "https://example.test/istat-source",
+            "source_page": "https://example.test/istat-page",
+            "license": "Fixture ISTAT licence",
+            "license_url": "https://example.test/istat-license",
+            "credit": "Fixture ISTAT credit",
+        },
         planned_chunk_count=1,
         completed_chunk_count=1,
         cell_count=1,
@@ -644,6 +654,30 @@ def test_area_detail_uses_exact_update_and_exposes_frozen_facts(area_fixture: di
     assert body["weather"]["requested_coordinates"] == {"latitude": 44.0, "longitude": 11.0}
     assert body["weather"]["returned_coordinates"] == {"latitude": 44.01, "longitude": 11.01}
     assert body["weather"]["reference_elevation_m"] == 500.0
+    assert body["sources"]["grid"] == {
+        "name": "Fixture ISTAT boundaries",
+        "release": "fixture-2026",
+        "native_resolution_m": None,
+        "catalogue_url": "https://example.test/istat-page",
+        "service_url": "https://example.test/istat-source",
+        "url": "https://example.test/istat-license",
+        "licence": "Fixture ISTAT licence",
+        "credit": "Fixture ISTAT credit",
+        "retrieval_time": None,
+        "retrieval_sha256": "1" * 64,
+        "source_metadata": {
+            "dataset": "Fixture ISTAT boundaries",
+            "version": "fixture-2026",
+            "archive_sha256": "1" * 64,
+            "source_url": "https://example.test/istat-source",
+            "source_page": "https://example.test/istat-page",
+            "license": "Fixture ISTAT licence",
+            "license_url": "https://example.test/istat-license",
+            "credit": "Fixture ISTAT credit",
+        },
+        "source_tiles": [],
+        "gaps": [],
+    }
     assert body["sources"]["forest"]["retrieval_sha256"] == "d" * 64
     assert body["sources"]["forest"]["release"] == "HRL Forest Type 2018"
     assert body["sources"]["forest"]["native_resolution_m"] == 10.0

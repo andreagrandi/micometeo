@@ -238,8 +238,9 @@ class WeatherSourceSchema(Schema):
 
 
 class SourcesSchema(Schema):
-    """Return forest, terrain and weather attribution records."""
+    """Return grid, forest, terrain and weather attribution records."""
 
+    grid: SourceRecordSchema
     forest: SourceRecordSchema
     terrain: SourceRecordSchema
     weather: WeatherSourceSchema
@@ -697,6 +698,30 @@ def _forest_source(*, forest_cell: ForestCell, update: EstimateUpdate) -> Source
     )
 
 
+def _grid_source(*, update: EstimateUpdate) -> SourceRecordSchema:
+    """Serialize the ISTAT source facts stored on the joined grid build."""
+    build = update.forest_build.grid_build
+    metadata = dict(build.source_metadata or {})
+
+    def source_text(*, key: str) -> str | None:
+        value = metadata.get(key)
+        return value if isinstance(value, str) and value else None
+
+    return SourceRecordSchema(
+        name=source_text(key="dataset") or build.version,
+        release=source_text(key="version"),
+        catalogue_url=source_text(key="source_page"),
+        service_url=source_text(key="source_url"),
+        url=source_text(key="license_url"),
+        licence=source_text(key="license"),
+        credit=source_text(key="credit"),
+        retrieval_sha256=source_text(key="archive_sha256"),
+        source_metadata=metadata,
+        source_tiles=[],
+        gaps=[],
+    )
+
+
 def _terrain_source(*, terrain_cell: TerrainCell, update: EstimateUpdate) -> SourceRecordSchema:
     """Serialize terrain build metadata and only tiles used by this square."""
     build = update.terrain_build
@@ -761,7 +786,7 @@ def _sources_response(
     terrain_cell: TerrainCell | None,
     weather: WeatherSchema,
 ) -> SourcesSchema:
-    """Combine exact forest, terrain and snapshot weather provenance."""
+    """Combine exact source records and snapshot weather provenance."""
     terrain = (
         _terrain_source(terrain_cell=terrain_cell, update=update)
         if terrain_cell is not None
@@ -773,6 +798,7 @@ def _sources_response(
         )
     )
     return SourcesSchema(
+        grid=_grid_source(update=update),
         forest=_forest_source(forest_cell=forest_cell, update=update),
         terrain=terrain,
         weather=WeatherSourceSchema(
@@ -934,7 +960,9 @@ def area_detail(
             ),
         )
     update = (
-        EstimateUpdate.objects.select_related("snapshot", "forest_build", "terrain_build")
+        EstimateUpdate.objects.select_related(
+            "snapshot", "forest_build__grid_build", "terrain_build"
+        )
         .filter(public_id=parsed_update)
         .first()
     )
