@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+
+<html lang="it" class="scroll-smooth"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Micometeo</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&amp;family=JetBrains+Mono:wght@400..700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;overflow-x:hidden;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}h1,h2,h3,h4,p,span,a,li{overflow-wrap:anywhere;}header span,header a{overflow-wrap:normal;white-space:nowrap;}.font-mono{font-family:"JetBrains Mono",ui-monospace,monospace;}.num{font-variant-numeric:tabular-nums;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-primary-fixed": "#032017", "secondary-fixed-dim": "#ddc1ac", "surface-container": "#f3ede2", "surface-container-highest": "#e8e2d7", "surface-tint": "#486458", "on-tertiary-container": "#d78c4a", "primary-container": "#1e3a2f", "on-background": "#1d1b15", "surface": "#fff9ed", "surface-dim": "#dfd9cf", "on-surface": "#1d1b15", "on-tertiary-fixed": "#2e1500", "secondary": "#6f5a49", "on-surface-variant": "#424844", "outline": "#727974", "secondary-fixed": "#faddc7", "on-primary-container": "#86a496", "tertiary-fixed": "#ffdcc2", "surface-container-lowest": "#ffffff", "outline-variant": "#c1c8c3", "tertiary": "#341800", "surface-bright": "#fff9ed", "tertiary-container": "#532a00", "on-secondary-container": "#745f4d", "surface-container-low": "#f9f3e8", "on-error": "#ffffff", "primary-fixed": "#caeada", "primary": "#07241a", "secondary-container": "#f7dac4", "on-secondary": "#ffffff", "error": "#ba1a1a", "tertiary-fixed-dim": "#ffb77b", "on-tertiary": "#ffffff", "inverse-primary": "#aecebe", "on-secondary-fixed-variant": "#564333", "surface-container-high": "#ede7dd", "inverse-on-surface": "#f6f0e5", "on-secondary-fixed": "#27180b", "on-primary": "#ffffff", "on-error-container": "#93000a", "error-container": "#ffdad6", "surface-variant": "#e8e2d7", "primary-fixed-dim": "#aecebe", "background": "#fff9ed", "on-primary-fixed-variant": "#304c41", "inverse-surface": "#333029", "on-tertiary-fixed-variant": "#6d3a00" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "gutter-desktop": "1.5rem", "space-xl": "2rem", "gutter": "1rem", "margin-tablet": "1.5rem", "space-sm": "0.5rem", "margin-desktop": "2.5rem", "margin": "1rem", "space-xs": "0.25rem", "gutter-tablet": "1.25rem", "space-lg": "1.25rem", "space-md": "0.75rem" }, "fontFamily": { "body-sm": [ "DM Sans" ], "headline-md": [ "Newsreader" ], "title-md": [ "DM Sans" ], "headline-lg-mobile": [ "Newsreader" ], "display-lg": [ "Newsreader" ], "headline-lg": [ "Newsreader" ], "body-md": [ "DM Sans" ], "caption-topo": [ "DM Sans" ], "title-lg": [ "DM Sans" ], "label-sm": [ "DM Sans" ], "label-md": [ "DM Sans" ], "display-lg-mobile": [ "Newsreader" ], "body-lg": [ "DM Sans" ] }, "fontSize": { "body-sm": [ "12px", { "lineHeight": "16px", "fontWeight": "400" } ], "headline-md": [ "22px", { "lineHeight": "28px", "fontWeight": "400" } ], "title-md": [ "15px", { "lineHeight": "20px", "fontWeight": "600" } ], "headline-lg-mobile": [ "24px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "500" } ], "display-lg": [ "44px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "500" } ], "headline-lg": [ "30px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "500" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "caption-topo": [ "10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "600" } ], "title-lg": [ "18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "label-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "700" } ], "label-md": [ "13px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" } ], "display-lg-mobile": [ "32px", { "lineHeight": "38px", "letterSpacing": "-0.015em", "fontWeight": "500" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased" id="top"><header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md min-w-0"><a class="flex items-center gap-space-sm group" data-lang-link href="landing.html"><div class="w-9 h-9 shrink-0 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center transition-colors group-hover:bg-primary group-hover:text-on-primary"><span class="material-symbols-outlined text-[20px]">nature</span></div><span class="font-headline-md text-headline-md tracking-tight text-primary font-serif">Micometeo</span></a></div><nav class="hidden xl:flex items-center gap-space-lg"><a aria-current="page" class="transition-colors text-primary font-title-md relative after:content-[''] after:absolute after:-bottom-1.5 after:left-0 after:w-full after:h-[2px] after:bg-primary" href="#top" data-i18n="navHome"></a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" data-app-link href="app.html" data-i18n="navMap"></a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" href="#come-funziona-section" data-i18n="navHow"></a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" href="#fattori-section" data-i18n="navFactors"></a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" href="#etica-section" data-i18n="navEthics"></a></nav><div class="flex items-center gap-space-sm sm:gap-space-md shrink-0"><button aria-label="Italiano / English" class="flex items-center gap-1 px-space-xs py-1 text-on-surface-variant hover:text-on-surface font-label-md text-label-md uppercase tracking-wider rounded-lg transition-colors" id="lang-toggle" type="button"><span class="material-symbols-outlined text-[16px]">language</span><span data-lang-label="it">IT</span><span class="text-outline-variant">/</span><span data-lang-label="en">EN</span></button><a class="inline-flex items-center gap-space-xs px-space-md py-2 bg-primary text-on-primary font-title-md text-title-md rounded-lg shadow-sm hover:bg-primary-container hover:text-on-primary-container transition-all" data-app-link href="app.html"><span class="hidden sm:inline" data-i18n="openMap"></span><span aria-hidden="true" class="material-symbols-outlined text-[18px]">arrow_forward</span></a><div aria-hidden="true" class="hidden sm:block w-8 h-8 shrink-0"></div></div></div></header><main class="w-full pt-20 bg-background"><div class="flex flex-col w-full">
+<!-- Design example notice -->
+<div class="w-full px-4 sm:px-6 lg:px-12 pt-4 bg-surface"><div class="max-w-7xl mx-auto"><p class="px-3 py-2 rounded-lg bg-surface-container-high text-on-surface-variant font-body-sm text-body-sm"><strong class="font-semibold text-on-surface" data-i18n="sampleLabel"></strong> <span data-i18n="sampleText"></span></p></div></div>
+<!-- SECTION 1: HERO -->
+<section class="relative w-full overflow-hidden px-4 sm:px-6 lg:px-12 py-12 lg:py-24 bg-surface">
+<div aria-hidden="true" class="absolute inset-0 opacity-[0.035] pointer-events-none select-none overflow-hidden">
+<svg class="w-full h-full object-cover" fill="none" viewbox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+<path class="text-primary" d="M-100 150 C 300 80, 600 240, 1300 120" stroke="currentColor" stroke-width="1.5"></path>
+<path class="text-primary" d="M-100 280 C 250 200, 700 380, 1300 230" stroke="currentColor" stroke-width="1.5"></path>
+<path class="text-primary" d="M-100 410 C 320 330, 620 490, 1300 360" stroke="currentColor" stroke-width="1.5"></path>
+<path class="text-primary" d="M-100 540 C 280 460, 750 610, 1300 490" stroke="currentColor" stroke-width="1.5"></path>
+<path class="text-primary" d="M-100 670 C 350 590, 650 730, 1300 620" stroke="currentColor" stroke-width="1.5"></path>
+</svg>
+</div>
+<div class="max-w-7xl mx-auto relative z-10">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+<div class="lg:col-span-7 space-y-6 min-w-0">
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-high text-primary font-caption-topo text-caption-topo uppercase tracking-wider shadow-sm">
+<span class="w-2 h-2 shrink-0 rounded-full bg-on-tertiary-container"></span>
+<span data-i18n="heroBadge"></span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile sm:text-headline-lg lg:text-[46px] lg:leading-[52px] tracking-tight text-primary font-serif" data-i18n="heroTitle"></h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl leading-relaxed" data-i18n-html="heroText"></p>
+<div class="pt-2 flex flex-wrap items-center gap-4">
+<a class="inline-flex items-center gap-3 px-6 py-3.5 bg-primary text-on-primary font-title-md text-title-md rounded-lg shadow-md hover:bg-primary-container hover:text-on-primary-container transition-all group" data-app-link href="app.html">
+<span class="material-symbols-outlined text-[20px] transition-transform group-hover:rotate-45">explore</span>
+<span data-i18n="heroOpen"></span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+<a class="inline-flex items-center gap-2 px-5 py-3.5 rounded-lg bg-surface-container-low text-primary font-title-md text-title-md hover:bg-surface-container transition-colors shadow-sm" href="#come-funziona-section">
+<span class="material-symbols-outlined text-[20px] text-primary">science</span>
+<span data-i18n="heroHow"></span>
+<span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+</a>
+</div>
+<div class="pt-6 grid grid-cols-3 gap-3 sm:gap-4 border-t border-surface-container-highest max-w-xl">
+<div class="min-w-0">
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline" data-i18n="fig1Label"></p>
+<p class="font-title-lg text-[15px] sm:text-title-lg text-primary font-mono mt-0.5" data-i18n="fig1Value"></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="fig1Note"></p>
+</div>
+<div class="min-w-0">
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline" data-i18n="fig2Label"></p>
+<p class="font-title-lg text-[15px] sm:text-title-lg text-primary font-mono mt-0.5" data-i18n="fig2Value"></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="fig2Note"></p>
+</div>
+<div class="min-w-0">
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline" data-i18n="fig3Label"></p>
+<p class="font-title-lg text-[15px] sm:text-title-lg text-primary font-mono mt-0.5" data-i18n="fig3Value"></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="fig3Note"></p>
+</div>
+</div>
+</div>
+<!-- Sample card -->
+<div class="lg:col-span-5 min-w-0">
+<div class="relative bg-surface-container-low rounded-xl p-4 sm:p-6 lg:p-7 shadow-xl space-y-5">
+<div class="flex items-start justify-between gap-4">
+<div class="space-y-1 min-w-0">
+<span class="inline-block px-2.5 py-0.5 rounded bg-tertiary-container/10 text-on-tertiary-container font-caption-topo text-caption-topo uppercase tracking-wider font-semibold" data-i18n="cardTag"></span>
+<h2 class="font-headline-md text-headline-md text-primary font-serif" data-i18n="cardPlace"></h2>
+<p class="font-caption-topo text-caption-topo text-outline font-mono">44.1318° N, 10.6625° E</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="cardCoord"></p>
+</div>
+<div class="w-10 h-10 shrink-0 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined text-[22px]">forest</span>
+</div>
+</div>
+<div class="p-4 rounded-lg bg-surface-container-lowest shadow-sm space-y-3">
+<div class="flex flex-wrap items-center justify-between gap-2 text-on-surface">
+<span class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">calendar_today</span>
+<span data-i18n="cardDates"></span>
+</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase" data-i18n="cardRange"></span>
+</div>
+<div class="grid grid-cols-2 gap-3 pt-1">
+<div class="p-3 rounded bg-surface-container-low flex flex-col justify-between min-w-0">
+<span class="font-caption-topo text-caption-topo uppercase text-outline" data-i18n="cardToday"></span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-lg text-headline-lg font-mono text-primary num">42</span>
+<span class="font-title-md text-title-md text-on-surface-variant">%</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-surface-container-highest mt-2 overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 42%;"></div>
+</div>
+</div>
+<div class="p-3 rounded bg-secondary-container/40 flex flex-col justify-between min-w-0">
+<span class="font-caption-topo text-caption-topo uppercase text-secondary" data-i18n="cardLater"></span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-lg text-headline-lg font-mono text-on-tertiary-container num">48</span>
+<span class="font-title-md text-title-md text-secondary">%</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-surface-container-highest mt-2 overflow-hidden">
+<div class="h-full bg-on-tertiary-container rounded-full" style="width: 48%;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-start gap-2.5 p-3 rounded bg-surface-container-high border-l-[3px] border-on-tertiary-container">
+<span class="material-symbols-outlined text-[18px] text-on-tertiary-container shrink-0">info</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed"><strong class="font-semibold text-on-surface" data-i18n="noteLabel"></strong> <span data-i18n="noteText"></span></p>
+</div>
+<div class="space-y-2.5 font-body-sm text-body-sm">
+<div class="flex items-center justify-between gap-3 py-1.5 px-3 rounded bg-surface-container-lowest">
+<span class="text-on-surface-variant flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[16px] text-primary shrink-0">rainy</span>
+<span data-i18n="rowRain"></span>
+</span>
+<span class="font-mono font-medium text-primary num shrink-0">18 mm</span>
+</div>
+<div class="flex items-center justify-between gap-3 py-1.5 px-3 rounded bg-surface-container-lowest">
+<span class="text-on-surface-variant flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[16px] text-primary shrink-0">park</span>
+<span data-i18n="rowForest"></span>
+</span>
+<span class="font-mono font-medium text-primary num shrink-0">68%</span>
+</div>
+<div class="flex items-center justify-between gap-3 py-1.5 px-3 rounded bg-surface-container-lowest">
+<span class="text-on-surface-variant flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[16px] text-primary shrink-0">device_thermostat</span>
+<span data-i18n="rowTemp"></span>
+</span>
+<span class="font-mono font-medium text-primary num text-right" data-i18n="rowTempValue"></span>
+</div>
+</div>
+<div class="pt-2 flex flex-wrap items-center justify-between gap-2">
+<span class="font-caption-topo text-caption-topo uppercase text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] shrink-0">history</span>
+<span data-i18n="cardUpdate"></span>
+</span>
+<a class="font-title-md text-title-md text-primary hover:text-on-tertiary-container transition-colors inline-flex items-center gap-1 group" data-app-link href="app.html">
+<span data-i18n="cardOpen"></span>
+<span class="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 2: WHY MICOMETEO -->
+<section class="w-full px-4 sm:px-6 lg:px-12 py-16 bg-surface-container-low scroll-mt-20" id="fattori-section">
+<div class="max-w-7xl mx-auto space-y-12">
+<div class="max-w-3xl space-y-3">
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline" data-i18n="whyEyebrow"></p>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile sm:text-headline-lg text-primary font-serif" data-i18n="whyTitle"></h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed" data-i18n="whyText"></p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="space-y-4">
+<div class="w-12 h-12 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">grid_goldenratio</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary" data-i18n="why1Title"></h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="why1Text"></p>
+</div>
+<div class="pt-4 border-t border-surface-container-highest">
+<span class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider" data-i18n="why1Tag"></span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="space-y-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">water_drop</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary" data-i18n="why2Title"></h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="why2Text"></p>
+</div>
+<div class="pt-4 border-t border-surface-container-highest">
+<span class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider" data-i18n="why2Tag"></span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="space-y-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">lock</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary" data-i18n="why3Title"></h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="why3Text"></p>
+</div>
+<div class="pt-4 border-t border-surface-container-highest">
+<span class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider" data-i18n="why3Tag"></span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="space-y-4">
+<div class="w-12 h-12 rounded-lg bg-secondary-container/60 text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">favorite</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary" data-i18n="why4Title"></h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="why4Text"></p>
+</div>
+<div class="pt-4 border-t border-surface-container-highest">
+<span class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider" data-i18n="why4Tag"></span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 3: HOW THE ESTIMATE IS MADE -->
+<section class="w-full px-4 sm:px-6 lg:px-12 py-16 lg:py-24 bg-surface scroll-mt-20" id="come-funziona-section">
+<div class="max-w-7xl mx-auto space-y-16">
+<div class="text-center max-w-3xl mx-auto space-y-3">
+<span class="inline-block px-3 py-1 rounded bg-surface-container-high text-primary font-caption-topo text-caption-topo uppercase tracking-wider" data-i18n="howEyebrow"></span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile sm:text-headline-lg text-primary font-serif" data-i18n="howTitle"></h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed" data-i18n="howText"></p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+<div class="relative bg-surface-container-low rounded-xl p-6 shadow-sm space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-mono text-title-lg text-on-tertiary-container font-bold">01</span>
+<span class="material-symbols-outlined text-primary text-[24px]">satellite_alt</span>
+</div>
+<h3 class="font-title-md text-title-md text-primary" data-i18n="step1Title"></h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="step1Text"></p>
+<div class="pt-2">
+<span class="inline-flex items-center gap-1 font-caption-topo text-caption-topo uppercase text-outline">
+<span class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span> <span data-i18n="step1Tag"></span>
+</span>
+</div>
+</div>
+<div class="relative bg-surface-container-low rounded-xl p-6 shadow-sm space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-mono text-title-lg text-on-tertiary-container font-bold">02</span>
+<span class="material-symbols-outlined text-primary text-[24px]">history_toggle_off</span>
+</div>
+<h3 class="font-title-md text-title-md text-primary" data-i18n="step2Title"></h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="step2Text"></p>
+<div class="pt-2">
+<span class="inline-flex items-center gap-1 font-caption-topo text-caption-topo uppercase text-outline">
+<span class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span> <span data-i18n="step2Tag"></span>
+</span>
+</div>
+</div>
+<div class="relative bg-surface-container-low rounded-xl p-6 shadow-sm space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-mono text-title-lg text-on-tertiary-container font-bold">03</span>
+<span class="material-symbols-outlined text-primary text-[24px]">thermostat</span>
+</div>
+<h3 class="font-title-md text-title-md text-primary" data-i18n="step3Title"></h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="step3Text"></p>
+<div class="pt-2">
+<span class="inline-flex items-center gap-1 font-caption-topo text-caption-topo uppercase text-outline">
+<span class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span> <span data-i18n="step3Tag"></span>
+</span>
+</div>
+</div>
+<div class="relative bg-surface-container-low rounded-xl p-6 shadow-sm space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-mono text-title-lg text-on-tertiary-container font-bold">04</span>
+<span class="material-symbols-outlined text-primary text-[24px]">analytics</span>
+</div>
+<h3 class="font-title-md text-title-md text-primary" data-i18n="step4Title"></h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="step4Text"></p>
+<div class="pt-2">
+<span class="inline-flex items-center gap-1 font-caption-topo text-caption-topo uppercase text-outline">
+<span class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span> <span data-i18n="step4Tag"></span>
+</span>
+</div>
+</div>
+</div>
+<div class="p-4 sm:p-6 lg:p-8 rounded-xl bg-surface-container-high shadow-inner space-y-6">
+<div>
+<h4 class="font-title-lg text-title-lg text-primary" data-i18n="scaleTitle"></h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="scaleText"></p>
+</div>
+<div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+<div class="p-4 rounded-lg bg-surface space-y-2">
+<div class="flex items-center justify-between gap-2">
+<span class="font-label-md text-label-md text-outline num" data-i18n="scale1Range"></span>
+<span class="w-3 h-3 shrink-0 rounded-full border border-outline-variant" style="background:#FFF9F0"></span>
+</div>
+<p class="font-title-md text-title-md text-on-surface" data-i18n="scale1Title"></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="scale1Text"></p>
+</div>
+<div class="p-4 rounded-lg bg-surface space-y-2">
+<div class="flex items-center justify-between gap-2">
+<span class="font-label-md text-label-md text-outline num" data-i18n="scale2Range"></span>
+<span class="w-3 h-3 shrink-0 rounded-full border border-outline-variant" style="background:#F3E6D0"></span>
+</div>
+<p class="font-title-md text-title-md text-on-surface" data-i18n="scale2Title"></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="scale2Text"></p>
+</div>
+<div class="p-4 rounded-lg bg-surface space-y-2">
+<div class="flex items-center justify-between gap-2">
+<span class="font-label-md text-label-md text-outline num" data-i18n="scale3Range"></span>
+<span class="w-3 h-3 shrink-0 rounded-full border border-outline-variant" style="background:#EBD6B5"></span>
+</div>
+<p class="font-title-md text-title-md text-primary" data-i18n="scale3Title"></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="scale3Text"></p>
+</div>
+<div class="p-4 rounded-lg bg-surface space-y-2">
+<div class="flex items-center justify-between gap-2">
+<span class="font-label-md text-label-md text-outline num" data-i18n="scale4Range"></span>
+<span class="w-3 h-3 shrink-0 rounded-full border border-outline-variant" style="background:#DCBC91"></span>
+</div>
+<p class="font-title-md text-title-md text-primary font-semibold" data-i18n="scale4Title"></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="scale4Text"></p>
+</div>
+<div class="p-4 rounded-lg bg-surface space-y-2 col-span-2 lg:col-span-1">
+<div class="flex items-center justify-between gap-2">
+<span class="font-label-md text-label-md text-outline num" data-i18n="scale5Range"></span>
+<span class="w-3 h-3 shrink-0 rounded-full border border-outline-variant" style="background:#C99E6B"></span>
+</div>
+<p class="font-title-md text-title-md text-primary font-bold" data-i18n="scale5Title"></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="scale5Text"></p>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant" data-i18n="scaleNote"></p>
+</div>
+</div>
+</section>
+<!-- SECTION 4: ILLUSTRATIVE AREAS -->
+<section class="w-full px-4 sm:px-6 lg:px-12 py-16 bg-surface-container-low">
+<div class="max-w-7xl mx-auto space-y-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="space-y-3 max-w-2xl">
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline" data-i18n="areasEyebrow"></p>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile sm:text-headline-lg text-primary font-serif" data-i18n="areasTitle"></h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed" data-i18n="areasText"></p>
+</div>
+<a class="inline-flex items-center gap-2 text-primary hover:text-on-tertiary-container font-title-md text-title-md transition-colors group" data-app-link href="app.html">
+<span data-i18n="areasAll"></span>
+<span class="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">arrow_forward</span>
+</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+<div class="p-5 space-y-4">
+<div class="flex items-center justify-between gap-2">
+<span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase" data-i18n="area1Tag"></span>
+<div class="flex items-baseline gap-1 shrink-0">
+<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container num">48%</span>
+<span class="font-caption-topo text-caption-topo text-outline" data-i18n="areaExample"></span>
+</div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary" data-i18n="area1Title"></h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1" data-i18n="area1Places"></p>
+</div>
+<div class="space-y-2 pt-2 border-t border-surface-container-highest font-body-sm text-body-sm">
+<div class="flex justify-between gap-3 text-on-surface-variant"><span data-i18n="areaRowSquare"></span><span class="font-mono text-primary">500 m</span></div>
+<div class="flex justify-between gap-3 text-on-surface-variant"><span data-i18n="areaRowDates"></span><span class="font-mono text-primary num" data-i18n="areaRowDatesValue"></span></div>
+</div>
+</div>
+<div class="p-5 pt-0">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link href="app.html">
+<span class="material-symbols-outlined text-[16px]">map</span>
+<span data-i18n="areaOpen"></span>
+</a>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+<div class="p-5 space-y-4">
+<div class="flex items-center justify-between gap-2">
+<span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase" data-i18n="area2Tag"></span>
+<div class="flex items-baseline gap-1 shrink-0">
+<span class="font-title-lg text-title-lg font-mono font-bold text-primary num">39%</span>
+<span class="font-caption-topo text-caption-topo text-outline" data-i18n="areaExample"></span>
+</div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary" data-i18n="area2Title"></h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1" data-i18n="area2Places"></p>
+</div>
+<div class="space-y-2 pt-2 border-t border-surface-container-highest font-body-sm text-body-sm">
+<div class="flex justify-between gap-3 text-on-surface-variant"><span data-i18n="areaRowSquare"></span><span class="font-mono text-primary">500 m</span></div>
+<div class="flex justify-between gap-3 text-on-surface-variant"><span data-i18n="areaRowDates"></span><span class="font-mono text-primary num" data-i18n="areaRowDatesValue"></span></div>
+</div>
+</div>
+<div class="p-5 pt-0">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link href="app.html">
+<span class="material-symbols-outlined text-[16px]">map</span>
+<span data-i18n="areaOpen"></span>
+</a>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+<div class="p-5 space-y-4">
+<div class="flex items-center justify-between gap-2">
+<span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase" data-i18n="area3Tag"></span>
+<div class="flex items-baseline gap-1 shrink-0">
+<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container num">51%</span>
+<span class="font-caption-topo text-caption-topo text-outline" data-i18n="areaExample"></span>
+</div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary" data-i18n="area3Title"></h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1" data-i18n="area3Places"></p>
+</div>
+<div class="space-y-2 pt-2 border-t border-surface-container-highest font-body-sm text-body-sm">
+<div class="flex justify-between gap-3 text-on-surface-variant"><span data-i18n="areaRowSquare"></span><span class="font-mono text-primary">500 m</span></div>
+<div class="flex justify-between gap-3 text-on-surface-variant"><span data-i18n="areaRowDates"></span><span class="font-mono text-primary num" data-i18n="areaRowDatesValue"></span></div>
+</div>
+</div>
+<div class="p-5 pt-0">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link href="app.html">
+<span class="material-symbols-outlined text-[16px]">map</span>
+<span data-i18n="areaOpen"></span>
+</a>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+<div class="p-5 space-y-4">
+<div class="flex items-center justify-between gap-2">
+<span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase" data-i18n="area4Tag"></span>
+<div class="flex items-baseline gap-1 shrink-0">
+<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container num">44%</span>
+<span class="font-caption-topo text-caption-topo text-outline" data-i18n="areaExample"></span>
+</div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary" data-i18n="area4Title"></h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1" data-i18n="area4Places"></p>
+</div>
+<div class="space-y-2 pt-2 border-t border-surface-container-highest font-body-sm text-body-sm">
+<div class="flex justify-between gap-3 text-on-surface-variant"><span data-i18n="areaRowSquare"></span><span class="font-mono text-primary">500 m</span></div>
+<div class="flex justify-between gap-3 text-on-surface-variant"><span data-i18n="areaRowDates"></span><span class="font-mono text-primary num" data-i18n="areaRowDatesValue"></span></div>
+</div>
+</div>
+<div class="p-5 pt-0">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link href="app.html">
+<span class="material-symbols-outlined text-[16px]">map</span>
+<span data-i18n="areaOpen"></span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 5: ETHICS AND EXPERIMENTAL ESTIMATE -->
+<section class="w-full px-4 sm:px-6 lg:px-12 py-16 lg:py-20 bg-surface scroll-mt-20" id="etica-section">
+<div class="max-w-7xl mx-auto space-y-10">
+<div class="max-w-3xl space-y-3">
+<span class="inline-block px-3 py-1 rounded bg-surface-container-high text-primary font-caption-topo text-caption-topo uppercase tracking-wider" data-i18n="ethEyebrow"></span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile sm:text-headline-lg text-primary font-serif" data-i18n="ethTitle"></h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed" data-i18n="ethText"></p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<div class="lg:col-span-5 bg-surface-container-low rounded-xl p-6 lg:p-8 border-l-4 border-on-tertiary-container shadow-sm space-y-4">
+<div class="flex items-center gap-2.5 text-on-tertiary-container">
+<span class="material-symbols-outlined text-[24px] shrink-0">info</span>
+<h3 class="font-title-lg text-title-lg text-primary" data-i18n="ethCardTitle"></h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed" data-i18n-html="ethCardText"></p>
+<p class="font-body-sm text-body-sm text-outline leading-relaxed" data-i18n="ethCardSmall"></p>
+</div>
+<div class="lg:col-span-7 bg-surface-container-lowest rounded-xl p-6 lg:p-8 shadow-sm space-y-6">
+<h3 class="font-title-lg text-title-lg text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px] shrink-0">verified</span>
+<span data-i18n="rulesTitle"></span>
+</h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+<div class="space-y-1.5">
+<div class="flex items-center gap-2 text-primary font-title-md text-title-md">
+<span class="material-symbols-outlined text-[18px] shrink-0">badge</span>
+<span data-i18n="rule1Title"></span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="rule1Text"></p>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center gap-2 text-primary font-title-md text-title-md">
+<span class="material-symbols-outlined text-[18px] shrink-0">shopping_basket</span>
+<span data-i18n="rule2Title"></span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="rule2Text"></p>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center gap-2 text-primary font-title-md text-title-md">
+<span class="material-symbols-outlined text-[18px] shrink-0">eco</span>
+<span data-i18n="rule3Title"></span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="rule3Text"></p>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center gap-2 text-primary font-title-md text-title-md">
+<span class="material-symbols-outlined text-[18px] shrink-0">local_hospital</span>
+<span data-i18n="rule4Title"></span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="rule4Text"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 6: CLOSING BAND -->
+<section class="w-full px-4 sm:px-6 lg:px-12 py-16 lg:py-24 bg-primary text-on-primary relative overflow-hidden">
+<div aria-hidden="true" class="absolute -right-24 -bottom-24 w-96 h-96 rounded-full bg-primary-container opacity-40 blur-3xl pointer-events-none"></div>
+<div aria-hidden="true" class="absolute -left-24 -top-24 w-96 h-96 rounded-full bg-surface-tint opacity-20 blur-3xl pointer-events-none"></div>
+<div class="max-w-4xl mx-auto text-center relative z-10 space-y-8">
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-container text-on-primary-container font-caption-topo text-caption-topo uppercase tracking-wider">
+<span class="material-symbols-outlined text-[16px] shrink-0">map</span>
+<span data-i18n="closeBadge"></span>
+</div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile sm:text-headline-lg lg:text-[44px] lg:leading-[52px] tracking-tight text-on-primary font-serif" data-i18n="closeTitle"></h2>
+<p class="font-body-lg text-body-lg text-on-primary-container max-w-2xl mx-auto leading-relaxed" data-i18n="closeText"></p>
+<div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+<a class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-surface text-primary font-title-lg text-title-lg rounded-lg shadow-xl hover:bg-surface-container transition-all group" data-app-link href="app.html">
+<span class="material-symbols-outlined text-[22px] text-primary transition-transform group-hover:scale-110">nature</span>
+<span data-i18n="closeOpen"></span>
+<span class="material-symbols-outlined text-[20px] text-primary">arrow_forward</span>
+</a>
+<a class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-4 rounded-lg bg-primary-container/80 text-on-primary hover:bg-primary-container transition-colors font-title-md text-title-md" href="#come-funziona-section">
+<span class="material-symbols-outlined text-[18px]">menu_book</span>
+<span data-i18n="closeHow"></span>
+</a>
+</div>
+<div class="pt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-on-primary-container font-caption-topo text-caption-topo uppercase tracking-wider">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] shrink-0">check_circle</span>
+<span data-i18n="trust1"></span>
+</span>
+<span class="hidden sm:inline text-primary-container">•</span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] shrink-0">check_circle</span>
+<span data-i18n="trust2"></span>
+</span>
+<span class="hidden sm:inline text-primary-container">•</span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] shrink-0">check_circle</span>
+<span data-i18n="trust3"></span>
+</span>
+</div>
+</div>
+</section>
+</div></main><footer class="w-full bg-surface-container-low pt-space-xl pb-space-lg text-on-surface-variant"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12"><div class="p-space-lg mb-space-xl rounded-xl bg-surface-container-high border-l-4 border-tertiary-container flex flex-col md:flex-row items-start gap-space-md"><span class="material-symbols-outlined text-on-tertiary-container text-[24px] shrink-0 mt-0.5">info</span><div class="space-y-1"><h4 class="font-title-md text-title-md text-on-surface" data-i18n="footWarnTitle"></h4><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="footWarnText"></p></div></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-xl mb-space-xl"><div class="space-y-space-sm"><div class="flex items-center gap-space-sm"><div class="w-7 h-7 rounded bg-primary-container text-on-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-[18px]">nature</span></div><span class="font-headline-md text-headline-md tracking-tight text-primary font-serif">Micometeo</span></div><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="footAbout"></p><p class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider" data-i18n="footTags"></p></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface" data-i18n="footSourcesTitle"></h5><ul class="space-y-space-xs font-body-sm text-body-sm"><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">satellite_alt</span><span class="text-on-surface" data-i18n="footSource1"></span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">cloudy_snowing</span><span class="text-on-surface" data-i18n="footSource2"></span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">map</span><span class="text-on-surface" data-i18n="footSource3"></span></li></ul></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface" data-i18n="footNavTitle"></h5><ul class="space-y-space-xs font-body-sm text-body-sm"><li><a class="hover:text-primary transition-colors" href="#come-funziona-section" data-i18n="footNav1"></a></li><li><a class="hover:text-primary transition-colors" href="#fattori-section" data-i18n="footNav2"></a></li><li><a class="hover:text-primary transition-colors" href="#etica-section" data-i18n="footNav3"></a></li><li><a class="hover:text-primary transition-colors" data-app-link href="app.html" data-i18n="footNav4"></a></li></ul></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface" data-i18n="footPrivacyTitle"></h5><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed" data-i18n="footPrivacyText"></p></div></div><div class="pt-space-lg border-t border-surface-container-highest flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-sm font-body-sm text-body-sm text-outline"><p data-i18n="footBottom1"></p><p><strong class="font-semibold" data-i18n="sampleLabel"></strong> <span data-i18n="sampleText"></span></p></div></div></footer><script src="landing.js"></script></body></html>

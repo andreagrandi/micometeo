@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Micometeo combined design: viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    body {
+      min-height: 100vh;
+      background: var(--parchment-100);
+    }
+
+    .viewer-bar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      gap: var(--space-3) var(--space-5);
+      padding: var(--space-3) var(--space-4);
+      background: var(--white);
+      border-bottom: 1px solid var(--parchment-300);
+    }
+
+    .viewer-bar h1 {
+      flex: 1 1 100%;
+      margin: 0;
+      font-size: var(--text-section);
+      line-height: 1.2;
+    }
+
+    .viewer-bar h1 span {
+      color: var(--earth-700);
+      font-size: var(--text-body);
+      font-weight: 400;
+    }
+
+    .control label,
+    .control .label {
+      display: block;
+      margin-bottom: var(--space-1);
+      font-size: var(--text-caption);
+      font-weight: 600;
+    }
+
+    .segmented {
+      display: flex;
+      border: 1px solid var(--pine-800);
+      border-radius: var(--radius-control);
+      overflow: hidden;
+    }
+
+    .segmented button {
+      min-height: var(--touch);
+      padding: 0 var(--space-3);
+      border: 0;
+      background: var(--white);
+      color: var(--pine-800);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .segmented button[aria-pressed="true"] {
+      background: var(--pine-800);
+      color: #fff;
+    }
+
+    .segmented button:focus-visible {
+      outline-offset: -5px;
+    }
+
+    select {
+      min-height: var(--touch);
+      min-width: 260px;
+      padding: 0 var(--space-3);
+      border: 1px solid var(--earth-700);
+      border-radius: var(--radius-control);
+      background: var(--white);
+      font: inherit;
+    }
+
+    .scale-note {
+      margin: 0;
+      color: var(--earth-700);
+    }
+
+    .stage {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: center;
+      gap: var(--space-5);
+      padding: var(--space-4);
+    }
+
+    .frame-box h2 {
+      margin: 0 0 var(--space-2);
+      font-size: var(--text-body);
+      font-weight: 600;
+    }
+
+    .frame-clip {
+      overflow: hidden;
+      border: 1px solid var(--earth-700);
+      border-radius: var(--radius-control);
+      background: #fff;
+      box-shadow: var(--shadow-3);
+    }
+
+    .frame-clip iframe {
+      display: block;
+      border: 0;
+      background: #fff;
+      transform-origin: 0 0;
+    }
+  </style>
+</head>
+<body>
+<header class="viewer-bar">
+  <h1>Micometeo combined design <span id="viewer-note"></span></h1>
+  <div class="control">
+    <span class="label" id="lang-label">Language / Lingua</span>
+    <div class="segmented" role="group" aria-labelledby="lang-label" id="lang-group">
+      <button type="button" data-value="it">Italiano</button>
+      <button type="button" data-value="en">English</button>
+    </div>
+  </div>
+  <div class="control">
+    <label for="page-picker">Page</label>
+    <select id="page-picker">
+      <option value="app">Map app (app.html)</option>
+      <option value="landing">Landing page (landing.html)</option>
+    </select>
+  </div>
+  <div class="control">
+    <label for="state-picker">State</label>
+    <select id="state-picker">
+      <option value="none">none: normal journey, national view</option>
+      <option value="loading">loading: estimates are loading</option>
+      <option value="first_fetch">first_fetch: waiting for weather</option>
+      <option value="missing_data">missing_data: no estimate</option>
+      <option value="older_update">older_update: older result</option>
+      <option value="request_error">request_error: request failed</option>
+      <option value="no_results">no_results: search finds nothing</option>
+      <option value="location_denied">location_denied: no location</option>
+      <option value="storage_unavailable">storage_unavailable: favorite not saved</option>
+      <option value="less_forest">less_forest: under 10% forest</option>
+      <option value="selected">selected: Abetone, 15 October, details open</option>
+    </select>
+  </div>
+  <div class="control">
+    <label for="size-picker">Size</label>
+    <select id="size-picker">
+      <option value="phone">Phone 390 by 844</option>
+      <option value="small">Small phone 320 by 568</option>
+      <option value="desktop">Desktop 1440 by 900</option>
+      <option value="all">All sizes</option>
+    </select>
+  </div>
+  <p class="scale-note" id="scale-note" role="status"></p>
+</header>
+<main class="stage" id="stage"></main>
+
+<script>
+  (function () {
+    "use strict";
+
+    var SIZES = {
+      phone: { label: "Phone 390 by 844", width: 390, height: 844 },
+      small: { label: "Small phone 320 by 568", width: 320, height: 568 },
+      desktop: { label: "Desktop 1440 by 900", width: 1440, height: 900 }
+    };
+    var ALL_ORDER = ["phone", "small", "desktop"];
+    var STAGE_PADDING = 32;
+    var FRAME_GAP = 24;
+    var TITLE_HEIGHT = 30;
+
+    var params = new URLSearchParams(window.location.search);
+    var view = {
+      lang: params.get("lang") === "it" ? "it" : "en",
+      page: params.get("page") === "landing" ? "landing" : "app",
+      state: params.get("state") || "none",
+      size: SIZES[params.get("size")] || params.get("size") === "all" ? params.get("size") : "phone"
+    };
+
+    var stage = document.getElementById("stage");
+    var scaleNote = document.getElementById("scale-note");
+    var picks = {
+      page: document.getElementById("page-picker"),
+      state: document.getElementById("state-picker"),
+      size: document.getElementById("size-picker")
+    };
+
+    function frameUrl() {
+      var query = "?lang=" + view.lang;
+      if (view.page === "landing") {
+        return "landing.html" + query;
+      }
+      if (view.state === "selected") {
+        return "app.html" + query + "&select=1";
+      }
+      return "app.html" + query + "&state=" + view.state;
+    }
+
+    function names() {
+      return view.size === "all" ? ALL_ORDER : [view.size];
+    }
+
+    function chooseScale(keys) {
+      var bar = document.querySelector(".viewer-bar").offsetHeight;
+      var availableWidth = window.innerWidth - STAGE_PADDING - FRAME_GAP * (keys.length - 1) - 2 * keys.length;
+      var availableHeight = window.innerHeight - bar - STAGE_PADDING - TITLE_HEIGHT;
+      var totalWidth = keys.reduce(function (sum, key) { return sum + SIZES[key].width; }, 0);
+      var tallest = Math.max.apply(null, keys.map(function (key) { return SIZES[key].height; }));
+      return Math.min(1, availableWidth / totalWidth, availableHeight / tallest);
+    }
+
+    function render() {
+      var keys = names();
+      var scale = chooseScale(keys);
+      var src = frameUrl();
+      stage.innerHTML = "";
+      keys.forEach(function (key) {
+        var size = SIZES[key];
+        var box = document.createElement("section");
+        box.className = "frame-box";
+        box.innerHTML = "<h2>" + size.label + "</h2><div class=\"frame-clip\"><iframe></iframe></div>";
+        var clip = box.querySelector(".frame-clip");
+        var frame = box.querySelector("iframe");
+        clip.style.width = Math.round(size.width * scale) + "px";
+        clip.style.height = Math.round(size.height * scale) + "px";
+        frame.width = size.width;
+        frame.height = size.height;
+        frame.style.transform = "scale(" + scale + ")";
+        frame.title = size.label;
+        frame.src = src;
+        stage.appendChild(box);
+      });
+      scaleNote.textContent = "Scale " + Math.round(scale * 100) + "%. Frames keep their exact CSS size and are shrunk to fit this window.";
+      document.getElementById("viewer-note").textContent = view.page === "landing" ? "Landing page" : "Map app";
+      picks.state.disabled = view.page === "landing";
+      syncControls();
+      window.history.replaceState(null, "", "?lang=" + view.lang + "&page=" + view.page +
+        "&state=" + view.state + "&size=" + view.size);
+    }
+
+    function syncControls() {
+      document.querySelectorAll("#lang-group button").forEach(function (button) {
+        button.setAttribute("aria-pressed", String(button.getAttribute("data-value") === view.lang));
+      });
+      picks.page.value = view.page;
+      picks.state.value = view.state;
+      picks.size.value = view.size;
+    }
+
+    document.querySelectorAll("#lang-group button").forEach(function (button) {
+      button.addEventListener("click", function () {
+        view.lang = button.getAttribute("data-value");
+        render();
+      });
+    });
+    Object.keys(picks).forEach(function (name) {
+      picks[name].addEventListener("change", function () {
+        view[name] = picks[name].value;
+        render();
+      });
+    });
+    window.addEventListener("resize", function () {
+      var keys = names();
+      var scale = chooseScale(keys);
+      document.querySelectorAll(".frame-box").forEach(function (box, index) {
+        var size = SIZES[keys[index]];
+        var clip = box.querySelector(".frame-clip");
+        clip.style.width = Math.round(size.width * scale) + "px";
+        clip.style.height = Math.round(size.height * scale) + "px";
+        box.querySelector("iframe").style.transform = "scale(" + scale + ")";
+      });
+      scaleNote.textContent = "Scale " + Math.round(scale * 100) + "%. Frames keep their exact CSS size and are shrunk to fit this window.";
+    });
+
+    render();
+  }());
+</script>
+</body>
+</html>

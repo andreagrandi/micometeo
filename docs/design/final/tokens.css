@@ -1,0 +1,117 @@
+/* Shared design tokens for the combined mockup. Values come from docs/design/decision.md. */
+:root {
+  --pine-900: #11221B;
+  --pine-800: #1B352A;
+  --pine-600: #2E5645;
+  --pine-500: #3C6E59;
+  --pine-100: #E5ECE8;
+  --pine-50: #F2F6F4;
+  --parchment: #FCFAF6;
+  --parchment-100: #F5F0E6;
+  --parchment-200: #ECE3D2;
+  --parchment-300: #DED2BC;
+  --parchment-900: #2B261D;
+  --earth-700: #5C432D;
+  --earth-600: #7A5A3D;
+  --earth-100: #F3ECE4;
+  --error-bg: #FFDAD6;
+  --error-ink: #BA1A1A;
+  --older-bg: #FFF1D6;
+  --older-ink: #7A4B00;
+  --white: #FFFFFF;
+
+  --scale-0: #FFF9F0;
+  --scale-1: #F3E6D0;
+  --scale-2: #EBD6B5;
+  --scale-3: #DCBC91;
+  --scale-4: #C99E6B;
+  --square-border: rgba(17, 34, 27, 0.25);
+
+  --font: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-serif: "Newsreader", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --text-caption: 12px;
+  --text-body: 14px;
+  --text-label: 16px;
+  --text-section: 18px;
+  --text-percent: 40px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --radius-control: 4px;
+  --radius-card: 8px;
+  --touch: 44px;
+  --shadow-2: 0 2px 6px rgba(17, 34, 27, 0.14), 0 1px 2px rgba(17, 34, 27, 0.1);
+  --shadow-3: 0 8px 24px rgba(17, 34, 27, 0.18), 0 2px 6px rgba(17, 34, 27, 0.1);
+}
+
+@media (min-width: 900px) {
+  :root {
+    --touch: 40px;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--parchment);
+  color: var(--parchment-900);
+  font-family: var(--font);
+  font-size: var(--text-body);
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 3px solid var(--pine-600);
+  outline-offset: 2px;
+}
+
+.notice-sample {
+  border: 1px dashed var(--earth-700);
+  background: var(--parchment-100);
+  color: var(--earth-700);
+  border-radius: var(--radius-control);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-caption);
+}
+
+.notice-sample strong {
+  margin-right: var(--space-1);
+}
+
+.notice-experimental {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  border-left: 3px solid var(--earth-600);
+  background: var(--earth-100);
+  color: var(--parchment-900);
+  border-radius: 0 var(--radius-card) var(--radius-card) 0;
+  padding: var(--space-3);
+  font-size: var(--text-caption);
+  line-height: 1.45;
+}
+
+.notice-experimental .icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 1px;
+  fill: none;
+  stroke: var(--earth-600);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
