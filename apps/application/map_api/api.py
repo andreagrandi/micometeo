@@ -43,6 +43,15 @@ MAX_SQUARES = 16_000
 MAX_DAYS_AHEAD = 7
 MAP_CACHE_SECONDS = 300
 
+_WEATHER_NOT_READY_REASONS: dict[str, tuple[str, str]] = {
+    "fetch_pending": ("pending", "estimate.result_not_ready"),
+    "fetch_running": ("pending", "estimate.result_not_ready"),
+    "visitor_limit": ("visitor_limit", "estimate.visitor_limit"),
+    "quota_exhausted": ("quota_exhausted", "estimate.quota_exhausted"),
+    "provider_unavailable": ("provider_unavailable", "estimate.provider_unavailable"),
+    "provider_refused": ("provider_refused", "estimate.provider_refused"),
+}
+
 router = Router(tags=["map"])
 
 
@@ -365,7 +374,7 @@ def _cache_key(
     build_version: str,
     bbox: tuple[float, float, float, float],
     target_date: date,
-    weather_items: tuple[tuple[str, str, str | None, str | None], ...],
+    weather_items: tuple[tuple[str, str, str | None, str | None, str | None], ...],
 ) -> str:
     normalized_bbox = ",".join(format(value, ".12g") for value in bbox)
     identity = {
@@ -385,17 +394,28 @@ def _weather_identity(
     cells: tuple[WeatherCell, ...],
     by_cell: dict[str, Any],
     updates: dict[tuple[str, str], EstimateUpdate],
-) -> tuple[tuple[str, str, str | None, str | None], ...]:
-    values: list[tuple[str, str, str | None, str | None]] = []
+) -> tuple[tuple[str, str, str | None, str | None, str | None], ...]:
+    values: list[tuple[str, str, str | None, str | None, str | None]] = []
     for cell in cells:
         result = by_cell.get(cell.key)
         state = str(getattr(result, "state", "not_available_yet"))
+        reason_code = getattr(result, "reason_code", None)
+        reason_text = str(reason_code) if reason_code is not None else None
         snapshot_id = getattr(result, "snapshot_id", None)
         snapshot_text = str(snapshot_id) if snapshot_id is not None else None
         update = updates.get((snapshot_text or "", cell.key))
         marker = str(update.public_id) if update is not None else "pending"
-        values.append((cell.key, state, snapshot_text, marker))
+        values.append((cell.key, state, snapshot_text, marker, reason_text))
     return tuple(values)
+
+
+def _weather_not_ready_properties(*, weather_result: Any) -> tuple[str, str]:
+    """Return the public reason and message key for a missing weather result."""
+    reason_code = str(getattr(weather_result, "reason_code", ""))
+    return _WEATHER_NOT_READY_REASONS.get(
+        reason_code,
+        ("pending", "estimate.result_not_ready"),
+    )
 
 
 def _squares_response(*, body: dict[str, Any], key: str) -> JsonResponse:
@@ -451,6 +471,9 @@ def _result_properties(
             state = "expired"
             reason = "target_outside_update_range"
             message_key = "estimate.target_outside_update_range"
+        elif state == "not_available_yet":
+            state = "noresultyet"
+            reason, message_key = _weather_not_ready_properties(weather_result=weather_result)
         else:
             state = "noresultyet"
             reason = "pending"
