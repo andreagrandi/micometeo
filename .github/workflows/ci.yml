@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       database:
-        image: postgis/postgis:17-3.5
+        image: imresamu/postgis:17-3.5-bookworm@sha256:35fe7dceda62bfe7d2965b0ba78d915ff9f901b5e0466d633ecc58421b5b5210
         env:
           POSTGRES_DB: micometeo
           POSTGRES_USER: micometeo

@@ -341,6 +341,49 @@ These desktop results are separate from the physical-phone measurements
 recorded below for [#64](https://github.com/andreagrandi/micometeo/issues/64).
 Any closer starting view needs the owner's agreement, as required by #49.
 
+### Native PostGIS image repeat
+
+On 12 October 2026, the same saved benchmark data was measured again after
+moving it to the native image and volume. A second run used the previous
+PostGIS image with AMD64 emulation against the original benchmark database.
+Both runs made five database queries per view, made no weather HTTP requests
+and decoded to exactly the same GeoJSON on the same Apple M2 Pro laptop.
+The broad Italy request returned `view_too_large` with zero weather calls in
+both runs.
+
+| View | Raw bytes | Native gzip bytes | Native read times | AMD64 emulated read times |
+| --- | ---: | --- | --- | --- |
+| Northern Apennines | 9,260,493 | 819,599 / 819,556 / 819,577 | 1.6214 / 0.9208 / 0.9741 s | 2.7762 / 1.1423 / 1.2033 s |
+| Alps | 9,196,599 | 830,403 / 830,413 / 830,454 | 1.4087 / 1.0249 / 0.9969 s | 1.6005 / 1.2187 / 1.2027 s |
+| Calabria | 8,432,534 | 759,743 / 759,741 / 759,693 | 1.2677 / 0.8957 / 0.8429 s | 1.4887 / 1.0995 / 1.0233 s |
+
+Each time list contains the first read followed by two cached reads. The
+native run used `imresamu/postgis:17-3.5-bookworm` at digest
+`sha256:35fe7dceda62bfe7d2965b0ba78d915ff9f901b5e0466d633ecc58421b5b5210`.
+It contains PostgreSQL 17.6 and PostGIS 3.5.3. The emulated run used the
+previous PostgreSQL 17.5 and PostGIS 3.5.2 image. Native cached reads were
+19.2 percent shorter for Northern Apennines, 16.5 percent shorter for the Alps
+and 18.1 percent shorter for Calabria when comparing the average of the two
+cached reads. These results include the image and database-version change, so
+they describe this repeat setup rather than isolating CPU architecture. The
+historical table records 8,432,366 raw bytes for Calabria. Both current runs
+recorded 8,432,534 bytes.
+
+The native report is
+`data/processed/map_checks/issue73-native/micometeo-map-measurements.json`.
+Its SHA-256 is
+`0c2ff6fd8e113447c5912cc6090fd0fdc1d1b282f4ddcbf2d2bac447a7334109`.
+Repeat the native measurement with the disposable database and output path. Set
+`MICOMETEO_DB_PORT` to the port of that database when it is not the default:
+
+```sh
+MICOMETEO_DB_PORT="${MICOMETEO_DB_PORT:-5542}" \
+  uv run python tools/map_checks/measure_responses.py \
+  --database-name micometeo_estimate_benchmark_20261012 \
+  --assessment-date 2026-10-13 \
+  --output-dir data/processed/map_checks/issue73-native
+```
+
 The repeatable measurement tools and page are under `tools/map_checks/`.
 The ignored local files under `data/processed/map_checks/` contain the three
 saved responses and the two measurement reports. To repeat the response size
