@@ -223,6 +223,8 @@ __marimo__/
 data/raw/
 data/processed/
 tools/map_checks/node_modules/
+node_modules/
+test-results/
 .cache/
 cache/
 !.envrc.example

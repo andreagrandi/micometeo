@@ -1,0 +1,14 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\nLanguage: en\n"
+
+msgid "Experimental estimate"
+msgstr "Experimental estimate"
+
+msgid "No places found"
+msgstr "No places found"
+
+msgid "Loading the estimate"
+msgstr "Loading the estimate"
+
+msgid "Search a place"
+msgstr "Search a place"

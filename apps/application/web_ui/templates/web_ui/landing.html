@@ -1,0 +1,523 @@
+{% extends "web_ui/base.html" %}
+{% load static i18n %}
+{% block title %}{% translate "Micometeo" %}{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'web_ui/landing.css' %}">
+{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
+{% endblock %}
+{% block content %}
+<div class="landing-page scroll-smooth" id="top">
+<header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md min-w-0"><a class="flex items-center gap-space-sm group" data-lang-link href="/"><div class="w-9 h-9 shrink-0 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center transition-colors group-hover:bg-primary group-hover:text-on-primary"><span class="material-symbols-outlined text-[20px]">nature</span></div><span class="font-headline-md text-headline-md tracking-tight text-primary font-serif">Micometeo</span></a></div><nav class="hidden xl:flex items-center gap-space-lg"><a aria-current="page" class="transition-colors text-primary font-title-md relative after:content-[''] after:absolute after:-bottom-1.5 after:left-0 after:w-full after:h-[2px] after:bg-primary" href="#top">{% translate "Home" %}</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" data-app-link href="/map/">{% translate "Map / Explore" %}</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" href="#come-funziona-section">{% translate "How it works" %}</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" href="#fattori-section">{% translate "Weather factors" %}</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" href="#etica-section">{% translate "Ethics and safety" %}</a></nav><div class="flex items-center gap-space-sm sm:gap-space-md shrink-0">{% include "web_ui/components/language.html" %}<a class="inline-flex items-center gap-space-xs px-space-md py-2 bg-primary text-on-primary font-title-md text-title-md rounded-lg shadow-sm hover:bg-primary-container hover:text-on-primary-container transition-all" data-app-link href="/map/"><span class="hidden sm:inline">{% translate "Open the map" %}</span><span aria-hidden="true" class="material-symbols-outlined text-[18px]">arrow_forward</span></a><div aria-hidden="true" class="hidden sm:block w-8 h-8 shrink-0"></div></div></div></header><main class="w-full pt-16 bg-background"><div class="flex flex-col w-full">
+<!-- Design example notice -->
+<div class="w-full px-4 sm:px-6 lg:px-12 pt-4 bg-surface"><div class="max-w-7xl mx-auto"><p class="px-3 py-2 rounded-lg bg-surface-container-high text-on-surface-variant font-body-sm text-body-sm"><strong class="font-semibold text-on-surface">{% translate "Design example:" %}</strong> <span>{% translate "all values shown here are illustrative and are not from a live forecast." %}</span></p></div></div>
+<!-- SECTION 1: HERO -->
+<section class="relative w-full overflow-hidden px-4 sm:px-6 lg:px-12 py-8 lg:py-16 bg-surface">
+<div aria-hidden="true" class="absolute inset-0 opacity-[0.035] pointer-events-none select-none overflow-hidden">
+<svg class="w-full h-full object-cover" fill="none" viewbox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+<path class="text-primary" d="M-100 150 C 300 80, 600 240, 1300 120" stroke="currentColor" stroke-width="1.5"></path>
+<path class="text-primary" d="M-100 280 C 250 200, 700 380, 1300 230" stroke="currentColor" stroke-width="1.5"></path>
+<path class="text-primary" d="M-100 410 C 320 330, 620 490, 1300 360" stroke="currentColor" stroke-width="1.5"></path>
+<path class="text-primary" d="M-100 540 C 280 460, 750 610, 1300 490" stroke="currentColor" stroke-width="1.5"></path>
+<path class="text-primary" d="M-100 670 C 350 590, 650 730, 1300 620" stroke="currentColor" stroke-width="1.5"></path>
+</svg>
+</div>
+<div class="max-w-7xl mx-auto relative z-10">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+<div class="lg:col-span-7 space-y-6 min-w-0">
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-high text-primary font-caption-topo text-caption-topo uppercase tracking-wider shadow-sm">
+<span class="w-2 h-2 shrink-0 rounded-full bg-on-tertiary-container"></span>
+<span>{% translate "Free experimental tool for Italian forests" %}</span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile sm:text-headline-lg lg:text-[46px] lg:leading-[52px] tracking-tight text-primary font-serif">{% translate "Hear the forest breathe. Find where conditions for porcini look favourable." %}</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl leading-relaxed">{% translate "Micometeo combines the <strong class=&quot;text-on-surface font-semibold&quot;>Copernicus</strong> forest map with <strong class=&quot;text-on-surface font-semibold&quot;>Open-Meteo</strong> modelled weather to estimate the chance that porcini are growing in 500 metre forest squares across Italy. No sign-up, no advertising, free." %}</p>
+<div class="pt-2 flex flex-wrap items-center gap-4">
+<a class="inline-flex items-center gap-3 px-6 py-3.5 bg-primary text-on-primary font-title-md text-title-md rounded-lg shadow-md hover:bg-primary-container hover:text-on-primary-container transition-all group" data-app-link href="/map/">
+<span class="material-symbols-outlined text-[20px] transition-transform group-hover:rotate-45">explore</span>
+<span>{% translate "Explore the interactive map" %}</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+<a class="inline-flex items-center gap-2 px-5 py-3.5 rounded-lg bg-surface-container-low text-primary font-title-md text-title-md hover:bg-surface-container transition-colors shadow-sm" href="#come-funziona-section">
+<span class="material-symbols-outlined text-[20px] text-primary">science</span>
+<span>{% translate "See how it works" %}</span>
+<span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+</a>
+</div>
+<div class="pt-6 grid grid-cols-3 gap-3 sm:gap-4 border-t border-surface-container-highest max-w-xl">
+<div class="min-w-0">
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline">{% translate "Detail" %}</p>
+<p class="font-title-lg text-[15px] sm:text-title-lg text-primary font-mono mt-0.5">{% translate "500 m" %}</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">{% translate "Forest squares" %}</p>
+</div>
+<div class="min-w-0">
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline">{% translate "Dates" %}</p>
+<p class="font-title-lg text-[15px] sm:text-title-lg text-primary font-mono mt-0.5">{% translate "8 days" %}</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">{% translate "Today and seven more" %}</p>
+</div>
+<div class="min-w-0">
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline">{% translate "Coverage" %}</p>
+<p class="font-title-lg text-[15px] sm:text-title-lg text-primary font-mono mt-0.5">{% translate "Italy" %}</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">{% translate "Islands included" %}</p>
+</div>
+</div>
+</div>
+<!-- Sample card -->
+<div class="lg:col-span-5 min-w-0">
+<div class="relative bg-surface-container-low rounded-xl p-4 sm:p-6 lg:p-7 shadow-xl space-y-5">
+<div class="flex items-start justify-between gap-4">
+<div class="space-y-1 min-w-0">
+<span class="inline-block px-2.5 py-0.5 rounded bg-tertiary-container/10 text-on-tertiary-container font-caption-topo text-caption-topo uppercase tracking-wider font-semibold">{% translate "Illustrative example" %}</span>
+<h2 class="font-headline-md text-headline-md text-primary font-serif">{% translate "Abetone, Tuscany" %}</h2>
+<p class="font-caption-topo text-caption-topo text-outline font-mono">{% translate "44.1318° N • 10.6625° E • 1,388 m above sea level" %}</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">{% translate "Illustrative design coordinate" %}</p>
+</div>
+<div class="w-10 h-10 shrink-0 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined text-[22px]">forest</span>
+</div>
+</div>
+<div class="p-4 rounded-lg bg-surface-container-lowest shadow-sm space-y-3">
+<div class="flex flex-wrap items-center justify-between gap-2 text-on-surface">
+<span class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">calendar_today</span>
+<span>{% translate "Two dates compared" %}</span>
+</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">{% translate "Today 12 Oct and Thu 15 Oct" %}</span>
+</div>
+<div class="grid grid-cols-2 gap-3 pt-1">
+<div class="p-3 rounded bg-surface-container-low flex flex-col justify-between min-w-0">
+<span class="font-caption-topo text-caption-topo uppercase text-outline">{% translate "Today, 12 Oct" %}</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-lg text-headline-lg font-mono text-primary num">42</span>
+<span class="font-title-md text-title-md text-on-surface-variant">%</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-surface-container-highest mt-2 overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 42%;"></div>
+</div>
+</div>
+<div class="p-3 rounded bg-secondary-container/40 flex flex-col justify-between min-w-0">
+<span class="font-caption-topo text-caption-topo uppercase text-secondary">{% translate "Thursday, 15 Oct" %}</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-lg text-headline-lg font-mono text-on-tertiary-container num">48</span>
+<span class="font-title-md text-title-md text-secondary">%</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-surface-container-highest mt-2 overflow-hidden">
+<div class="h-full bg-on-tertiary-container rounded-full" style="width: 48%;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-start gap-2.5 p-3 rounded bg-surface-container-high border-l-[3px] border-on-tertiary-container">
+<span class="material-symbols-outlined text-[18px] text-on-tertiary-container shrink-0">info</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed"><strong class="font-semibold text-on-surface">{% translate "Experimental estimate:" %}</strong> <span>{% translate "this percentage is unvalidated. It does not mean your personal chance of finding porcini." %}</span></p>
+</div>
+<div class="space-y-2.5 font-body-sm text-body-sm">
+<div class="flex items-center justify-between gap-3 py-1.5 px-3 rounded bg-surface-container-lowest">
+<span class="text-on-surface-variant flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[16px] text-primary shrink-0">rainy</span>
+<span>{% translate "Rain, last 7 days" %}</span>
+</span>
+<span class="font-mono font-medium text-primary num shrink-0">18 mm</span>
+</div>
+<div class="flex items-center justify-between gap-3 py-1.5 px-3 rounded bg-surface-container-lowest">
+<span class="text-on-surface-variant flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[16px] text-primary shrink-0">park</span>
+<span>{% translate "Forest in the square" %}</span>
+</span>
+<span class="font-mono font-medium text-primary num shrink-0">68%</span>
+</div>
+<div class="flex items-center justify-between gap-3 py-1.5 px-3 rounded bg-surface-container-lowest">
+<span class="text-on-surface-variant flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[16px] text-primary shrink-0">device_thermostat</span>
+<span>{% translate "Modelled temperature" %}</span>
+</span>
+<span class="font-mono font-medium text-primary num text-right">{% translate "13°C, minimum 8°C" %}</span>
+</div>
+</div>
+<div class="pt-2 flex flex-wrap items-center justify-between gap-2">
+<span class="font-caption-topo text-caption-topo uppercase text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] shrink-0">history</span>
+<span>{% translate "Illustrative update: 12 Oct 2026, 10:30" %}</span>
+</span>
+<a class="font-title-md text-title-md text-primary hover:text-on-tertiary-container transition-colors inline-flex items-center gap-1 group" data-app-link href="/map/">
+<span>{% translate "Open Abetone on the map" %}</span>
+<span class="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 2: WHY MICOMETEO -->
+<section class="w-full px-4 sm:px-6 lg:px-12 py-12 bg-surface-container-low scroll-mt-20" id="fattori-section">
+<div class="max-w-7xl mx-auto space-y-12">
+<div class="max-w-3xl space-y-3">
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline">{% translate "An experimental tool" %}</p>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile sm:text-headline-lg text-primary font-serif">{% translate "Why Micometeo is a different kind of tool" %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "No paid app to download and no miracle forecast. An estimate built on a forest map, modelled weather and free mapping, with its limits stated." %}</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="space-y-4">
+<div class="w-12 h-12 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">grid_goldenratio</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "500 metre squares" %}</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "Estimates exist only for squares with at least 10% forest on the Copernicus forest map, drawn over the OpenStreetMap map." %}</p>
+</div>
+<div class="pt-4 border-t border-surface-container-highest">
+<span class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider">{% translate "Copernicus forest map" %}</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="space-y-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">water_drop</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Rain and weather of the day" %}</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "The rain that fell in the last 7, 14 and 21 completed days, and the modelled weather for the day you choose, such as temperature." %}</p>
+</div>
+<div class="pt-4 border-t border-surface-container-highest">
+<span class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider">{% translate "Open-Meteo modelled weather" %}</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="space-y-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">lock</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "No account" %}</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "You do not need to sign up. Favorites stay in your browser, do not sync between devices and are lost if you clear your browser data." %}</p>
+</div>
+<div class="pt-4 border-t border-surface-container-highest">
+<span class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider">{% translate "Favorites in the browser" %}</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="space-y-4">
+<div class="w-12 h-12 rounded-lg bg-secondary-container/60 text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">favorite</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Free and no advertising" %}</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "No subscription and no hidden paywall. All of Italy, including Sicily and Sardinia, is free to browse." %}</p>
+</div>
+<div class="pt-4 border-t border-surface-container-highest">
+<span class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider">{% translate "Always free" %}</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 3: HOW THE ESTIMATE IS MADE -->
+<section class="w-full px-4 sm:px-6 lg:px-12 py-12 lg:py-16 bg-surface scroll-mt-20" id="come-funziona-section">
+<div class="max-w-7xl mx-auto space-y-16">
+<div class="text-center max-w-3xl mx-auto space-y-3">
+<span class="inline-block px-3 py-1 rounded bg-surface-container-high text-primary font-caption-topo text-caption-topo uppercase tracking-wider">{% translate "The method" %}</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile sm:text-headline-lg text-primary font-serif">{% translate "How the probability is made" %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "The estimate uses three kinds of data. This is how Micometeo works it out for each square." %}</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+<div class="relative bg-surface-container-low rounded-xl p-6 shadow-sm space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-mono text-title-lg text-on-tertiary-container font-bold">01</span>
+<span class="material-symbols-outlined text-primary text-[24px]">satellite_alt</span>
+</div>
+<h3 class="font-title-md text-title-md text-primary">{% translate "Forest from the Copernicus map" %}</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "The forest map says how much of each 500 metre square is forest. Squares with less than 10% forest get no estimate." %}</p>
+<div class="pt-2">
+<span class="inline-flex items-center gap-1 font-caption-topo text-caption-topo uppercase text-outline">
+<span class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span> <span>{% translate "At least 10% forest" %}</span>
+</span>
+</div>
+</div>
+<div class="relative bg-surface-container-low rounded-xl p-6 shadow-sm space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-mono text-title-lg text-on-tertiary-container font-bold">02</span>
+<span class="material-symbols-outlined text-primary text-[24px]">history_toggle_off</span>
+</div>
+<h3 class="font-title-md text-title-md text-primary">{% translate "Rain of recent days" %}</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "We count the rain that fell in the last 7, 14 and 21 completed days. These are past totals, not future rain. In the Abetone example they are 18, 37 and 54 mm." %}</p>
+<div class="pt-2">
+<span class="inline-flex items-center gap-1 font-caption-topo text-caption-topo uppercase text-outline">
+<span class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span> <span>{% translate "History of 7, 14 and 21 days" %}</span>
+</span>
+</div>
+</div>
+<div class="relative bg-surface-container-low rounded-xl p-6 shadow-sm space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-mono text-title-lg text-on-tertiary-container font-bold">03</span>
+<span class="material-symbols-outlined text-primary text-[24px]">thermostat</span>
+</div>
+<h3 class="font-title-md text-title-md text-primary">{% translate "Weather of the chosen day" %}</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "Modelled weather for the day you choose, such as temperature. It is a calculation for an area of about 11 by 8 km, not a measurement at your point. Many squares share the same weather." %}</p>
+<div class="pt-2">
+<span class="inline-flex items-center gap-1 font-caption-topo text-caption-topo uppercase text-outline">
+<span class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span> <span>{% translate "Weather area of 11 by 8 km" %}</span>
+</span>
+</div>
+</div>
+<div class="relative bg-surface-container-low rounded-xl p-6 shadow-sm space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-mono text-title-lg text-on-tertiary-container font-bold">04</span>
+<span class="material-symbols-outlined text-primary text-[24px]">analytics</span>
+</div>
+<h3 class="font-title-md text-title-md text-primary">{% translate "Estimate for 8 days" %}</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "The data become a percentage for today and for each of the next seven days, so you can pick the day. The estimate is experimental and not yet validated." %}</p>
+<div class="pt-2">
+<span class="inline-flex items-center gap-1 font-caption-topo text-caption-topo uppercase text-outline">
+<span class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span> <span>{% translate "Today plus 7 days" %}</span>
+</span>
+</div>
+</div>
+</div>
+<div class="p-4 sm:p-6 lg:p-8 rounded-xl bg-surface-container-high shadow-inner space-y-6" data-probability-scale>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div>
+<h4 class="font-title-lg text-title-lg text-primary">{% translate "Micometeo probability scale" %}</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">{% translate "Visual interpretation of probability indices on the cartographic map" %}</p>
+</div>
+<span class="font-caption-topo text-caption-topo px-3 py-1 bg-surface rounded text-outline uppercase font-mono">{% translate "Model updated every 6 hours" %}</span>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+<div class="p-4 rounded-lg bg-surface space-y-2" data-probability-card>
+<div class="flex items-center justify-between gap-2"><span class="font-label-md text-label-md text-outline num">{% translate "0% – 25%" %}</span><span class="w-3 h-3 shrink-0 rounded-full" style="background:#ded9cd"></span></div>
+<p class="font-title-md text-title-md text-on-surface">{% translate "Elusive / Dry" %}</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">{% translate "Arid ground or negative thermal shock present." %}</p>
+</div>
+<div class="p-4 rounded-lg bg-surface space-y-2" data-probability-card>
+<div class="flex items-center justify-between gap-2"><span class="font-label-md text-label-md text-outline num">{% translate "26% – 40%" %}</span><span class="w-3 h-3 shrink-0 rounded-full" style="background:#e4c2ad"></span></div>
+<p class="font-title-md text-title-md text-on-surface">{% translate "Baseline Conditions" %}</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">{% translate "Start of mycelial incubation after the first rains." %}</p>
+</div>
+<div class="p-4 rounded-lg bg-surface space-y-2" data-probability-card>
+<div class="flex items-center justify-between gap-2"><span class="font-label-md text-label-md text-outline num">{% translate "41% – 60%" %}</span><span class="w-3 h-3 shrink-0 rounded-full" style="background:#dc893f"></span></div>
+<p class="font-title-md text-title-md text-primary font-semibold">{% translate "Favourable" %}</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">{% translate "Thermal window and water accumulation in balance." %}</p>
+</div>
+<div class="p-4 rounded-lg bg-surface space-y-2" data-probability-card>
+<div class="flex items-center justify-between gap-2"><span class="font-label-md text-label-md text-outline num">{% translate ">60%" %}</span><span class="w-3 h-3 shrink-0 rounded-full" style="background:#1e3a2f"></span></div>
+<p class="font-title-md text-title-md text-primary font-bold">{% translate "Highly Favourable" %}</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">{% translate "Optimal weather and forest conditions." %}</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 4: ILLUSTRATIVE AREAS -->
+<section class="w-full px-4 sm:px-6 lg:px-12 py-12 bg-surface-container-low">
+<div class="max-w-7xl mx-auto space-y-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="space-y-3 max-w-2xl">
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline">{% translate "Illustrative examples" %}</p>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile sm:text-headline-lg text-primary font-serif">{% translate "Forest areas of Italy" %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "Four forest zones with percentages made up for the design. They show how the map looks and are not forecasts." %}</p>
+</div>
+<a class="inline-flex items-center gap-2 text-primary hover:text-on-tertiary-container font-title-md text-title-md transition-colors group" data-app-link href="/map/">
+<span>{% translate "Open the map of all Italy" %}</span>
+<span class="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">arrow_forward</span>
+</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+<div class="p-5 space-y-4">
+<div class="flex items-center justify-between gap-2">
+<span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">{% translate "Tuscany, Emilia" %}</span>
+<div class="flex items-baseline gap-1 shrink-0">
+<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container num">48%</span>
+<span class="font-caption-topo text-caption-topo text-outline">{% translate "example" %}</span>
+</div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Tuscan-Emilian Apennines" %}</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{% translate "Abetone, Cisa Pass" %}</p>
+</div>
+<div class="space-y-2 pt-2 border-t border-surface-container-highest font-body-sm text-body-sm">
+<div class="flex justify-between gap-3 text-on-surface-variant"><span>{% translate "Square" %}</span><span class="font-mono text-primary">500 m</span></div>
+<div class="flex justify-between gap-3 text-on-surface-variant"><span>{% translate "Dates" %}</span><span class="font-mono text-primary num">{% translate "today plus 7" %}</span></div>
+</div>
+</div>
+<div class="p-5 pt-0">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link href="/map/">
+<span class="material-symbols-outlined text-[16px]">map</span>
+<span>{% translate "Open on the map" %}</span>
+</a>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+<div class="p-5 space-y-4">
+<div class="flex items-center justify-between gap-2">
+<span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">{% translate "Lombardy" %}</span>
+<div class="flex items-baseline gap-1 shrink-0">
+<span class="font-title-lg text-title-lg font-mono font-bold text-primary num">39%</span>
+<span class="font-caption-topo text-caption-topo text-outline">{% translate "example" %}</span>
+</div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Orobic Alps and Prealps" %}</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{% translate "Val Brembana, Val Seriana, Valsassina" %}</p>
+</div>
+<div class="space-y-2 pt-2 border-t border-surface-container-highest font-body-sm text-body-sm">
+<div class="flex justify-between gap-3 text-on-surface-variant"><span>{% translate "Square" %}</span><span class="font-mono text-primary">500 m</span></div>
+<div class="flex justify-between gap-3 text-on-surface-variant"><span>{% translate "Dates" %}</span><span class="font-mono text-primary num">{% translate "today plus 7" %}</span></div>
+</div>
+</div>
+<div class="p-5 pt-0">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link href="/map/">
+<span class="material-symbols-outlined text-[16px]">map</span>
+<span>{% translate "Open on the map" %}</span>
+</a>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+<div class="p-5 space-y-4">
+<div class="flex items-center justify-between gap-2">
+<span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">{% translate "Romagna, Tuscany" %}</span>
+<div class="flex items-baseline gap-1 shrink-0">
+<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container num">51%</span>
+<span class="font-caption-topo text-caption-topo text-outline">{% translate "example" %}</span>
+</div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Casentino Forests" %}</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{% translate "Badia Prataglia, Camaldoli, Campigna" %}</p>
+</div>
+<div class="space-y-2 pt-2 border-t border-surface-container-highest font-body-sm text-body-sm">
+<div class="flex justify-between gap-3 text-on-surface-variant"><span>{% translate "Square" %}</span><span class="font-mono text-primary">500 m</span></div>
+<div class="flex justify-between gap-3 text-on-surface-variant"><span>{% translate "Dates" %}</span><span class="font-mono text-primary num">{% translate "today plus 7" %}</span></div>
+</div>
+</div>
+<div class="p-5 pt-0">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link href="/map/">
+<span class="material-symbols-outlined text-[16px]">map</span>
+<span>{% translate "Open on the map" %}</span>
+</a>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+<div class="p-5 space-y-4">
+<div class="flex items-center justify-between gap-2">
+<span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">{% translate "Calabria" %}</span>
+<div class="flex items-baseline gap-1 shrink-0">
+<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container num">44%</span>
+<span class="font-caption-topo text-caption-topo text-outline">{% translate "example" %}</span>
+</div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Sila National Park" %}</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{% translate "Sila Grande, Lorica, Camigliatello" %}</p>
+</div>
+<div class="space-y-2 pt-2 border-t border-surface-container-highest font-body-sm text-body-sm">
+<div class="flex justify-between gap-3 text-on-surface-variant"><span>{% translate "Square" %}</span><span class="font-mono text-primary">500 m</span></div>
+<div class="flex justify-between gap-3 text-on-surface-variant"><span>{% translate "Dates" %}</span><span class="font-mono text-primary num">{% translate "today plus 7" %}</span></div>
+</div>
+</div>
+<div class="p-5 pt-0">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link href="/map/">
+<span class="material-symbols-outlined text-[16px]">map</span>
+<span>{% translate "Open on the map" %}</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 5: ETHICS AND EXPERIMENTAL ESTIMATE -->
+<section class="w-full px-4 sm:px-6 lg:px-12 py-12 lg:py-16 bg-surface scroll-mt-20" id="etica-section">
+<div class="max-w-7xl mx-auto space-y-10">
+<div class="max-w-3xl space-y-3">
+<span class="inline-block px-3 py-1 rounded bg-surface-container-high text-primary font-caption-topo text-caption-topo uppercase tracking-wider">{% translate "Responsibility and forest care" %}</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile sm:text-headline-lg text-primary font-serif">{% translate "Foraging ethics and the experimental estimate" %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "Respect for the fungal ecosystem and care in the mountains matter for everyone who visits the forest." %}</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<div class="lg:col-span-5 bg-surface-container-low rounded-xl p-6 lg:p-8 border-l-4 border-on-tertiary-container shadow-sm space-y-4">
+<div class="flex items-center gap-2.5 text-on-tertiary-container">
+<span class="material-symbols-outlined text-[24px] shrink-0">info</span>
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Experimental estimate" %}</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "The Micometeo percentage is an <strong class=&quot;text-on-surface font-semibold&quot;>experimental estimate that has not been validated</strong>. It is the chance that porcini are growing somewhere inside the square. It is not your personal chance of finding them and it does not promise a mushroom at one point." %}</p>
+<p class="font-body-sm text-body-sm text-outline leading-relaxed">{% translate "Nature follows complex dynamics. Use Micometeo to help choose where to go, not as a treasure map." %}</p>
+</div>
+<div class="lg:col-span-7 bg-surface-container-lowest rounded-xl p-6 lg:p-8 shadow-sm space-y-6">
+<h3 class="font-title-lg text-title-lg text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px] shrink-0">verified</span>
+<span>{% translate "The 4 rules of the responsible forager" %}</span>
+</h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+<div class="space-y-1.5">
+<div class="flex items-center gap-2 text-primary font-title-md text-title-md">
+<span class="material-symbols-outlined text-[18px] shrink-0">badge</span>
+<span>{% translate "Permits and licences" %}</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "Always check regional, provincial or municipal rules and carry the right picking permit before you go into the forest." %}</p>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center gap-2 text-primary font-title-md text-title-md">
+<span class="material-symbols-outlined text-[18px] shrink-0">shopping_basket</span>
+<span>{% translate "Ventilated wicker basket" %}</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "Plastic bags and airtight containers are banned. Rigid baskets let spores spread naturally as you walk." %}</p>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center gap-2 text-primary font-title-md text-title-md">
+<span class="material-symbols-outlined text-[18px] shrink-0">eco</span>
+<span>{% translate "Respect for nature" %}</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "Do not destroy or kick mushrooms you do not know or that are inedible. Every species plays a vital part in the balance of the undergrowth." %}</p>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center gap-2 text-primary font-title-md text-title-md">
+<span class="material-symbols-outlined text-[18px] shrink-0">local_hospital</span>
+<span>{% translate "Free ASL check" %}</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "Always have your harvest checked at the free mycology inspection of the local ASL health authority before you eat it." %}</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 6: CLOSING BAND -->
+<section class="w-full px-4 sm:px-6 lg:px-12 py-12 lg:py-16 bg-primary text-on-primary relative overflow-hidden">
+<div aria-hidden="true" class="absolute -right-24 -bottom-24 w-96 h-96 rounded-full bg-primary-container opacity-40 blur-3xl pointer-events-none"></div>
+<div aria-hidden="true" class="absolute -left-24 -top-24 w-96 h-96 rounded-full bg-surface-tint opacity-20 blur-3xl pointer-events-none"></div>
+<div class="max-w-4xl mx-auto text-center relative z-10 space-y-8">
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-container text-on-primary-container font-caption-topo text-caption-topo uppercase tracking-wider">
+<span class="material-symbols-outlined text-[16px] shrink-0">map</span>
+<span>{% translate "Free map" %}</span>
+</div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile sm:text-headline-lg lg:text-[44px] lg:leading-[52px] tracking-tight text-on-primary font-serif">{% translate "Ready for your next trip into the forest?" %}</h2>
+<p class="font-body-lg text-body-lg text-on-primary-container max-w-2xl mx-auto leading-relaxed">{% translate "Check the rain of recent days, the weather of the day and the estimate for today and the next seven days, across all Italy. Free, no sign-up." %}</p>
+<div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+<a class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-surface text-primary font-title-lg text-title-lg rounded-lg shadow-xl hover:bg-surface-container transition-all group" data-app-link href="/map/">
+<span class="material-symbols-outlined text-[22px] text-primary transition-transform group-hover:scale-110">nature</span>
+<span>{% translate "Start Micometeo" %}</span>
+<span class="material-symbols-outlined text-[20px] text-primary">arrow_forward</span>
+</a>
+<a class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-4 rounded-lg bg-primary-container/80 text-on-primary hover:bg-primary-container transition-colors font-title-md text-title-md" href="#come-funziona-section">
+<span class="material-symbols-outlined text-[18px]">menu_book</span>
+<span>{% translate "Read about the method" %}</span>
+</a>
+</div>
+<div class="pt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-on-primary-container font-caption-topo text-caption-topo uppercase tracking-wider">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] shrink-0">check_circle</span>
+<span>{% translate "No app to install" %}</span>
+</span>
+<span class="hidden sm:inline text-primary-container">•</span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] shrink-0">check_circle</span>
+<span>{% translate "Phone and computer" %}</span>
+</span>
+<span class="hidden sm:inline text-primary-container">•</span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] shrink-0">check_circle</span>
+<span>{% translate "Free and no advertising" %}</span>
+</span>
+</div>
+</div>
+</section>
+</div></main><footer class="w-full bg-surface-container-low pt-space-xl pb-space-lg text-on-surface-variant"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12"><div class="p-space-lg mb-space-xl rounded-xl bg-surface-container-high border-l-4 border-tertiary-container flex flex-col md:flex-row items-start gap-space-md"><span class="material-symbols-outlined text-on-tertiary-container text-[24px] shrink-0 mt-0.5">info</span><div class="space-y-1"><h4 class="font-title-md text-title-md text-on-surface">{% translate "Before you go into the forest" %}</h4><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "Micometeo estimates are experimental and do not guarantee that porcini or other species will fruit. Mountain and forest environments carry real dangers. Only eat mushrooms whose safety has been checked by ASL mycology inspectors. Check the rules and permits of your region." %}</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-xl mb-space-xl"><div class="space-y-space-sm"><div class="flex items-center gap-space-sm"><div class="w-7 h-7 rounded bg-primary-container text-on-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-[18px]">nature</span></div><span class="font-headline-md text-headline-md tracking-tight text-primary font-serif">Micometeo</span></div><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "A free map with experimental estimates of porcini growth in the forests of Italy." %}</p><p class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider">{% translate "Free, no account, no advertising" %}</p></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">{% translate "Data sources" %}</h5><ul class="space-y-space-xs font-body-sm text-body-sm"><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">satellite_alt</span><span class="text-on-surface">{% translate "Copernicus forest map" %}</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">cloudy_snowing</span><span class="text-on-surface">{% translate "Open-Meteo modelled weather" %}</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">map</span><span class="text-on-surface">{% translate "OpenStreetMap map data" %}</span></li></ul></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">{% translate "Navigation" %}</h5><ul class="space-y-space-xs font-body-sm text-body-sm"><li><a class="hover:text-primary transition-colors" href="#come-funziona-section">{% translate "How the estimate is made" %}</a></li><li><a class="hover:text-primary transition-colors" href="#fattori-section">{% translate "Why Micometeo is different" %}</a></li><li><a class="hover:text-primary transition-colors" href="#etica-section">{% translate "Foraging ethics" %}</a></li><li><a class="hover:text-primary transition-colors" data-app-link href="/map/">{% translate "Map of all Italy" %}</a></li></ul></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">{% translate "Account and favorites" %}</h5><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "Micometeo needs no account and shows no advertising. Favorites stay in your browser and do not sync between devices." %}</p></div></div><div class="pt-space-lg border-t border-surface-container-highest flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-sm font-body-sm text-body-sm text-outline"><p>{% translate "Micometeo, experimental porcini estimates." %}</p><p><strong class="font-semibold">{% translate "Design example:" %}</strong> <span>{% translate "all values shown here are illustrative and are not from a live forecast." %}</span></p></div></div></footer>
+</div>
+{% endblock %}

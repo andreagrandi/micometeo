@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "estimate_updates",
     "area_api",
     "map_api",
+    "web_ui",
 ]
 
 MICOMETEO_TERRAIN_BUILD_VERSION = os.getenv(
@@ -84,6 +85,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.gzip.GZipMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "web_ui.middleware.WebUILocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -130,12 +132,16 @@ TASKS = {
     },
 }
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "en"
+LANGUAGE_COOKIE_NAME = "micometeo_language"
+LANGUAGES = [("en", "English"), ("it", "Italiano")]
 TIME_ZONE = "Europe/Rome"
 USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+LOCALE_PATHS = [BASE_DIR / "web_ui" / "locale", BASE_DIR / "web_ui" / "landing_locale"]
+MICOMETEO_UI_FIXTURE_PAGES = _env_bool(name="MICOMETEO_UI_FIXTURE_PAGES", default=False)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 GDAL_LIBRARY_PATH = (

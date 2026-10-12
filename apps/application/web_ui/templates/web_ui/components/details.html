@@ -1,0 +1,134 @@
+<aside class="details" id="details" data-details data-sheet-height="short" data-size="short" aria-label="{{ labels.details_label }}">
+  <div class="d-top">
+    <div>
+      <h2 id="details-heading" tabindex="-1">Abetone, Toscana</h2>
+      <p class="d-coord">44.1318° N, 10.6625° E <span class="d-coord-label">{{ labels.point_label }}</span></p>
+    </div>
+    <button class="btn btn-secondary phone-only" type="button" data-close-details>{{ labels.back_to_map }}</button>
+    <button class="btn btn-secondary desktop-only" type="button" data-close-details aria-label="{{ labels.close_details }}">×</button>
+  </div>
+
+  <div class="d-actions">
+    <button class="btn btn-secondary" type="button" data-save>{{ labels.save_favorite }}</button>
+    <button class="btn btn-primary" type="button" data-navigation>{{ labels.open_navigation }}</button>
+  </div>
+
+  <div class="date-row">
+    <div class="date-block">
+      <span class="date-label">{{ labels.date_label }}</span>
+      <span class="date-big">{{ selected_date_full_display }}</span>
+    </div>
+    <div class="pct-badge">
+      <span class="pct">{% if has_estimate %}{{ selected_estimate }}%{% else %}-{% endif %}</span>
+      <span class="pct-unit">{% if has_estimate %}{{ labels.pct_unit }}{% else %}{{ labels.estimate_unavailable }}{% endif %}</span>
+    </div>
+    {% if fixture_state == 'older_update' or fixture_state == 'request_error' %}
+      <span class="pct-caption">{{ older_percent_caption_display }}. {{ labels.updated }}: {{ update_display }}</span>
+    {% endif %}
+  </div>
+
+  <div class="d-status">
+    {% if fixture_state == 'request_error' %}
+      <div class="callout callout-error" role="alert">
+        <strong>{{ labels.error_title }}</strong> {{ labels.error_text }}
+        <br><button type="button" class="btn btn-secondary" data-try-again>{{ labels.retry }}</button>
+      </div>
+    {% elif fixture_state == 'older_update' %}
+      <div class="callout callout-older"><strong>{{ labels.older_title }}</strong> {{ older_text_display }}</div>
+    {% elif fixture_state == 'first_fetch' %}
+      <div class="callout callout-wait"><span class="spinner" aria-hidden="true"></span><span>{{ labels.waiting }}</span></div>
+    {% elif fixture_state == 'missing_data' %}
+      <div class="callout">
+        <strong>{{ labels.no_estimate }}</strong> {{ labels.no_estimate_help }}<br>
+        <button type="button" class="btn btn-primary" data-center-select>{{ labels.pick_another }}</button>
+        <button type="button" class="btn btn-secondary" data-try-again>{{ labels.retry }}</button>
+      </div>
+    {% elif fixture_state == 'less_forest' %}
+      <div class="callout">
+        <strong>{{ labels.less_forest_detail }}</strong><br>
+        <button type="button" class="btn btn-primary" data-center-select>{{ labels.pick_another }}</button>
+      </div>
+    {% elif fixture_state == 'loading' %}
+      <div class="callout callout-wait"><span class="spinner" aria-hidden="true"></span><span>{{ loading_display }}</span></div>
+    {% else %}
+      <div class="notice-experimental"><span aria-hidden="true">ⓘ</span><p><strong>{{ labels.experimental_label }}</strong> {{ labels.experimental_body }}</p></div>
+    {% endif %}
+  </div>
+
+  <div class="d-more">
+    {% if has_estimate %}
+      <section class="d-sec">
+        <h3>{{ labels.facts_heading }}</h3>
+        <p class="facts">{{ facts_display }}</p>
+      </section>
+    {% endif %}
+
+    {% if has_estimate %}
+      <section class="d-sec">
+        <h3>{{ labels.weather_heading }}</h3>
+        <div class="tiles">
+    {% else %}
+      <section class="d-sec"><div class="tiles">
+    {% endif %}
+        <div class="tile">
+          <span class="tile-label">{{ labels.forest_heading }}</span>
+          <span class="tile-value">{{ forest_share }}<small>%</small></span>
+          <div class="forest-bar"><i style="width:{{ forest_share }}%"></i></div>
+        </div>
+    {% if has_estimate %}
+        <div class="tile">
+          <span class="tile-label">{{ labels.temperature }}</span>
+          <span class="tile-value">13°C<small>{{ labels.minimum }} 8°C</small></span>
+          <span class="tile-sub">{{ labels.drying }}: {{ labels.drying_low }}</span>
+        </div>
+        <div class="tile">
+          <span class="tile-label">{{ labels.frost }}</span>
+          <span class="tile-text">{{ labels.frost_none }}</span>
+        </div>
+        <div class="tile">
+          <span class="tile-label">{{ labels.hail }}</span>
+          <span class="tile-text">{{ labels.hail_missing }}</span>
+        </div>
+    {% endif %}
+      </div></section>
+
+    {% if has_estimate %}
+      <section class="d-sec">
+        <h3>{{ labels.rain_heading }}</h3>
+        <dl class="rain-list">
+          <div class="rain-row"><dt>7 {{ labels.days }}, {{ labels.from }} 5 {{ labels.to }} 11 {{ labels.october }}</dt><dd>18 mm</dd></div>
+          <div class="rain-row"><dt>14 {{ labels.days }}, {{ labels.from }} 28 {{ labels.september }} {{ labels.to }} 11 {{ labels.october }}</dt><dd>37 mm</dd></div>
+          <div class="rain-row"><dt>21 {{ labels.days }}, {{ labels.from }} 21 {{ labels.september }} {{ labels.to }} 11 {{ labels.october }}</dt><dd>54 mm</dd></div>
+        </dl>
+        <p class="rain-note">{{ rain_note_display }}</p>
+      </section>
+    {% endif %}
+
+    <section class="d-sec">
+      <h3>{{ labels.area_heading }}</h3>
+      <p class="callout callout-info">{{ labels.area_text }}</p>
+    </section>
+
+    <section class="d-sec sources">
+      <h3>{{ labels.sources_heading }}</h3>
+      <ul>
+        <li>{{ labels.src_forest }}</li>
+        <li>{{ labels.src_weather }}</li>
+        <li>{{ labels.src_osm }}</li>
+      </ul>
+      <p class="muted">{{ labels.src_dates }}</p>
+      <dl>
+        <div class="kv"><dt>{{ labels.target_day }}</dt><dd>{{ stored_target_date_display }}</dd></div>
+        <div class="kv"><dt>{{ labels.assessment_date_label }}</dt><dd>{{ stored_assessment_date_display }}</dd></div>
+        <div class="kv"><dt>{{ labels.updated }}</dt><dd>{{ update_display }}</dd></div>
+      </dl>
+    </section>
+
+    <p class="notice-sample d-sample"><strong>{{ labels.design_label }}</strong> {{ labels.design_text }}</p>
+  </div>
+
+  <div class="sizerow">
+    <button class="btn btn-secondary" type="button" data-sheet-height>{{ labels.more_details }}</button>
+    <button class="btn btn-quiet" type="button" data-close-details>{{ labels.back_to_map }}</button>
+  </div>
+</aside>

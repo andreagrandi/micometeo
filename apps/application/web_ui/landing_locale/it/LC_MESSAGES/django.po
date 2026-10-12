@@ -1,0 +1,481 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: micometeo\n"
+"PO-Revision-Date: 2026-10-12 00:00+0200\n"
+"Last-Translator: Micometeo team\n"
+"Language: it\n"
+"Language-Team: Italian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Home"
+msgstr "Home"
+
+msgid "44.1318° N • 10.6625° E • 1,388 m above sea level"
+msgstr "44.1318° N • 10.6625° E • 1.388 m s.l.m."
+
+msgid "Micometeo probability scale"
+msgstr "Scala di Probabilità Micometeo"
+
+msgid "Visual interpretation of probability indices on the cartographic map"
+msgstr "Interpretazione visiva degli indici probabilistici sulla mappa cartografica"
+
+msgid "Model updated every 6 hours"
+msgstr "Modello aggiornato ogni 6 ore"
+
+msgid "0%% – 25%%"
+msgstr "0%% – 25%%"
+
+msgid "26%% – 40%%"
+msgstr "26%% – 40%%"
+
+msgid "41%% – 60%%"
+msgstr "41%% – 60%%"
+
+msgid ">60%%"
+msgstr "> 60%%"
+
+msgid "Elusive / Dry"
+msgstr "Sfuggente / Secco"
+
+msgid "Arid ground or negative thermal shock present."
+msgstr "Terreno arido o shock termico negativo presente."
+
+msgid "Baseline Conditions"
+msgstr "Condizioni Basali"
+
+msgid "Start of mycelial incubation after the first rains."
+msgstr "Inizio incubazione miceliare dopo le prime piogge."
+
+msgid "Favourable"
+msgstr "Favorevole"
+
+msgid "Thermal window and water accumulation in balance."
+msgstr "Finestra termica e accumulo idrico in equilibrio."
+
+msgid "Highly Favourable"
+msgstr "Altamente Propizio"
+
+msgid "Optimal weather and forest conditions."
+msgstr "Condizioni climatiche e forestali ottimali."
+
+msgid "Map / Explore"
+msgstr "Mappa / Esplora"
+
+msgid "How it works"
+msgstr "Come funziona"
+
+msgid "Weather factors"
+msgstr "Fattori meteo"
+
+msgid "Ethics and safety"
+msgstr "Etica e sicurezza"
+
+msgid "Open the map"
+msgstr "Apri la mappa"
+
+msgid "Design example:"
+msgstr "Esempio di design:"
+
+msgid "all values shown here are illustrative and are not from a live forecast."
+msgstr "tutti i valori mostrati sono illustrativi e non provengono da una previsione in tempo reale."
+
+msgid "Experimental estimate:"
+msgstr "Stima sperimentale:"
+
+msgid "this percentage is unvalidated. It does not mean your personal chance of finding porcini."
+msgstr "questa percentuale non è stata validata. Non indica la tua probabilità personale di trovare porcini."
+
+msgid "Free experimental tool for Italian forests"
+msgstr "Strumento sperimentale gratuito per i boschi italiani"
+
+msgid "Hear the forest breathe. Find where conditions for porcini look favourable."
+msgstr "Ascolta il respiro del bosco. Scopri dove le condizioni per i porcini sono favorevoli."
+
+msgid "Micometeo combines the <strong class=&quot;text-on-surface font-semibold&quot;>Copernicus</strong> forest map with <strong class=&quot;text-on-surface font-semibold&quot;>Open-Meteo</strong> modelled weather to estimate the chance that porcini are growing in 500 metre forest squares across Italy. No sign-up, no advertising, free."
+msgstr "Micometeo unisce la carta forestale <strong class=\"text-on-surface font-semibold\">Copernicus</strong> con il meteo modellato di <strong class=\"text-on-surface font-semibold\">Open-Meteo</strong> per stimare la probabilità che crescano porcini in quadrati di bosco da 500 metri, in tutta Italia. Senza registrazione, senza pubblicità, gratuito."
+
+msgid "Explore the interactive map"
+msgstr "Esplora la mappa interattiva"
+
+msgid "See how it works"
+msgstr "Guarda come funziona"
+
+msgid "Detail"
+msgstr "Dettaglio"
+
+msgid "500 m"
+msgstr "500 m"
+
+msgid "Forest squares"
+msgstr "Quadrati di bosco"
+
+msgid "Dates"
+msgstr "Date"
+
+msgid "8 days"
+msgstr "8 giorni"
+
+msgid "Today and seven more"
+msgstr "Oggi e sette dopo"
+
+msgid "Coverage"
+msgstr "Copertura"
+
+msgid "Italy"
+msgstr "Italia"
+
+msgid "Islands included"
+msgstr "Isole comprese"
+
+msgid "Illustrative example"
+msgstr "Esempio illustrativo"
+
+msgid "Abetone, Tuscany"
+msgstr "Abetone, Toscana"
+
+msgid "Illustrative design coordinate"
+msgstr "Coordinata illustrativa del design"
+
+msgid "Two dates compared"
+msgstr "Due date a confronto"
+
+msgid "Today 12 Oct and Thu 15 Oct"
+msgstr "Oggi 12 ott e gio 15 ott"
+
+msgid "Today, 12 Oct"
+msgstr "Oggi, 12 ott"
+
+msgid "Thursday, 15 Oct"
+msgstr "Giovedì, 15 ott"
+
+msgid "Rain, last 7 days"
+msgstr "Pioggia, ultimi 7 giorni"
+
+msgid "Forest in the square"
+msgstr "Bosco nel quadrato"
+
+msgid "Modelled temperature"
+msgstr "Temperatura modellata"
+
+msgid "13°C, minimum 8°C"
+msgstr "13°C, minima 8°C"
+
+msgid "Illustrative update: 12 Oct 2026, 10:30"
+msgstr "Aggiornamento illustrativo: 12 ott 2026, 10:30"
+
+msgid "Open Abetone on the map"
+msgstr "Apri Abetone nella mappa"
+
+msgid "An experimental tool"
+msgstr "Uno strumento sperimentale"
+
+msgid "Why Micometeo is a different kind of tool"
+msgstr "Perché Micometeo è uno strumento differente"
+
+msgid "No paid app to download and no miracle forecast. An estimate built on a forest map, modelled weather and free mapping, with its limits stated."
+msgstr "Nessuna app a pagamento da scaricare, nessuna previsione miracolosa. Una stima basata su carta forestale, meteo modellato e cartografia libera, con i limiti dichiarati."
+
+msgid "500 metre squares"
+msgstr "Quadrati da 500 metri"
+
+msgid "Estimates exist only for squares with at least 10%% forest on the Copernicus forest map, drawn over the OpenStreetMap map."
+msgstr "Le stime esistono solo per i quadrati con almeno il 10%% di bosco secondo la carta forestale di Copernicus, disegnati sopra la mappa di OpenStreetMap."
+
+msgid "Copernicus forest map"
+msgstr "Carta forestale Copernicus"
+
+msgid "Rain and weather of the day"
+msgstr "Pioggia e meteo del giorno"
+
+msgid "The rain that fell in the last 7, 14 and 21 completed days, and the modelled weather for the day you choose, such as temperature."
+msgstr "La pioggia caduta negli ultimi 7, 14 e 21 giorni completati e il meteo modellato per il giorno scelto, come la temperatura."
+
+msgid "Open-Meteo modelled weather"
+msgstr "Meteo modellato Open-Meteo"
+
+msgid "No account"
+msgstr "Nessun account"
+
+msgid "You do not need to sign up. Favorites stay in your browser, do not sync between devices and are lost if you clear your browser data."
+msgstr "Non serve registrarsi. I preferiti restano nel tuo browser, non si sincronizzano tra dispositivi e si perdono se cancelli i dati del browser."
+
+msgid "Favorites in the browser"
+msgstr "Preferiti nel browser"
+
+msgid "Free and no advertising"
+msgstr "Gratuito e senza pubblicità"
+
+msgid "No subscription and no hidden paywall. All of Italy, including Sicily and Sardinia, is free to browse."
+msgstr "Nessun abbonamento e nessun paywall nascosto. Tutta Italia, Sicilia e Sardegna comprese, si consulta gratuitamente."
+
+msgid "Always free"
+msgstr "Sempre gratuito"
+
+msgid "The method"
+msgstr "Il metodo"
+
+msgid "How the probability is made"
+msgstr "Come viene elaborata la probabilità"
+
+msgid "The estimate uses three kinds of data. This is how Micometeo works it out for each square."
+msgstr "La stima usa tre tipi di dati. Ecco come Micometeo la calcola per ogni quadrato."
+
+msgid "Forest from the Copernicus map"
+msgstr "Bosco dalla carta di Copernicus"
+
+msgid "The forest map says how much of each 500 metre square is forest. Squares with less than 10%% forest get no estimate."
+msgstr "La carta forestale dice quanta parte di ogni quadrato da 500 metri è bosco. I quadrati con meno del 10%% di bosco non ricevono una stima."
+
+msgid "At least 10%% forest"
+msgstr "Almeno 10%% di bosco"
+
+msgid "Rain of recent days"
+msgstr "Pioggia dei giorni scorsi"
+
+msgid "We count the rain that fell in the last 7, 14 and 21 completed days. These are past totals, not future rain. In the Abetone example they are 18, 37 and 54 mm."
+msgstr "Contiamo la pioggia caduta negli ultimi 7, 14 e 21 giorni completati. Sono totali del passato, non pioggia futura. Nell'esempio di Abetone sono 18, 37 e 54 mm."
+
+msgid "History of 7, 14 and 21 days"
+msgstr "Storico di 7, 14 e 21 giorni"
+
+msgid "Weather of the chosen day"
+msgstr "Meteo del giorno scelto"
+
+msgid "Modelled weather for the day you choose, such as temperature. It is a calculation for an area of about 11 by 8 km, not a measurement at your point. Many squares share the same weather."
+msgstr "Il meteo modellato per il giorno scelto, come la temperatura. È un calcolo su un'area di circa 11 per 8 km, non una misura nel tuo punto. Molti quadrati condividono lo stesso meteo."
+
+msgid "Weather area of 11 by 8 km"
+msgstr "Area meteo di 11 per 8 km"
+
+msgid "Estimate for 8 days"
+msgstr "Stima su 8 giorni"
+
+msgid "The data become a percentage for today and for each of the next seven days, so you can pick the day. The estimate is experimental and not yet validated."
+msgstr "I dati diventano una percentuale per oggi e per ognuno dei sette giorni successivi, così puoi scegliere il giorno. La stima è sperimentale e non ancora validata."
+
+msgid "Today plus 7 days"
+msgstr "Oggi più 7 giorni"
+
+msgid "Colour scale on the map"
+msgstr "Scala dei colori sulla mappa"
+
+msgid "From warm white to warm light brown, following the percentage of the square."
+msgstr "Dal bianco caldo al marrone chiaro caldo, secondo la percentuale del quadrato."
+
+msgid "0 to 19%%"
+msgstr "da 0 a 19%%"
+
+msgid "Very low"
+msgstr "Molto bassa"
+
+msgid "Warm white."
+msgstr "Bianco caldo."
+
+msgid "20 to 39%%"
+msgstr "da 20 a 39%%"
+
+msgid "Low"
+msgstr "Bassa"
+
+msgid "Light beige."
+msgstr "Beige chiaro."
+
+msgid "40 to 59%%"
+msgstr "da 40 a 59%%"
+
+msgid "Medium"
+msgstr "Media"
+
+msgid "Sand."
+msgstr "Sabbia."
+
+msgid "60 to 79%%"
+msgstr "da 60 a 79%%"
+
+msgid "High"
+msgstr "Alta"
+
+msgid "Light brown."
+msgstr "Marrone chiaro."
+
+msgid "80 to 100%%"
+msgstr "da 80 a 100%%"
+
+msgid "Very high"
+msgstr "Molto alta"
+
+msgid "Deeper light brown."
+msgstr "Marrone chiaro intenso."
+
+msgid "Squares with no estimate, because data is missing or forest is under 10%%, look different and come with a written reason. The map never shows 0%% in place of missing data."
+msgstr "I quadrati senza stima, per dati mancanti o per meno del 10%% di bosco, hanno un aspetto a parte e una spiegazione a parole. La mappa non mostra mai 0%% al posto di un dato mancante."
+
+msgid "Illustrative examples"
+msgstr "Esempi illustrativi"
+
+msgid "Forest areas of Italy"
+msgstr "Aree boschive d'Italia"
+
+msgid "Four forest zones with percentages made up for the design. They show how the map looks and are not forecasts."
+msgstr "Quattro zone boscose con percentuali inventate per il design. Servono a mostrare come appare la mappa, non sono previsioni."
+
+msgid "Open the map of all Italy"
+msgstr "Apri la mappa di tutta Italia"
+
+msgid "example"
+msgstr "esempio"
+
+msgid "Tuscany, Emilia"
+msgstr "Toscana, Emilia"
+
+msgid "Tuscan-Emilian Apennines"
+msgstr "Appennino Tosco-Emiliano"
+
+msgid "Abetone, Cisa Pass"
+msgstr "Abetone, Passo della Cisa"
+
+msgid "Lombardy"
+msgstr "Lombardia"
+
+msgid "Orobic Alps and Prealps"
+msgstr "Alpi Orobie e Prealpi"
+
+msgid "Val Brembana, Val Seriana, Valsassina"
+msgstr "Val Brembana, Val Seriana, Valsassina"
+
+msgid "Romagna, Tuscany"
+msgstr "Romagna, Toscana"
+
+msgid "Casentino Forests"
+msgstr "Foreste Casentinesi"
+
+msgid "Badia Prataglia, Camaldoli, Campigna"
+msgstr "Badia Prataglia, Camaldoli, Campigna"
+
+msgid "Calabria"
+msgstr "Calabria"
+
+msgid "Sila National Park"
+msgstr "Parco Nazionale della Sila"
+
+msgid "Sila Grande, Lorica, Camigliatello"
+msgstr "Sila Grande, Lorica, Camigliatello"
+
+msgid "Square"
+msgstr "Quadrato"
+
+msgid "today plus 7"
+msgstr "oggi più 7"
+
+msgid "Open on the map"
+msgstr "Apri sulla mappa"
+
+msgid "Responsibility and forest care"
+msgstr "Responsabilità e tutela forestale"
+
+msgid "Foraging ethics and the experimental estimate"
+msgstr "Etica di raccolta e stima sperimentale"
+
+msgid "Respect for the fungal ecosystem and care in the mountains matter for everyone who visits the forest."
+msgstr "Il rispetto dell'ecosistema fungino e la prudenza in montagna contano per chiunque frequenti i boschi."
+
+msgid "Experimental estimate"
+msgstr "Stima sperimentale"
+
+msgid "The Micometeo percentage is an <strong class=&quot;text-on-surface font-semibold&quot;>experimental estimate that has not been validated</strong>. It is the chance that porcini are growing somewhere inside the square. It is not your personal chance of finding them and it does not promise a mushroom at one point."
+msgstr "La percentuale di Micometeo è una <strong class=\"text-on-surface font-semibold\">stima sperimentale, non ancora validata</strong>. Indica la probabilità che i porcini crescano da qualche parte dentro il quadrato, non la tua probabilità personale di trovarli e non promette un fungo in un punto preciso."
+
+msgid "Nature follows complex dynamics. Use Micometeo to help choose where to go, not as a treasure map."
+msgstr "La natura segue dinamiche complesse. Usa Micometeo come aiuto per scegliere dove andare, non come mappa del tesoro."
+
+msgid "The 4 rules of the responsible forager"
+msgstr "Le 4 regole del raccoglitore responsabile"
+
+msgid "Permits and licences"
+msgstr "Permessi e tesserini"
+
+msgid "Always check regional, provincial or municipal rules and carry the right picking permit before you go into the forest."
+msgstr "Verifica sempre le normative regionali, provinciali o comunali e munisciti dell'apposito permesso di raccolta prima di inoltrarti nel bosco."
+
+msgid "Ventilated wicker basket"
+msgstr "Cestino di vimini aerato"
+
+msgid "Plastic bags and airtight containers are banned. Rigid baskets let spores spread naturally as you walk."
+msgstr "È vietato l'uso di sacchetti di plastica o contenitori ermetici. I cestini rigidi permettono la dispersione naturale delle spore durante il cammino."
+
+msgid "Respect for nature"
+msgstr "Rispetto della biosfera"
+
+msgid "Do not destroy or kick mushrooms you do not know or that are inedible. Every species plays a vital part in the balance of the undergrowth."
+msgstr "Non distruggere né scalciare funghi che non conosci o non commestibili. Ciascuna specie riveste un ruolo vitale per l'equilibrio del sottobosco."
+
+msgid "Free ASL check"
+msgstr "Controllo ASL gratuito"
+
+msgid "Always have your harvest checked at the free mycology inspection of the local ASL health authority before you eat it."
+msgstr "Fai sempre verificare la commestibilità del tuo raccolto presso gli ispettorati micologici gratuiti dell'ASL locale prima del consumo."
+
+msgid "Free map"
+msgstr "Mappa gratuita"
+
+msgid "Ready for your next trip into the forest?"
+msgstr "Pronto per la tua prossima uscita nel bosco?"
+
+msgid "Check the rain of recent days, the weather of the day and the estimate for today and the next seven days, across all Italy. Free, no sign-up."
+msgstr "Controlla la pioggia dei giorni scorsi, il meteo del giorno e la stima per oggi e per i prossimi sette giorni, in tutta Italia. Gratuito, senza registrazione."
+
+msgid "Start Micometeo"
+msgstr "Avvia Micometeo"
+
+msgid "Read about the method"
+msgstr "Approfondisci il metodo"
+
+msgid "No app to install"
+msgstr "Nessuna app da installare"
+
+msgid "Phone and computer"
+msgstr "Telefono e computer"
+
+msgid "Before you go into the forest"
+msgstr "Prima di andare nel bosco"
+
+msgid "Micometeo estimates are experimental and do not guarantee that porcini or other species will fruit. Mountain and forest environments carry real dangers. Only eat mushrooms whose safety has been checked by ASL mycology inspectors. Check the rules and permits of your region."
+msgstr "Le stime di Micometeo sono sperimentali e non garantiscono la fruttificazione del porcino o di altre specie. L'ambiente montano e forestale comporta pericoli oggettivi. Raccogli solo funghi la cui commestibilità sia stata controllata dagli ispettori micologici dell'ASL. Controlla le regole e i permessi della tua regione."
+
+msgid "A free map with experimental estimates of porcini growth in the forests of Italy."
+msgstr "Mappa gratuita con stime sperimentali sulla crescita dei porcini nei boschi d'Italia."
+
+msgid "Free, no account, no advertising"
+msgstr "Gratuito, senza account, senza pubblicità"
+
+msgid "Data sources"
+msgstr "Fonti dei dati"
+
+msgid "OpenStreetMap map data"
+msgstr "Dati cartografici di OpenStreetMap"
+
+msgid "Navigation"
+msgstr "Navigazione"
+
+msgid "How the estimate is made"
+msgstr "Come viene calcolata la stima"
+
+msgid "Why Micometeo is different"
+msgstr "Perché Micometeo è diverso"
+
+msgid "Foraging ethics"
+msgstr "Etica di raccolta"
+
+msgid "Map of all Italy"
+msgstr "Mappa di tutta Italia"
+
+msgid "Account and favorites"
+msgstr "Account e preferiti"
+
+msgid "Micometeo needs no account and shows no advertising. Favorites stay in your browser and do not sync between devices."
+msgstr "Micometeo non richiede un account e non mostra pubblicità. I preferiti restano nel tuo browser e non si sincronizzano tra dispositivi."
+
+msgid "Micometeo, experimental porcini estimates."
+msgstr "Micometeo, stime sperimentali sui porcini."

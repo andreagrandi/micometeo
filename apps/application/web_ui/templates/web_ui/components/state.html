@@ -1,0 +1,17 @@
+{% if fixture_state == 'loading' %}
+  <div class="msg msg-wait" data-state-message data-kind="loading"><span class="spinner" aria-hidden="true"></span><span>{{ loading_display }}</span></div>
+{% elif fixture_state == 'first_fetch' %}
+  <div class="msg msg-wait" data-state-message data-kind="waiting"><span class="spinner" aria-hidden="true"></span><span>{{ labels.first_fetch }}</span></div>
+{% elif fixture_state == 'missing_data' %}
+  <div class="msg msg-error" data-state-message data-kind="missing"><strong>{{ labels.missing_data }}</strong><span>{{ labels.no_estimate_help }}</span><button type="button" class="btn btn-secondary" data-try-again>{{ labels.try_again }}</button></div>
+{% elif fixture_state == 'older_update' %}
+  <div class="msg msg-older" data-state-message data-kind="older"><strong>{{ labels.older_title }}</strong><span>{{ older_text_display }}</span></div>
+{% elif fixture_state == 'request_error' %}
+  <div class="msg msg-error" data-state-message data-kind="error"><strong>{{ labels.error_title }}</strong><span>{{ labels.error_text }}</span><button type="button" class="btn btn-secondary" data-try-again>{{ labels.retry }}</button></div>
+{% elif fixture_state == 'location_denied' %}
+  <div class="msg" data-state-message data-kind="location-denied"><strong>{{ labels.location_denied }}</strong></div>
+{% elif fixture_state == 'storage_unavailable' %}
+  <div class="msg msg-error" data-state-message data-kind="storage"><strong>{{ labels.unsaved }}</strong><span>{{ labels.unsaved_banner }}</span></div>
+{% elif fixture_state == 'less_forest' %}
+  <div class="msg" data-state-message data-kind="less-forest"><strong>{{ labels.less_forest_detail }}</strong><span>{{ labels.no_estimate_help }}</span></div>
+{% endif %}
