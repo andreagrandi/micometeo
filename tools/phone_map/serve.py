@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import hashlib
 import json
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -17,17 +18,30 @@ def main() -> None:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8769)
     parser.add_argument("--data-dir", type=Path, default=Path("/tmp/agents"))
+    parser.add_argument(
+        "--forest-layer", type=Path,
+        help="Measure this gzip forest layer instead of the three estimate views.",
+    )
     parser.add_argument("--results-dir", type=Path, default=Path("data/processed/phone_map_checks"))
     args = parser.parse_args()
     assets: dict[str, tuple[bytes, str, bool]] = {
         "/": (Path(__file__).with_name("index.html").read_bytes(), "text/html; charset=utf-8", False),
     }
     manifest = {}
-    for name in ("northern_apennines", "alps", "calabria"):
-        raw = (args.data_dir / f"micometeo-map-{name}.geojson").read_bytes()
-        compressed = gzip.compress(data=raw, mtime=0)
-        assets[f"/{name}.geojson"] = (compressed, "application/geo+json", True)
-        manifest[name] = {"raw_bytes": len(raw), "gzip_bytes": len(compressed)}
+    if args.forest_layer:
+        compressed = args.forest_layer.read_bytes()
+        raw = gzip.decompress(data=compressed)
+        assets["/forest.geojson"] = (compressed, "application/geo+json", True)
+        manifest["forest"] = {
+            "raw_bytes": len(raw), "gzip_bytes": len(compressed),
+            "sha256": hashlib.sha256(string=compressed).hexdigest(),
+        }
+    else:
+        for name in ("northern_apennines", "alps", "calabria"):
+            raw = (args.data_dir / f"micometeo-map-{name}.geojson").read_bytes()
+            compressed = gzip.compress(data=raw, mtime=0)
+            assets[f"/{name}.geojson"] = (compressed, "application/geo+json", True)
+            manifest[name] = {"raw_bytes": len(raw), "gzip_bytes": len(compressed)}
     assets["/manifest.json"] = (json.dumps(obj=manifest).encode(), "application/json", False)
     args.results_dir.mkdir(parents=True, exist_ok=True)
 
@@ -65,8 +79,8 @@ def main() -> None:
                 if not 0 < length <= 100_000:
                     raise ValueError("Invalid report size.")
                 report = json.loads(s=self.rfile.read(length))
-                if not isinstance(report, dict) or len(report.get("results", [])) != 9:
-                    raise ValueError("Expected nine measurements.")
+                if not isinstance(report, dict) or len(report.get("results", [])) != 3 * len(manifest):
+                    raise ValueError("Expected three measurements per map view.")
             except (ValueError, TypeError):
                 self.send_error(code=400)
                 return

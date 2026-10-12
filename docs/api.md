@@ -400,3 +400,68 @@ Its SHA-256 is
 `805e6a8842506cd75f67b780815b3f4d75d057c389ae488983b96333626b3107`.
 The original report omitted the library-version property. The pinned script
 URL identifies version 4.7.1, and the measurement page now records it explicitly.
+
+### National forest measurement
+
+For #69, start the same page with the completed forest artifact:
+
+```sh
+uv run python tools/phone_map/serve.py --host 0.0.0.0 --port 8769 \
+  --forest-layer data/processed/mvp_forest/italy-forest-copernicus-2018-v1/forest_layer_2000m.geojson.gz
+```
+
+This option needs no saved estimate responses. The server sends the existing
+gzip file unchanged and records its checksum and sizes in the manifest.
+The page draws all 74,047 forest polygons across Italy. Colour represents
+`forest_share`; there are no estimates or weather calls. It runs three trials
+with a fresh map and an uncached download each time. The original nine-trial
+check remains available when `--forest-layer` is omitted.
+
+Open the laptop's address on the same Wi-Fi, enter the device details and tap
+`Run measurements`. Keep the page visible. Once it finishes, pan and zoom
+around Italy and report whether the map feels usable. The page saves all
+three results in `data/processed/phone_map_checks/`.
+
+Each trial records these times in milliseconds:
+
+- `download_ms` covers the request through receiving and decoding the full
+  response text, including gzip decompression.
+- `reading_ms` covers `JSON.parse` on that text.
+- `source_to_idle_ms` covers adding the forest source and drawing it until
+  MapLibre reports that the map is idle.
+- `fetch_to_drawn_ms` covers the whole request through drawing, including
+  calculating bounds and creating the map between reading and drawing.
+
+The sum of the first three times excludes map setup. Use `fetch_to_drawn_ms`
+for the issue's three-second threshold. The check excludes the initial page
+and library downloads, background tiles and application-server work.
+
+On 12 October 2026 at 15:08 CEST, the owner ran the three checks on a physical
+iPhone 15 and reported iOS 27. The browser identified itself as Safari 27.0.1.
+The phone and laptop used the same Wi-Fi. The page stayed visible throughout
+the run. MapLibre GL JS 4.7.1 drew the layer in a 393 by 555 CSS pixel map,
+with a device pixel ratio of three.
+
+| Trial | Gzip bytes | Download | Reading JSON | Drawing | Total |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | 3,377,975 | 191 ms | 58 ms | 4,321 ms | 4,858 ms |
+| 2 | 3,377,975 | 185 ms | 56 ms | 4,610 ms | 5,127 ms |
+| 3 | 3,377,975 | 315 ms | 58 ms | 4,559 ms | 5,202 ms |
+
+Each encoded body size matched the original gzip file. Every run used all
+74,047 polygons and 22,169,307 uncompressed bytes. The owner described the
+initial load as a bit slow but found it acceptable for the whole Italy map.
+All three initial loads exceeded the three-second target in #69. Drawing
+accounted for most of the time.
+
+The owner expects normal use to start zoomed in around the user's area.
+This check measures the national overview and does not establish the speed
+of that local starting view. Keep the forest artifact unchanged for now and
+judge normal loading in the application with that local view. The national
+three-second target remains unmet. A smaller viewport alone does not avoid
+downloading and reading the national file if the application still requests it.
+
+The complete local report is
+`data/processed/phone_map_checks/4cc56f4f76e54c399c28b10347087699.json`.
+Its SHA-256 is
+`4c253d04efe5984378cf9fb8796fa00184266272c8605fafbbc6c32014e70a2b`.

@@ -16,13 +16,13 @@ pre {white-space: pre-wrap; overflow-wrap: anywhere;}
 </style>
 <main>
 <h1>Micometeo phone measurement</h1>
-<p>This checks drawing speed for three large Italian map views. Each saved view has fixed edges. Panning beyond them shows empty space. The percentages are synthetic test data. Keep this page visible while the nine checks run.</p>
+<p id="description">Loading the measurement details.</p>
 <form id="form">
 <label>Phone model<input name="model" type="text" required placeholder="For example, iPhone 15"></label>
 <label>Operating system and browser versions<input name="software" type="text" required placeholder="For example, iOS 27.0, Safari 27.0"></label>
 <label>Connection<input name="connection" type="text" required value="Phone and laptop on the same Wi-Fi"></label>
 <label><input name="physical" type="checkbox" checked> I am using a physical phone</label>
-<button id="start" type="submit">Run measurements</button>
+<button id="start" type="submit" disabled>Run measurements</button>
 </form>
 <p id="status" role="status">Ready.</p>
 <pre id="results"></pre>
@@ -35,6 +35,17 @@ let hiddenDuringRun = false;
 document.addEventListener("visibilitychange", () => { if (document.hidden) hiddenDuringRun = true; });
 const status = document.getElementById("status");
 const output = document.getElementById("results");
+let manifest;
+fetch("/manifest.json").then(response => {
+  if (!response.ok) throw new Error(`Manifest response ${response.status}`);
+  return response.json();
+}).then(data => {
+  manifest = data;
+  document.getElementById("description").textContent = manifest.forest
+    ? "This draws the forest layer for all Italy, with no estimates. Keep this page visible while the three checks run."
+    : "This checks drawing speed for three large Italian map views. Each saved view has fixed edges. Panning beyond them shows empty space. The percentages are synthetic test data. Keep this page visible while the nine checks run.";
+  document.getElementById("start").disabled = false;
+}).catch(error => { status.textContent = `Check failed: ${error.message}`; });
 function eventOnce(map, event) {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => { cleanup(); reject(new Error(`Map ${event} timed out.`)); }, 60000);
@@ -50,7 +61,9 @@ window.runMeasurement = async function(name, trial, sizes) {
   const start = performance.now();
   const response = await fetch(`/${name}.geojson`, {cache: "no-store"});
   if (!response.ok) throw new Error(`Map response ${response.status}`);
-  const data = await response.json();
+  const text = await response.text();
+  const downloaded = performance.now();
+  const data = JSON.parse(text);
   const loaded = performance.now();
   const bounds = new maplibregl.LngLatBounds();
   for (const feature of data.features) for (const point of feature.geometry.coordinates[0]) bounds.extend(point);
@@ -62,12 +75,15 @@ window.runMeasurement = async function(name, trial, sizes) {
   const idle = eventOnce(currentMap, "idle");
   currentMap.addSource("squares", {type: "geojson", data});
   currentMap.addLayer({id: "squares", type: "fill", source: "squares", paint: {
-    "fill-color": ["case", ["==", ["get", "state"], "noforest"], "#ded8c4",
+    "fill-color": name === "forest"
+      ? ["interpolate", ["linear"], ["get", "forest_share"], 0, "#eff3db", 1, "#205d35"]
+      : ["case", ["==", ["get", "state"], "noforest"], "#ded8c4",
       ["interpolate", ["linear"], ["coalesce", ["get", "percentage"], 0], 0, "#eff3db", 100, "#205d35"]], "fill-opacity": .8}});
   await idle;
   const done = performance.now();
   const timing = performance.getEntriesByName(new URL(`/${name}.geojson`, location.href).href)[0];
   return {name, trial, squares: data.features.length, ...sizes,
+    download_ms: downloaded - start, reading_ms: loaded - downloaded,
     fetch_and_json_ms: loaded - start, source_to_idle_ms: done - drawStart, fetch_to_drawn_ms: done - start,
     encoded_body_bytes: timing?.encodedBodySize ?? null, transfer_bytes: timing?.transferSize ?? null,
     rendered_features: currentMap.queryRenderedFeatures({layers: ["squares"]}).length,
@@ -78,26 +94,28 @@ document.getElementById("form").addEventListener("submit", async event => {
   event.preventDefault();
   const form = event.currentTarget;
   document.getElementById("start").disabled = true;
+  output.textContent = "";
   hiddenDuringRun = false;
   const report = {physical_phone: form.elements.physical.checked, model: form.elements.model.value,
     software: form.elements.software.value, connection: form.elements.connection.value,
     user_agent: navigator.userAgent, started_at: new Date().toISOString(),
-    synthetic_weather: true, maplibre_version: "4.7.1", results: []};
+    synthetic_weather: !manifest.forest, maplibre_version: "4.7.1", results: []};
   try {
     if (!window.maplibregl) throw new Error("MapLibre did not load. Check the internet connection and reload.");
-    const manifest = await (await fetch("/manifest.json")).json();
-    for (const name of ["northern_apennines", "alps", "calabria"]) {
+    for (const name of Object.keys(manifest)) {
       for (let trial = 1; trial <= 3; trial++) {
         status.textContent = `Running ${name.replaceAll("_", " ")}, trial ${trial} of 3.`;
         const result = await window.runMeasurement(name, trial, manifest[name]);
         report.results.push(result);
-        output.textContent += `${name}, trial ${trial}: ${result.source_to_idle_ms.toFixed(0)} ms drawing, ${result.fetch_to_drawn_ms.toFixed(0)} ms including data loading.\n`;
+        output.textContent += `${name}, trial ${trial}: ${result.download_ms.toFixed(0)} ms downloading, ${result.reading_ms.toFixed(0)} ms reading, ${result.source_to_idle_ms.toFixed(0)} ms drawing, ${result.fetch_to_drawn_ms.toFixed(0)} ms total.\n`;
       }
     }
     report.hidden_during_run = hiddenDuringRun;
     const saved = await fetch("/results", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(report)});
     if (!saved.ok) throw new Error(`Saving failed: ${saved.status}. Results are still visible above.`);
-    status.textContent = "Done. Results saved on the laptop. Try panning within the saved area and report whether it feels usable. This test does not load more squares beyond its edges.";
+    status.textContent = manifest.forest
+      ? "Done. Results saved on the laptop. Try panning and zooming around Italy and report whether the map feels usable. This layer shows forests only."
+      : "Done. Results saved on the laptop. Try panning within the saved area and report whether it feels usable. This test does not load more squares beyond its edges.";
     window.measurementReport = report;
   } catch (error) { status.textContent = `Check failed: ${error.message}`; }
   finally { document.getElementById("start").disabled = false; }
