@@ -2,7 +2,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 import math
 from threading import Lock
 from types import SimpleNamespace
@@ -18,7 +18,12 @@ from micometeo.forecast_method import ForecastResult, calculate_forecast
 from national_forest.models import ForestBuild, ForestCell, ForestChunk
 from national_grid.models import GridBuild, GridBuildCell, GridCell, GridChunk, GridRegion
 from national_terrain.models import TerrainBuild, TerrainCell, TerrainChunk
-from weather_summaries.models import WeatherSnapshot, WeatherSummary
+from weather_summaries.models import (
+    WeatherDaily,
+    WeatherSnapshot,
+    WeatherSnapshotDay,
+    WeatherSummary,
+)
 
 from estimate_updates.contracts import (
     EstimateReadStatus,
@@ -421,6 +426,7 @@ def complete_estimate_fixture() -> dict[str, object]:
             )
         )
     WeatherSummary.objects.bulk_create(summaries)
+    _add_daily_temperatures(snapshot=snapshot)
     return {
         "snapshot": snapshot,
         "forest": forest,
@@ -430,10 +436,52 @@ def complete_estimate_fixture() -> dict[str, object]:
     }
 
 
+def _add_daily_temperatures(
+    *,
+    snapshot: WeatherSnapshot,
+    missing_dates: tuple[date, ...] = (),
+    frost_dates: tuple[date, ...] = (),
+) -> None:
+    """Link daily temperature rows to a snapshot, from 21 days before through 7 days after."""
+    attempt_id = uuid4()
+    rows = []
+    for offset in range(-21, 8):
+        current = snapshot.assessment_date + timedelta(days=offset)
+        if current in missing_dates:
+            continue
+        rows.append(
+            WeatherDaily(
+                cell_key=snapshot.cell_key,
+                date=current,
+                source_provider="Open-Meteo",
+                source_model="test",
+                source_endpoint="https://example.test/weather",
+                source_id="benchmark:weather",
+                request_id="request-1",
+                attempt_id=attempt_id,
+                retrieved_at=datetime(2026, 10, 11, 10, tzinfo=UTC),
+                requested_latitude=44.0,
+                requested_longitude=11.0,
+                returned_latitude=44.0,
+                returned_longitude=11.0,
+                reference_elevation_m=500.0,
+                rain_mm=0.0,
+                mean_temperature_c=16.25,
+                min_temperature_c=-1.0 if current in frost_dates else 8.0,
+                status=WeatherDaily.Status.COMPLETE,
+            )
+        )
+    WeatherDaily.objects.bulk_create(rows)
+    WeatherSnapshotDay.objects.bulk_create(
+        [WeatherSnapshotDay(snapshot=snapshot, date=row.date, daily=row) for row in rows]
+    )
+
+
 def _create_followup_snapshot(
     *,
     source_snapshot: WeatherSnapshot,
     assessment_date: date,
+    frost_dates: tuple[date, ...] = (),
 ) -> WeatherSnapshot:
     """Create a second frozen weather assessment with the same input shape."""
     snapshot = WeatherSnapshot.objects.create(
@@ -482,7 +530,110 @@ def _create_followup_snapshot(
             )
         )
     WeatherSummary.objects.bulk_create(summaries)
+    _add_daily_temperatures(snapshot=snapshot, frost_dates=frost_dates)
     return snapshot
+
+
+@pytest.mark.django_db(transaction=True)
+def test_default_method_stores_v2_with_twenty_day_temperatures(
+    complete_estimate_fixture: dict[str, object],
+) -> None:
+    snapshot = complete_estimate_fixture["snapshot"]
+    forest = complete_estimate_fixture["forest"]
+    terrain = complete_estimate_fixture["terrain"]
+    calculated_inputs = []
+
+    def capturing(*, inputs):
+        calculated_inputs.append(inputs)
+        return calculate_forecast(inputs=inputs)
+
+    prepared = calculate_estimate_update(
+        snapshot_id=snapshot.id,
+        cell_key=snapshot.cell_key,
+        assessment_date=snapshot.assessment_date,
+        forest_build_version=forest.version,
+        terrain_build_version=terrain.version,
+        calculator=capturing,
+    )
+    default_prepared = calculate_estimate_update(
+        snapshot_id=snapshot.id,
+        cell_key=snapshot.cell_key,
+        assessment_date=snapshot.assessment_date,
+        forest_build_version=forest.version,
+        terrain_build_version=terrain.version,
+    )
+
+    assert prepared.method_version == "porcini-experimental-v2"
+    assert default_prepared.method_version == "porcini-experimental-v2"
+    assert len(calculated_inputs) == 8
+    for days_ahead, inputs in enumerate(calculated_inputs):
+        record = inputs.period_temperatures
+        assert len(record.daily_means) == 20
+        assert len(record.daily_minimums) == 20
+        assert record.period_end == inputs.target_date
+        assert record.period_start == inputs.target_date - timedelta(days=19)
+        assert record.completed_day_count == 19 - days_ahead
+        assert record.forecast_day_count == days_ahead + 1
+        assert record.unit == "deg_c"
+        assert None not in record.daily_means
+    values = decode_result_bytes(values=default_prepared.rows[0].values)
+    assert all(isinstance(value, int) for value in values)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_frost_day_in_the_period_lowers_the_percentage(
+    complete_estimate_fixture: dict[str, object],
+) -> None:
+    snapshot = complete_estimate_fixture["snapshot"]
+    forest = complete_estimate_fixture["forest"]
+    terrain = complete_estimate_fixture["terrain"]
+    assessment = date(2026, 10, 12)
+    frost_snapshot = _create_followup_snapshot(
+        source_snapshot=snapshot,
+        assessment_date=assessment,
+        frost_dates=(assessment - timedelta(days=3), assessment - timedelta(days=4)),
+    )
+
+    def percentage_on_first_day(*, current: WeatherSnapshot) -> int:
+        prepared = calculate_estimate_update(
+            snapshot_id=current.id,
+            cell_key=current.cell_key,
+            assessment_date=current.assessment_date,
+            forest_build_version=forest.version,
+            terrain_build_version=terrain.version,
+        )
+        value = decode_result_bytes(values=prepared.rows[0].values)[0]
+        assert isinstance(value, int)
+        return value
+
+    assert percentage_on_first_day(current=frost_snapshot) < percentage_on_first_day(current=snapshot)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_missing_daily_temperature_gives_period_temperature_reason(
+    complete_estimate_fixture: dict[str, object],
+) -> None:
+    source = complete_estimate_fixture["snapshot"]
+    forest = complete_estimate_fixture["forest"]
+    terrain = complete_estimate_fixture["terrain"]
+    snapshot = _create_followup_snapshot(source_snapshot=source, assessment_date=date(2026, 10, 12))
+    missing = snapshot.assessment_date - timedelta(days=5)
+    WeatherSnapshotDay.objects.filter(snapshot=snapshot, date=missing).delete()
+
+    prepared = calculate_estimate_update(
+        snapshot_id=snapshot.id,
+        cell_key=snapshot.cell_key,
+        assessment_date=snapshot.assessment_date,
+        forest_build_version=forest.version,
+        terrain_build_version=terrain.version,
+    )
+
+    decoded = decode_result_bytes(values=prepared.rows[0].values)
+    assert decoded == ("period_temperature",) * 8
+    assert encode_result_bytes(
+        percentages=[None] * 8,
+        unavailable_reasons=list(decoded),
+    ) == prepared.rows[0].values
 
 
 @pytest.mark.django_db(transaction=True)
@@ -556,9 +707,9 @@ def test_missing_terrain_input_keeps_exact_terrain_build_source(
     facts_inputs = []
     original_calculate_forecast = services.calculate_forecast
 
-    def facts_calculating(*, inputs):
+    def facts_calculating(*, inputs, method):
         facts_inputs.append(inputs)
-        return original_calculate_forecast(inputs=inputs)
+        return original_calculate_forecast(inputs=inputs, method=method)
 
     monkeypatch.setattr(services, "calculate_forecast", facts_calculating)
     facts_for_estimate(

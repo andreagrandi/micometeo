@@ -15,7 +15,7 @@ does not select an arbitrary latest terrain build.
 `EstimateResult` has no surrogate row ID. Its composite primary key is the
 update and forest square. Its `values` field contains exactly eight bytes for
 assessment day through day seven. Bytes from 0 through 100 are whole
-percentages. Bytes from 128 through 136 are documented unavailable reasons:
+percentages. Bytes from 128 through 137 are documented unavailable reasons:
 
 | Byte | Reason |
 | ---: | --- |
@@ -28,13 +28,21 @@ percentages. Bytes from 128 through 136 are documented unavailable reasons:
 | 134 | `forest_below_minimum` |
 | 135 | `weather_summary_missing` |
 | 136 | `terrain_data_missing` |
+| 137 | `period_temperature` |
+
+Byte 130 comes only from updates stored with `porcini-experimental-v1`. Byte
+137 comes only from v2 updates.
 
 Other bytes are rejected. A forest square without at least ten percent forest
 remains in `ForestCell` and receives no result row. An eligible square receives
 one result row containing all eight dates. The service loads summaries and
-habitat rows in batches, calculates with the frozen
-`porcini-experimental-v1` method, and validates every expected row before it
-inserts an update or result.
+habitat rows in batches, calculates with the current frozen method,
+`porcini-experimental-v2`, and validates every expected row before it inserts
+an update or result. v2 reads the daily mean and minimum temperature of the 20
+days ending on each target date from the snapshot's daily weather rows. The
+update stores its method version. An area detail rebuilds facts with the
+method named by that version, so an update stored with v1 keeps its v1
+percentages and facts after v2 is released.
 
 Forest squares are selected by the exact two-decimal weather-cell centre in
 SQL. The estimate updates migration adds a partial covering index for the

@@ -1126,3 +1126,68 @@ def test_area_detail_never_calls_weather_transport(area_fixture: dict[str, objec
 
     assert response.status_code == 200
     assert response.json()["estimate"]["whole_percentage"] == 52
+
+
+@pytest.mark.django_db(transaction=True)
+def test_area_detail_keeps_v1_update_on_v1_facts_and_serves_v2_facts_for_v2_update(
+    area_fixture: dict[str, object],
+) -> None:
+    v1_update = area_fixture["update"]
+    forest_cell = area_fixture["forest_cell"]
+    square_id = area_fixture["square_id"]
+    v2_version = "porcini-experimental-v2"
+    v2_update = EstimateUpdate.objects.create(
+        cell_key=v1_update.cell_key,
+        assessment_date=v1_update.assessment_date,
+        calculated_at=v1_update.calculated_at + timedelta(minutes=1),
+        snapshot=v1_update.snapshot,
+        forest_build=v1_update.forest_build,
+        terrain_build=v1_update.terrain_build,
+        method_version=v2_version,
+        row_count=1,
+        input_fingerprint=input_fingerprint(
+            cell_key=v1_update.cell_key,
+            assessment_date=v1_update.assessment_date,
+            snapshot_id=v1_update.snapshot_id,
+            forest_build_id=v1_update.forest_build_id,
+            terrain_build_id=v1_update.terrain_build_id,
+            method_version=v2_version,
+        ),
+    )
+    EstimateResult.objects.create(
+        update=v2_update,
+        forest_cell=forest_cell,
+        values=encode_result_bytes(
+            percentages=[61, 62, 63, 64, 65, 66, 67, 68],
+            unavailable_reasons=[None] * 8,
+        ),
+    )
+    client = Client()
+
+    v1_body = client.get(
+        f"/api/v1/areas/{square_id}",
+        {"target_date": "2026-10-12", "update_id": str(v1_update.public_id)},
+    ).json()
+    v2_body = client.get(
+        f"/api/v1/areas/{square_id}",
+        {"target_date": "2026-10-12", "update_id": str(v2_update.public_id)},
+    ).json()
+
+    assert v1_body["estimate"]["whole_percentage"] == 53
+    assert v1_body["estimate"]["method_version"] == "porcini-experimental-v1"
+    v1_facts = {fact["role_key"] for fact in v1_body["facts"]}
+    assert "target_temperature_at_reference" in v1_facts
+    assert "corrected_temperature" in v1_facts
+    assert "frost_days" not in v1_facts
+    assert v2_body["estimate"]["whole_percentage"] == 62
+    assert v2_body["estimate"]["method_version"] == v2_version
+    v2_facts = {fact["role_key"]: fact for fact in v2_body["facts"]}
+    assert "mean_temperature_at_reference" in v2_facts
+    assert "corrected_mean_temperature" in v2_facts
+    assert "frost_days" in v2_facts
+    assert "target_temperature_at_reference" not in v2_facts
+    period = v2_facts["mean_temperature_at_reference"]
+    assert period["period_start"] == "2026-09-23"
+    assert period["period_end"] == "2026-10-12"
+    assert period["completed_day_count"] == 18
+    assert period["forecast_day_count"] == 2

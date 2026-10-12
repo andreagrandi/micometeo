@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+import uuid
 from datetime import date, timedelta
 from typing import Any
 
@@ -12,7 +13,7 @@ from django.utils import timezone
 from national_forest.models import ForestBuild, ForestCell
 from national_terrain.models import TerrainBuild
 from weather_requests.eligibility import canonical_cell_key
-from weather_summaries.models import WeatherSnapshot, WeatherSummary
+from weather_summaries.models import WeatherDaily, WeatherSnapshot, WeatherSnapshotDay, WeatherSummary
 
 from .services import calculate_and_publish_estimates
 
@@ -64,6 +65,41 @@ def _database_sizes() -> dict[str, Any]:
     }
 
 
+def _synthetic_daily_rows(*, snapshot: WeatherSnapshot, assessment_date: date) -> None:
+    """Link synthetic daily temperatures to the snapshot for the 20-day temperature period."""
+    attempt_id = uuid.uuid4()
+    retrieved_at = timezone.now()
+    days = [assessment_date + timedelta(days=offset) for offset in range(-21, 8)]
+    rows = [
+        WeatherDaily(
+            cell_key=snapshot.cell_key,
+            date=day,
+            source_provider=BENCHMARK_SOURCE,
+            source_model=BENCHMARK_SOURCE,
+            source_endpoint="https://example.test/synthetic-benchmark",
+            source_id=BENCHMARK_SOURCE,
+            request_id=BENCHMARK_SOURCE,
+            attempt_id=attempt_id,
+            retrieved_at=retrieved_at,
+            requested_latitude=0.0,
+            requested_longitude=0.0,
+            returned_latitude=0.0,
+            returned_longitude=0.0,
+            reference_elevation_m=snapshot.reference_elevation_m,
+            rain_mm=0.0,
+            mean_temperature_c=16.25,
+            min_temperature_c=8.0,
+            status=WeatherDaily.Status.COMPLETE,
+            metadata={"benchmark": BENCHMARK_SOURCE},
+        )
+        for day in days
+    ]
+    WeatherDaily.objects.bulk_create(rows)
+    WeatherSnapshotDay.objects.bulk_create(
+        [WeatherSnapshotDay(snapshot=snapshot, date=row.date, daily=row) for row in rows]
+    )
+
+
 def _synthetic_snapshot(*, cell_key: str, assessment_date: date) -> WeatherSnapshot:
     metadata = {
         "benchmark": BENCHMARK_SOURCE,
@@ -88,6 +124,7 @@ def _synthetic_snapshot(*, cell_key: str, assessment_date: date) -> WeatherSnaps
                 f"Snapshot {snapshot.id} already contains non-benchmark weather inputs."
             )
         return snapshot
+    _synthetic_daily_rows(snapshot=snapshot, assessment_date=assessment_date)
     summaries = []
     for days_ahead in range(8):
         target_date = assessment_date + timedelta(days=days_ahead)

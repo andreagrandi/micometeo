@@ -9,6 +9,8 @@ import pytest
 from micometeo.forecast_method import (
     EVENT_KEY,
     METHOD_V1,
+    METHOD_V2,
+    DailyTemperatures,
     ForecastInputs,
     NumericInput,
     calculate_forecast,
@@ -68,6 +70,31 @@ def make_input(
     )
 
 
+def make_period_temperatures(
+    *,
+    assessment: date = ASSESSMENT,
+    days_ahead: int = 0,
+    daily_means: tuple[float | None, ...] | None = None,
+    daily_minimums: tuple[float | None, ...] | None = None,
+    mean: float = 16.95,
+    minimum: float = 8.0,
+    semantic: str = "temperature_at_reference_altitude",
+    period_start: date | None = None,
+) -> DailyTemperatures:
+    target = assessment + timedelta(days=days_ahead)
+    return DailyTemperatures(
+        daily_means=daily_means if daily_means is not None else (mean,) * 20,
+        daily_minimums=daily_minimums if daily_minimums is not None else (minimum,) * 20,
+        unit="deg_c",
+        source_id="test:period_temperature",
+        period_start=period_start or target - timedelta(days=19),
+        period_end=target,
+        completed_day_count=19 - days_ahead,
+        forecast_day_count=days_ahead + 1,
+        semantic=semantic,
+    )
+
+
 def make_inputs(
     *,
     assessment: date = ASSESSMENT,
@@ -78,9 +105,13 @@ def make_inputs(
     reference_altitude: float | None = 500.0,
     square_altitude: float | None = 1000.0,
     forest_share: float | None = 1.0,
+    period_temperatures: DailyTemperatures | None | str = "default",
 ) -> ForecastInputs:
     target = assessment + timedelta(days=days_ahead)
+    if period_temperatures == "default":
+        period_temperatures = make_period_temperatures(assessment=assessment, days_ahead=days_ahead)
     return ForecastInputs(
+        period_temperatures=period_temperatures,
         assessment_date=assessment,
         target_date=target,
         old_rain=None
@@ -125,9 +156,9 @@ def make_inputs(
 
 
 def test_fixed_examples_return_documented_percentages_and_facts() -> None:
-    ideal = calculate_forecast(inputs=make_inputs())
-    dry = calculate_forecast(inputs=make_inputs(old_rain=0.0))
-    low_forest = calculate_forecast(inputs=make_inputs(forest_share=0.1))
+    ideal = calculate_forecast(method=METHOD_V1, inputs=make_inputs())
+    dry = calculate_forecast(method=METHOD_V1, inputs=make_inputs(old_rain=0.0))
+    low_forest = calculate_forecast(method=METHOD_V1, inputs=make_inputs(forest_share=0.1))
 
     assert ideal.whole_percentage == 95
     assert dry.whole_percentage == 5
@@ -152,11 +183,11 @@ def test_fixed_examples_return_documented_percentages_and_facts() -> None:
         "test:reference_altitude",
         "test:square_altitude",
     )
-    assert ideal == calculate_forecast(inputs=make_inputs())
+    assert ideal == calculate_forecast(method=METHOD_V1, inputs=make_inputs())
 
 
 def test_missing_required_input_is_unavailable_and_keeps_known_facts() -> None:
-    result = calculate_forecast(inputs=make_inputs(old_rain=None))
+    result = calculate_forecast(method=METHOD_V1, inputs=make_inputs(old_rain=None))
 
     assert result.whole_percentage is None
     assert result.unavailable_reason == "older_rain"
@@ -166,8 +197,8 @@ def test_missing_required_input_is_unavailable_and_keeps_known_facts() -> None:
 
 
 def test_missing_forest_and_low_forest_are_distinct() -> None:
-    missing = calculate_forecast(inputs=make_inputs(forest_share=None))
-    low = calculate_forecast(inputs=make_inputs(forest_share=0.099999))
+    missing = calculate_forecast(method=METHOD_V1, inputs=make_inputs(forest_share=None))
+    low = calculate_forecast(method=METHOD_V1, inputs=make_inputs(forest_share=0.099999))
 
     assert missing.unavailable_reason == "missing_forest_data"
     assert missing.missing_inputs == ("forest_share",)
@@ -192,21 +223,21 @@ def test_wrong_units_raise_value_error(role: str, unit: str) -> None:
     inputs = replace(inputs, **{role: replacement})
 
     with pytest.raises(ValueError, match="must use"):
-        calculate_forecast(inputs=inputs)
+        calculate_forecast(method=METHOD_V1, inputs=inputs)
 
 
 def test_nonfinite_negative_and_out_of_range_values_raise() -> None:
     with pytest.raises(ValueError, match="finite"):
-        calculate_forecast(inputs=make_inputs(old_rain=math.inf))
+        calculate_forecast(method=METHOD_V1, inputs=make_inputs(old_rain=math.inf))
     with pytest.raises(ValueError, match="must not be negative"):
-        calculate_forecast(inputs=make_inputs(recent_rain=-1.0))
+        calculate_forecast(method=METHOD_V1, inputs=make_inputs(recent_rain=-1.0))
     with pytest.raises(ValueError, match="from zero to one"):
-        calculate_forecast(inputs=make_inputs(forest_share=1.1))
+        calculate_forecast(method=METHOD_V1, inputs=make_inputs(forest_share=1.1))
 
 
 def test_future_target_requires_exact_period_composition() -> None:
     assessment = date(2028, 2, 29)
-    result = calculate_forecast(inputs=make_inputs(assessment=assessment, days_ahead=7))
+    result = calculate_forecast(method=METHOD_V1, inputs=make_inputs(assessment=assessment, days_ahead=7))
 
     recent = next(fact for fact in result.ordered_facts if fact.role_key == "recent_rain")
     target = next(
@@ -228,7 +259,7 @@ def test_future_target_requires_exact_period_composition() -> None:
 def test_every_supported_days_ahead_value_has_matching_recent_composition(
     days_ahead: int,
 ) -> None:
-    result = calculate_forecast(inputs=make_inputs(days_ahead=days_ahead))
+    result = calculate_forecast(method=METHOD_V1, inputs=make_inputs(days_ahead=days_ahead))
 
     recent = next(fact for fact in result.ordered_facts if fact.role_key == "recent_rain")
     assert recent.completed_day_count == 7 - days_ahead
@@ -236,7 +267,7 @@ def test_every_supported_days_ahead_value_has_matching_recent_composition(
 
 
 def test_target_temperature_is_adjusted_once_from_reference_to_square() -> None:
-    result = calculate_forecast(inputs=make_inputs(target_temperature=16.25))
+    result = calculate_forecast(method=METHOD_V1, inputs=make_inputs(target_temperature=16.25))
     corrected = next(
         fact for fact in result.ordered_facts if fact.role_key == "corrected_temperature"
     )
@@ -250,7 +281,7 @@ def test_target_temperature_is_adjusted_once_from_reference_to_square() -> None:
         semantic="temperature_at_square_altitude",
     )
     with pytest.raises(ValueError, match="reference altitude"):
-        calculate_forecast(inputs=replace(make_inputs(), target_temperature=adjusted))
+        calculate_forecast(method=METHOD_V1, inputs=replace(make_inputs(), target_temperature=adjusted))
 
     missing_semantic = replace(
         make_inputs().target_temperature,
@@ -258,14 +289,14 @@ def test_target_temperature_is_adjusted_once_from_reference_to_square() -> None:
         semantic=None,
     )
     with pytest.raises(ValueError, match="reference altitude"):
-        calculate_forecast(inputs=replace(make_inputs(), target_temperature=missing_semantic))
+        calculate_forecast(method=METHOD_V1, inputs=replace(make_inputs(), target_temperature=missing_semantic))
 
 
 def test_calendar_boundaries_and_altitudes_have_no_hard_exclusions() -> None:
-    june = calculate_forecast(inputs=make_inputs(assessment=date(2026, 6, 15)))
-    november = calculate_forecast(inputs=make_inputs(assessment=date(2026, 11, 15)))
-    high = calculate_forecast(inputs=make_inputs(square_altitude=2500.0))
-    low = calculate_forecast(inputs=make_inputs(square_altitude=-20.0))
+    june = calculate_forecast(method=METHOD_V1, inputs=make_inputs(assessment=date(2026, 6, 15)))
+    november = calculate_forecast(method=METHOD_V1, inputs=make_inputs(assessment=date(2026, 11, 15)))
+    high = calculate_forecast(method=METHOD_V1, inputs=make_inputs(square_altitude=2500.0))
+    low = calculate_forecast(method=METHOD_V1, inputs=make_inputs(square_altitude=-20.0))
 
     assert june.whole_percentage == november.whole_percentage == 95
     assert high.whole_percentage is not None
@@ -273,19 +304,20 @@ def test_calendar_boundaries_and_altitudes_have_no_hard_exclusions() -> None:
 
 
 def test_round_half_up_and_invalid_method_configuration_are_explicit() -> None:
-    low_forest = calculate_forecast(inputs=make_inputs(forest_share=0.1))
+    low_forest = calculate_forecast(method=METHOD_V1, inputs=make_inputs(forest_share=0.1))
     assert low_forest.whole_percentage == 73
 
     invalid_frozen_value = replace(METHOD_V1, old_rain_saturation_mm=120.0)
     with pytest.raises(ValueError, match="parameters are frozen"):
         calculate_forecast(inputs=make_inputs(), method=invalid_frozen_value)
-    unsupported = replace(METHOD_V1, version="porcini-experimental-v2")
+    unsupported = replace(METHOD_V1, version="porcini-experimental-v3")
     with pytest.raises(ValueError, match="unsupported method version"):
         calculate_forecast(inputs=make_inputs(), method=unsupported)
 
 
 def test_documented_future_example_keeps_values_and_period_facts() -> None:
     result = calculate_forecast(
+        method=METHOD_V1,
         inputs=make_inputs(
             assessment=date(2026, 6, 15),
             days_ahead=3,
@@ -323,9 +355,260 @@ def test_documented_future_example_keeps_values_and_period_facts() -> None:
 
 
 def test_changed_input_changes_its_fact_and_normalized_factor() -> None:
-    result = calculate_forecast(inputs=make_inputs(old_rain=30.0))
+    result = calculate_forecast(method=METHOD_V1, inputs=make_inputs(old_rain=30.0))
     fact = next(fact for fact in result.ordered_facts if fact.role_key == "older_rain")
 
     assert result.whole_percentage == 50
     assert fact.original_value == 30.0
     assert fact.normalized_factor == 0.5
+
+
+def fact_by_role(*, result, role_key: str):
+    return next(fact for fact in result.ordered_facts if fact.role_key == role_key)
+
+
+def test_v2_fixed_examples_return_expected_percentages_and_facts() -> None:
+    ideal = calculate_forecast(method=METHOD_V2, inputs=make_inputs())
+    dry = calculate_forecast(method=METHOD_V2, inputs=make_inputs(old_rain=0.0))
+    low_forest = calculate_forecast(method=METHOD_V2, inputs=make_inputs(forest_share=0.1))
+    missing_old_rain = calculate_forecast(method=METHOD_V2, inputs=make_inputs(old_rain=None))
+
+    assert ideal.whole_percentage == 95
+    assert dry.whole_percentage == 5
+    assert low_forest.whole_percentage == 73
+    assert missing_old_rain.whole_percentage is None
+    assert missing_old_rain.unavailable_reason == "older_rain"
+    assert missing_old_rain.missing_inputs == ("older_rain",)
+    assert ideal.method_version == "porcini-experimental-v2"
+    assert tuple(fact.role_key for fact in ideal.ordered_facts) == (
+        "older_rain",
+        "recent_rain",
+        "mean_temperature_at_reference",
+        "reference_altitude",
+        "square_altitude",
+        "corrected_mean_temperature",
+        "frost_days",
+        "forest_share",
+    )
+    mean = fact_by_role(result=ideal, role_key="mean_temperature_at_reference")
+    corrected = fact_by_role(result=ideal, role_key="corrected_mean_temperature")
+    frost = fact_by_role(result=ideal, role_key="frost_days")
+    assert mean.original_value == pytest.approx(16.95)
+    assert mean.unit == "deg_c"
+    assert mean.normalized_factor is None
+    assert mean.translation_key == "forecast.fact.mean_temperature_at_reference"
+    assert corrected.original_value == pytest.approx(13.7)
+    assert corrected.normalized_factor == pytest.approx(1.0)
+    assert corrected.source_id == "derived:corrected_mean_temperature"
+    assert corrected.quality == "derived"
+    assert corrected.source_ids == (
+        "test:period_temperature",
+        "test:reference_altitude",
+        "test:square_altitude",
+    )
+    assert frost.original_value == 0.0
+    assert frost.unit == "days"
+    assert frost.normalized_factor == 1.0
+    assert frost.source_id == "derived:frost_days"
+    assert frost.translation_key == "forecast.fact.frost_days"
+    assert frost.period_start == date(2026, 5, 27)
+
+
+def test_v2_default_method_is_v2_and_ignores_target_temperature() -> None:
+    default = calculate_forecast(inputs=make_inputs())
+    without_target = calculate_forecast(inputs=make_inputs(target_temperature=None))
+
+    assert default.method_version == "porcini-experimental-v2"
+    assert without_target == default
+
+
+def test_v2_missing_period_temperature_is_unavailable_and_keeps_known_facts() -> None:
+    result = calculate_forecast(inputs=make_inputs(period_temperatures=None))
+    partial = calculate_forecast(
+        inputs=make_inputs(
+            period_temperatures=make_period_temperatures(
+                daily_means=(16.95,) * 19 + (None,),
+            )
+        )
+    )
+
+    assert result.whole_percentage is None
+    assert result.unavailable_reason == "period_temperature"
+    assert result.missing_inputs == ("period_temperature",)
+    roles = {fact.role_key for fact in result.ordered_facts}
+    assert {"older_rain", "forest_share", "reference_altitude"} <= roles
+    assert "mean_temperature_at_reference" not in roles
+    assert "frost_days" not in roles
+    assert partial.unavailable_reason == "period_temperature"
+
+
+def test_v2_missing_order_and_reason_precedence() -> None:
+    result = calculate_forecast(
+        inputs=make_inputs(
+            old_rain=None,
+            period_temperatures=None,
+            reference_altitude=None,
+            square_altitude=None,
+        )
+    )
+    no_forest = calculate_forecast(inputs=make_inputs(period_temperatures=None, forest_share=None))
+
+    assert result.unavailable_reason == "older_rain"
+    assert result.missing_inputs == (
+        "older_rain",
+        "period_temperature",
+        "reference_altitude",
+        "square_altitude",
+    )
+    assert no_forest.unavailable_reason == "missing_forest_data"
+
+
+def test_v2_future_example_keeps_values_and_period_facts() -> None:
+    result = calculate_forecast(
+        inputs=make_inputs(
+            assessment=date(2026, 6, 15),
+            days_ahead=3,
+            old_rain=48.0,
+            recent_rain=15.0,
+            reference_altitude=500.0,
+            square_altitude=500.0,
+            forest_share=0.75,
+            period_temperatures=make_period_temperatures(
+                assessment=date(2026, 6, 15), days_ahead=3, mean=15.0, minimum=8.0
+            ),
+        )
+    )
+
+    mean = fact_by_role(result=result, role_key="mean_temperature_at_reference")
+    assert result.whole_percentage == 67
+    assert mean.period_start == date(2026, 5, 30)
+    assert mean.period_end == date(2026, 6, 18)
+    assert mean.completed_day_count == 16
+    assert mean.forecast_day_count == 4
+
+
+def test_v2_frozen_alps_period_gives_minimum_percentage() -> None:
+    result = calculate_forecast(
+        inputs=make_inputs(
+            assessment=date(2026, 1, 20),
+            reference_altitude=1500.0,
+            square_altitude=1500.0,
+            period_temperatures=make_period_temperatures(
+                assessment=date(2026, 1, 20), mean=-5.0, minimum=-10.0
+            ),
+        )
+    )
+
+    assert result.whole_percentage is not None
+    assert result.whole_percentage <= 15
+    assert result.whole_percentage == 5
+
+
+def test_v2_puglia_heat_period_gives_minimum_percentage() -> None:
+    result = calculate_forecast(
+        inputs=make_inputs(
+            assessment=date(2026, 8, 5),
+            reference_altitude=100.0,
+            square_altitude=100.0,
+            period_temperatures=make_period_temperatures(
+                assessment=date(2026, 8, 5), mean=34.0, minimum=24.0
+            ),
+        )
+    )
+
+    assert result.whole_percentage is not None
+    assert result.whole_percentage <= 15
+    assert result.whole_percentage == 5
+
+
+def test_v2_one_frost_day_lowers_the_percentage() -> None:
+    minimums = (8.0,) * 19 + (2.0,)
+    result = calculate_forecast(
+        inputs=make_inputs(
+            period_temperatures=make_period_temperatures(daily_minimums=minimums)
+        )
+    )
+
+    frost = fact_by_role(result=result, role_key="frost_days")
+    assert result.whole_percentage == 73
+    assert frost.original_value == 1.0
+    assert frost.normalized_factor == 0.75
+
+
+def test_v2_frost_lapse_applies_to_the_minimum_but_not_at_equal_altitude() -> None:
+    minimums = (8.0,) * 19 + (2.0,)
+    same_altitude = calculate_forecast(
+        inputs=make_inputs(
+            square_altitude=500.0,
+            period_temperatures=make_period_temperatures(mean=13.7, daily_minimums=minimums),
+        )
+    )
+    higher_square = calculate_forecast(
+        inputs=make_inputs(
+            period_temperatures=make_period_temperatures(daily_minimums=minimums)
+        )
+    )
+
+    assert fact_by_role(result=same_altitude, role_key="frost_days").original_value == 0.0
+    assert fact_by_role(result=higher_square, role_key="frost_days").original_value == 1.0
+    assert same_altitude.whole_percentage == 95
+    assert higher_square.whole_percentage == 73
+
+
+@pytest.mark.parametrize(
+    ("corrected_mean", "expected_factor", "expected"),
+    [(13.7, 1.0, 95), (10.0, 0.239, 27), (20.0, 0.5, 50), (5.0, 0.000366, 5), (34.0, 0.000749, 5)],
+)
+def test_v2_temperature_curve_peaks_at_13_7_and_halves_at_20(
+    corrected_mean: float, expected_factor: float, expected: int
+) -> None:
+    result = calculate_forecast(
+        inputs=make_inputs(
+            period_temperatures=make_period_temperatures(mean=corrected_mean + 3.25)
+        )
+    )
+
+    corrected = fact_by_role(result=result, role_key="corrected_mean_temperature")
+    assert corrected.normalized_factor == pytest.approx(expected_factor, abs=1e-4)
+    assert result.whole_percentage == expected
+
+
+@pytest.mark.parametrize("days_ahead", range(8))
+def test_v2_every_days_ahead_value_has_matching_temperature_composition(
+    days_ahead: int,
+) -> None:
+    result = calculate_forecast(inputs=make_inputs(days_ahead=days_ahead))
+
+    mean = fact_by_role(result=result, role_key="mean_temperature_at_reference")
+    assert mean.completed_day_count == 19 - days_ahead
+    assert mean.forecast_day_count == days_ahead + 1
+
+
+def test_v2_invalid_temperature_records_raise_value_error() -> None:
+    with pytest.raises(ValueError, match="20 entries"):
+        calculate_forecast(
+            inputs=make_inputs(
+                period_temperatures=make_period_temperatures(daily_means=(16.95,) * 19)
+            )
+        )
+    with pytest.raises(ValueError, match="reference altitude"):
+        calculate_forecast(
+            inputs=make_inputs(
+                period_temperatures=make_period_temperatures(semantic="temperature_at_square_altitude")
+            )
+        )
+    with pytest.raises(ValueError, match="wrong period"):
+        calculate_forecast(
+            inputs=make_inputs(
+                period_temperatures=make_period_temperatures(period_start=date(2026, 5, 1))
+            )
+        )
+    with pytest.raises(ValueError, match="finite"):
+        calculate_forecast(
+            inputs=make_inputs(
+                period_temperatures=make_period_temperatures(daily_minimums=(math.nan,) * 20)
+            )
+        )
+    wrong_unit = replace(make_period_temperatures(), unit="mm")
+    with pytest.raises(ValueError, match="must use deg_c"):
+        calculate_forecast(inputs=make_inputs(period_temperatures=wrong_unit))

@@ -17,9 +17,14 @@ from django.db import IntegrityError, connection, transaction
 from django.utils import timezone
 
 from micometeo.forecast_method import (
-    METHOD_V1,
+    CURRENT_METHOD,
+    METHODS_BY_VERSION,
+    TEMPERATURE_PERIOD_DAYS,
+    DailyTemperatures,
     ForecastFact,
     ForecastInputs,
+    ForecastMethodConfig,
+    ForecastMethodV2Config,
     ForecastResult,
     NumericInput,
     calculate_forecast,
@@ -27,7 +32,7 @@ from micometeo.forecast_method import (
 from national_forest.models import ForestBuild, ForestCell
 from national_terrain.models import TerrainBuild, TerrainCell
 from weather_requests.eligibility import canonical_cell_key
-from weather_summaries.models import WeatherSnapshot, WeatherSummary
+from weather_summaries.models import WeatherSnapshot, WeatherSnapshotDay, WeatherSummary
 
 from .contracts import (
     EstimateRead,
@@ -39,7 +44,7 @@ from .contracts import (
 from .models import EstimateResult, EstimateTask, EstimateUpdate
 
 
-METHOD_VERSION = METHOD_V1.version
+METHOD_VERSION = CURRENT_METHOD.version
 DEFAULT_BATCH_SIZE = 1_000
 STALE_ESTIMATE_TASK_AGE = timedelta(minutes=30)
 TERRAIN_BUILD_SETTING = "MICOMETEO_TERRAIN_BUILD_VERSION"
@@ -223,6 +228,55 @@ def _numeric_input(
     )
 
 
+def _finite_or_none(*, value: float | None) -> float | None:
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
+def _snapshot_daily_rows(*, snapshot: WeatherSnapshot) -> dict[date, Any]:
+    """Load the daily weather rows linked to one snapshot, keyed by date."""
+    return {
+        day.date: day.daily
+        for day in WeatherSnapshotDay.objects.filter(snapshot_id=snapshot.id).select_related("daily")
+    }
+
+
+def _period_temperatures(
+    *,
+    snapshot: WeatherSnapshot,
+    target_date: date,
+    daily_rows: Mapping[date, Any],
+) -> DailyTemperatures:
+    """Build the 20 daily means and minimums that end on the target date."""
+    dates = [
+        target_date - timedelta(days=TEMPERATURE_PERIOD_DAYS - 1 - offset)
+        for offset in range(TEMPERATURE_PERIOD_DAYS)
+    ]
+    means: list[float | None] = []
+    minimums: list[float | None] = []
+    for day in dates:
+        row = daily_rows.get(day)
+        means.append(None if row is None else _finite_or_none(value=row.mean_temperature_c))
+        minimums.append(None if row is None else _finite_or_none(value=row.min_temperature_c))
+    completed = sum(1 for day in dates if day < snapshot.assessment_date)
+    return DailyTemperatures(
+        daily_means=tuple(means),
+        daily_minimums=tuple(minimums),
+        unit="deg_c",
+        source_id=f"weather-snapshot-days:{snapshot.id}",
+        period_start=dates[0],
+        period_end=dates[-1],
+        completed_day_count=completed,
+        forecast_day_count=len(dates) - completed,
+        semantic="temperature_at_reference_altitude",
+    )
+
+
 def _forecast_inputs(
     *,
     snapshot: WeatherSnapshot,
@@ -230,6 +284,7 @@ def _forecast_inputs(
     forest_cell: ForestCell,
     terrain_cell: TerrainCell | None,
     terrain_build_id: uuid.UUID,
+    daily_rows: Mapping[date, Any],
 ) -> ForecastInputs:
     assessment_date = snapshot.assessment_date
     target_date = summary.target_date
@@ -289,6 +344,11 @@ def _forecast_inputs(
             completed_day_count=target_completed,
             forecast_day_count=target_forecast,
             semantic="temperature_at_reference_altitude",
+        ),
+        period_temperatures=_period_temperatures(
+            snapshot=snapshot,
+            target_date=target_date,
+            daily_rows=daily_rows,
         ),
         reference_altitude=_numeric_input(
             value=snapshot.reference_elevation_m,
@@ -406,9 +466,10 @@ def calculate_estimate_update(
     assessment_date: date,
     forest_build_version: str,
     terrain_build_version: str | None = None,
-    calculator: Callable[[ForecastInputs], ForecastResult] = calculate_forecast,
+    calculator: Callable[..., ForecastResult] | None = None,
     calculated_at: datetime | None = None,
     batch_size: int = DEFAULT_BATCH_SIZE,
+    method: ForecastMethodConfig | ForecastMethodV2Config = CURRENT_METHOD,
 ) -> PreparedEstimateUpdate:
     """Calculate all eligible squares and validate rows before any insert."""
     assessment_date = _require_date(assessment_date, name="assessment_date")
@@ -430,6 +491,7 @@ def calculate_estimate_update(
     if forest_build.grid_build_id != terrain_build.grid_build_id:
         raise EstimateUpdateError("Forest and terrain builds must use the same grid build.")
     summaries = _summary_map(snapshot=snapshot)
+    daily_rows = _snapshot_daily_rows(snapshot=snapshot)
     forest_cells = _forest_cells_for_weather_cell(
         forest_build=forest_build,
         cell_key=cell_key,
@@ -459,12 +521,16 @@ def calculate_estimate_update(
                 forest_cell=forest_cell,
                 terrain_cell=terrain_cell,
                 terrain_build_id=terrain_build.id,
+                daily_rows=daily_rows,
             )
             try:
-                result = calculator(inputs=inputs)
+                if calculator is None:
+                    result = calculate_forecast(inputs=inputs, method=method)
+                else:
+                    result = calculator(inputs=inputs)
             except (TypeError, ValueError) as exc:
                 raise EstimateValidationError(str(exc)) from exc
-            if result.method_version != METHOD_VERSION:
+            if result.method_version != method.version:
                 raise EstimateValidationError("Estimate rows use mixed method versions.")
             if result.whole_percentage is None:
                 if result.unavailable_reason not in UNAVAILABLE_REASON_CODES:
@@ -496,7 +562,7 @@ def calculate_estimate_update(
         snapshot_id=snapshot.id,
         forest_build_id=forest_build.id,
         terrain_build_id=terrain_build.id,
-        method_version=METHOD_VERSION,
+        method_version=method.version,
     )
     return PreparedEstimateUpdate(
         cell_key=cell_key,
@@ -504,7 +570,7 @@ def calculate_estimate_update(
         snapshot_id=snapshot.id,
         forest_build_id=forest_build.id,
         terrain_build_id=terrain_build.id,
-        method_version=METHOD_VERSION,
+        method_version=method.version,
         calculated_at=when,
         rows=rows,
         input_fingerprint=fingerprint,
@@ -983,12 +1049,17 @@ lookup_estimate = read_estimate
 
 
 def facts_for_estimate(*, update_id: uuid.UUID | str, forest_cell_id: int, target_date: date) -> tuple[ForecastFact, ...]:
-    """Return facts recalculated from the exact stored update inputs."""
+    """Return facts recalculated with the update's own method version and inputs."""
     update = EstimateUpdate.objects.select_related(
         "snapshot",
         "forest_build",
         "terrain_build",
     ).get(public_id=uuid.UUID(str(update_id)))
+    method = METHODS_BY_VERSION.get(update.method_version)
+    if method is None:
+        raise EstimateUpdateError(
+            f"Update {update.public_id} uses unknown method version {update.method_version!r}."
+        )
     forest_cell = ForestCell.objects.get(id=forest_cell_id, build_id=update.forest_build_id)
     terrain_cell = TerrainCell.objects.filter(
         build_id=update.terrain_build_id,
@@ -1002,6 +1073,8 @@ def facts_for_estimate(*, update_id: uuid.UUID | str, forest_cell_id: int, targe
             forest_cell=forest_cell,
             terrain_cell=terrain_cell,
             terrain_build_id=update.terrain_build_id,
-        )
+            daily_rows=_snapshot_daily_rows(snapshot=update.snapshot),
+        ),
+        method=method,
     )
     return result.ordered_facts

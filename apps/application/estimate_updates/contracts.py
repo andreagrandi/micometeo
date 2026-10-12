@@ -19,6 +19,7 @@ UNAVAILABLE_REASON_CODES: dict[str, int] = {
     "forest_below_minimum": 134,
     "weather_summary_missing": 135,
     "terrain_data_missing": 136,
+    "period_temperature": 137,
 }
 UNAVAILABLE_CODE_REASONS = {value: key for key, value in UNAVAILABLE_REASON_CODES.items()}
 
