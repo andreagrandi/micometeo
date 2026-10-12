@@ -8,7 +8,7 @@ from uuid import UUID
 
 from django.conf import settings
 from django.http import HttpRequest
-from ninja import Router, Schema, Status
+from ninja import Field, Router, Schema, Status
 from pyproj import Transformer
 from shapely import transform as shapely_transform
 from shapely.geometry import mapping
@@ -87,8 +87,8 @@ class FactSchema(Schema):
 
     role_key: str
     role: str
-    actual_value: float
-    value: float
+    actual_value: float | None
+    value: float | None
     unit: str
     period_start: date
     period_end: date
@@ -102,6 +102,7 @@ class FactSchema(Schema):
     normalized_factor: float | None
     translation_key: str
     quality: str | None = None
+    source_metadata: dict = Field(default_factory=dict)
 
 
 class WeatherPeriodSchema(Schema):
@@ -461,6 +462,7 @@ def _serialize_fact(*, fact: Any) -> FactSchema:
         normalized_factor=fact.normalized_factor,
         translation_key=fact.translation_key,
         quality=fact.quality,
+        source_metadata=fact.source_metadata,
     )
 
 

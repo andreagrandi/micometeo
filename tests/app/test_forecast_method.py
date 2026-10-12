@@ -10,6 +10,8 @@ from micometeo.forecast_method import (
     EVENT_KEY,
     METHOD_V1,
     METHOD_V2,
+    METHOD_V3,
+    HostTrees,
     DailyTemperatures,
     ForecastInputs,
     NumericInput,
@@ -414,12 +416,50 @@ def test_v2_fixed_examples_return_expected_percentages_and_facts() -> None:
     assert frost.period_start == date(2026, 5, 27)
 
 
-def test_v2_default_method_is_v2_and_ignores_target_temperature() -> None:
+def test_default_method_is_v3_and_ignores_target_temperature() -> None:
     default = calculate_forecast(inputs=make_inputs())
     without_target = calculate_forecast(inputs=make_inputs(target_temperature=None))
 
-    assert default.method_version == "porcini-experimental-v2"
+    assert default.method_version == "porcini-experimental-v3"
     assert without_target == default
+
+
+@pytest.mark.parametrize("group_index", range(5))
+def test_v3_host_group_lowers_penalty_without_changing_weather(group_index: int) -> None:
+    empty = HostTrees(values=(0.0,) * 5, source_id="jrc:test", source_year=2006, resolution_m=1000)
+    values = [0.0] * 5
+    values[group_index] = 1.0
+    wooded = replace(empty, values=tuple(values))
+    inputs = make_inputs()
+    low = calculate_forecast(inputs=replace(inputs, host_trees=empty))
+    high = calculate_forecast(inputs=replace(inputs, host_trees=wooded))
+    assert low.whole_percentage == 50
+    assert high.whole_percentage == 95
+    assert low.method_version == METHOD_V3.version
+    assert low.ordered_facts != high.ordered_facts
+    assert calculate_forecast(inputs=replace(inputs, host_trees=empty), method=METHOD_V2).whole_percentage == 95
+
+
+def test_v3_missing_and_partial_hosts_keep_v2_percentage_and_disclose_fallback() -> None:
+    inputs = make_inputs()
+    partial = HostTrees(values=(0.0, None, 0.0, 0.0, 0.0), source_id="jrc:test", source_year=2006, resolution_m=1000)
+    for trees in (None, partial):
+        result = calculate_forecast(inputs=replace(inputs, host_trees=trees))
+        assert result.whole_percentage == calculate_forecast(inputs=inputs, method=METHOD_V2).whole_percentage
+        assert result.ordered_facts[-1].quality == "forest_only_missing_host_data"
+        assert result.ordered_facts[-1].normalized_factor == 1.0
+    result = calculate_forecast(inputs=replace(inputs, host_trees=partial))
+    chestnut = next(fact for fact in result.ordered_facts if fact.role_key == "host_chestnut")
+    assert chestnut.original_value is None
+    assert chestnut.period_start == date(2006, 1, 1)
+    assert chestnut.source_id == "jrc:test"
+
+
+@pytest.mark.parametrize("value", [-0.1, 1.1, float("nan"), float("inf"), True])
+def test_v3_rejects_invalid_host_values(value: float) -> None:
+    trees = HostTrees(values=(value, 0.0, 0.0, 0.0, 0.0), source_id="jrc:test", source_year=2006, resolution_m=1000)
+    with pytest.raises(ValueError, match="host occurrence"):
+        calculate_forecast(inputs=replace(make_inputs(), host_trees=trees))
 
 
 def test_v2_missing_period_temperature_is_unavailable_and_keeps_known_facts() -> None:

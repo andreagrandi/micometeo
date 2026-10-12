@@ -69,6 +69,9 @@ MICOMETEO_TERRAIN_BUILD_VERSION = os.getenv(
 MICOMETEO_FOREST_BUILD_VERSION = os.getenv(
     "MICOMETEO_FOREST_BUILD_VERSION", "italy-forest-copernicus-2018-v1"
 )
+MICOMETEO_JRC_DIRECTORY = os.getenv(
+    "MICOMETEO_JRC_DIRECTORY", str(BASE_DIR.parent.parent / "data/raw/jrc_host_trees")
+)
 
 CACHES = {
     "default": {

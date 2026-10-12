@@ -37,6 +37,8 @@ class EstimateUpdate(models.Model):
     method_version = models.CharField(max_length=120)
     row_count = models.PositiveIntegerField()
     input_fingerprint = models.CharField(max_length=64, unique=True)
+    tree_fingerprint = models.CharField(max_length=64, default="", blank=True)
+    tree_inputs = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -49,6 +51,7 @@ class EstimateUpdate(models.Model):
                     "forest_build",
                     "terrain_build",
                     "method_version",
+                    "tree_fingerprint",
                 ],
                 name="estimate_update_input_tuple_unique",
             ),
@@ -80,7 +83,7 @@ class EstimateUpdate(models.Model):
         return self.input_fingerprint
 
     @property
-    def input_tuple(self) -> tuple[str, str, int, int, int, str]:
+    def input_tuple(self) -> tuple[str, str, int, int, int, str, str]:
         """Return the immutable identities used by this publication."""
         return (
             self.cell_key,
@@ -89,6 +92,7 @@ class EstimateUpdate(models.Model):
             self.forest_build_id,
             self.terrain_build_id,
             self.method_version,
+            self.tree_fingerprint,
         )
 
 
@@ -111,6 +115,7 @@ class EstimateTask(models.Model):
     assessment_date = models.DateField()
     forest_build_version = models.CharField(max_length=120)
     terrain_build_version = models.CharField(max_length=120)
+    calculation_version = models.CharField(max_length=64, default="", blank=True)
     published_update = models.ForeignKey(
         EstimateUpdate,
         null=True,
@@ -132,7 +137,7 @@ class EstimateTask(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["snapshot", "cell_key", "assessment_date", "forest_build_version", "terrain_build_version"],
+                fields=["snapshot", "cell_key", "assessment_date", "forest_build_version", "terrain_build_version", "calculation_version"],
                 name="estimate_task_input_tuple_unique",
             ),
         ]
@@ -168,3 +173,18 @@ class EstimateResult(models.Model):
     def estimate_update(self) -> EstimateUpdate:
         """Return the update associated with this result row."""
         return self.update
+
+
+class HostTreeCache(models.Model):
+    """Cache only requested squares against an immutable source fingerprint."""
+
+    source_version = models.CharField(max_length=64)
+    cell_id = models.CharField(max_length=80)
+    values = models.JSONField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["source_version", "cell_id"], name="host_tree_source_cell_unique",
+            ),
+        ]

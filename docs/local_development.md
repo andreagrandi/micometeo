@@ -602,6 +602,41 @@ unfinished chunk. Use a new version when source or processing inputs change.
 The [terrain coverage report](../reports/mvp/terrain_coverage.md) records the
 national measurements, source limitations and credit.
 
+## Local JRC host-tree setup
+
+Run the migration and prepare the local files before starting the worker:
+
+```sh
+uv run python apps/application/manage.py migrate
+uv run python apps/application/manage.py prepare_host_trees
+```
+
+The default directory is `data/raw/jrc_host_trees`. Set
+`MICOMETEO_JRC_DIRECTORY` for a different persistent location. API and worker
+processes must use the same setting. `--directory` changes the setup command's
+destination only, so set the environment variable too when using that option.
+
+Setup downloads 18 JRC archives once, checks their raster format and writes a
+manifest only when the complete set is ready. A repeat verifies checksums and
+reuses valid files. After an interrupted download, repeat the command. A
+changed cached file causes an error. Prepare a new directory for a deliberate
+source replacement and restart the worker with the new setting.
+
+Workers read only requested square centres and cache their five host-group
+values in PostgreSQL. Neither map requests nor workers download JRC files.
+Missing or damaged files cause a logged forest-only fallback for uncached
+areas. Details disclose missing tree evidence. Already cached areas can still
+use their saved values. Each published update retains its own tree inputs.
+
+The local check on 12 October 2026 downloaded and verified the 18 archives in
+65.52 seconds. They occupy 315,002,972 bytes; extracted rasters occupy
+358,709,516 bytes. Repeating setup took 0.55 seconds without downloads.
+Reading 504 Tuscany square centres took 0.575 seconds including initial
+checksum checks and 0.365 seconds on a repeat in the same process.
+These are laptop measurements, not hosted service targets.
+
+The hosted one-time bootstrap is tracked separately in [#88](https://github.com/andreagrandi/micometeo/issues/88).
+
 ## Shutdown
 
 Stop Django and the worker with `Ctrl+C` in their terminals. Let the worker

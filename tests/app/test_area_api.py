@@ -1225,3 +1225,45 @@ def test_area_detail_keeps_v1_update_on_v1_facts_and_serves_v2_facts_for_v2_upda
     assert period["period_end"] == "2026-10-12"
     assert period["completed_day_count"] == 18
     assert period["forecast_day_count"] == 2
+
+
+@pytest.mark.django_db(transaction=True)
+def test_area_tree_facts_use_saved_inputs_after_the_source_changes(area_fixture, monkeypatch) -> None:
+    from estimate_updates.services import calculate_and_publish_estimates
+
+    old = area_fixture["update"]
+    cell = area_fixture["forest_cell"]
+    square_id = area_fixture["square_id"]
+    inputs = {
+        "source": {"source_id": "jrc:first", "source_year": 2006, "resolution_m": 1000,
+                   "metadata": {"credit": "JRC", "licence": "EC reuse notice"}},
+        "cells": {str(cell.id): [0.8, 0.1, 0.2, 0.0, 0.0]},
+    }
+    monkeypatch.setattr("estimate_updates.services.tree_inputs_for_area", lambda **kwargs: inputs)
+    kwargs = dict(snapshot_id=old.snapshot_id, cell_key=old.cell_key, assessment_date=old.assessment_date,
+                  forest_build_version=old.forest_build.version, terrain_build_version=old.terrain_build.version)
+    first = calculate_and_publish_estimates(**kwargs)
+    assert first.created is True
+    assert calculate_and_publish_estimates(**kwargs).created is False
+    inputs = {**inputs, "cells": {str(cell.id): [0.0] * 5}}
+    second = calculate_and_publish_estimates(**kwargs)
+    assert second.created is True
+    assert second.update.id != first.update.id
+
+    def detail(update):
+        response = Client().get(f"/api/v1/areas/{square_id}",
+                                {"target_date": "2026-10-12", "update_id": str(update.public_id)})
+        assert response.status_code == 200
+        return response.json()
+
+    original = detail(first.update)
+    changed = detail(second.update)
+    facts = {fact["role_key"]: fact for fact in original["facts"]}
+    assert facts["host_beech"]["actual_value"] == 0.8
+    assert facts["host_beech"]["source_id"] == "jrc:first"
+    assert facts["host_beech"]["period_start"] == "2006-01-01"
+    assert facts["host_beech"]["source_metadata"]["resolution_m"] == 1000
+    assert facts["host_tree_factor"]["actual_value"] == 0.9
+    assert original["estimate"]["whole_percentage"] > changed["estimate"]["whole_percentage"]
+    assert detail(old)["estimate"]["whole_percentage"] == 53
+    assert all(not fact["role_key"].startswith("host_") for fact in detail(old)["facts"])
