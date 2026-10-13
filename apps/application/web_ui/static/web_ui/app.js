@@ -1868,9 +1868,18 @@
       actions.className = "d-actions";
       const save = document.createElement("button");
       save.type = "button";
-      save.className = "btn btn-secondary";
+      save.className = "btn btn-secondary favorite-icon";
       save.dataset.save = "";
-      save.textContent = labels.save_favorite;
+      save.setAttribute("aria-label", labels.save_favorite);
+      save.title = labels.save_favorite;
+      const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      icon.setAttribute("class", "icon");
+      icon.setAttribute("viewBox", "0 0 24 24");
+      icon.setAttribute("aria-hidden", "true");
+      const star = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      star.setAttribute("d", "M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.2 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z");
+      icon.append(star);
+      save.append(icon);
       save.addEventListener("click", (event) => {
         favoriteTrigger = event.currentTarget;
         openFavoriteEditor();

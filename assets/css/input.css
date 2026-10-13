@@ -397,9 +397,10 @@ body:has(.app) {
 .datecol .date-fold {
   display: inline-flex;
   flex-shrink: 0;
+  transform: rotate(180deg);
 }
 .datecol.is-folded .date-fold {
-  transform: rotate(180deg);
+  transform: none;
 }
 .datecol.is-folded .date-head {
   border-bottom: 0;
@@ -809,6 +810,15 @@ body:has(.app) {
 .fold-btn {
   display: none;
 }
+[data-fold="legend"][aria-expanded="true"],
+[data-fold="layers"][aria-expanded="false"] {
+  transform: rotate(180deg);
+}
+.panel.is-folded .panel-head {
+  border-bottom: 0;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
 .choice {
   align-items: center;
   background: var(--parchment-100);
@@ -1067,6 +1077,11 @@ body:has(.app) {
 .d-actions .btn {
   padding: 0 var(--space-2);
 }
+.d-actions .favorite-icon {
+  width: var(--touch);
+  height: var(--touch);
+  padding: 0;
+}
 .d-more {
   margin-top: var(--space-2);
 }
@@ -1185,6 +1200,7 @@ body:has(.app) {
   display: none;
 }
 .sizerow {
+  display: none;
   margin-top: var(--space-2);
 }
 .toast {
@@ -1880,12 +1896,14 @@ body:has(.app) ul {
     order: 6;
   }
   .details .sizerow {
+    display: flex;
+    gap: var(--space-2);
     order: 4;
   }
   .details[data-size="short"] .d-actions {
     display: none;
   }
-  .details[data-size="short"] .sizerow .btn:last-child {
+  .details[data-size="short"] .sizerow .btn:not([data-sheet-height]) {
     display: none;
   }
   .details[data-size="short"] .d-more {

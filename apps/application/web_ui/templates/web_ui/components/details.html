@@ -9,7 +9,9 @@
   </div>
 
   <div class="d-actions">
-    <button class="btn btn-secondary" type="button" data-save>{{ labels.save_favorite }}</button>
+    <button class="btn btn-secondary favorite-icon" type="button" data-save aria-label="{{ labels.save_favorite }}" title="{{ labels.save_favorite }}">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.2 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>
+    </button>
     <button class="btn btn-primary" type="button" data-navigation>{{ labels.open_navigation }}</button>
   </div>
 

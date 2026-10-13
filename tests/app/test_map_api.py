@@ -14,8 +14,10 @@ from uuid import uuid4
 import pytest
 from django.contrib.gis.geos import MultiPolygon, Polygon
 from django.core.cache import cache
+from django.db import connection
 from django.test import Client
 from django.test import override_settings
+from django.test.utils import CaptureQueriesContext
 from shapely import transform as shapely_transform
 from shapely.wkb import loads as load_wkb
 
@@ -873,12 +875,16 @@ def test_squares_route_uses_newest_publication_and_preserves_all_square_states(
         client = Client()
         url = f"/api/v1/squares?bbox={map_fixture['bbox']}&target_date={MAP_DATE.isoformat()}"
         response = client.get(url, REMOTE_ADDR="198.51.100.7")
-        repeated_response = client.get(url, REMOTE_ADDR="198.51.100.7")
+        with CaptureQueriesContext(connection) as cached_queries:
+            repeated_response = client.get(url, REMOTE_ADDR="198.51.100.7")
 
     assert response.status_code == 200
     assert repeated_response.status_code == 200
     assert response["Cache-Control"] == "no-cache"
     assert response["ETag"] == repeated_response["ETag"]
+    assert not any(
+        EstimateResult._meta.db_table in query["sql"] for query in cached_queries
+    )
     assert len(requester_calls) == 2
     assert requester_calls[0]["visitor_id"] == "198.51.100.7"
     assert requester_calls[0]["assessment_date"] == MAP_DATE
