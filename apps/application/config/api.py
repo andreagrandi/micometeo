@@ -8,6 +8,7 @@ from ninja import NinjaAPI, Schema, Status
 
 from area_api.router import router as area_router
 from map_api.api import router as map_router
+from place_search.api import router as place_search_router
 
 
 class HealthResponse(Schema):
@@ -34,3 +35,4 @@ def health(request: HttpRequest) -> HealthResponse | Status[HealthResponse]:
 
 api.add_router("", area_router)
 api.add_router("", map_router)
+api.add_router("", place_search_router)

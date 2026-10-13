@@ -5,6 +5,12 @@
   const languageButtons = [...document.querySelectorAll("button[data-language]")];
   const locale = () => document.documentElement.lang === "it" ? "it-IT" : "en-GB";
   let liveMapController = null;
+  let selectionGeneration = 0;
+
+  function beginSelectionIntent() {
+    selectionGeneration += 1;
+    return selectionGeneration;
+  }
 
   function date(value) {
     return new Intl.DateTimeFormat(locale(), {
@@ -143,14 +149,73 @@
   }
 
   const params = new URLSearchParams(window.location.search);
+  const geolocationStateKey = "micometeo.currentGeolocation";
+  const locationQueryKeys = [
+    "square",
+    "center",
+    "zoom",
+    "point_latitude",
+    "point_longitude",
+    "representative_latitude",
+    "representative_longitude",
+    "point_source",
+  ];
+  const oldGeolocationUrl = params.get("point_source") === "geolocation";
+  const hasExplicitLocationUrl = !oldGeolocationUrl && locationQueryKeys.some((key) => params.has(key));
+
+  function readGeolocationState() {
+    if (hasExplicitLocationUrl) return null;
+    try {
+      const stored = JSON.parse(window.sessionStorage.getItem(geolocationStateKey) || "null");
+      if (stored?.source !== "geolocation" || !stored.point) return null;
+      if (![stored.point.latitude, stored.point.longitude].every(Number.isFinite)) return null;
+      return stored;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function clearStoredGeolocation() {
+    try {
+      window.sessionStorage.removeItem(geolocationStateKey);
+    } catch (error) {
+      return;
+    }
+  }
+
+  function removeLocationQueryState() {
+    const next = new URL(window.location.href);
+    let changed = false;
+    locationQueryKeys.forEach((key) => {
+      if (next.searchParams.has(key)) {
+        next.searchParams.delete(key);
+        changed = true;
+      }
+    });
+    if (changed) window.history.replaceState({}, "", next);
+  }
+
+  if (oldGeolocationUrl) removeLocationQueryState();
+  const storedGeolocation = readGeolocationState();
+  const initialPoint = storedGeolocation?.point || {
+    latitude: Number(oldGeolocationUrl ? "NaN" : params.get("point_latitude") || root.dataset.pointLatitude || "NaN"),
+    longitude: Number(oldGeolocationUrl ? "NaN" : params.get("point_longitude") || root.dataset.pointLongitude || "NaN"),
+  };
+  const initialRepresentative = storedGeolocation?.representative || {
+    latitude: Number(oldGeolocationUrl ? "NaN" : params.get("representative_latitude") || root.dataset.representativeLatitude || "NaN"),
+    longitude: Number(oldGeolocationUrl ? "NaN" : params.get("representative_longitude") || root.dataset.representativeLongitude || "NaN"),
+  };
   const state = {
-    square: params.get("square") || root.dataset.selectedSquare || "",
+    square: storedGeolocation?.square || (oldGeolocationUrl ? "" : params.get("square") || root.dataset.selectedSquare || ""),
     date: root.dataset.targetDate || params.get("date") || "",
     resultId: params.get("result") || root.dataset.resultId || "",
     assessment: root.dataset.assessmentDate || params.get("assessment") || "",
     updateId: params.get("update") || root.dataset.updateId || "",
-    center: params.get("center") || root.dataset.mapCenter || "",
-    zoom: Number(params.get("zoom") || root.dataset.mapZoom || "11"),
+    center: storedGeolocation?.center || (oldGeolocationUrl ? "" : params.get("center") || root.dataset.mapCenter || ""),
+    zoom: Number(storedGeolocation?.zoom || (oldGeolocationUrl ? root.dataset.mapZoom || "11" : params.get("zoom") || root.dataset.mapZoom || "11")),
+    point: initialPoint,
+    representative: initialRepresentative,
+    pointSource: storedGeolocation ? "geolocation" : (oldGeolocationUrl ? "" : params.get("point_source") || root.dataset.selectionSource || ""),
     panel: params.get("panel") || "",
     details: params.has("details") ? params.get("details") === "true" : root.dataset.detailsOpen === "true",
     sheetHeight: params.get("sheet") || "short",
@@ -167,6 +232,12 @@
   state.opacity = Number.isFinite(state.opacity) ? Math.min(100, Math.max(0, state.opacity)) : 60;
   state.zoom = Number.isFinite(state.zoom) ? Math.min(19, Math.max(1, state.zoom)) : 11;
   if (!["layers", "legend"].includes(state.panel)) state.panel = "";
+  if (!Number.isFinite(state.point.latitude) || !Number.isFinite(state.point.longitude)) {
+    state.point = null;
+  }
+  if (!Number.isFinite(state.representative.latitude) || !Number.isFinite(state.representative.longitude)) {
+    state.representative = null;
+  }
 
   const toastTarget = document.querySelector("[data-toast]");
   let toastTimer;
@@ -178,17 +249,379 @@
     toastTimer = window.setTimeout(() => toastTarget.classList.remove("is-visible"), 2600);
   }
 
+  function createPlaceSearch() {
+    const form = document.querySelector("[data-search-form]");
+    const input = document.querySelector("[data-place-search]");
+    const resultsBox = document.querySelector("[data-search-results]");
+    const status = document.querySelector("[data-search-status]");
+    const locationButton = document.querySelector("[data-location]");
+    if (!form || !input || !resultsBox) return null;
+
+    let generation = 0;
+    let timer = null;
+    let request = null;
+    let items = [];
+    let activeIndex = -1;
+    const searchCache = new Map();
+    const normalizeSearch = (value) => value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
+
+    function rememberSearch(key, results) {
+      searchCache.delete(key);
+      searchCache.set(key, { results, expires: Date.now() + (results.length ? 1_800_000 : 60_000) });
+      while (searchCache.size > 100) searchCache.delete(searchCache.keys().next().value);
+    }
+
+    function cachedSuggestions(query, language) {
+      const found = new Map();
+      for (const [key, entry] of searchCache) {
+        if (entry.expires <= Date.now()) {
+          searchCache.delete(key);
+          continue;
+        }
+        if (!key.startsWith(`${language}|`)) continue;
+        for (const item of entry.results) {
+          const name = normalizeSearch(item.name || "");
+          if (name.startsWith(query) || name.split(" ").some((word) => word.startsWith(query))) {
+            found.set(JSON.stringify([item.name, item.context, item.latitude, item.longitude]), item);
+          }
+        }
+      }
+      return [...found.values()].slice(0, 8);
+    }
+
+    function appendAttribution() {
+      const attribution = document.createElement("div");
+      attribution.className = "search-attribution";
+      attribution.setAttribute("role", "note");
+      attribution.append(`${labels.search_attribution || "Place names from"} `);
+      [
+        ["Photon", "https://photon.komoot.io/"],
+        ["OpenStreetMap", "https://www.openstreetmap.org/copyright"],
+      ].forEach(([text, url], index) => {
+        if (index) attribution.append(" · ");
+        const link = document.createElement("a");
+        link.href = url;
+        link.rel = "noreferrer";
+        link.textContent = text;
+        attribution.append(link);
+      });
+      resultsBox.append(attribution);
+    }
+
+    function announce(message) {
+      if (status) status.textContent = message || "";
+    }
+
+    function hideResults() {
+      resultsBox.hidden = true;
+      input.setAttribute("aria-expanded", "false");
+      input.removeAttribute("aria-activedescendant");
+      activeIndex = -1;
+    }
+
+    function cancelSearch() {
+      window.clearTimeout(timer);
+      timer = null;
+      request?.abort();
+      request = null;
+      generation += 1;
+      items = [];
+      activeIndex = -1;
+      resultsBox.replaceChildren();
+    }
+
+    function closeResults() {
+      cancelSearch();
+      hideResults();
+    }
+
+    function setActive(index) {
+      activeIndex = items.length ? (index + items.length) % items.length : -1;
+      const options = [...resultsBox.querySelectorAll("[role=option]")];
+      options.forEach((option, optionIndex) => {
+        const selected = optionIndex === activeIndex;
+        option.setAttribute("aria-selected", String(selected));
+      });
+      if (activeIndex < 0) {
+        input.removeAttribute("aria-activedescendant");
+        return;
+      }
+      const option = options[activeIndex];
+      if (!option) return;
+      input.setAttribute("aria-activedescendant", option.id);
+      option.scrollIntoView({ block: "nearest" });
+    }
+
+    function renderResults(nextItems) {
+      activeIndex = -1;
+      input.removeAttribute("aria-activedescendant");
+      items = Array.isArray(nextItems) ? nextItems : [];
+      resultsBox.replaceChildren();
+      if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "result-empty";
+        empty.setAttribute("role", "option");
+        empty.setAttribute("aria-disabled", "true");
+        const title = document.createElement("strong");
+        title.textContent = labels.search_no_results;
+        empty.append(title);
+        resultsBox.append(empty);
+        appendAttribution();
+        resultsBox.hidden = false;
+        input.setAttribute("aria-expanded", "true");
+        announce(labels.search_no_results);
+        return;
+      }
+      items.forEach((item, index) => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.className = "result";
+        option.id = `place-result-${generation}-${index}`;
+        option.setAttribute("role", "option");
+        option.setAttribute("aria-selected", "false");
+        const name = document.createElement("span");
+        name.className = "result-name";
+        name.textContent = item.name || "";
+        option.append(name);
+        if (item.context) {
+          const context = document.createElement("span");
+          context.className = "result-context";
+          context.textContent = item.context;
+          option.append(context);
+        }
+        option.addEventListener("click", () => choose(item));
+        resultsBox.append(option);
+      });
+      appendAttribution();
+      resultsBox.hidden = false;
+      input.setAttribute("aria-expanded", "true");
+      announce(`${items.length} ${labels.search_results}`);
+    }
+
+    function renderMessage(message) {
+      items = [];
+      resultsBox.replaceChildren();
+      const error = document.createElement("div");
+      error.className = "result-error";
+      error.setAttribute("role", "option");
+      error.setAttribute("aria-disabled", "true");
+      error.textContent = message;
+      resultsBox.append(error);
+      appendAttribution();
+      resultsBox.hidden = false;
+      input.setAttribute("aria-expanded", "true");
+      announce(message);
+    }
+
+    function errorMessage(body, response) {
+      if (response.status === 429 || body?.code === "throttled") return labels.search_throttled;
+      if (response.status === 504 || body?.code === "provider_timeout") return labels.search_timeout;
+      return labels.search_error;
+    }
+
+    async function search(query, immediate = false) {
+      cancelSearch();
+      hideResults();
+      const normalized = normalizeSearch(query);
+      const language = document.documentElement.lang || "it";
+      const cacheKey = `${language}|${normalized}`;
+      const currentGeneration = generation;
+      const minimum = 2;
+      if (normalized.length < minimum) {
+        announce(normalized ? labels.search_min_length : "");
+        return;
+      }
+      const cached = searchCache.get(cacheKey);
+      if (cached && cached.expires > Date.now()) {
+        renderResults(cached.results);
+        return;
+      }
+      let preview = cachedSuggestions(normalized, language);
+      if (preview.length) renderResults(preview);
+      const run = async () => {
+        const controller = new AbortController();
+        request = controller;
+        if (!preview.length) announce(labels.search_loading);
+        try {
+          const queryString = new URLSearchParams({
+            q: query.trim(),
+            lang: language,
+          }).toString();
+          const cachedResponse = await fetch(`/api/v1/places/search?${queryString}&cached_only=1`, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          const cachedBody = await cachedResponse.json().catch(() => ({}));
+          if (currentGeneration !== generation || controller.signal.aborted) return;
+          if (cachedResponse.ok && cachedBody.complete === true) {
+            const results = Array.isArray(cachedBody.results) ? cachedBody.results : [];
+            rememberSearch(cacheKey, results);
+            renderResults(results);
+            return;
+          }
+          if (cachedResponse.ok && cachedBody.results?.length) {
+            preview = cachedBody.results;
+            renderResults(preview);
+          }
+          const response = await fetch(`/api/v1/places/search?${queryString}`, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          const body = await response.json().catch(() => ({}));
+          if (currentGeneration !== generation || controller.signal.aborted) return;
+          if (!response.ok) {
+            if (preview.length) announce(errorMessage(body, response));
+            else renderMessage(errorMessage(body, response));
+            return;
+          }
+          const results = Array.isArray(body.results) ? body.results : [];
+          rememberSearch(cacheKey, results);
+          renderResults(results);
+        } catch (error) {
+          if (error.name === "AbortError" || currentGeneration !== generation) return;
+          if (preview.length) announce(labels.search_error);
+          else renderMessage(labels.search_error);
+        } finally {
+          if (currentGeneration === generation) request = null;
+        }
+      };
+      if (immediate) {
+        await run();
+      } else {
+        timer = window.setTimeout(run, 220);
+      }
+    }
+
+    function choose(item) {
+      if (!item || !Number.isFinite(Number(item.latitude)) || !Number.isFinite(Number(item.longitude))) return;
+      beginSelectionIntent();
+      clearStoredGeolocation();
+      input.value = item.name || input.value;
+      closeResults();
+      announce(item.name || "");
+      if (liveMapController?.selectDestination) {
+        liveMapController.selectDestination({
+          latitude: Number(item.latitude),
+          longitude: Number(item.longitude),
+          source: "search",
+        });
+      } else {
+        window.__micometeoPendingDestination = {
+          latitude: Number(item.latitude),
+          longitude: Number(item.longitude),
+          source: "search",
+        };
+      }
+    }
+
+    function showLocationError(message) {
+      announce(message);
+      toast(message);
+      locationButton?.removeAttribute("aria-busy");
+    }
+
+    function locationError(error, intent) {
+      if (intent !== selectionGeneration) {
+        locationButton?.removeAttribute("aria-busy");
+        return;
+      }
+      const messages = {
+        1: labels.location_denied_detail,
+        2: labels.location_unavailable,
+        3: labels.location_timeout,
+      };
+      showLocationError(messages[error?.code] || labels.location_unavailable);
+    }
+
+    function locate() {
+      const intent = beginSelectionIntent();
+      if (!window.isSecureContext && !["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname)) {
+        showLocationError(labels.location_insecure);
+        return;
+      }
+      if (!navigator.geolocation?.getCurrentPosition) {
+        showLocationError(labels.location_unsupported);
+        return;
+      }
+      locationButton?.setAttribute("aria-busy", "true");
+      announce(labels.location_loading);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          if (intent !== selectionGeneration) {
+            locationButton?.removeAttribute("aria-busy");
+            return;
+          }
+          locationButton?.removeAttribute("aria-busy");
+          const point = {
+            latitude: Number(position.coords.latitude),
+            longitude: Number(position.coords.longitude),
+            source: "geolocation",
+          };
+          if (liveMapController?.selectDestination) {
+            liveMapController.selectDestination(point);
+          } else {
+            window.__micometeoPendingDestination = point;
+          }
+          announce(labels.location);
+        },
+        (error) => locationError(error, intent),
+        { enableHighAccuracy: false, maximumAge: 300_000, timeout: 10_000 },
+      );
+    }
+
+    input.addEventListener("input", () => search(input.value));
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setActive(activeIndex + 1);
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setActive(activeIndex - 1);
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        if (items[activeIndex]) choose(items[activeIndex]);
+        else search(input.value, true);
+      } else if (event.key === "Escape") {
+        closeResults();
+      }
+    });
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (items[activeIndex]) choose(items[activeIndex]);
+      else search(input.value, true);
+    });
+    locationButton?.addEventListener("click", locate);
+    document.addEventListener("click", (event) => {
+      if (!form.contains(event.target)) closeResults();
+    });
+    return { search, choose, locate, closeResults };
+  }
+
   function persistState() {
     root.classList.toggle("has-overlay", state.details || Boolean(state.panel));
     const next = new URL(window.location.href);
+    const geolocationSelection = state.pointSource === "geolocation" && state.point;
+    if (geolocationSelection) {
+      try {
+        window.sessionStorage.setItem(geolocationStateKey, JSON.stringify({
+          source: "geolocation",
+          point: state.point,
+          representative: state.representative,
+          square: state.square,
+          center: state.center,
+          zoom: state.zoom,
+        }));
+      } catch (error) {
+        // Private browsing can disable session storage. The in-memory state still works.
+      }
+    } else {
+      clearStoredGeolocation();
+    }
     const values = {
-      square: state.square,
       date: state.date,
       result: state.resultId,
       assessment: state.assessment,
       update: state.updateId,
-      center: state.center,
-      zoom: String(state.zoom),
       panel: state.panel,
       details: String(state.details),
       sheet: state.sheetHeight,
@@ -200,6 +633,19 @@
       foldedDates: String(state.foldedDates),
       legendMore: String(state.legendMore),
     };
+    if (!geolocationSelection) {
+      Object.assign(values, {
+        square: state.square,
+        center: state.center,
+        zoom: String(state.zoom),
+        point_latitude: state.point ? String(state.point.latitude) : "",
+        point_longitude: state.point ? String(state.point.longitude) : "",
+        representative_latitude: state.representative ? String(state.representative.latitude) : "",
+        representative_longitude: state.representative ? String(state.representative.longitude) : "",
+        point_source: state.pointSource,
+      });
+    }
+    if (geolocationSelection) locationQueryKeys.forEach((key) => next.searchParams.delete(key));
     Object.entries(values).forEach(([key, value]) => {
       if (value) next.searchParams.set(key, value);
       else next.searchParams.delete(key);
@@ -213,9 +659,30 @@
       resultId: state.resultId,
       mapCenter: state.center,
       mapZoom: String(state.zoom),
+      pointLatitude: state.point ? String(state.point.latitude) : "",
+      pointLongitude: state.point ? String(state.point.longitude) : "",
+      representativeLatitude: state.representative ? String(state.representative.latitude) : "",
+      representativeLongitude: state.representative ? String(state.representative.longitude) : "",
+      selectionSource: state.pointSource,
       detailsOpen: String(state.details),
       panel: state.panel,
     });
+    window.dispatchEvent(new CustomEvent("micometeo:selectionchange", {
+      detail: {
+        point: state.point,
+        representative: state.representative,
+        destination: state.point || state.representative,
+        square: state.square || null,
+        source: state.pointSource || null,
+        mapCentre: state.center ? parseMapCenter(state.center) : null,
+      },
+    }));
+  }
+
+  function parseMapCenter(value) {
+    const values = String(value || "").split(",").map(Number);
+    if (values.length !== 2 || values.some((part) => !Number.isFinite(part))) return null;
+    return { latitude: values[0], longitude: values[1] };
   }
 
   function setDate(button) {
@@ -365,8 +832,6 @@
       document.getElementById("details-heading")?.focus();
     } else toast(labels.later_map);
   }));
-  document.querySelector("[data-search-form]")?.addEventListener("submit", (event) => { event.preventDefault(); toast(labels.later_search); });
-  document.querySelector("[data-location]")?.addEventListener("click", () => toast(labels.later_search));
   document.querySelector("[data-favourites]")?.addEventListener("click", () => toast(labels.later_favorites));
   document.querySelector("[data-save]")?.addEventListener("click", () => toast(labels.later_favorites));
   document.querySelector("[data-navigation]")?.addEventListener("click", () => toast(labels.later_navigation));
@@ -439,6 +904,12 @@
       pendingSelectionId: null,
       pendingSelectionUpdateId: null,
       pendingSelectionDetails: false,
+      pendingSelectionPoint: null,
+      pendingSelectionRepresentative: null,
+      pendingSelectionSource: "",
+      pendingDestination: null,
+      destinationRequest: null,
+      destinationGeneration: 0,
       debounce: null,
       generation: 0,
       pendingPolls: 0,
@@ -469,6 +940,15 @@
       initialising: false,
       backgroundKey: state.background,
     };
+
+    function clearPendingSelection() {
+      stateData.pendingSelectionId = null;
+      stateData.pendingSelectionUpdateId = null;
+      stateData.pendingSelectionDetails = false;
+      stateData.pendingSelectionPoint = null;
+      stateData.pendingSelectionRepresentative = null;
+      stateData.pendingSelectionSource = "";
+    }
 
     const squareLayers = [
       "micometeo-square-estimates",
@@ -599,6 +1079,9 @@
         stateData.pendingSelectionId = state.square;
         stateData.pendingSelectionUpdateId = state.updateId;
         stateData.pendingSelectionDetails = state.details;
+        stateData.pendingSelectionPoint = state.point;
+        stateData.pendingSelectionRepresentative = state.representative;
+        stateData.pendingSelectionSource = state.pointSource;
         state.square = "";
         state.updateId = "";
         state.details = false;
@@ -1005,7 +1488,7 @@
       return details;
     }
 
-    function showDetails(feature) {
+    function showDetails(feature, pointSelection = null) {
       const properties = feature.properties || {};
       const details = createLiveDetails();
       if (!details) return;
@@ -1068,6 +1551,19 @@
       state.square = properties.cell_id || feature.id || "";
       state.updateId = properties.update_id || "";
       state.assessment = properties.assessment_date || state.assessment;
+      if (pointSelection?.source === "centre") {
+        state.point = null;
+        state.pointSource = "centre";
+      } else if (pointSelection?.point) {
+        state.point = pointSelection.point;
+        state.pointSource = pointSelection.source || state.pointSource || "map";
+      }
+      if (pointSelection?.source === "map" || pointSelection?.source === "centre" || !state.representative) {
+        const representative = featureCenter(feature);
+        if (representative) {
+          state.representative = { latitude: representative[1], longitude: representative[0] };
+        }
+      }
       root.classList.add("details-open");
       document.querySelector("#main")?.classList.add("details-open");
       document.getElementById("centre-btn")?.removeAttribute("hidden");
@@ -1076,6 +1572,8 @@
     }
 
     function clearSelection() {
+      beginSelectionIntent();
+      clearStoredGeolocation();
       stateData.weatherLabel?.remove();
       stateData.weatherLabel = null;
       stateData.selected = null;
@@ -1084,9 +1582,7 @@
       stateData.estimateRequest = null;
       stateData.estimateFeature = null;
       clearDateEstimates();
-      stateData.pendingSelectionId = null;
-      stateData.pendingSelectionUpdateId = null;
-      stateData.pendingSelectionDetails = false;
+      clearPendingSelection();
       emptySource("selected-square");
       emptySource("weather-area");
       const details = document.querySelector("aside[data-live-details]");
@@ -1094,13 +1590,16 @@
       state.details = false;
       state.square = "";
       state.updateId = "";
+      state.point = null;
+      state.representative = null;
+      state.pointSource = "";
       root.classList.remove("details-open");
       document.querySelector("#main")?.classList.remove("details-open");
       persistState();
       liveMapController?.resize();
     }
 
-    function selectFeature(feature) {
+    function selectFeature(feature, pointSelection = null) {
       if (feature.properties?.overview) {
         const ring = feature.geometry.coordinates[0];
         const west = Math.min(...ring.map(point => point[0]));
@@ -1110,11 +1609,18 @@
         stateData.map.fitBounds([[west, south], [east, north]], { padding: 100, maxZoom: 12 });
         return;
       }
+      if (pointSelection?.source === "map" || pointSelection?.source === "centre") {
+        beginSelectionIntent();
+        clearStoredGeolocation();
+        stateData.destinationGeneration += 1;
+        stateData.destinationRequest?.abort();
+        stateData.destinationRequest = null;
+      }
       const selection = plainFeature(feature);
       if (!selection?.geometry) return;
       stateData.selected = selection;
       drawSelection(selection);
-      showDetails(selection);
+      showDetails(selection, pointSelection);
       loadSelectedEstimates(selection);
     }
 
@@ -1204,6 +1710,24 @@
       return { ...data, features };
     }
 
+    function keepDestinationWithoutFeature(selectedId, selectedUpdateId) {
+      const hasDestination = Boolean(state.point || state.representative || state.pointSource);
+      if (!hasDestination) {
+        clearPendingSelection();
+        clearSelection();
+        return false;
+      }
+      clearVisibleSelection();
+      state.details = false;
+      state.square = selectedId;
+      state.updateId = selectedUpdateId || "";
+      clearPendingSelection();
+      root.classList.remove("details-open");
+      document.querySelector("#main")?.classList.remove("details-open");
+      persistState();
+      return true;
+    }
+
     function handleSelectionAfterData(data) {
       const selectedId = state.square || stateData.pendingSelectionId;
       if (!selectedId) return "";
@@ -1212,27 +1736,28 @@
       if (!feature) {
         // A selected area remains selected when it leaves the viewport.
         if (stateData.selected?.properties?.target_date === state.date && state.details) return "";
-        stateData.pendingSelectionId = null;
-        stateData.pendingSelectionUpdateId = null;
-        stateData.pendingSelectionDetails = false;
-        clearSelection();
+        keepDestinationWithoutFeature(selectedId, selectedUpdateId);
         return "";
       }
       if (feature.properties?.state === "expired" || (selectedUpdateId && feature.properties?.update_id && feature.properties.update_id !== selectedUpdateId)) {
-        clearSelection();
+        keepDestinationWithoutFeature(selectedId, selectedUpdateId);
         return labels.map_expired;
       }
-      stateData.pendingSelectionId = null;
-      stateData.pendingSelectionUpdateId = null;
       state.square = selectedId;
       state.updateId = feature.properties?.update_id || selectedUpdateId || "";
       state.details = state.details || stateData.pendingSelectionDetails;
-      stateData.pendingSelectionDetails = false;
+      state.point = stateData.pendingSelectionPoint || state.point;
+      state.representative = stateData.pendingSelectionRepresentative || state.representative;
+      state.pointSource = stateData.pendingSelectionSource || state.pointSource;
+      clearPendingSelection();
       persistState();
       stateData.selected = feature;
       drawSelection(feature);
       loadSelectedEstimates(feature);
-      if (state.details) showDetails(feature);
+      if (state.details) showDetails(feature, {
+        point: state.point,
+        source: state.pointSource,
+      });
       return "";
     }
 
@@ -1368,7 +1893,12 @@
       });
       listen("click", (event) => {
         const features = map.queryRenderedFeatures(event.point, { layers: ["micometeo-square-estimates", "micometeo-square-missing", "micometeo-square-noforest", "micometeo-noforest-line", "micometeo-missing-line"] });
-        if (features[0]) selectFeature(features[0]);
+        if (features[0] && event.lngLat) {
+          selectFeature(features[0], {
+            point: { latitude: event.lngLat.lat, longitude: event.lngLat.lng },
+            source: "map",
+          });
+        }
       });
       listen("mouseenter", () => { map.getCanvas().style.cursor = "pointer"; }, "micometeo-square-estimates");
       listen("mouseleave", () => { map.getCanvas().style.cursor = ""; }, "micometeo-square-estimates");
@@ -1440,6 +1970,11 @@
           stateData.ready = true;
           syncMapState();
           scheduleFetch(0);
+          if (stateData.pendingDestination) {
+            const destination = stateData.pendingDestination;
+            stateData.pendingDestination = null;
+            selectDestination(destination);
+          }
         });
         const attribution = document.querySelector("[data-map-attribution]");
         if (attribution) {
@@ -1515,6 +2050,85 @@
       }
     }
 
+    async function selectDestination(destination) {
+      const latitude = Number(destination?.latitude);
+      const longitude = Number(destination?.longitude);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)
+        || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return false;
+      const point = { latitude, longitude };
+      const source = destination.source || "point";
+      if (source !== "geolocation") clearStoredGeolocation();
+      const destinationGeneration = ++stateData.destinationGeneration;
+      stateData.destinationRequest?.abort();
+      const destinationController = new AbortController();
+      stateData.destinationRequest = destinationController;
+      clearVisibleSelection();
+      state.square = "";
+      state.updateId = "";
+      state.details = false;
+      state.representative = null;
+      clearPendingSelection();
+      root.classList.remove("details-open");
+      document.querySelector("#main")?.classList.remove("details-open");
+      state.point = point;
+      state.pointSource = source;
+      stateData.pendingDestination = !stateData.map || !stateData.ready
+        ? { latitude, longitude, source }
+        : null;
+      persistState();
+      if (!stateData.map || !stateData.ready) return false;
+      let response;
+      let body;
+      try {
+        ({ response, body } = await fetchJson("/api/v1/places/resolve", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ latitude, longitude, source }),
+          signal: destinationController.signal,
+        }));
+      } catch (error) {
+        if (error.name === "AbortError" || destinationGeneration !== stateData.destinationGeneration) return false;
+        message(labels.search_error, "error");
+        return false;
+      } finally {
+        if (destinationGeneration === stateData.destinationGeneration) {
+          stateData.destinationRequest = null;
+        }
+      }
+      if (destinationGeneration !== stateData.destinationGeneration || destinationController.signal.aborted) return false;
+      if (!response.ok) {
+        state.square = "";
+        state.details = false;
+        const errorMessage = body?.code === "outside_italy"
+          ? labels.outside_italy
+          : body?.code === "outside_configured_coverage"
+            ? labels.outside_coverage
+            : labels.search_error;
+        message(errorMessage, "error");
+        persistState();
+        return false;
+      }
+      state.square = body.square_id || "";
+      state.updateId = "";
+      state.representative = body.representative || null;
+      state.details = Boolean(state.square);
+      persistState();
+      const centre = [longitude, latitude];
+      const targetZoom = Math.max(12, Math.min(18, stateData.map.getZoom()));
+      const currentCentre = stateData.map.getCenter();
+      const sameView = currentCentre
+        && Math.abs(currentCentre.lng - longitude) < 0.000001
+        && Math.abs(currentCentre.lat - latitude) < 0.000001
+        && Math.abs(stateData.map.getZoom() - targetZoom) < 0.001;
+      stateData.map.easeTo({ center: centre, zoom: targetZoom });
+      if (sameView || !stateData.map.isMoving()) scheduleFetch(0);
+      return true;
+    }
+
     const controller = {
       zoom(delta) {
         if (!stateData.map) return;
@@ -1525,6 +2139,7 @@
       },
       setOverlay(value) { applyOverlay(value); },
       setOpacity(value) { applyOpacity(value); },
+      selectDestination,
       centerSelection() {
         const map = stateData.map;
         if (!map || !stateData.squaresRendered) return false;
@@ -1533,7 +2148,8 @@
           layers: ["micometeo-square-estimates", "micometeo-square-missing", "micometeo-square-noforest", "micometeo-noforest-line", "micometeo-missing-line"],
         });
         if (!features[0]) return false;
-        selectFeature(features[0]);
+        const centre = featureCenter(features[0]);
+        selectFeature(features[0], { source: "centre" });
         return true;
       },
       resize() {
@@ -1620,5 +2236,11 @@
     return controller;
   }
 
+  const placeSearch = createPlaceSearch();
   liveMapController = createLiveMapController();
+  if (window.__micometeoPendingDestination && liveMapController?.selectDestination) {
+    liveMapController.selectDestination(window.__micometeoPendingDestination);
+    delete window.__micometeoPendingDestination;
+  }
+  window.MicometeoPlaceSearch = placeSearch;
 })();
