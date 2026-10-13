@@ -7,6 +7,21 @@
   let liveMapController = null;
   let selectionGeneration = 0;
 
+  function buildGoogleMapsUrl(coordinates) {
+    if (!coordinates || typeof coordinates.latitude !== "number" || typeof coordinates.longitude !== "number") {
+      return null;
+    }
+    const { latitude, longitude } = coordinates;
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)
+      || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      return null;
+    }
+    const query = new URLSearchParams({ api: "1", query: `${latitude},${longitude}` });
+    return `https://www.google.com/maps/search/?${query.toString()}`;
+  }
+
+  window.MicometeoNavigation = { buildGoogleMapsUrl };
+
   function beginSelectionIntent() {
     selectionGeneration += 1;
     return selectionGeneration;
@@ -252,6 +267,39 @@
     toastTarget.classList.add("is-visible");
     window.clearTimeout(toastTimer);
     toastTimer = window.setTimeout(() => toastTarget.classList.remove("is-visible"), 2600);
+  }
+
+  function verifiedRepresentative() {
+    if (!state.representative
+      || state.detailRepresentativeSquare !== state.square
+      || state.detailRepresentativeDate !== state.date
+      || !state.detailRepresentativeUpdate
+      || String(state.detailRepresentativeUpdate) !== String(state.updateId || "")) {
+      return null;
+    }
+    return state.representative;
+  }
+
+  function navigationCoordinates() {
+    if (state.pointSource === "centre") return verifiedRepresentative();
+    return state.point || verifiedRepresentative();
+  }
+
+  function updateNavigationAction() {
+    const coordinates = navigationCoordinates();
+    const url = root.dataset.fixture ? null : buildGoogleMapsUrl(coordinates);
+    document.querySelectorAll("[data-navigation]").forEach((control) => {
+      control.disabled = !url;
+      control.dataset.navigationUrl = url || "";
+      control.setAttribute("aria-disabled", String(!url));
+    });
+    document.querySelectorAll("[data-navigation-status]").forEach((status) => {
+      const message = url && state.pointSource === "centre"
+        ? labels.navigation_representative
+        : url ? "" : labels.navigation_unavailable;
+      status.hidden = !message;
+      status.textContent = message;
+    });
   }
 
   function createPlaceSearch() {
@@ -682,6 +730,7 @@
       detailsOpen: String(state.details),
       panel: state.panel,
     });
+    updateNavigationAction();
     window.dispatchEvent(new CustomEvent("micometeo:selectionchange", {
       detail: {
         point: state.point,
@@ -1184,7 +1233,6 @@
     if (event.key !== window.MicometeoFavorites?.key || !favoriteDialog?.open) return;
     renderFavoriteList(window.MicometeoFavorites.read());
   });
-  document.querySelector("[data-navigation]")?.addEventListener("click", () => toast(labels.later_navigation));
   document.querySelectorAll("[data-try-again]").forEach((button) => button.addEventListener("click", () => window.location.reload()));
 
   document.addEventListener("keydown", (event) => {
@@ -1884,8 +1932,26 @@
         favoriteTrigger = event.currentTarget;
         openFavoriteEditor();
       });
-      actions.append(save);
-      details.append(actions);
+      const navigation = document.createElement("button");
+      navigation.type = "button";
+      navigation.className = "btn btn-primary";
+      navigation.dataset.navigation = "";
+      navigation.textContent = labels.open_navigation;
+      navigation.disabled = true;
+      navigation.addEventListener("click", () => {
+        const url = buildGoogleMapsUrl(navigationCoordinates());
+        if (!url) return;
+        window.open(url, "_blank", "noopener,noreferrer");
+      });
+      actions.append(save, navigation);
+      const status = document.createElement("p");
+      status.className = "navigation-status";
+      status.dataset.navigationStatus = "";
+      status.setAttribute("role", "status");
+      status.setAttribute("aria-live", "polite");
+      status.hidden = true;
+      details.append(actions, status);
+      updateNavigationAction();
     }
 
     function appendUniqueDetailLink(parent, className, url, text, seen) {
@@ -2740,8 +2806,8 @@
         stateData.detailData = body;
         state.updateId = String(body.selection.update_id || updateId);
         state.assessment = body.selection.assessment_date || state.assessment;
-        state.representative = body.selection.representative_coordinates || state.representative;
-        state.detailRepresentative = body.selection.representative_coordinates || state.representative;
+        state.representative = body.selection.representative_coordinates || null;
+        state.detailRepresentative = body.selection.representative_coordinates || null;
         state.detailRepresentativeSquare = squareId;
         state.detailRepresentativeDate = targetDate;
         state.detailRepresentativeUpdate = String(body.selection.update_id || updateId);
@@ -3425,7 +3491,7 @@
       state.point = { latitude: valid.latitude, longitude: valid.longitude };
       state.pointName = "";
       state.representative = null;
-      state.pointSource = "map";
+      state.pointSource = "centre";
       root.classList.remove("details-open");
       document.querySelector("#main")?.classList.remove("details-open");
       persistState();
