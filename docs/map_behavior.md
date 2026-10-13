@@ -97,6 +97,34 @@ Each request names the same square and stored update. Dates beyond an older
 update's forecast remain unavailable. A bounded cache avoids repeating
 successful requests for the same square and update.
 
+## External destination handoff
+
+The selected-area action opens a Google Maps URL with the validated latitude
+and longitude. The URL uses the documented HTTPS search format, so an Android
+or iOS device can hand it to an installed Google Maps app. Desktop browsers
+and devices without the app use the same URL in the browser. See [Google's
+Maps URL documentation](https://developers.google.com/maps/documentation/urls/get-started).
+
+A point selected from the map or place search keeps its exact coordinates when
+the map moves or the date changes. A grid selection waits for the current
+area response, then uses that response's representative point. The action
+stays disabled while that point is missing or does not match the selected
+square, date and update. The illustrative fixture keeps the action disabled
+because its coordinates are examples rather than a verified destination.
+
+The control opens the external URL only after activation. It does not request
+the visitor's location and does not start a route, record a journey, or claim
+that the point is a parking place, entrance or safe path.
+
+On 13 October 2026, a headed Chromium desktop check selected a grid area at
+the map centre and opened Google Maps at `44.131200,10.641300`. A headed WebKit
+phone-sized check in Italian selected a search point and opened Google Maps at
+`44.130500,10.640500`. Both checks moved the map after selection and retained
+the selected destination. The browser fallback reached the Google Maps place
+page after its consent screen. Neither check started a journey. These checks
+used controlled local map and API responses. They did not test native app
+opening on a physical Android or iOS device.
+
 ## Test scope
 
 Automated browser checks use controlled API responses to exercise failures,
@@ -286,5 +314,4 @@ or physical-phone acceptance.
 - #57 adds place search and current location.
 - #58 adds the complete selected-area explanations, weather and source details.
 - #59 adds favorites stored in the current browser.
-- #60 adds external navigation.
 - #62 covers sustained use on physical phones, including iPhone Safari.

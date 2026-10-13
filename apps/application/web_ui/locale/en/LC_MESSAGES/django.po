@@ -348,6 +348,12 @@ msgstr "The selected area's response was incomplete. Try again."
 
 msgid "This square has less than 10% forest. No estimate is available."
 msgstr "This square has less than 10% forest. No estimate is available."
+msgid "Open in Google Maps"
+msgstr "Open in Google Maps"
+msgid "A destination is not available for this selection yet."
+msgstr "A destination is not available for this selection yet."
+msgid "Google Maps will open at this area's representative point."
+msgstr "Google Maps will open at this area's representative point."
 
 msgid "The forest share is below the method minimum. No estimate is available."
 msgstr "The forest share is below the method minimum. No estimate is available."

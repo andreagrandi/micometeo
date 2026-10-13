@@ -1086,6 +1086,11 @@ body:has(.app) {
   height: var(--touch);
   padding: 0;
 }
+.navigation-status {
+  color: var(--earth-700);
+  font-size: var(--text-caption);
+  margin-top: var(--space-2);
+}
 .d-more {
   margin-top: var(--space-2);
 }

@@ -1395,16 +1395,9 @@ def test_delayed_overview_failure_cannot_replace_the_latest_map_state(
 def test_failed_squares_request_offers_retry_without_losing_the_selected_date(
     page: Page, base_url: str
 ) -> None:
-    requests = _install_map_routes(page, fail_first_squares_request=True)
-    page.set_viewport_size({"width": 1440, "height": 900})
-    page.goto(
-        url=f"{base_url}/map/?center=44.14,10.65&zoom=12",
-        wait_until="domcontentloaded",
-    )
-    page.wait_for_function(
-        "() => Boolean(window.MicometeoMap?.map && document.querySelector('#map canvas.maplibregl-canvas'))",
-        timeout=15_000,
-    )
+    _open_map(page=page, base_url=base_url)
+    expect(page.locator("[data-live-state='wait']")).to_contain_text("pending")
+    requests = _install_map_routes(page=page, fail_first_squares_request=True)
     page.locator(".date-btn[data-date='2026-10-16']").click()
     _wait_for_square_request(page, requests, "2026-10-16")
     expect(page.locator("[data-live-state='error']")).to_be_visible()
