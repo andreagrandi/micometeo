@@ -87,7 +87,7 @@ class WeatherDaily(ImmutableRecordMixin, models.Model):
 
 
 class WeatherSnapshot(ImmutableRecordMixin, models.Model):
-    """Freeze the 29 daily rows used by one assessment."""
+    """Freeze the 38 daily rows used by one assessment."""
 
     class Status(models.TextChoices):
         READY = "ready", "Ready"

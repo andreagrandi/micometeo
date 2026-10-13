@@ -7,7 +7,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from math import ceil
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 from django.db.models import Q
 
@@ -65,70 +65,72 @@ from .quota import (
 )
 
 
+# The windows below sit in summer so that no clock change touches them.
+_BUDGET_DAY = date(2026, 6, 15)
+_INITIAL_SPANS: tuple[tuple[int, int], ...] = (
+    (-30, -18),
+    (-17, -5),
+    (-4, -1),
+    (0, 7),
+)
+_REFRESH_SPANS: tuple[tuple[int, int], ...] = ((-1, -1), (0, 7))
+
+
 def _sum_batch_weights(
     *,
     cell_count: int,
-    days: int,
-    start_date: date,
+    spans: Sequence[tuple[int, int]],
     reserved: bool,
 ) -> Decimal:
-    """Sum one canonical planner weight for every provider batch."""
+    """Sum one canonical planner weight for every provider batch and date range."""
     if cell_count <= 0:
         return Decimal("0")
     result = Decimal("0")
-    for offset in range(0, cell_count, MAX_LOCATIONS):
-        places = min(MAX_LOCATIONS, cell_count - offset)
-        if reserved:
-            result += reservation_weight(
-                variables=len(HOURLY_VARIABLES),
-                start_date=start_date,
-                end_date=start_date + timedelta(days=days - 1),
-                places=places,
-            )
-        else:
-            result += nominal_weight(
-                variables=len(HOURLY_VARIABLES),
-                days=days,
-                places=places,
-            )
+    for first_offset, last_offset in spans:
+        start_date = _BUDGET_DAY + timedelta(days=first_offset)
+        end_date = _BUDGET_DAY + timedelta(days=last_offset)
+        for offset in range(0, cell_count, MAX_LOCATIONS):
+            places = min(MAX_LOCATIONS, cell_count - offset)
+            if reserved:
+                result += reservation_weight(
+                    variables=len(HOURLY_VARIABLES),
+                    start_date=start_date,
+                    end_date=end_date,
+                    places=places,
+                )
+            else:
+                result += nominal_weight(
+                    variables=len(HOURLY_VARIABLES),
+                    days=(end_date - start_date).days + 1,
+                    places=places,
+                )
     return result
 
 
 def _budget_weights(*, cell_count: int) -> dict[str, Decimal]:
-    """Return first, daily and monthly weights for the eligible cell count."""
-    first_nominal = _sum_batch_weights(
-        cell_count=cell_count,
-        days=29,
-        start_date=date(2026, 1, 1),
-        reserved=False,
-    )
-    daily_nominal = _sum_batch_weights(
-        cell_count=cell_count,
-        days=11,
-        start_date=date(2026, 1, 1),
-        reserved=False,
-    )
-    first_reserved = _sum_batch_weights(
-        cell_count=cell_count,
-        days=29,
-        start_date=date(2026, 1, 1),
-        reserved=True,
-    )
-    daily_reserved = _sum_batch_weights(
-        cell_count=cell_count,
-        days=11,
-        start_date=date(2026, 1, 1),
-        reserved=True,
-    )
+    """Return initial, nightly and monthly weights for the 38-day window."""
+    initial_nominal = _sum_batch_weights(cell_count=cell_count, spans=_INITIAL_SPANS, reserved=False)
+    refresh_nominal = _sum_batch_weights(cell_count=cell_count, spans=_REFRESH_SPANS, reserved=False)
+    initial_reserved = _sum_batch_weights(cell_count=cell_count, spans=_INITIAL_SPANS, reserved=True)
+    refresh_reserved = _sum_batch_weights(cell_count=cell_count, spans=_REFRESH_SPANS, reserved=True)
     return {
-        "first_nominal": first_nominal,
-        "daily_nominal": daily_nominal,
-        "first_reserved": first_reserved,
-        "daily_reserved": daily_reserved,
-        "steady_month_nominal": daily_nominal * 31,
-        "steady_month_reserved": daily_reserved * 31,
-        "first_month_nominal": first_nominal + daily_nominal * 30,
-        "first_month_reserved": first_reserved + daily_reserved * 30,
+        "initial_nominal": initial_nominal,
+        "refresh_nominal": refresh_nominal,
+        "initial_reserved": initial_reserved,
+        "refresh_reserved": refresh_reserved,
+        "steady_month_nominal": refresh_nominal * 31,
+        "steady_month_reserved": refresh_reserved * 31,
+        "first_month_nominal": initial_nominal + refresh_nominal * 30,
+        "first_month_reserved": initial_reserved + refresh_reserved * 30,
+    }
+
+
+def _budget_http_requests(*, cell_count: int) -> dict[str, int]:
+    """Return the HTTP requests of the initial load and one nightly refresh."""
+    batch_count = ceil(cell_count / MAX_LOCATIONS) if cell_count else 0
+    return {
+        "initial_load": len(_INITIAL_SPANS) * batch_count,
+        "nightly_refresh": len(_REFRESH_SPANS) * batch_count,
     }
 
 
@@ -200,14 +202,18 @@ def budget_for_forest_build(*, forest_build_version: str) -> dict[str, Any]:
         ],
         "regional_cells_overlap": sum(len(values) for values in region_cells.values()) - cell_count,
         "regional_counts_are_not_additive": True,
-        "nominal_weight": {
-            "first_29_dates": float(weights["first_nominal"]),
-            "daily_11_dates": float(weights["daily_nominal"]),
+        "window": "30 completed days, today and 7 forecast days, 38 dates",
+        "counted_calls": {
+            "nominal": {
+                "initial_load": float(weights["initial_nominal"]),
+                "nightly_refresh": float(weights["refresh_nominal"]),
+            },
+            "reserved": {
+                "initial_load": float(weights["initial_reserved"]),
+                "nightly_refresh": float(weights["refresh_reserved"]),
+            },
         },
-        "reserved_weight": {
-            "first_29_dates": float(weights["first_reserved"]),
-            "daily_11_dates": float(weights["daily_reserved"]),
-        },
+        "http_requests": _budget_http_requests(cell_count=cell_count),
         "monthly_usage": {
             "steady_month": _month_budget(
                 nominal=weights["steady_month_nominal"],

@@ -20,7 +20,7 @@ Epic 1 investigated technical possibilities. Its experiments and reports supply 
 
 In particular, the MVP covers all Italy rather than the investigation's home area. It presents experimental growing-probability estimates. Validation against field observations is not a release condition. The historical reports and their results remain unchanged.
 
-Decisions D15 to D21 in [decisions.md](decisions.md) were made after this interview and replace the matching parts of this document. Weather is fetched on demand for each area. Weather cells are 0.1 degrees. Only squares with at least 10 percent forest get estimates. D21 authorizes 30 days of weather history, replacing D18's 21-day limit. Method v4 uses reconstructed past weather for completed days and forecasts for today and the next seven days. Habitat and current conditions stay internal to one public score. The zoomed-out map shows only forests. Estimates are stored compactly and only the current and previous assessment dates are kept.
+Decisions D15 to D21 in [decisions.md](decisions.md) were made after this interview and replace the matching parts of this document. Weather is prepared by a scheduled background run and stored, as D15 now states. Weather cells are 0.1 degrees. Only squares with at least 10 percent forest get estimates. D21 authorizes 30 days of weather history, replacing D18's 21-day limit. Method v4 uses reconstructed past weather for completed days and forecasts for today and the next seven days. Habitat and current conditions stay internal to one public score. The zoomed-out map shows only forests. Estimates are stored compactly and only the current and previous assessment dates are kept.
 
 | Interview decision | Agreed requirement |
 |---|---|
@@ -93,7 +93,7 @@ Use the same calculation and input requirements across Italy. National coverage 
 
 Use Italian local days in Europe/Rome. Language selection must not change which dates a forecast represents. The date control includes today and days one through seven ahead. Each selected area shows its target date and the time its estimate was produced.
 
-Fetch weather on demand, as decided in D15. The first request for an area on an Italian day fetches the weather of its weather cells once, and every later visitor that day uses the stored result. Keep 30 previous days and the upcoming forecast under D21. Reuse completed past days between fetches. Replace yesterday's forecast with reconstructed past weather before using it as a completed day.
+Prepare weather ahead on a schedule, as decided in D15. A nightly background run fetches the weather of every weather cell that holds forest squares and stores it, and visitors read the stored result. The window is 38 days: the 30 completed Italian days before today, today and the next seven days, under D21. Store each completed day once and reuse it without a time limit. Do not treat a forecast as a completed day when its date passes. Fetch the newly completed day from the historical source and store it as history. A failed request must not become a stored gap, and an explicit correction creates a new history version while the older rows stay. The national goal stays. The current code runs the schedule for Tuscany only.
 
 Show a completed update consistently across the map and area details. A failed fetch must not erase an area's last stored estimates. Mark older results with their actual date and update time. Never relabel yesterday's estimate as today's estimate or present a past run's seventh day as a forecast for a later date.
 
@@ -170,7 +170,7 @@ Use [Book Corners](https://github.com/andreagrandi/book-corners) as the implemen
 
 Reuse useful Micometeo data processing code and the established grid and date conventions. P5's demonstration API and page are experiments, not a requirement to retain their production architecture. Book Corners' account dependencies are unnecessary while F77 is deferred.
 
-Compute an area's results when it is first requested each day, store them and serve the stored results to every later visitor. Map browsing must not trigger one Open-Meteo request per visitor or per 500 m square. Nearby squares can share the weather that actually covers them while retaining their separate habitat inputs.
+Prepare weather ahead in a scheduled run, store the results and serve the stored results to every visitor. Map browsing must not trigger one Open-Meteo request per visitor or per 500 m square. Nearby squares can share the weather that actually covers them while retaining their separate habitat inputs.
 
 Keep the method version, input sources, source dates and calculation time with each published update. This supports explanations and later changes to the method without requiring an automatic learning system in the MVP.
 
@@ -206,7 +206,7 @@ The implementation tickets must turn these requirements into concrete checks aga
 | Dates | All eight dates use Europe/Rome correctly, including date rollover and daylight-saving changes. Weather and percentages refer to the selected date. |
 | Calculation | Real inputs produce repeatable estimates. Invalid or missing inputs cannot create made-up percentages. The calculation and method version are recorded. |
 | Experimental status | The legend and area details explain that probability accuracy has not been validated. No screen claims validated accuracy or guaranteed finds. |
-| Updates | The first request for an area each day fetches and stores its weather and estimates, and later requests read them. Failed fetches keep correctly dated previous results and show their age. |
+| Updates | A scheduled run fetches and stores the 38-day weather window ahead of visitors, and requests read the stored results. Failed fetches keep correctly dated previous results and show their age. |
 | Favorites | Names, colors and locations persist across a reload in the same browser. Rename and removal work. No account or public submission is created. |
 | Map behavior | Repeated panning, zooming, date changes and background changes remain usable on an actual iPhone with Safari and an Android phone browser, plus desktop browsers. |
 | Known phone failure | Repeat a sustained map interaction comparable to P5, including at least 25 moves. The production page must not repeat the progressive slowdown and freeze reported there. |

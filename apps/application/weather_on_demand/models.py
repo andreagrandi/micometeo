@@ -10,6 +10,47 @@ from weather_requests.models import WeatherRequest
 from weather_summaries.models import WeatherSnapshot
 
 
+class ScheduledWeatherRun(models.Model):
+    """Track one resumable Tuscany weather preparation for one Italian date."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        RUNNING = "running", "Running"
+        COMPLETED = "completed", "Completed"
+        FAILED = "failed", "Failed"
+
+    class Mode(models.TextChoices):
+        INITIAL = "initial", "Initial"
+        REFRESH = "refresh", "Refresh"
+
+    id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
+    region_code = models.CharField(max_length=10)
+    assessment_date = models.DateField()
+    forest_build_version = models.CharField(max_length=120)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    mode = models.CharField(max_length=20, choices=Mode.choices)
+    planned_counted_calls = models.DecimalField(max_digits=12, decimal_places=6, default=0)
+    planned_http_requests = models.PositiveIntegerField(default=0)
+    provider_attempts = models.PositiveIntegerField(default=0)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    next_start_at = models.DateTimeField(null=True, blank=True)
+    task_id = models.UUIDField(null=True, blank=True)
+    reason_code = models.CharField(max_length=80, blank=True, default="")
+    full_reason = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-assessment_date"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["region_code", "assessment_date"],
+                name="scheduled_weather_run_region_date_unique",
+            ),
+        ]
+
+
 class WeatherFetchBatch(models.Model):
     """Group compatible cell fetches into one provider request."""
 
@@ -28,6 +69,13 @@ class WeatherFetchBatch(models.Model):
         related_name="on_demand_batches",
     )
     canonical_spec = models.JSONField(default=dict)
+    scheduled_run = models.ForeignKey(
+        ScheduledWeatherRun,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="batches",
+    )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     task_id = models.UUIDField(null=True, blank=True, unique=True)
     retry_at = models.DateTimeField(null=True, blank=True)

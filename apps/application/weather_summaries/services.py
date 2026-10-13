@@ -11,6 +11,8 @@ from uuid import UUID
 
 from django.db import transaction
 
+from micometeo.weather.policy import HISTORY_DAYS, WEATHER_HISTORY_VERSION, history_endpoint
+
 from .aggregation import DailyWeather, aggregate_response
 from .contracts import NormalizedProviderResponse
 from .models import WeatherDaily, WeatherSnapshot, WeatherSnapshotDay, WeatherSummary
@@ -68,6 +70,11 @@ def _daily_kwargs(
     response: NormalizedProviderResponse,
     daily: DailyWeather,
 ) -> dict[str, Any]:
+    history_metadata = (
+        {"history_version": WEATHER_HISTORY_VERSION}
+        if response.provider_endpoint == history_endpoint()
+        else {}
+    )
     return {
         "cell_key": response.location.cell_key,
         "date": daily.date,
@@ -95,6 +102,7 @@ def _daily_kwargs(
         "status": daily.status,
         "metadata": {
             **daily.metadata,
+            **history_metadata,
             "response": dict(response.metadata),
             "location": dict(response.location.metadata),
             "source": {
@@ -120,6 +128,28 @@ def _daily_kwargs(
             },
         },
     }
+
+
+def stored_history_rows(*, cell_key: str, assessment_date: date) -> dict[date, WeatherDaily]:
+    """Return completed history rows stored for one cell, without reading snapshots.
+
+    Only rows from the configured history source and the current history version
+    count, and the earliest stored row wins so stored history stays frozen.
+    """
+    first_day = assessment_date - timedelta(days=HISTORY_DAYS)
+    candidates = WeatherDaily.objects.filter(
+        cell_key=cell_key,
+        date__gte=first_day,
+        date__lte=assessment_date - timedelta(days=1),
+        source_endpoint=history_endpoint(),
+        status__in=[WeatherDaily.Status.COMPLETE, WeatherDaily.Status.CHECKED_KNOWN_MISSING],
+    ).order_by("created_at", "id")
+    rows: dict[date, WeatherDaily] = {}
+    for row in candidates:
+        if row.metadata.get("history_version", 1) != WEATHER_HISTORY_VERSION:
+            continue
+        rows.setdefault(row.date, row)
+    return rows
 
 
 def _period_dates(*, start: date, end: date) -> tuple[date, ...]:
