@@ -49,13 +49,20 @@ having no detail for that update. Other failed requests show a retry action.
 Old results retain their facts and sources and show the assessment and
 calculation dates.
 
+The default panel shows up to four fact values. The closed details control
+keeps the full fact list, periods and shared tree-data caveats available.
+Sources start closed. Source cards use readable names and short links, omit
+repeated metadata and keep long credits in a separate closed control. Changing
+the rain period retains open controls and keyboard focus. A new selection
+starts with these controls closed.
+
 Facts use the response values, units and inclusive periods. The selected-day
 weather section is separate from recent rain. The rain controls show 7, 14 and
 21 completed days ending on the day before the assessment date. They never
 include rain from the selected target day or a later day. Optional weather
 values and recorded gaps remain visible as unavailable. The sheet renders no
 hail value, confidence percentage or accuracy label unless the API supplies a
-supported value. Weather source records include model, retrieval time, source
+supported value. Weather source records include retrieval time, source
 points, detail limits and required credits. The selected square is 500 m wide,
 while a weather value can cover several kilometres.
 
@@ -69,24 +76,23 @@ Fixture pages remain gated behind `MICOMETEO_UI_FIXTURE_PAGES=true`. The
 normal `/map/` route renders only responses from the live API and does not use
 illustrative details.
 
-On 13 October 2026, a standalone headed Chromium session with a persistent
-profile checked the live panel with intercepted area API responses. The
-checks used English at 1440 by 900 and 320 by 568, and Italian at 390 by 844.
-The first phone check found a hidden square heading and close button. Both
-remain visible after the fix, including while scrolling through the sources.
-The final checks found no horizontal overflow or JavaScript errors. Selecting
-7, 14 and 21 days retained focus on the chosen rain button. Escape closed the
-panel, returned focus to the map and preserved the target date. Source credits
-and the weather detail explanation remained readable in the phone sheet.
+On 13 October 2026, standalone headed Chrome with a persistent profile checked
+the panel against the local area API. Checks covered the compact layout in
+Italian and English at desktop and phone widths, including 1440 by 900,
+390 by 844 and 320 by 568. Sources and extra facts started closed. Expanded
+sources used short links and retained credits without repeating the long
+terrain text. No horizontal overflow appeared. The rain controls retained
+keyboard focus. Earlier checks verified that Escape returned focus to the map
+and preserved the target date.
 
-The full local run used `uv run pytest --tb=short -q` and finished with 727
-passes and two failures. Both failures came from a browser assertion that
-still expected English missing-data text in the Italian case. After correcting
-the assertion and the final weather-unit rendering, the 12 affected browser
-cases passed in Chromium and WebKit. The 18 focused retry, expired-update,
-destination and keyboard cases also passed. Django checks, translation checks,
-JavaScript syntax and repository file checks passed. Rebuilding the map CSS
-produced the same file. These results are local checks, not remote CI.
+The final full local run used `uv run pytest --tb=short -q` and finished with
+731 passes and two failures. Both failures expected the old long fact sentence
+in the unavailable-estimate panel. The corrected assertion opens the folded
+facts and checks the actual value and period. The subsequent complete area
+browser run passed all 72 cases in Chromium and WebKit. The CI retry and touch
+test corrections also passed six focused cases across both browsers. Django,
+translation, JavaScript syntax and repository file checks passed. These are
+local results; the PR checks report remote CI separately.
 
 ## Fixture states
 

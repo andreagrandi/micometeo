@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import date, timedelta
 from urllib.parse import parse_qs, urlparse
 
@@ -336,7 +337,8 @@ def test_area_detail_renders_api_facts_weather_rain_sources_and_language(
     expect(detail).to_contain_text("cell-zero")
     expect(detail).to_contain_text("0%")
     expect(detail).to_contain_text("12,5 mm" if language == "it" else "12.5 mm")
-    expect(detail.locator(".detail-weather")).to_contain_text(
+    detail.locator("[data-detail-disclosure='weather-extra'] > summary").click()
+    expect(detail.locator(".detail-weather-extra")).to_contain_text(
         "0,3 m³/m³" if language == "it" else "0.3 m³/m³"
     )
     expect(detail).to_contain_text("Open-Meteo")
@@ -349,6 +351,88 @@ def test_area_detail_renders_api_facts_weather_rain_sources_and_language(
     page.locator("[data-rain-days='14']").click()
     expect(detail.locator(".detail-rain-value")).to_contain_text("24,5 mm" if language == "it" else "24.5 mm")
     expect(detail).to_contain_text("September" if language == "en" else "settembre")
+
+
+@pytest.mark.parametrize("language", ["en", "it"])
+def test_area_detail_keeps_long_facts_and_sources_folded_and_accessible(
+    page: Page, base_url: str, language: str
+) -> None:
+    _open_map(page, base_url, language=language)
+    credit = "Copernicus elevation credit. " * 12
+
+    def detail_route(route: Route) -> None:
+        parsed = urlparse(url=route.request.url)
+        query = parse_qs(qs=parsed.query)
+        response = _full_area_response(
+            cell_id=parsed.path.rsplit("/", maxsplit=1)[-1],
+            target_date=query["target_date"][0],
+            host_facts=True,
+        )
+        host = response["facts"][-1]
+        for role in ["host_chestnut", "host_oaks", "host_pines", "host_spruce_fir"]:
+            response["facts"].append({**host, "role_key": role})
+        response["sources"]["forest"].update({
+            "name": "2018",
+            "source_metadata": {"source_release": "2018", "source_resolution_m": 10},
+            "service_url": "https://example.test/forest",
+            "url": "https://example.test/forest",
+        })
+        response["sources"]["terrain"].update({
+            "credit": credit,
+            "licence": credit,
+            "source_tiles": [{"tile_name": "N44_00_E010_00", "credit": credit}],
+            "gaps": [
+                {"reason_key": "No valid elevation pixels in the source window"},
+                {"reason_key": "source_missing", "detail": "Missing tile N44_00_E010_00"},
+            ],
+        })
+        route.fulfill(content_type="application/json", body=json.dumps(obj=response))
+
+    page.route("**/api/v1/areas/**", detail_route)
+    _click_square(page)
+    detail = page.locator("aside[data-live-details]")
+    facts = detail.locator("[data-detail-disclosure='facts']")
+    sources = detail.locator("[data-detail-disclosure='sources']")
+    expect(detail.locator(".detail-key-facts > li")).to_have_count(3)
+    expect(facts).not_to_have_attribute("open", "")
+    expect(sources).not_to_have_attribute("open", "")
+    expect(detail.locator(".source-card").first).not_to_be_visible()
+    expect(detail.locator(".facts-more")).not_to_be_visible()
+    assert "Copernicus elevation credit" not in detail.inner_text()
+    assert "2006" not in detail.inner_text()
+
+    facts.locator(":scope > summary").focus()
+    page.keyboard.press("Enter")
+    expect(detail.locator(".facts-more")).to_be_visible()
+    expect(detail.locator(".facts-more")).to_contain_text("2006")
+    expect(detail.locator(".facts-more")).to_contain_text("42,0 %" if language == "it" else "42.0 %")
+    expect(facts.locator(".fact-quality")).to_have_count(1)
+
+    sources.locator(":scope > summary").focus()
+    page.keyboard.press("Enter")
+    expect(detail.locator(".source-card").first).to_be_visible()
+    weather_name = "Meteo modellato Open-Meteo" if language == "it" else "Open-Meteo modelled weather"
+    expect(sources.locator(".source-name", has_text=weather_name)).to_be_visible()
+    expect(sources.locator(".source-name", has_text=re.compile(r"^2018$"))).to_have_count(0)
+    expect(sources.locator("a[href='https://example.test/forest']")).to_have_count(1)
+    assert all(not text.startswith("https://") for text in sources.locator("a").all_text_contents())
+    assert sources.text_content().count(credit.strip()) == 1
+    assert "Copernicus elevation credit" not in sources.inner_text()
+    expect(sources.locator(".source-gap", has_text="No valid elevation pixels")).to_be_visible()
+    expect(sources.locator(".source-gap", has_text="Missing tile N44_00_E010_00")).to_be_visible()
+
+    rain_button = detail.locator("[data-rain-days='14']")
+    rain_button.focus()
+    page.keyboard.press("Enter")
+    expect(rain_button).to_be_focused()
+    expect(facts).to_have_attribute("open", "")
+    expect(sources).to_have_attribute("open", "")
+    expect(detail.locator(".detail-rain-value")).to_contain_text("24,5 mm" if language == "it" else "24.5 mm")
+
+    _click_square(page, "cell-hundred")
+    expect(detail.locator("#details-heading")).to_have_text("cell-hundred")
+    expect(facts).not_to_have_attribute("open", "")
+    expect(sources).not_to_have_attribute("open", "")
 
 
 def test_area_detail_tracks_target_date_and_api_representative_after_date_change(
@@ -586,9 +670,15 @@ def test_area_detail_keeps_facts_and_sources_for_a_full_unavailable_estimate(
     detail = page.locator("aside[data-live-details]")
     expect(detail).to_contain_text("No estimate is available", timeout=10_000)
     expect(detail).not_to_contain_text("0%")
-    expect(detail).to_contain_text("The value for Rain in the recent period")
-    expect(detail).to_contain_text("Open-Meteo")
-    expect(detail).to_contain_text("CC BY 4.0")
+    detail.locator("[data-detail-disclosure='facts'] > summary").click()
+    rain_fact = detail.locator(".facts-more .fact-row", has_text="Rain in the recent period")
+    expect(rain_fact).to_be_visible()
+    expect(rain_fact).to_contain_text("12.5 mm")
+    expect(rain_fact).to_contain_text("5 October 2026 - 11 October 2026")
+    detail.locator("[data-detail-disclosure='sources'] > summary").click()
+    weather_source = detail.locator(".source-card", has_text="Open-Meteo")
+    expect(weather_source).to_be_visible()
+    expect(weather_source).to_contain_text("CC BY 4.0")
 
 
 def test_area_detail_retries_a_failed_request_without_losing_the_selection(
@@ -812,7 +902,8 @@ def test_area_detail_renders_host_source_provenance_and_quality(
     _click_square(page)
     detail = page.locator("aside[data-live-details]")
     expect(detail).to_contain_text("2006")
-    expect(detail).to_contain_text("1000,0 m" if language == "it" else "1,000.0 m")
+    resolution = re.compile(r"1[.\u00a0\u202f]?000,0 m") if language == "it" else "1,000.0 m"
+    expect(detail).to_contain_text(resolution)
     expect(detail).to_contain_text("JRC")
     expect(detail).to_contain_text(
         "Presenza modellata" if language == "it" else "Modelled host occurrence"

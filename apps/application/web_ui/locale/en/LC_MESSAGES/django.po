@@ -447,3 +447,42 @@ msgstr "Host occurrence is missing. The estimate uses forest data only."
 
 msgid "Experimental method factor."
 msgstr "Experimental method factor."
+
+msgid "Key facts"
+msgstr "Key facts"
+
+msgid "More input details"
+msgstr "More input details"
+
+msgid "More weather values"
+msgstr "More weather values"
+
+msgid "Weather data gaps"
+msgstr "Weather data gaps"
+
+msgid "Statistical grid"
+msgstr "Statistical grid"
+
+msgid "Copernicus forest map"
+msgstr "Copernicus forest map"
+
+msgid "Copernicus elevation model"
+msgstr "Copernicus elevation model"
+
+msgid "Open-Meteo modelled weather"
+msgstr "Open-Meteo modelled weather"
+
+msgid "source catalogue"
+msgstr "source catalogue"
+
+msgid "source service"
+msgstr "source service"
+
+msgid "source page"
+msgstr "source page"
+
+msgid "credit page"
+msgstr "credit page"
+
+msgid "More source details"
+msgstr "More source details"

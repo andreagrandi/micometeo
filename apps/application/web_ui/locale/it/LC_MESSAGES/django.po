@@ -313,6 +313,39 @@ msgstr "Manca la presenza degli alberi ospiti. La stima usa solo i dati forestal
 
 msgid "Experimental method factor."
 msgstr "Fattore del metodo sperimentale."
+
+msgid "Key facts"
+msgstr "Dati principali"
+
+msgid "More input details"
+msgstr "Altri dettagli dei dati"
+
+msgid "More weather values"
+msgstr "Altri valori meteo"
+
+msgid "Weather data gaps"
+msgstr "Lacune nei dati meteo"
+
+msgid "Statistical grid"
+msgstr "Griglia statistica"
+
+msgid "Copernicus elevation model"
+msgstr "Modello altimetrico Copernicus"
+
+msgid "source catalogue"
+msgstr "catalogo della fonte"
+
+msgid "source service"
+msgstr "servizio della fonte"
+
+msgid "source page"
+msgstr "pagina della fonte"
+
+msgid "credit page"
+msgstr "pagina del credito"
+
+msgid "More source details"
+msgstr "Altri dettagli della fonte"
 msgid "Layers"
 msgstr "Livelli"
 msgid "Zoom in"

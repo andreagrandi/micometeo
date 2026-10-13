@@ -1983,6 +1983,92 @@ body:has(.app) ul {
   font-size: var(--text-caption);
   margin-top: var(--space-1);
 }
+.live-details .d-sec {
+  margin-top: var(--space-4);
+}
+.detail-disclosure {
+  border-top: 1px solid var(--parchment-200);
+  margin-top: var(--space-4);
+}
+.detail-disclosure summary {
+  color: var(--pine-800);
+  cursor: pointer;
+  font-weight: 700;
+  min-height: var(--touch);
+  padding: var(--space-3) 0;
+}
+.detail-disclosure summary::marker {
+  color: var(--earth-700);
+}
+.detail-disclosure[open] summary {
+  padding-bottom: var(--space-2);
+}
+.d-sec-key-facts {
+  margin-top: var(--space-3);
+}
+.facts.detail-key-facts {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: var(--space-2);
+}
+.fact-row {
+  display: grid;
+  gap: 2px var(--space-2);
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
+  padding: var(--space-2);
+}
+.facts.detail-key-facts .fact-row {
+  background: var(--parchment-100);
+  border-radius: var(--radius-control);
+}
+.fact-label {
+  color: var(--earth-700);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  min-width: 0;
+}
+.fact-value {
+  font-family: var(--mono);
+  font-size: var(--text-caption);
+  text-align: right;
+  white-space: nowrap;
+}
+.fact-period {
+  color: var(--earth-700);
+  font-size: var(--text-caption);
+  grid-column: 1 / -1;
+  margin-top: 2px;
+}
+.facts-more {
+  background: #fff;
+  border: 1px solid var(--parchment-200);
+  border-radius: var(--radius-card);
+  padding: var(--space-2);
+}
+.facts-more .fact-row {
+  border-bottom: 1px solid var(--parchment-200);
+}
+.facts-more .fact-row:last-child {
+  border-bottom: 0;
+}
+.fact-quality {
+  color: var(--earth-700);
+  font-size: var(--text-caption);
+  margin-top: var(--space-2);
+}
+.detail-weather-more {
+  margin-top: var(--space-2);
+}
+.detail-weather-more summary {
+  font-size: var(--text-caption);
+  min-height: 36px;
+  padding: var(--space-2) 0;
+}
+.detail-weather-extra {
+  margin-top: var(--space-1);
+}
 .detail-identity {
   color: var(--earth-700);
   font-family: var(--mono);
@@ -2044,6 +2130,23 @@ body:has(.app) ul {
   font-size: var(--text-caption);
   margin-top: var(--space-1);
   overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.source-list {
+  padding-bottom: var(--space-2);
+}
+.source-more {
+  margin-top: var(--space-2);
+}
+.source-more summary {
+  color: var(--earth-700);
+  font-size: var(--text-caption);
+  min-height: 32px;
+  padding: var(--space-1) 0;
+}
+.source-more-body {
+  padding-bottom: var(--space-1);
 }
 .live-details .callout .btn {
   margin-top: var(--space-2);

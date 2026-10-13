@@ -1523,6 +1523,17 @@
       parent.append(item);
     }
 
+    function appendUniqueDetailLink(parent, className, url, text, seen) {
+      if (!url || !/^https?:\/\//.test(url) || !text || seen.has(url)) return;
+      seen.add(url);
+      const link = document.createElement("a");
+      if (className) link.className = className;
+      link.href = url;
+      link.rel = "noreferrer";
+      link.textContent = text;
+      parent.append(link);
+    }
+
     function factLabel(fact) {
       const labelsByRole = {
         recent_rain: labels.fact_recent_rain,
@@ -1567,29 +1578,6 @@
         multiplier: "x",
       };
       return measurement(value, units[unit] || unit || "");
-    }
-
-    function factSentence(fact) {
-      const value = fact.actual_value ?? fact.value;
-      const actual = value === null || value === undefined
-        ? labels.detail_missing_value
-        : factMeasurement(value, fact.unit, fact.role_key);
-      const start = fact.period_start || fact.period?.start;
-      const end = fact.period_end || fact.period?.end;
-      const period = start && end
-        ? `${date(start)} - ${date(end)}${fact.period?.inclusive === false ? "" : `, ${labels.detail_inclusive}`}`
-        : "";
-      const template = period ? labels.fact_sentence : labels.fact_sentence_no_period;
-      const sentence = template
-        .replace("{label}", factLabel(fact))
-        .replace("{value}", actual)
-        .replace("{period}", period);
-      const quality = {
-        modelled_1km_not_tree_cover: labels.detail_quality_modelled_host,
-        forest_only_missing_host_data: labels.detail_quality_missing_host,
-        experimental_project_weight: labels.detail_quality_experimental,
-      }[fact.quality];
-      return quality ? `${sentence} ${quality}` : sentence;
     }
 
     function formatCoordinates(coordinates) {
@@ -1679,6 +1667,16 @@
       details.append(notice);
     }
 
+    function createDetailDisclosure(key, summaryText, className = "") {
+      const disclosure = document.createElement("details");
+      disclosure.className = `detail-disclosure${className ? ` ${className}` : ""}`;
+      disclosure.dataset.detailDisclosure = key;
+      const summary = document.createElement("summary");
+      summary.textContent = summaryText;
+      disclosure.append(summary);
+      return disclosure;
+    }
+
     function appendWeather(details, weather) {
       const section = document.createElement("section");
       section.className = "d-sec";
@@ -1688,6 +1686,7 @@
       const selected = weather?.selected_day;
       const tileGrid = document.createElement("div");
       tileGrid.className = "tiles detail-weather";
+      section.append(tileGrid);
       if (selected?.state === "available") {
         const values = [
           [labels.detail_weather_date, selected.date ? date(selected.date) : ""],
@@ -1695,10 +1694,6 @@
           [labels.detail_weather_rain, selected.rain_mm === null || selected.rain_mm === undefined ? "" : measurement(selected.rain_mm, "mm")],
           [labels.detail_weather_minimum, selected.min_temperature_c === null || selected.min_temperature_c === undefined ? "" : measurement(selected.min_temperature_c, "°C")],
         ];
-        if (selected.et0_mm !== null && selected.et0_mm !== undefined) values.push([labels.detail_weather_et0, measurement(selected.et0_mm, "mm")]);
-        if (selected.mean_soil_temperature_c !== null && selected.mean_soil_temperature_c !== undefined) values.push([labels.detail_weather_soil_temperature, measurement(selected.mean_soil_temperature_c, "°C")]);
-        if (selected.mean_soil_moisture !== null && selected.mean_soil_moisture !== undefined) values.push([labels.detail_weather_soil_moisture, measurement(selected.mean_soil_moisture, "m³/m³")]);
-        if (selected.frost !== null && selected.frost !== undefined) values.push([labels.frost, selected.frost ? labels.detail_frost_yes : labels.detail_frost_no]);
         values.forEach(([label, value]) => {
           if (!value) return;
           const tile = document.createElement("div");
@@ -1720,6 +1715,26 @@
         }
         selectedCounts.textContent = countParts.join(". ");
         if (countParts.length) section.append(selectedCounts);
+
+        const extraValues = [];
+        if (selected.et0_mm !== null && selected.et0_mm !== undefined) extraValues.push([labels.detail_weather_et0, measurement(selected.et0_mm, "mm")]);
+        if (selected.mean_soil_temperature_c !== null && selected.mean_soil_temperature_c !== undefined) extraValues.push([labels.detail_weather_soil_temperature, measurement(selected.mean_soil_temperature_c, "°C")]);
+        if (selected.mean_soil_moisture !== null && selected.mean_soil_moisture !== undefined) extraValues.push([labels.detail_weather_soil_moisture, measurement(selected.mean_soil_moisture, "m³/m³")]);
+        if (selected.frost !== null && selected.frost !== undefined) extraValues.push([labels.frost, selected.frost ? labels.detail_frost_yes : labels.detail_frost_no]);
+        if (extraValues.length) {
+          const disclosure = createDetailDisclosure("weather-extra", labels.detail_weather_more, "detail-weather-more");
+          const extraGrid = document.createElement("div");
+          extraGrid.className = "tiles detail-weather-extra";
+          extraValues.forEach(([label, value]) => {
+            const tile = document.createElement("div");
+            tile.className = "tile";
+            appendDetailText(tile, "tile-label", label);
+            appendDetailText(tile, "tile-text", value);
+            extraGrid.append(tile);
+          });
+          disclosure.append(extraGrid);
+          section.append(disclosure);
+        }
       } else {
         addStatusCallout(section, labels.detail_weather_missing, "info");
         if (selected?.missing_reason_key) {
@@ -1730,9 +1745,9 @@
           );
         }
       }
-      section.append(tileGrid);
       const gaps = Array.isArray(weather?.variable_gaps) ? weather.variable_gaps : [];
       if (gaps.length) {
+        const disclosure = createDetailDisclosure("weather-gaps", labels.detail_weather_gaps, "detail-weather-more");
         const gapList = document.createElement("ul");
         gapList.className = "detail-gaps";
         gaps.forEach((gap) => {
@@ -1761,7 +1776,8 @@
           item.textContent = `${dateText}: ${variable}${unitText}. ${weatherGapReason(gap.reason_key)}${hours.length ? ` ${hours.join(". ")}.` : ""}`;
           gapList.append(item);
         });
-        section.append(gapList);
+        disclosure.append(gapList);
+        section.append(disclosure);
       }
       details.append(section);
     }
@@ -1805,6 +1821,7 @@
         button.setAttribute("aria-pressed", String(stateData.detailRainDays === days));
         button.textContent = `${days} ${labels.days}`;
         button.addEventListener("click", () => {
+          button.focus();
           stateData.detailRainDays = days;
           if (stateData.detailData) renderDetailContent(stateData.detailData, stateData.detailFeature);
         });
@@ -1846,13 +1863,66 @@
     }
 
     function appendSources(details, detail) {
-      const section = document.createElement("section");
-      section.className = "d-sec sources";
-      const heading = document.createElement("h3");
-      heading.textContent = labels.sources_heading;
-      section.append(heading);
+      const section = createDetailDisclosure("sources", labels.sources_heading, "d-sec sources");
+      const sourceBody = document.createElement("div");
+      sourceBody.className = "source-list";
+      section.append(sourceBody);
       const sources = detail?.sources || {};
       const knownFactSources = new Set();
+      const seenUrls = new Set();
+      const sourceNames = {
+        grid: labels.detail_source_grid,
+        forest: labels.detail_source_forest,
+        terrain: labels.detail_source_terrain,
+        weather: labels.detail_source_weather,
+      };
+      const linkLabels = {
+        catalogue: labels.detail_source_catalogue,
+        service: labels.detail_source_service,
+        page: labels.detail_source_page,
+        credit: labels.detail_source_credit,
+      };
+      const cardValues = new WeakMap();
+      const longSourceBodies = new WeakMap();
+
+      function sourceName(key, source) {
+        if (key === "weather" && source.provider === "Open-Meteo") return labels.detail_source_weather;
+        const candidate = source?.name || source?.provider || "";
+        return candidate && !/^\s*[\d._-]+\s*$/.test(String(candidate))
+          ? String(candidate)
+          : sourceNames[key] || labels.detail_source_page;
+      }
+
+      function sourceField(card, className, label, value) {
+        if (value === null || value === undefined || value === "") return;
+        const rendered = String(value).trim();
+        if (!rendered) return;
+        const values = cardValues.get(card) || new Set();
+        const dedupeKey = rendered.toLocaleLowerCase();
+        if (values.has(dedupeKey)) return;
+        values.add(dedupeKey);
+        cardValues.set(card, values);
+        const parent = rendered.length > 120 ? sourceLongBody(card) : card;
+        appendDetailText(parent, className, `${label}: ${rendered}`);
+      }
+
+      function sourceLongBody(card) {
+        const existing = longSourceBodies.get(card);
+        if (existing) return existing;
+        const disclosure = createDetailDisclosure(`source-provenance-${card.dataset.sourceKey}`, labels.detail_source_more, "source-more");
+        const body = document.createElement("div");
+        body.className = "source-more-body";
+        disclosure.append(body);
+        card.append(disclosure);
+        longSourceBodies.set(card, body);
+        return body;
+      }
+
+      function sourceLink(card, url, kind) {
+        const label = linkLabels[kind] || labels.detail_source_page;
+        appendUniqueDetailLink(card, "source-link", url, label, seenUrls);
+      }
+
       ["grid", "forest", "terrain", "weather"].forEach((key) => {
         const source = sources[key];
         if (!source) return;
@@ -1860,14 +1930,21 @@
         (source.ids || []).forEach((sourceId) => knownFactSources.add(sourceId));
         const card = document.createElement("div");
         card.className = "source-card";
-        appendDetailText(card, "source-name", source.name || source.provider || key);
-        appendDetailText(card, "source-release", source.release || source.model || "");
-        if (source.native_resolution_m) appendDetailText(card, "source-meta", `${labels.detail_resolution}: ${measurement(source.native_resolution_m, "m")}`);
-        if (source.retrieval_time) appendDetailText(card, "source-meta", `${labels.detail_retrieved}: ${dateTime(source.retrieval_time)}`);
-        if (typeof source.credit === "string") appendDetailText(card, "source-meta", `${labels.detail_credit}: ${source.credit}`);
-        if (source.licence) appendDetailText(card, "source-meta", `${labels.detail_licence}: ${source.licence}`);
-        if (source.requested_coordinates) appendDetailText(card, "source-meta", `${labels.detail_requested}: ${formatCoordinates(source.requested_coordinates)}`);
-        if (source.returned_coordinates) appendDetailText(card, "source-meta", `${labels.detail_returned}: ${formatCoordinates(source.returned_coordinates)}`);
+        card.dataset.sourceKey = key;
+        const name = sourceName(key, source);
+        appendDetailText(card, "source-name", name);
+        if (source.release && String(source.release).trim() !== name) {
+          sourceField(card, "source-release", labels.detail_release, source.release);
+        }
+        if (source.native_resolution_m) sourceField(card, "source-meta", labels.detail_resolution, measurement(source.native_resolution_m, "m"));
+        if (source.retrieval_time) sourceField(card, "source-meta", labels.detail_retrieved, dateTime(source.retrieval_time));
+        const creditText = typeof source.credit === "string" ? source.credit : source.credit?.text;
+        const creditLicence = typeof source.credit === "object" ? source.credit?.licence : "";
+        if (creditText) sourceField(card, "source-meta", labels.detail_credit, creditText);
+        const licence = source.licence || creditLicence;
+        if (licence) sourceField(card, "source-meta", labels.detail_licence, licence);
+        if (source.requested_coordinates) sourceField(card, "source-meta", labels.detail_requested, formatCoordinates(source.requested_coordinates));
+        if (source.returned_coordinates) sourceField(card, "source-meta", labels.detail_returned, formatCoordinates(source.returned_coordinates));
         const metadataLabels = {
           survey_year: labels.detail_survey_year,
           survey_age_years: labels.detail_survey_age,
@@ -1879,13 +1956,15 @@
           if (value === null || value === undefined || typeof value === "object") return;
           if (!metadataLabels[name]) return;
           const rendered = name.endsWith("_m") ? measurement(value, "m") : String(value);
-          appendDetailText(card, "source-meta", `${metadataLabels[name]}: ${rendered}`);
+          sourceField(card, "source-meta", metadataLabels[name], rendered);
         });
         (source.source_tiles || []).forEach((tile) => {
-          appendDetailText(card, "source-meta", `${tile.tile_name || labels.detail_tile}: ${tile.release || tile.status || labels.detail_missing_value}`);
-          if (tile.retrieved_at) appendDetailText(card, "source-meta", `${labels.detail_retrieved}: ${dateTime(tile.retrieved_at)}`);
-          if (tile.credit) appendDetailText(card, "source-meta", `${labels.detail_credit}: ${tile.credit}`);
-          if (tile.error_detail) appendDetailText(card, "source-gap", `${labels.detail_gap}: ${tile.error_detail}`);
+          const tileName = tile.tile_name || labels.detail_tile;
+          sourceField(card, "source-meta", tileName, tile.release || tile.status || labels.detail_missing_value);
+          if (tile.retrieved_at) sourceField(card, "source-meta", labels.detail_retrieved, dateTime(tile.retrieved_at));
+          if (tile.credit) sourceField(card, "source-meta", labels.detail_credit, tile.credit);
+          if (tile.error_detail) sourceField(card, "source-gap", labels.detail_gap, tile.error_detail);
+          if (tile.url) sourceLink(card, tile.url, "page");
         });
         const gaps = [...(source.gaps || []), ...(source.variable_gaps || [])];
         gaps.forEach((gap) => {
@@ -1893,70 +1972,148 @@
             optional_variable_absent: labels.detail_gap_optional,
             "terrain.data_missing": labels.detail_gap_terrain,
             "terrain.source_gap": labels.detail_gap_terrain,
-          }[gap.reason_key] || labels.detail_missing_value;
-          appendDetailText(card, "source-gap", `${labels.detail_gap}: ${reason}`);
+          }[gap.reason_key] || gap.detail || gap.reason_key || labels.detail_missing_value;
+          sourceField(card, "source-gap", labels.detail_gap, reason);
         });
-        if (source.credit?.text) appendDetailText(card, "source-meta", `${source.credit.text} · ${source.credit.licence || ""}`);
-        [source.catalogue_url, source.service_url, source.url, source.credit?.url].filter(Boolean).forEach((url) => {
-          if (!/^https?:\/\//.test(url)) return;
-          const link = document.createElement("a");
-          link.href = url;
-          link.rel = "noreferrer";
-          link.textContent = url;
-          card.append(link);
-        });
-        section.append(card);
+        sourceLink(card, source.catalogue_url, "catalogue");
+        sourceLink(card, source.service_url, "service");
+        sourceLink(card, source.url, "page");
+        sourceLink(card, source.endpoint, "service");
+        sourceLink(card, source.credit?.url, "credit");
+        sourceBody.append(card);
       });
       const hostFacts = (Array.isArray(detail?.facts) ? detail.facts : []).filter((fact) => {
+        const roleKey = fact.role_key || fact.role || "";
         const sourceId = fact.source_id;
-        return sourceId && !knownFactSources.has(sourceId) && fact.source_metadata && Object.keys(fact.source_metadata).length;
+        return roleKey.startsWith("host_")
+          && sourceId
+          && !knownFactSources.has(sourceId)
+          && fact.source_metadata
+          && Object.keys(fact.source_metadata).length;
       });
       const hostSources = new Map();
       hostFacts.forEach((fact) => {
         const sourceId = fact.source_id;
-        if (!hostSources.has(sourceId)) hostSources.set(sourceId, []);
-        hostSources.get(sourceId).push(fact);
+        const quality = fact.quality || "";
+        const groupKey = `${sourceId}|${quality}`;
+        if (!hostSources.has(groupKey)) hostSources.set(groupKey, []);
+        hostSources.get(groupKey).push(fact);
       });
-      hostSources.forEach((facts, sourceId) => {
+      hostSources.forEach((facts, groupKey) => {
         const card = document.createElement("div");
         card.className = "source-card source-host-card";
-        appendDetailText(card, "source-name", labels.detail_source_host);
+        card.dataset.sourceKey = `host-${groupKey}`;
         const metadata = facts.find((fact) => fact.source_metadata)?.source_metadata || {};
-        if (metadata.sampling_version) appendDetailText(card, "source-release", String(metadata.sampling_version));
-        if (metadata.credit) appendDetailText(card, "source-meta", `${labels.detail_credit}: ${metadata.credit}`);
-        if (metadata.licence) appendDetailText(card, "source-meta", `${labels.detail_licence}: ${metadata.licence}`);
-        if (metadata.resolution_m) appendDetailText(card, "source-meta", `${labels.detail_resolution}: ${measurement(metadata.resolution_m, "m")}`);
-        const periods = facts
-          .flatMap((fact) => [fact.period_start || fact.period?.start, fact.period_end || fact.period?.end])
-          .filter(Boolean)
-          .sort();
-        if (periods.length >= 2) appendDetailText(card, "source-meta", `${labels.detail_period}: ${date(periods[0])} - ${date(periods[periods.length - 1])}`);
         const quality = facts.map((fact) => fact.quality).find(Boolean);
         const qualityText = {
           modelled_1km_not_tree_cover: labels.detail_quality_modelled_host,
           forest_only_missing_host_data: labels.detail_quality_missing_host,
         }[quality];
+        const hasProvenance = metadata.credit || metadata.licence || metadata.resolution_m || metadata.source_url || qualityText;
+        if (!hasProvenance) return;
+        appendDetailText(card, "source-name", labels.detail_source_host);
+        if (metadata.credit) sourceField(card, "source-meta", labels.detail_credit, metadata.credit);
+        if (metadata.licence) sourceField(card, "source-meta", labels.detail_licence, metadata.licence);
+        if (metadata.resolution_m) sourceField(card, "source-meta", labels.detail_resolution, measurement(metadata.resolution_m, "m"));
+        const periods = facts
+          .flatMap((fact) => [fact.period_start || fact.period?.start, fact.period_end || fact.period?.end])
+          .filter(Boolean)
+          .sort();
+        if (periods.length >= 2) sourceField(card, "source-meta", labels.detail_period, `${date(periods[0])} - ${date(periods[periods.length - 1])}`);
         if (qualityText) appendDetailText(card, "source-gap", qualityText);
-        if (metadata.source_url && /^https?:\/\//.test(metadata.source_url)) {
-          const link = document.createElement("a");
-          link.href = metadata.source_url;
-          link.rel = "noreferrer";
-          link.textContent = metadata.source_url;
-          card.append(link);
-        }
-        section.append(card);
+        sourceLink(card, metadata.source_url, "page");
+        sourceBody.append(card);
       });
       const limitationKeys = Array.isArray(sources.limitation_keys) ? sources.limitation_keys : [];
       if (limitationKeys.includes("weather.shared_across_several_kilometres")) {
-        appendDetailText(section, "callout callout-info", labels.detail_weather_limit);
+        appendDetailText(sourceBody, "callout callout-info", labels.detail_weather_limit);
       }
       details.append(section);
+    }
+
+    function factIsHost(fact) {
+      const roleKey = fact?.role_key || fact?.role || "";
+      return roleKey.startsWith("host_");
+    }
+
+    function factActualText(fact) {
+      const value = fact.actual_value ?? fact.value;
+      return value === null || value === undefined
+        ? labels.detail_missing_value
+        : factMeasurement(value, fact.unit, fact.role_key);
+    }
+
+    function factPeriodText(fact) {
+      const start = fact.period_start || fact.period?.start;
+      const end = fact.period_end || fact.period?.end;
+      if (!start || !end) return "";
+      return start === end ? date(start) : `${date(start)} - ${date(end)}`;
+    }
+
+    function factQualityText(fact) {
+      return {
+        modelled_1km_not_tree_cover: labels.detail_quality_modelled_host,
+        forest_only_missing_host_data: labels.detail_quality_missing_host,
+        experimental_project_weight: labels.detail_quality_experimental,
+      }[fact.quality] || "";
+    }
+
+    function appendFactRow(list, fact, includePeriod = false) {
+      const item = document.createElement("li");
+      item.className = "fact-row";
+      const label = document.createElement("span");
+      label.className = "fact-label";
+      label.textContent = factLabel(fact);
+      const value = document.createElement("strong");
+      value.className = "fact-value";
+      value.textContent = factActualText(fact);
+      item.append(label, value);
+      if (includePeriod) {
+        const period = factPeriodText(fact);
+        if (period) appendDetailText(item, "fact-period", period);
+      }
+      list.append(item);
+    }
+
+    function appendFacts(details, facts) {
+      const keyFacts = facts.filter((fact) => !factIsHost(fact)).slice(0, 4);
+      if (keyFacts.length) {
+        const section = document.createElement("section");
+        section.className = "d-sec d-sec-key-facts";
+        const heading = document.createElement("h3");
+        heading.textContent = labels.detail_key_facts;
+        section.append(heading);
+        const list = document.createElement("ul");
+        list.className = "facts detail-key-facts";
+        keyFacts.forEach((fact) => appendFactRow(list, fact));
+        section.append(list);
+        details.append(section);
+      }
+      if (!facts.length) return;
+      const disclosure = createDetailDisclosure("facts", labels.detail_facts_more, "d-sec detail-facts");
+      const list = document.createElement("ul");
+      list.className = "facts facts-more";
+      facts.forEach((fact) => appendFactRow(list, fact, true));
+      disclosure.append(list);
+      const qualities = new Set();
+      facts.forEach((fact) => {
+        const quality = factQualityText(fact);
+        if (!quality || qualities.has(quality)) return;
+        qualities.add(quality);
+        appendDetailText(disclosure, "fact-quality", quality);
+      });
+      details.append(disclosure);
     }
 
     function renderDetailContent(detail, feature) {
       const details = createLiveDetails();
       if (!details) return;
       const focusedRainDays = document.activeElement?.dataset?.rainDays || "";
+      const scrollTop = details.scrollTop;
+      const openDisclosures = new Set(
+        [...details.querySelectorAll("details[data-detail-disclosure][open]")]
+          .map((disclosure) => disclosure.dataset.detailDisclosure),
+      );
       details.replaceChildren();
       const selection = detail?.selection || {};
       const properties = feature?.properties || {};
@@ -2004,18 +2161,7 @@
       if (stateName !== "available") addStatusCallout(details, statusText(detail), "info");
 
       const facts = Array.isArray(detail?.facts) ? detail.facts : [];
-      if (facts.length) {
-        const section = document.createElement("section");
-        section.className = "d-sec";
-        const headingFacts = document.createElement("h3");
-        headingFacts.textContent = labels.facts_heading;
-        section.append(headingFacts);
-        const list = document.createElement("ul");
-        list.className = "facts";
-        facts.forEach((fact) => appendDetailText(list, "", factSentence(fact)));
-        section.append(list);
-        details.append(section);
-      }
+      appendFacts(details, facts);
       appendWeather(details, detail?.weather);
       appendRain(details, detail?.weather);
       appendSources(details, detail);
@@ -2046,6 +2192,11 @@
         root.dataset.representativeLongitude = String(selection.representative_coordinates.longitude);
       }
       liveMapController?.resize();
+      openDisclosures.forEach((key) => {
+        const disclosure = details.querySelector(`details[data-detail-disclosure="${CSS.escape(key)}"]`);
+        if (disclosure) disclosure.open = true;
+      });
+      details.scrollTop = scrollTop;
       if (focusedRainDays) details.querySelector(`[data-rain-days="${CSS.escape(focusedRainDays)}"]`)?.focus();
     }
 
