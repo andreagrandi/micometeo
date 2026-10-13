@@ -243,11 +243,41 @@ body:has(.app) {
   text-align: left;
   width: 100%;
 }
+.result[aria-selected="true"],
+.result:focus-visible {
+  background: var(--pine-100);
+  outline: 2px solid var(--pine-600);
+  outline-offset: -2px;
+}
+.result-name {
+  display: block;
+  font-weight: 700;
+}
+.result-context {
+  color: var(--earth-700);
+  display: block;
+  font-size: var(--text-caption);
+  margin-top: 2px;
+}
 .result:hover {
   background: var(--pine-100);
 }
 .result-empty {
   padding: var(--space-3);
+}
+.result-error {
+  color: var(--earth-700);
+  padding: var(--space-3);
+}
+.search-attribution {
+  border-top: 1px solid var(--parchment-200);
+  color: var(--earth-600);
+  font-size: var(--text-caption);
+  margin-top: var(--space-1);
+  padding: var(--space-2) var(--space-3) var(--space-1);
+}
+.search-attribution a {
+  color: var(--pine-700);
 }
 .result-empty strong {
   display: block;

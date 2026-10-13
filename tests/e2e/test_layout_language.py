@@ -413,6 +413,13 @@ def test_no_results_state_stays_inside_search_results(
 def test_location_and_detail_actions_use_all_matching_controls(
     page: Page, base_url: str
 ) -> None:
+    page.add_init_script(
+        """
+        navigator.geolocation.getCurrentPosition = (_success, failure) => {
+          failure({code: 1});
+        };
+        """
+    )
     _open_page(
         page,
         url=f"{base_url}/map/fixture/missing_data/",
@@ -437,5 +444,5 @@ def test_location_and_detail_actions_use_all_matching_controls(
 
     page.locator("[data-location]").click()
     expect(page.locator("[data-toast]")).to_contain_text(
-        "La ricerca dei luoghi e la posizione arriveranno in un aggiornamento successivo."
+        "L'accesso alla posizione è stato rifiutato. Cerca o sposta la mappa."
     )

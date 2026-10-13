@@ -137,3 +137,27 @@ Final local verification on 12 October 2026 passed 371 application checks and
 CSS builds, translation compilation, Django checks and repository file checks
 also passed. The final source review found no remaining material issues.
 These are local results. Remote CI has not run for this change.
+
+## Place and point selection
+
+Issue #57 adds the selection state used by search, current location, map
+clicks and the centre selection button. The browser emits a
+`micometeo:selectionchange` event after the state changes.
+
+The event detail contains:
+
+- `point`, the exact latitude and longitude chosen by a search result,
+  geolocation permission or a map click.
+- `representative`, the configured square representative used when the
+  visitor selects an area at the map centre.
+- `destination`, which is the exact point when one exists and otherwise the
+  representative point.
+- `square`, the validated grid square ID, when the point is in coverage.
+- `source`, one of `search`, `geolocation`, `map` or `centre`.
+- `mapCentre`, the current map view centre. This remains separate from the
+  selected destination.
+
+Changing the target date, language, background, overlay or map centre keeps
+the exact point and its source. A slower map response cannot replace a newer
+selection. Search and geolocation first resolve the exact point against the
+configured land geometry. The browser does not snap to a nearby square.

@@ -13,6 +13,51 @@ msgstr "Loading the estimate"
 msgid "Search a place"
 msgstr "Search a place"
 
+msgid "Place search results"
+msgstr "Place search results"
+
+msgid "Place names from"
+msgstr "Place names from"
+
+msgid "Type at least two letters to search."
+msgstr "Type at least two letters to search."
+
+msgid "Searching places."
+msgstr "Searching places."
+
+msgid "No Italian places found."
+msgstr "No Italian places found."
+
+msgid "Place search is unavailable. Try again or move the map."
+msgstr "Place search is unavailable. Try again or move the map."
+
+msgid "Place search is busy. Try again in a moment."
+msgstr "Place search is busy. Try again in a moment."
+
+msgid "Place search took too long. Try again."
+msgstr "Place search took too long. Try again."
+
+msgid "Finding your location."
+msgstr "Finding your location."
+
+msgid "Your location took too long to answer. Search or move the map instead."
+msgstr "Your location took too long to answer. Search or move the map instead."
+
+msgid "Your location is unavailable. Search or move the map instead."
+msgstr "Your location is unavailable. Search or move the map instead."
+
+msgid "This browser cannot provide a location. Search or move the map instead."
+msgstr "This browser cannot provide a location. Search or move the map instead."
+
+msgid "Location needs a secure connection. Search or move the map instead."
+msgstr "Location needs a secure connection. Search or move the map instead."
+
+msgid "This point is outside Italy. Search or move the map instead."
+msgstr "This point is outside Italy. Search or move the map instead."
+
+msgid "This point is outside the configured map coverage."
+msgstr "This point is outside the configured map coverage."
+
 msgid "Loading the map data."
 msgstr "Loading the map data."
 
