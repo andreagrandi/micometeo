@@ -214,6 +214,7 @@
     center: storedGeolocation?.center || (oldGeolocationUrl ? "" : params.get("center") || root.dataset.mapCenter || ""),
     zoom: Number(storedGeolocation?.zoom || (oldGeolocationUrl ? root.dataset.mapZoom || "11" : params.get("zoom") || root.dataset.mapZoom || "11")),
     point: initialPoint,
+    pointName: "",
     representative: initialRepresentative,
     detailRepresentative: null,
     detailRepresentativeSquare: "",
@@ -508,12 +509,14 @@
           latitude: Number(item.latitude),
           longitude: Number(item.longitude),
           source: "search",
+          name: item.name || "",
         });
       } else {
         window.__micometeoPendingDestination = {
           latitude: Number(item.latitude),
           longitude: Number(item.longitude),
           source: "search",
+          name: item.name || "",
         };
       }
     }
@@ -845,13 +848,348 @@
       document.getElementById("details-heading")?.focus();
     } else toast(labels.later_map);
   }));
-  document.querySelector("[data-favourites]")?.addEventListener("click", () => toast(labels.later_favorites));
-  document.querySelector("[data-save]")?.addEventListener("click", () => toast(labels.later_favorites));
+  let favoriteDialog = null;
+  let favoriteTrigger = null;
+
+  function parseFavoriteCoordinates(value) {
+    const matches = String(value || "").match(/(-?\d+(?:\.\d+)?)[^\d-]+(-?\d+(?:\.\d+)?)/);
+    if (!matches) return null;
+    const latitude = Number(matches[1]);
+    const longitude = Number(matches[2]);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+    return { latitude, longitude };
+  }
+
+  function currentFavoriteSelection() {
+    const selected = liveMapController?.getFavoriteSelection?.();
+    if (selected) return selected;
+    if (root.dataset.fixture && state.square) {
+      const point = parseFavoriteCoordinates(document.querySelector(".d-coord")?.textContent);
+      if (point) return { kind: "grid", ...point, cellId: state.square, name: "" };
+    }
+    if (state.point) return { kind: "point", ...state.point, name: state.pointName };
+    return null;
+  }
+
+  function favoriteName(selection) {
+    if (selection.name) return selection.name;
+    if (selection.kind === "grid") return labels.favorite_default_grid.replace("{cell}", selection.cellId);
+    return labels.favorite_default_point
+      .replace("{lat}", Number(selection.latitude).toFixed(4))
+      .replace("{lon}", Number(selection.longitude).toFixed(4));
+  }
+
+  function favoriteStatus(reading) {
+    if (reading.status === "warning") return labels.favorite_storage_malformed;
+    if (reading.status === "unknown") return labels.favorite_storage_unknown;
+    if (reading.status === "unreadable") return labels.favorite_read_error;
+    if (reading.status === "unavailable") return labels.favorite_storage_unavailable;
+    return "";
+  }
+
+  function favoriteReadFailure(reading) {
+    if (reading && !["unknown", "unreadable", "unavailable"].includes(reading.status)) return "";
+    return favoriteStatus(reading || { status: "unavailable" });
+  }
+
+  function favoriteWriteFailure(result) {
+    if (result.ok) return "";
+    return result.reason === "quota"
+      ? labels.favorite_storage_quota
+      : result.reason === "write" ? labels.favorite_storage_write : labels.favorite_storage_unavailable;
+  }
+
+  function updateFavoriteCount(items) {
+    const count = document.querySelector("[data-favourite-count]");
+    if (count) count.textContent = items.length ? String(items.length) : "";
+  }
+
+  function ensureFavoriteDialog() {
+    if (favoriteDialog) return favoriteDialog;
+    favoriteDialog = document.createElement("dialog");
+    favoriteDialog.className = "favorites-dialog";
+    favoriteDialog.dataset.favoritesDialog = "";
+    favoriteDialog.addEventListener("close", () => {
+      favoriteTrigger?.focus();
+      favoriteTrigger = null;
+    });
+    document.body.append(favoriteDialog);
+    return favoriteDialog;
+  }
+
+  function closeFavoriteDialog() {
+    if (favoriteDialog?.open) favoriteDialog.close();
+  }
+
+  function renderFavoriteHeader(title, showBack = false) {
+    const header = document.createElement("div");
+    header.className = "favorites-header";
+    const heading = document.createElement("h2");
+    heading.id = "favorites-dialog-heading";
+    heading.textContent = title;
+    header.append(heading);
+    ensureFavoriteDialog().setAttribute("aria-labelledby", heading.id);
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "btn btn-secondary";
+    close.dataset.favoriteClose = "";
+    close.textContent = showBack ? labels.favorite_cancel : labels.favorite_close;
+    close.addEventListener("click", closeFavoriteDialog);
+    header.append(close);
+    return header;
+  }
+
+  function renderFavoriteList(reading) {
+    const dialog = ensureFavoriteDialog();
+    const items = reading.items;
+    updateFavoriteCount(items);
+    dialog.replaceChildren(renderFavoriteHeader(labels.favorites));
+    const note = document.createElement("p");
+    note.className = "favorites-note";
+    note.textContent = labels.favorite_storage_note;
+    dialog.append(note);
+    const warning = favoriteStatus(reading);
+    if (warning) {
+      const status = document.createElement("p");
+      status.className = "favorites-status";
+      status.setAttribute("role", "status");
+      status.textContent = warning;
+      dialog.append(status);
+    }
+    const list = document.createElement("div");
+    list.className = "favorites-list";
+    list.setAttribute("aria-live", "polite");
+    if (!items.length) {
+      const empty = document.createElement("p");
+      empty.className = "favorites-empty";
+      empty.textContent = labels.favorite_empty;
+      list.append(empty);
+    }
+    items.forEach((favorite) => {
+      const card = document.createElement("article");
+      card.className = "favorite-card";
+      card.dataset.favoriteId = favorite.id;
+      if (favorite.color) card.dataset.favoriteColor = favorite.color;
+      const title = document.createElement("h3");
+      title.textContent = favorite.name;
+      card.append(title);
+      const kind = document.createElement("p");
+      kind.className = "favorite-kind";
+      kind.textContent = favorite.kind === "grid" ? labels.favorite_grid : labels.favorite_point;
+      card.append(kind);
+      const coordinate = document.createElement("p");
+      coordinate.className = "favorite-coordinate";
+      coordinate.textContent = favorite.kind === "grid"
+        ? favorite.cellId
+        : `${favorite.latitude.toFixed(4)}° N, ${favorite.longitude.toFixed(4)}° E`;
+      card.append(coordinate);
+      const result = document.createElement("p");
+      result.className = "favorite-result";
+      result.textContent = labels.favorite_open_for_result;
+      card.append(result);
+      const actions = document.createElement("div");
+      actions.className = "favorite-actions";
+      const open = document.createElement("button");
+      open.type = "button";
+      open.className = "btn btn-primary";
+      open.dataset.favoriteOpen = favorite.id;
+      open.textContent = labels.favorite_open;
+      open.addEventListener("click", () => {
+        closeFavoriteDialog();
+        liveMapController?.openFavorite?.(favorite);
+      });
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "btn btn-secondary";
+      edit.dataset.favoriteEdit = favorite.id;
+      edit.textContent = labels.favorite_edit;
+      edit.addEventListener("click", () => openFavoriteEditor(favorite));
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "btn btn-quiet";
+      remove.dataset.favoriteRemove = favorite.id;
+      remove.textContent = labels.favorite_remove;
+      remove.addEventListener("click", () => removeFavorite(favorite.id));
+      actions.append(open, edit, remove);
+      card.append(actions);
+      list.append(card);
+    });
+    dialog.append(list);
+    const save = document.createElement("button");
+    save.type = "button";
+    save.className = "btn btn-primary favorites-save-selected";
+    save.dataset.favoriteSaveSelected = "";
+    save.textContent = labels.favorite_save_selected;
+    save.addEventListener("click", () => openFavoriteEditor());
+    dialog.append(save);
+    if (dialog.open) dialog.querySelector("[data-favorite-close]")?.focus();
+  }
+
+  function openFavoriteEditor(existing = null) {
+    const selection = existing || currentFavoriteSelection();
+    if (!selection && !existing) {
+      toast(labels.not_selected);
+      return;
+    }
+    const dialog = ensureFavoriteDialog();
+    dialog.replaceChildren(renderFavoriteHeader(existing ? labels.favorite_edit : labels.favorite_save_selected, true));
+    const form = document.createElement("form");
+    form.className = "favorite-form";
+    const nameLabel = document.createElement("label");
+    nameLabel.textContent = labels.favorite_name;
+    const name = document.createElement("input");
+    name.type = "text";
+    name.required = true;
+    name.maxLength = 160;
+    name.dataset.favoriteName = "";
+    name.value = existing?.name || favoriteName(selection);
+    nameLabel.append(name);
+    form.append(nameLabel);
+    const colorLabel = document.createElement("label");
+    colorLabel.textContent = labels.favorite_color;
+    const color = document.createElement("select");
+    color.dataset.favoriteColor = "";
+    const none = document.createElement("option");
+    none.value = "";
+    none.textContent = labels.favorite_color_none;
+    color.append(none);
+    (window.MicometeoFavorites?.colors || []).forEach((value) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = labels[`favorite_color_${value}`] || value;
+      color.append(option);
+    });
+    color.value = existing?.color || "";
+    colorLabel.append(color);
+    form.append(colorLabel);
+    const actions = document.createElement("div");
+    actions.className = "favorite-form-actions";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "btn btn-secondary";
+    cancel.textContent = labels.favorite_cancel;
+    cancel.addEventListener("click", () => renderFavoriteList(window.MicometeoFavorites.read()));
+    const submit = document.createElement("button");
+    submit.type = "submit";
+    submit.className = "btn btn-primary";
+    submit.textContent = labels.favorite_save;
+    actions.append(cancel, submit);
+    form.append(actions);
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      saveFavorite({ selection, existing, name: name.value, color: color.value || undefined });
+    });
+    dialog.append(form);
+    if (!dialog.open) dialog.showModal();
+    name.focus();
+  }
+
+  function favoriteFeedback(message) {
+    if (!favoriteDialog) return;
+    let status = favoriteDialog.querySelector("[data-favorite-form-status]");
+    if (!status) {
+      status = document.createElement("p");
+      status.className = "favorites-status";
+      status.dataset.favoriteFormStatus = "";
+      status.setAttribute("role", "alert");
+      const target = favoriteDialog.querySelector(".favorite-form") || favoriteDialog;
+      target.prepend(status);
+    }
+    status.textContent = message;
+  }
+
+  function saveFavorite({ selection, existing, name, color }) {
+    const reading = window.MicometeoFavorites?.read?.();
+    const readMessage = favoriteReadFailure(reading);
+    if (readMessage) {
+      favoriteFeedback(readMessage);
+      toast(readMessage);
+      return;
+    }
+    const candidate = window.MicometeoFavorites.create({
+      ...(existing || selection),
+      id: existing?.id,
+      name,
+      color: color || undefined,
+    });
+    if (!candidate) {
+      toast(labels.favorite_invalid);
+      favoriteFeedback(labels.favorite_invalid);
+      return;
+    }
+    const duplicate = reading.items.find((item) => item.id !== candidate.id && window.MicometeoFavorites.sameDestination(item, candidate));
+    if (duplicate) {
+      openFavoriteEditor(duplicate);
+      toast(labels.favorite_duplicate);
+      return;
+    }
+    const items = existing
+      ? reading.items.map((item) => item.id === existing.id ? candidate : item)
+      : [...reading.items, candidate];
+    const result = window.MicometeoFavorites.write(items, reading.invalid);
+    const writeMessage = favoriteWriteFailure(result);
+    if (writeMessage) {
+      favoriteFeedback(writeMessage);
+      toast(writeMessage);
+      return;
+    }
+    updateFavoriteCount(items);
+    toast(existing ? labels.favorite_updated : labels.favorite_saved);
+    renderFavoriteList({
+      status: reading.invalid.length ? "warning" : "ready",
+      items,
+      invalid: reading.invalid,
+    });
+  }
+
+  function removeFavorite(id) {
+    const reading = window.MicometeoFavorites?.read?.();
+    const readMessage = favoriteReadFailure(reading);
+    if (readMessage) {
+      favoriteFeedback(readMessage);
+      toast(readMessage);
+      return;
+    }
+    const items = reading.items.filter((item) => item.id !== id);
+    const result = window.MicometeoFavorites.write(items, reading.invalid);
+    const writeMessage = favoriteWriteFailure(result);
+    if (writeMessage) {
+      favoriteFeedback(writeMessage);
+      toast(writeMessage);
+      return;
+    }
+    toast(labels.favorite_removed);
+    renderFavoriteList({
+      status: reading.invalid.length ? "warning" : "ready",
+      items,
+      invalid: reading.invalid,
+    });
+  }
+
+  function openFavoritesDialog(trigger) {
+    favoriteTrigger = trigger;
+    const dialog = ensureFavoriteDialog();
+    renderFavoriteList(window.MicometeoFavorites.read());
+    if (!dialog.open) dialog.showModal();
+    dialog.querySelector("[data-favorite-close]")?.focus();
+  }
+
+  document.querySelector("[data-favourites]")?.addEventListener("click", (event) => openFavoritesDialog(event.currentTarget));
+  document.querySelectorAll("[data-save]").forEach((button) => button.addEventListener("click", (event) => {
+    favoriteTrigger = event.currentTarget;
+    openFavoriteEditor();
+  }));
+  updateFavoriteCount(window.MicometeoFavorites?.read?.().items || []);
+  window.addEventListener("storage", (event) => {
+    if (event.key !== window.MicometeoFavorites?.key || !favoriteDialog?.open) return;
+    renderFavoriteList(window.MicometeoFavorites.read());
+  });
   document.querySelector("[data-navigation]")?.addEventListener("click", () => toast(labels.later_navigation));
   document.querySelectorAll("[data-try-again]").forEach((button) => button.addEventListener("click", () => window.location.reload()));
 
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
+    if (favoriteDialog?.open) return;
     if (state.panel) closePanel(state.panel);
     else if (state.details) setDetails(false);
   });
@@ -920,6 +1258,7 @@
       pendingSelectionPoint: null,
       pendingSelectionRepresentative: null,
       pendingSelectionSource: "",
+      pendingFavoriteCell: null,
       pendingDestination: null,
       destinationRequest: null,
       destinationGeneration: 0,
@@ -965,6 +1304,7 @@
       stateData.pendingSelectionPoint = null;
       stateData.pendingSelectionRepresentative = null;
       stateData.pendingSelectionSource = "";
+      stateData.pendingFavoriteCell = null;
     }
 
     const squareLayers = [
@@ -1521,6 +1861,22 @@
       if (className) item.className = className;
       item.textContent = text;
       parent.append(item);
+    }
+
+    function appendFavoriteAction(details) {
+      const actions = document.createElement("div");
+      actions.className = "d-actions";
+      const save = document.createElement("button");
+      save.type = "button";
+      save.className = "btn btn-secondary";
+      save.dataset.save = "";
+      save.textContent = labels.save_favorite;
+      save.addEventListener("click", (event) => {
+        favoriteTrigger = event.currentTarget;
+        openFavoriteEditor();
+      });
+      actions.append(save);
+      details.append(actions);
     }
 
     function appendUniqueDetailLink(parent, className, url, text, seen) {
@@ -2138,6 +2494,7 @@
       close.addEventListener("click", () => clearSelection());
       top.append(close);
       details.append(top);
+      appendFavoriteAction(details);
 
       const summary = document.createElement("div");
       summary.className = "live-summary";
@@ -2258,6 +2615,7 @@
       close.addEventListener("click", () => clearSelection());
       top.append(close);
       details.append(top);
+      appendFavoriteAction(details);
       const properties = feature?.properties || {};
       const summary = document.createElement("div");
       summary.className = "live-summary";
@@ -2280,6 +2638,50 @@
       sizeButton.textContent = labels.sheet_size;
       sizeButton.addEventListener("click", cycleSheetHeight);
       sizeRow.append(sizeButton);
+      details.append(sizeRow);
+      details.hidden = false;
+      state.details = true;
+      root.classList.add("details-open");
+      document.querySelector("#main")?.classList.add("details-open");
+      liveMapController?.resize();
+    }
+
+    function renderFavoriteMissing(cellId) {
+      const details = createLiveDetails();
+      if (!details) return;
+      details.replaceChildren();
+      const top = document.createElement("div");
+      top.className = "d-top";
+      const title = document.createElement("h2");
+      title.textContent = cellId || labels.map_selected;
+      title.id = "details-heading";
+      title.tabIndex = -1;
+      top.append(title);
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "btn btn-secondary live-details-close";
+      close.textContent = "×";
+      close.setAttribute("aria-label", labels.close_details);
+      close.addEventListener("click", () => clearSelection());
+      top.append(close);
+      details.append(top);
+      appendFavoriteAction(details);
+      const summary = document.createElement("div");
+      summary.className = "live-summary";
+      const coordinate = state.point ? `${state.point.latitude}° N, ${state.point.longitude}° E` : "";
+      const strong = document.createElement("strong");
+      strong.textContent = labels.favorite_missing;
+      summary.append(strong);
+      appendDetailText(summary, "detail-identity", coordinate);
+      details.append(summary);
+      const sizeRow = document.createElement("div");
+      sizeRow.className = "sizerow";
+      const closeButton = document.createElement("button");
+      closeButton.type = "button";
+      closeButton.className = "btn btn-quiet";
+      closeButton.textContent = labels.back_to_map;
+      closeButton.addEventListener("click", () => clearSelection());
+      sizeRow.append(closeButton);
       details.append(sizeRow);
       details.hidden = false;
       state.details = true;
@@ -2362,9 +2764,11 @@
       state.assessment = properties.assessment_date || state.assessment;
       if (pointSelection?.source === "centre") {
         state.point = null;
+        state.pointName = "";
         state.pointSource = "centre";
       } else if (pointSelection?.point) {
         state.point = pointSelection.point;
+        if (pointSelection.source === "map") state.pointName = "";
         state.pointSource = pointSelection.source || state.pointSource || "map";
       }
       root.classList.add("details-open");
@@ -2399,6 +2803,7 @@
       state.square = "";
       state.updateId = "";
       state.point = null;
+      state.pointName = "";
       state.representative = null;
       state.detailRepresentative = null;
       state.detailRepresentativeSquare = "";
@@ -2547,6 +2952,16 @@
       const selectedUpdateId = state.updateId || stateData.pendingSelectionUpdateId;
       const feature = data.features.find((item) => item.id === selectedId || item.properties?.cell_id === selectedId);
       if (!feature) {
+        if (stateData.pendingFavoriteCell === selectedId) {
+          stateData.pendingFavoriteCell = null;
+          state.square = selectedId;
+          state.details = true;
+          clearPendingSelection();
+          persistState();
+          message(labels.favorite_missing, "error");
+          renderFavoriteMissing(selectedId);
+          return "";
+        }
         // A selected area remains selected when it leaves the viewport.
         if (stateData.selected?.properties?.target_date === state.date && state.details) return "";
         keepDestinationWithoutFeature(selectedId, selectedUpdateId);
@@ -2606,7 +3021,18 @@
       const overview = size.width > Number(stateData.info.max_width_km) || size.height > Number(stateData.info.max_height_km);
       setForestVisible(false);
       if (outsideCoverage()) {
+        const missingFavoriteCell = stateData.pendingFavoriteCell;
         clearSquares();
+        if (missingFavoriteCell) {
+          stateData.pendingFavoriteCell = null;
+          clearPendingSelection();
+          state.square = missingFavoriteCell;
+          state.details = true;
+          persistState();
+          renderFavoriteMissing(missingFavoriteCell);
+          message(labels.favorite_missing, "error");
+          return;
+        }
         message(labels.map_outside_coverage, "error");
         return;
       }
@@ -2791,7 +3217,8 @@
           if (stateData.pendingDestination) {
             const destination = stateData.pendingDestination;
             stateData.pendingDestination = null;
-            selectDestination(destination);
+            if (destination.favorite) openFavorite(destination.favorite);
+            else selectDestination(destination);
           }
         });
         const attribution = document.querySelector("[data-map-attribution]");
@@ -2889,12 +3316,21 @@
       root.classList.remove("details-open");
       document.querySelector("#main")?.classList.remove("details-open");
       state.point = point;
+      state.pointName = typeof destination.name === "string" ? destination.name.trim() : "";
       state.pointSource = source;
       stateData.pendingDestination = !stateData.map || !stateData.ready
-        ? { latitude, longitude, source }
+        ? {
+          latitude,
+          longitude,
+          source,
+          name: state.pointName,
+          preservePointOnFailure: destination.preservePointOnFailure === true,
+        }
         : null;
       persistState();
       if (!stateData.map || !stateData.ready) return false;
+      const centre = [longitude, latitude];
+      const targetZoom = Math.max(12, Math.min(18, stateData.map.getZoom()));
       let response;
       let body;
       try {
@@ -2910,6 +3346,7 @@
         }));
       } catch (error) {
         if (error.name === "AbortError" || destinationGeneration !== stateData.destinationGeneration) return false;
+        if (destination.preservePointOnFailure === true) stateData.map.easeTo({ center: centre, zoom: targetZoom });
         message(labels.search_error, "error");
         return false;
       } finally {
@@ -2926,6 +3363,7 @@
           : body?.code === "outside_configured_coverage"
             ? labels.outside_coverage
             : labels.search_error;
+        if (destination.preservePointOnFailure === true) stateData.map.easeTo({ center: centre, zoom: targetZoom });
         message(errorMessage, "error");
         persistState();
         return false;
@@ -2935,15 +3373,56 @@
       state.representative = body.representative || null;
       state.details = Boolean(state.square);
       persistState();
-      const centre = [longitude, latitude];
-      const targetZoom = Math.max(12, Math.min(18, stateData.map.getZoom()));
       const currentCentre = stateData.map.getCenter();
       const sameView = currentCentre
         && Math.abs(currentCentre.lng - longitude) < 0.000001
         && Math.abs(currentCentre.lat - latitude) < 0.000001
         && Math.abs(stateData.map.getZoom() - targetZoom) < 0.001;
       stateData.map.easeTo({ center: centre, zoom: targetZoom });
-      if (sameView || !stateData.map.isMoving()) scheduleFetch(0);
+      if (state.square && (sameView || !stateData.map.isMoving())) scheduleFetch(0);
+      return true;
+    }
+
+    async function openFavorite(favorite) {
+      const valid = window.MicometeoFavorites?.validateItem?.(favorite);
+      if (!valid) {
+        message(labels.favorite_invalid, "error");
+        return false;
+      }
+      beginSelectionIntent();
+      if (valid.kind === "point") {
+        return selectDestination({
+          latitude: valid.latitude,
+          longitude: valid.longitude,
+          source: "point",
+          name: valid.name,
+          preservePointOnFailure: true,
+        });
+      }
+      if (!stateData.map || !stateData.ready) {
+        stateData.pendingDestination = { favorite: valid };
+        return false;
+      }
+      clearStoredGeolocation();
+      stateData.destinationGeneration += 1;
+      stateData.destinationRequest?.abort();
+      stateData.destinationRequest = null;
+      clearVisibleSelection();
+      clearPendingSelection();
+      stateData.pendingFavoriteCell = valid.cellId;
+      state.square = valid.cellId;
+      state.updateId = "";
+      state.details = true;
+      state.point = { latitude: valid.latitude, longitude: valid.longitude };
+      state.pointName = "";
+      state.representative = null;
+      state.pointSource = "map";
+      root.classList.remove("details-open");
+      document.querySelector("#main")?.classList.remove("details-open");
+      persistState();
+      const targetZoom = Math.max(13, Math.min(18, stateData.map.getZoom()));
+      stateData.map.easeTo({ center: [valid.longitude, valid.latitude], zoom: targetZoom });
+      scheduleFetch(0);
       return true;
     }
 
@@ -2961,6 +3440,7 @@
       setOverlay(value) { applyOverlay(value); },
       setOpacity(value) { applyOpacity(value); },
       selectDestination,
+      openFavorite,
       closeDetails() {
         if (state.details) clearSelection();
       },
@@ -2975,6 +3455,39 @@
         const centre = featureCenter(features[0]);
         selectFeature(features[0], { source: "centre" });
         return true;
+      },
+      getFavoriteSelection() {
+        if (["search", "geolocation", "point"].includes(state.pointSource) && state.point) {
+          return {
+            kind: "point",
+            latitude: state.point.latitude,
+            longitude: state.point.longitude,
+            name: state.pointName,
+          };
+        }
+        if (state.square) {
+          const centre = stateData.selected ? featureCenter(stateData.selected) : null;
+          const point = centre
+            ? { latitude: centre[1], longitude: centre[0] }
+            : state.point;
+          if (!point) return null;
+          return {
+            kind: "grid",
+            latitude: point.latitude,
+            longitude: point.longitude,
+            cellId: state.square,
+            name: state.pointName,
+          };
+        }
+        if (state.point) {
+          return {
+            kind: "point",
+            latitude: state.point.latitude,
+            longitude: state.point.longitude,
+            name: state.pointName,
+          };
+        }
+        return null;
       },
       resize() {
         const width = container.clientWidth;
