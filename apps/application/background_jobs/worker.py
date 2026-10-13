@@ -21,6 +21,7 @@ logger = logging.getLogger("django_tasks_db")
 REPRESENTATIVE_TASK_PATH = "background_jobs.tasks.representative_job_task"
 WEATHER_FETCH_TASK_PATH = "weather_on_demand.tasks.weather_fetch_task"
 WEATHER_CLEANUP_TASK_PATH = "weather_on_demand.tasks.weather_cleanup_task"
+SCHEDULED_WEATHER_TASK_PATH = "weather_on_demand.tasks.scheduled_weather_run_task"
 
 
 class MicometeoWorker(DatabaseWorker):
@@ -64,6 +65,17 @@ class MicometeoWorker(DatabaseWorker):
             from weather_on_demand.services import weather_cleanup_task_lock_keys
 
             return weather_cleanup_task_lock_keys(job_id=parsed_job_id)
+        if task_result.task_path == SCHEDULED_WEATHER_TASK_PATH:
+            run_id = kwargs.get("run_id")
+            if run_id is None:
+                return ()
+            try:
+                parsed_run_id = uuid.UUID(str(run_id))
+            except ValueError:
+                return ()
+            from weather_on_demand.services import scheduled_run_task_lock_keys
+
+            return scheduled_run_task_lock_keys(run_id=parsed_run_id)
         return ()
 
     def _logical_key_for_task(self, task_result: DBTaskResult) -> str | None:

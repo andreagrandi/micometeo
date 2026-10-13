@@ -10,6 +10,7 @@ from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -22,13 +23,18 @@ from django.db import (
     connection,
     transaction,
 )
-from django.db.models import Count, Sum
+from django.db.models import Count, Q, Sum
 from django_tasks_db.models import DBTaskResult
 from django.utils import timezone
 
-from micometeo.weather.openmeteo import ARCHIVE_URL, FORECAST_URL
-from micometeo.weather.policy import PIPELINE_VERSION, HISTORY_DAYS
-from weather_requests.eligibility import WeatherCell
+from micometeo.weather.openmeteo import FORECAST_URL
+from micometeo.weather.policy import (
+    FORECAST_DAYS,
+    HISTORY_DAYS,
+    PIPELINE_VERSION,
+    history_endpoint,
+)
+from weather_requests.eligibility import TUSCANY_ISTAT_CODE, WeatherCell, tuscany_weather_cells
 from weather_requests.planning import (
     DEFAULT_MODEL,
     MAX_LOCATIONS,
@@ -51,12 +57,13 @@ from weather_summaries.provider_adapter import normalized_provider_responses
 from weather_summaries.services import (
     WeatherDailyConflictError,
     build_weather_snapshot,
-    reusable_previous_daily_rows,
     store_weather_daily_rows,
     store_weather_response,
+    stored_history_rows,
 )
 
 from .models import (
+    ScheduledWeatherRun,
     WeatherCleanupJob,
     WeatherFetch,
     WeatherFetchBatch,
@@ -73,6 +80,9 @@ DEFAULT_WAIT_SECONDS = 3.0
 RETRY_DELAY = timedelta(minutes=2)
 WEATHER_FETCH_TASK_PATH = "weather_on_demand.tasks.weather_fetch_task"
 WEATHER_CLEANUP_TASK_PATH = "weather_on_demand.tasks.weather_cleanup_task"
+SCHEDULED_START_GAP = timedelta(seconds=90)
+SCHEDULED_RUNNING_RECHECK = timedelta(seconds=60)
+SCHEDULED_SOURCE = "tuscany_schedule"
 _ESTIMATE_CALLBACK: Callable[..., Any] | None = None
 _CLEANUP_CALLBACK: Callable[..., Any] | None = None
 
@@ -151,6 +161,14 @@ def _clock_now(clock: Callable[[], datetime] | None = None) -> datetime:
 def italian_assessment_date(*, clock: Callable[[], datetime] | None = None) -> date:
     """Return today's date at the Europe/Rome boundary."""
     return _clock_now(clock).astimezone(ROME).date()
+
+
+def weather_window(*, assessment_date: date) -> tuple[date, date]:
+    """Return the first and last date of the 38-day weather window."""
+    return (
+        assessment_date - timedelta(days=HISTORY_DAYS),
+        assessment_date + timedelta(days=FORECAST_DAYS),
+    )
 
 
 def opaque_visitor_hash(*, visitor_id: str | bytes | None) -> str:
@@ -508,20 +526,90 @@ def _mark_visitor_limited(
     )
 
 
+def _completed_dates(
+    *,
+    cell_key: str,
+    assessment_date: date,
+    fetch_id: uuid.UUID | None,
+) -> tuple[dict[date, WeatherDaily], set[date]]:
+    """Return stored history rows and every date that needs no provider request.
+
+    The dry run and the real plan both call this, so they agree on what is missing.
+    """
+    history = stored_history_rows(cell_key=cell_key, assessment_date=assessment_date)
+    completed = set(history)
+    if fetch_id is not None:
+        completed.update(_completed_part_dates(fetch_id=fetch_id))
+    return history, completed
+
+
+def _completed_part_dates(*, fetch_id: uuid.UUID) -> set[date]:
+    row_ids = {
+        str(row_id)
+        for part_ids in WeatherFetchPart.objects.filter(
+            fetch_id=fetch_id,
+            status=WeatherFetchPart.Status.COMPLETED,
+        ).values_list("daily_ids", flat=True)
+        for row_id in (part_ids or [])
+    }
+    if not row_ids:
+        return set()
+    return set(WeatherDaily.objects.filter(id__in=row_ids).values_list("date", flat=True))
+
+
+def _contiguous_ranges(*, days: Iterable[date]) -> list[tuple[date, date]]:
+    ranges: list[tuple[date, date]] = []
+    for day in sorted(set(days)):
+        if ranges and ranges[-1][1] + timedelta(days=1) == day:
+            ranges[-1] = (ranges[-1][0], day)
+        else:
+            ranges.append((day, day))
+    return ranges
+
+
+def _attach_stored_history(
+    *,
+    fetch: WeatherFetch,
+    history: Mapping[date, WeatherDaily],
+    now: datetime,
+) -> None:
+    """Attach stored history rows to a fetch as completed parts without a request."""
+    covered = _completed_part_dates(fetch_id=fetch.id)
+    for start, end in _contiguous_ranges(days=set(history) - covered):
+        rows = [history[start + timedelta(days=offset)] for offset in range((end - start).days + 1)]
+        WeatherFetchPart.objects.get_or_create(
+            fetch=fetch,
+            start_date=start,
+            end_date=end,
+            defaults={
+                "status": WeatherFetchPart.Status.COMPLETED,
+                "daily_ids": [str(row.id) for row in rows],
+                "source_ids": list(dict.fromkeys(row.source_id for row in rows)),
+                "source_attempt_ids": list(dict.fromkeys(str(row.attempt_id) for row in rows)),
+                "reason_code": "stored_history",
+                "completed_at": now,
+            },
+        )
+
+
 def _plan_batches(
     *,
     cells: Sequence[WeatherCell],
     assessment_date: date,
-    visitor_hash: str,
+    visitor_hash: str | None,
     now: datetime,
     model: str,
     forest_build_version: str,
     options: Mapping[str, str] | None,
+    scheduled_run: ScheduledWeatherRun | None = None,
 ) -> tuple[WeatherFetchBatch, ...]:
+    """Plan provider batches for the cells, or for a scheduled run when no visitor is given."""
     cells_by_key = {cell.key: cell for cell in cells}
     available: list[tuple[WeatherCell, WeatherFetch, Any]] = []
     pending_batches: dict[uuid.UUID, WeatherFetchBatch] = {}
     endpoint = os.environ.get("MICOMETEO_WEATHER_ENDPOINT", FORECAST_URL)
+    fetch_visitor = visitor_hash or ""
+    source = "weather_on_demand" if visitor_hash is not None else SCHEDULED_SOURCE
     with transaction.atomic():
         fetches: dict[str, WeatherFetch] = {}
         trigger_keys: set[str] = set()
@@ -539,7 +627,7 @@ def _plan_batches(
                         cell_key=cell.key,
                         assessment_date=assessment_date,
                         previous_snapshot=None,
-                        visitor_hash=visitor_hash,
+                        visitor_hash=fetch_visitor,
                         now=now,
                     )
                 if (
@@ -581,7 +669,7 @@ def _plan_batches(
                     cell_key=cell.key,
                     assessment_date=assessment_date,
                     previous_snapshot=previous,
-                    visitor_hash=visitor_hash,
+                    visitor_hash=fetch_visitor,
                     now=now,
                 )
             fetches[cell.key] = fetch
@@ -604,28 +692,44 @@ def _plan_batches(
             )
             for part in active_parts:
                 if part.batch_id is not None:
+                    if scheduled_run is not None and part.batch.scheduled_run_id is None:
+                        part.batch.scheduled_run = scheduled_run
+                        part.batch.save(update_fields=["scheduled_run", "updated_at"])
                     pending_batches[part.batch_id] = part.batch
             if active_parts:
                 continue
-            if fetch.reason_code == "visitor_limit" and fetch.visitor_hash == visitor_hash:
+            if (
+                visitor_hash is not None
+                and fetch.reason_code == "visitor_limit"
+                and fetch.visitor_hash == visitor_hash
+            ):
                 if fetch.retry_at is None or fetch.retry_at > now:
                     continue
             if fetch.status == WeatherFetch.Status.RUNNING:
                 continue
-            if fetch.retry_at is None or fetch.retry_at <= now:
+            if (
+                fetch.retry_at is None
+                or fetch.retry_at <= now
+                or (visitor_hash is None and fetch.reason_code == "visitor_limit")
+            ):
                 trigger_keys.add(cell.key)
 
-        accepted_keys = _reserve_visitor_slots(
-            visitor_hash=visitor_hash,
-            cell_keys=tuple(trigger_keys),
-            assessment_date=assessment_date,
-            now=now,
+        accepted_keys = (
+            _reserve_visitor_slots(
+                visitor_hash=visitor_hash,
+                cell_keys=tuple(trigger_keys),
+                assessment_date=assessment_date,
+                now=now,
+            )
+            if visitor_hash is not None
+            else set(trigger_keys)
         )
         for cell_key, fetch in fetches.items():
             if fetch.batch_id is not None or fetch.status == WeatherFetch.Status.RUNNING:
                 continue
             if (
-                fetch.reason_code == "visitor_limit"
+                visitor_hash is not None
+                and fetch.reason_code == "visitor_limit"
                 and fetch.visitor_hash == visitor_hash
                 and (fetch.retry_at is None or fetch.retry_at > now)
             ):
@@ -634,41 +738,21 @@ def _plan_batches(
             if not is_new:
                 continue
             if is_new and cell_key not in accepted_keys:
-                _mark_visitor_limited(fetch=fetch, visitor_hash=visitor_hash, now=now)
+                _mark_visitor_limited(fetch=fetch, visitor_hash=fetch_visitor, now=now)
                 continue
-            previous = fetch.previous_snapshot
-            completed_dates: set[date] = set()
-            if previous is not None:
-                completed_dates.update(
-                    reusable_previous_daily_rows(
-                        previous_snapshot=previous,
-                        assessment_date=assessment_date,
-                        cell_key=fetch.cell_key,
-                        reference_elevation_m=previous.reference_elevation_m,
-                    )
-                )
-            completed_part_ids = list(
-                WeatherFetchPart.objects.filter(
-                    fetch=fetch,
-                    status=WeatherFetchPart.Status.COMPLETED,
-                ).values_list("daily_ids", flat=True)
+            history, completed_dates = _completed_dates(
+                cell_key=fetch.cell_key,
+                assessment_date=assessment_date,
+                fetch_id=fetch.id,
             )
-            daily_ids = {
-                str(row_id)
-                for part_ids in completed_part_ids
-                for row_id in (part_ids or [])
-            }
-            if daily_ids:
-                completed_dates.update(
-                    WeatherDaily.objects.filter(id__in=daily_ids).values_list("date", flat=True)
-                )
+            _attach_stored_history(fetch=fetch, history=history, now=now)
             specs = plan_current_weather_requests(
                 locations=[cells_by_key[cell_key]],
                 assessment_date=assessment_date,
                 completed_dates=completed_dates,
                 model=model,
                 endpoint=endpoint,
-                history_endpoint=os.environ.get("MICOMETEO_WEATHER_HISTORY_ENDPOINT", ARCHIVE_URL),
+                history_endpoint=history_endpoint(),
                 options=options,
                 forest_build_version=forest_build_version,
             )
@@ -690,7 +774,7 @@ def _plan_batches(
                 combined = combine_request_specs(specs=[item[2] for item in chunk])
                 request = get_or_create_request(
                     spec=combined,
-                    provenance={"source": "weather_on_demand", "assessment_date": assessment_date.isoformat()},
+                    provenance={"source": source, "assessment_date": assessment_date.isoformat()},
                 )
                 logical_key = f"weather-fetch:{assessment_date.isoformat()}:{combined.digest}"
                 batch, _created = WeatherFetchBatch.objects.get_or_create(
@@ -699,8 +783,12 @@ def _plan_batches(
                         "assessment_date": assessment_date,
                         "request": request,
                         "canonical_spec": combined.as_dict(),
+                        "scheduled_run": scheduled_run,
                     },
                 )
+                if scheduled_run is not None and batch.scheduled_run_id is None:
+                    batch.scheduled_run = scheduled_run
+                    batch.save(update_fields=["scheduled_run", "updated_at"])
                 if batch.request_id != request.id:
                     raise WeatherOnDemandError("A weather batch logical key has another request.")
                 for _cell, fetch, _spec in chunk:
@@ -784,6 +872,9 @@ def _enqueue_batch(*, batch_id: uuid.UUID, run_after: datetime | None = None) ->
 
 
 def _schedule_batch(*, batch: WeatherFetchBatch, run_after: datetime | None = None) -> None:
+    if batch.scheduled_run_id is not None:
+        # The scheduled run task starts its batches one at a time.
+        return
     if run_after is None and batch.retry_at is not None and batch.retry_at > timezone.now():
         run_after = batch.retry_at
     if _queue_task_is_active(task_id=batch.task_id):
@@ -1470,6 +1561,415 @@ def process_weather_fetch_batch(
         return False
 
 
+@dataclass(frozen=True)
+class ScheduledPartPlan:
+    """Describe one date range that a scheduled run asks the provider for."""
+
+    kind: str
+    start_date: date
+    end_date: date
+    cells: int
+    http_requests: int
+    counted_calls: Decimal
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return the part in a JSON-safe shape."""
+        return {
+            "kind": self.kind,
+            "start_date": self.start_date.isoformat(),
+            "end_date": self.end_date.isoformat(),
+            "cells": self.cells,
+            "http_requests": self.http_requests,
+            "counted_calls": float(self.counted_calls),
+        }
+
+
+@dataclass(frozen=True)
+class ScheduledWeatherPlan:
+    """Describe what one scheduled run would request, without writing anything."""
+
+    assessment_date: date
+    cells_total: int
+    cells_ready: int
+    mode: str
+    counted_calls: Decimal
+    http_requests: int
+    parts: tuple[ScheduledPartPlan, ...]
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return the plan in a JSON-safe shape."""
+        first_day, last_day = weather_window(assessment_date=self.assessment_date)
+        return {
+            "assessment_date": self.assessment_date.isoformat(),
+            "window_start": first_day.isoformat(),
+            "window_end": last_day.isoformat(),
+            "cells_total": self.cells_total,
+            "cells_ready": self.cells_ready,
+            "mode": self.mode,
+            "counted_calls": float(self.counted_calls),
+            "http_requests": self.http_requests,
+            "parts": [part.as_dict() for part in self.parts],
+        }
+
+
+def _scheduled_mode(*, cell_keys: Sequence[str], assessment_date: date) -> str:
+    """Return initial when no cell has a ready snapshot for an earlier date."""
+    has_earlier = WeatherSnapshot.objects.filter(
+        cell_key__in=cell_keys,
+        assessment_date__lt=assessment_date,
+        status=WeatherSnapshot.Status.READY,
+        pipeline_version=PIPELINE_VERSION,
+    ).exists()
+    return (
+        ScheduledWeatherRun.Mode.REFRESH if has_earlier else ScheduledWeatherRun.Mode.INITIAL
+    ).value
+
+
+def plan_scheduled_weather(
+    *,
+    cells: Sequence[WeatherCell],
+    assessment_date: date,
+    model: str = DEFAULT_MODEL,
+    options: Mapping[str, str] | None = None,
+    forest_build_version: str = "",
+) -> ScheduledWeatherPlan:
+    """Read the database and return what a scheduled run would request.
+
+    The plan makes no writes and no provider calls.
+    """
+    cell_keys = sorted({cell.key for cell in cells})
+    ready_keys = set(
+        WeatherSnapshot.objects.filter(
+            cell_key__in=cell_keys,
+            assessment_date=assessment_date,
+            status=WeatherSnapshot.Status.READY,
+            pipeline_version=PIPELINE_VERSION,
+        ).values_list("cell_key", flat=True)
+    )
+    endpoint = os.environ.get("MICOMETEO_WEATHER_ENDPOINT", FORECAST_URL)
+    groups: dict[tuple[Any, ...], list[Any]] = defaultdict(list)
+    for cell in sorted({cell.key: cell for cell in cells}.values(), key=lambda item: item.key):
+        if cell.key in ready_keys:
+            continue
+        fetch_id = (
+            WeatherFetch.objects.filter(
+                cell_key=cell.key,
+                assessment_date=assessment_date,
+                pipeline_version=PIPELINE_VERSION,
+            )
+            .values_list("id", flat=True)
+            .first()
+        )
+        _history, completed_dates = _completed_dates(
+            cell_key=cell.key,
+            assessment_date=assessment_date,
+            fetch_id=fetch_id,
+        )
+        specs = plan_current_weather_requests(
+            locations=[cell],
+            assessment_date=assessment_date,
+            completed_dates=completed_dates,
+            model=model,
+            endpoint=endpoint,
+            history_endpoint=history_endpoint(),
+            options=options,
+            forest_build_version=forest_build_version,
+        )
+        for spec in specs:
+            requested_dates = {
+                spec.start_date + timedelta(days=offset)
+                for offset in range((spec.end_date - spec.start_date).days + 1)
+            }
+            if not requested_dates.issubset(completed_dates):
+                groups[request_compatibility_key(spec=spec)].append(spec)
+    parts = tuple(
+        ScheduledPartPlan(
+            kind="history" if group[0].end_date < assessment_date else "forecast",
+            start_date=group[0].start_date,
+            end_date=group[0].end_date,
+            cells=len(group),
+            http_requests=-(-len(group) // MAX_LOCATIONS),
+            counted_calls=sum((spec.reservation_weight for spec in group), Decimal("0")),
+        )
+        for group in sorted(groups.values(), key=lambda items: (items[0].start_date, items[0].end_date))
+    )
+    return ScheduledWeatherPlan(
+        assessment_date=assessment_date,
+        cells_total=len(cell_keys),
+        cells_ready=len(ready_keys),
+        mode=_scheduled_mode(cell_keys=cell_keys, assessment_date=assessment_date),
+        counted_calls=sum((part.counted_calls for part in parts), Decimal("0")),
+        http_requests=sum(part.http_requests for part in parts),
+        parts=parts,
+    )
+
+
+def scheduled_run_task_lock_keys(*, run_id: uuid.UUID | str) -> tuple[str, ...]:
+    """Return the advisory key claimed by one scheduled run queue task."""
+    run = ScheduledWeatherRun.objects.filter(id=uuid.UUID(str(run_id))).first()
+    if run is None:
+        return ()
+    return (f"scheduled-weather-run:{run.region_code}:{run.assessment_date.isoformat()}",)
+
+
+def _enqueue_run(
+    *,
+    run_id: uuid.UUID,
+    run_after: datetime | None = None,
+    own_task: bool = False,
+) -> uuid.UUID | None:
+    """Queue the next task of a run, unless a live task already exists.
+
+    The task that calls this from inside the worker passes own_task, because its
+    own queue row is still running at that moment.
+    """
+    from .tasks import scheduled_weather_run_task
+
+    try:
+        task = (
+            scheduled_weather_run_task.using(run_after=run_after)
+            if run_after
+            else scheduled_weather_run_task
+        )
+        with transaction.atomic():
+            run = ScheduledWeatherRun.objects.select_for_update().get(id=run_id)
+            if not own_task and _queue_task_is_active(
+                task_id=run.task_id,
+                logical_keys=scheduled_run_task_lock_keys(run_id=run_id),
+            ):
+                return run.task_id
+            task_result = task.enqueue(run_id=str(run_id))
+            run.task_id = uuid.UUID(str(task_result.id))
+            run.save(update_fields=["task_id", "updated_at"])
+            return run.task_id
+    except Exception as exc:
+        ScheduledWeatherRun.objects.filter(id=run_id).update(
+            task_id=None,
+            reason_code="queue_failure",
+            full_reason=str(exc),
+            updated_at=timezone.now(),
+        )
+        return None
+
+
+def start_scheduled_weather_run(
+    *,
+    assessment_date: date,
+    region_code: str = TUSCANY_ISTAT_CODE,
+    forest_build_version: str,
+    clock: Callable[[], datetime] | None = None,
+    model: str = DEFAULT_MODEL,
+    options: Mapping[str, str] | None = None,
+) -> ScheduledWeatherRun:
+    """Plan the Tuscany batches for one date and queue the run task once.
+
+    Calling it again for the same date resumes the run and never repeats work.
+    """
+    cells = tuscany_weather_cells(
+        forest_build_version=forest_build_version,
+        region_code=region_code,
+    )
+    now = _clock_now(clock)
+    plan = plan_scheduled_weather(
+        cells=cells,
+        assessment_date=assessment_date,
+        model=model,
+        options=options,
+        forest_build_version=forest_build_version,
+    )
+    with transaction.atomic():
+        run, created = ScheduledWeatherRun.objects.select_for_update().get_or_create(
+            region_code=region_code,
+            assessment_date=assessment_date,
+            defaults={
+                "forest_build_version": forest_build_version,
+                "mode": plan.mode,
+                "planned_counted_calls": plan.counted_calls,
+                "planned_http_requests": plan.http_requests,
+            },
+        )
+        if run.status == ScheduledWeatherRun.Status.COMPLETED:
+            return run
+        if run.status == ScheduledWeatherRun.Status.FAILED:
+            run.status = ScheduledWeatherRun.Status.PENDING
+            run.completed_at = None
+            run.reason_code = ""
+            run.full_reason = ""
+            run.save(update_fields=["status", "completed_at", "reason_code", "full_reason", "updated_at"])
+        _plan_batches(
+            cells=cells,
+            assessment_date=assessment_date,
+            visitor_hash=None,
+            now=now,
+            model=model,
+            forest_build_version=forest_build_version,
+            options=options,
+            scheduled_run=run,
+        )
+    _enqueue_run(run_id=run.id)
+    run.refresh_from_db()
+    return run
+
+
+def _scheduled_batch_lock_keys(*, batch: WeatherFetchBatch) -> list[tuple[str, date]]:
+    keys = list(batch.parts.values_list("fetch__cell_key", "fetch__assessment_date"))
+    return keys or list(batch.fetches.values_list("cell_key", "assessment_date"))
+
+
+def _finish_scheduled_run(*, run: ScheduledWeatherRun, now: datetime) -> ScheduledWeatherRun:
+    """Mark a run completed when every Tuscany cell has a snapshot, otherwise failed."""
+    try:
+        cells = tuscany_weather_cells(
+            forest_build_version=run.forest_build_version,
+            region_code=run.region_code,
+        )
+    except ValueError as exc:
+        status, reason_code, full_reason = ScheduledWeatherRun.Status.FAILED, "scope_error", str(exc)
+    else:
+        keys = {cell.key for cell in cells}
+        ready = set(
+            WeatherSnapshot.objects.filter(
+                cell_key__in=keys,
+                assessment_date=run.assessment_date,
+                status=WeatherSnapshot.Status.READY,
+                pipeline_version=PIPELINE_VERSION,
+            ).values_list("cell_key", flat=True)
+        )
+        if ready >= keys:
+            status, reason_code, full_reason = ScheduledWeatherRun.Status.COMPLETED, "ready", ""
+        else:
+            blocked = (
+                WeatherFetch.objects.filter(
+                    cell_key__in=keys - ready,
+                    assessment_date=run.assessment_date,
+                    pipeline_version=PIPELINE_VERSION,
+                )
+                .exclude(reason_code="fetch_pending")
+                .order_by("cell_key")
+                .first()
+            )
+            status = ScheduledWeatherRun.Status.FAILED
+            reason_code = blocked.reason_code if blocked is not None else "not_planned"
+            full_reason = (
+                f"{len(keys - ready)} of {len(keys)} weather cells have no snapshot. "
+                + (blocked.full_reason if blocked is not None else "")
+            ).strip()
+    ScheduledWeatherRun.objects.filter(id=run.id).update(
+        status=status,
+        completed_at=now,
+        task_id=None,
+        reason_code=reason_code,
+        full_reason=full_reason,
+        updated_at=now,
+    )
+    run.refresh_from_db()
+    return run
+
+
+def run_scheduled_weather_step(
+    *,
+    run_id: uuid.UUID | str,
+    transport: Callable[..., Any] | None = None,
+    clock: Callable[[], datetime] | None = None,
+    provider: WeatherProvider | None = None,
+) -> ScheduledWeatherRun:
+    """Start at most one provider request of a run, then queue the next step."""
+    parsed_run_id = uuid.UUID(str(run_id))
+    now = _clock_now(clock)
+    run = ScheduledWeatherRun.objects.get(id=parsed_run_id)
+    if run.status in {ScheduledWeatherRun.Status.COMPLETED, ScheduledWeatherRun.Status.FAILED}:
+        return run
+    ScheduledWeatherRun.objects.filter(id=run.id).update(
+        status=ScheduledWeatherRun.Status.RUNNING,
+        started_at=run.started_at or now,
+        updated_at=now,
+    )
+    run.refresh_from_db()
+    if run.next_start_at is not None and run.next_start_at > now:
+        _enqueue_run(run_id=run.id, run_after=run.next_start_at, own_task=True)
+        run.refresh_from_db()
+        return run
+    batch = (
+        run.batches.filter(status=WeatherFetchBatch.Status.PENDING)
+        .filter(Q(retry_at__isnull=True) | Q(retry_at__lte=now))
+        .order_by("logical_key")
+        .first()
+    )
+    if batch is not None:
+        attempts_before = WeatherRequestAttempt.objects.filter(request_id=batch.request_id).count()
+        with weather_cell_locks(keys=_scheduled_batch_lock_keys(batch=batch), wait=True):
+            process_weather_fetch_batch(
+                batch_id=batch.id,
+                transport=transport,
+                clock=clock,
+                provider=provider,
+            )
+        attempts = (
+            WeatherRequestAttempt.objects.filter(request_id=batch.request_id).count()
+            - attempts_before
+        )
+        next_start_at = now + SCHEDULED_START_GAP if attempts > 0 else None
+        batch.refresh_from_db()
+        if batch.status == WeatherFetchBatch.Status.PENDING and batch.retry_at is not None:
+            # A quota block or a provider retry time holds the whole run, not only this batch.
+            next_start_at = max(next_start_at or batch.retry_at, batch.retry_at)
+        if attempts > 0 or next_start_at is not None:
+            ScheduledWeatherRun.objects.filter(id=run.id).update(
+                provider_attempts=run.provider_attempts + attempts,
+                next_start_at=next_start_at or run.next_start_at,
+                updated_at=now,
+            )
+    current = _clock_now(clock)
+    run.refresh_from_db()
+    open_batches = list(
+        run.batches.filter(
+            status__in=[WeatherFetchBatch.Status.PENDING, WeatherFetchBatch.Status.RUNNING]
+        ).order_by("logical_key")
+    )
+    if not open_batches:
+        return _finish_scheduled_run(run=run, now=current)
+    ready_times = [
+        current + SCHEDULED_RUNNING_RECHECK
+        if open_batch.status == WeatherFetchBatch.Status.RUNNING
+        else (open_batch.retry_at or current)
+        for open_batch in open_batches
+    ]
+    run_after = max(min(ready_times), run.next_start_at or current)
+    waiting = next(
+        (item for item in open_batches if item.retry_at is not None and item.retry_at > current),
+        None,
+    )
+    ScheduledWeatherRun.objects.filter(id=run.id).update(
+        reason_code=waiting.reason_code if waiting is not None else "",
+        full_reason=waiting.full_reason if waiting is not None else "",
+        updated_at=current,
+    )
+    _enqueue_run(
+        run_id=run.id,
+        run_after=run_after if run_after > current else None,
+        own_task=True,
+    )
+    run.refresh_from_db()
+    return run
+
+
+def _recover_scheduled_runs(*, now: datetime) -> int:
+    """Queue a task again for every unfinished run that has no live task."""
+    recovered = 0
+    for run in ScheduledWeatherRun.objects.filter(
+        status__in=[ScheduledWeatherRun.Status.PENDING, ScheduledWeatherRun.Status.RUNNING]
+    ).order_by("assessment_date"):
+        if _queue_task_is_active(
+            task_id=run.task_id,
+            logical_keys=scheduled_run_task_lock_keys(run_id=run.id),
+        ):
+            continue
+        run_after = run.next_start_at if run.next_start_at and run.next_start_at > now else None
+        _enqueue_run(run_id=run.id, run_after=run_after, own_task=True)
+        recovered += 1
+    return recovered
+
+
 def _cell_result(
     *,
     cell_key: str,
@@ -1826,6 +2326,7 @@ def recover_weather_fetches(
         if job.retry_at is not None and job.retry_at > current:
             continue
         _schedule_cleanup(job=job, run_after=max(current, job.retry_at or current))
+    recovered += _recover_scheduled_runs(now=current)
     _recover_estimate_callbacks(now=current)
     return recovered
 
@@ -1919,10 +2420,15 @@ def cleanup_weather(
         cutoff = cleanup_date - timedelta(days=HISTORY_DAYS)
         from weather_summaries.models import WeatherDaily
 
-        deleted_daily_count = WeatherDaily.objects.filter(
-            date__lt=cutoff,
-            snapshot_days__isnull=True,
-        ).exclude(id__in=protected_daily_ids).delete()[0]
+        deleted_daily_count = (
+            WeatherDaily.objects.filter(
+                date__lt=cutoff,
+                snapshot_days__isnull=True,
+            )
+            .exclude(id__in=protected_daily_ids)
+            .exclude(source_endpoint=history_endpoint())
+            .delete()[0]
+        )
         from weather_requests.models import WeatherRequestAttempt
 
         attempt_cutoff = datetime.combine(
@@ -2100,6 +2606,9 @@ def weather_status(*, assessment_date: date | None = None) -> dict[str, Any]:
 __all__ = [
     "CellWeatherResult",
     "DEFAULT_WAIT_SECONDS",
+    "SCHEDULED_START_GAP",
+    "ScheduledPartPlan",
+    "ScheduledWeatherPlan",
     "WeatherLookupResult",
     "WeatherOnDemandError",
     "cleanup_weather",
@@ -2113,8 +2622,12 @@ __all__ = [
     "process_weather_fetch_batch",
     "recover_weather_fetches",
     "request_weather",
+    "plan_scheduled_weather",
     "reopen_weather_fetch",
     "run_cleanup_job",
+    "run_scheduled_weather_step",
+    "start_scheduled_weather_run",
+    "weather_window",
     "set_estimate_callback",
     "set_cleanup_callback",
     "weather_status",

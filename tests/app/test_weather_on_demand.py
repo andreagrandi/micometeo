@@ -587,10 +587,11 @@ def test_ten_day_stale_snapshot_refreshes_old_forecast_days() -> None:
     assert list(
         WeatherFetchPart.objects.filter(fetch=fetch)
         .order_by("start_date")
-        .values_list("start_date", "end_date", "status")
+        .values_list("start_date", "end_date", "status", "reason_code")
     ) == [
-        (date(2026, 10, 11), date(2026, 10, 20), WeatherFetchPart.Status.COMPLETED),
-        (date(2026, 10, 21), date(2026, 10, 28), WeatherFetchPart.Status.COMPLETED),
+        (date(2026, 9, 21), date(2026, 10, 10), WeatherFetchPart.Status.COMPLETED, "stored_history"),
+        (date(2026, 10, 11), date(2026, 10, 20), WeatherFetchPart.Status.COMPLETED, "part_stored"),
+        (date(2026, 10, 21), date(2026, 10, 28), WeatherFetchPart.Status.COMPLETED, "part_stored"),
     ]
     assert fake.call_count == 6
 
@@ -746,7 +747,10 @@ def test_multipart_refusal_reopens_all_sibling_batches_and_parts(
     refused = _FakeOpenMeteo(status=400, message="multipart request must be reopened")
     _request_weather(cells=(cell,), day=second_day, transport=refused)
     fetch = WeatherFetch.objects.get(cell_key=cell.key, assessment_date=second_day)
-    failed_parts = list(WeatherFetchPart.objects.filter(fetch=fetch))
+    failed_parts = list(WeatherFetchPart.objects.filter(fetch=fetch, batch__isnull=False))
+    assert WeatherFetchPart.objects.filter(
+        fetch=fetch, reason_code="stored_history", status=WeatherFetchPart.Status.COMPLETED
+    ).count() == 1
     failed_batches = list(
         WeatherFetchBatch.objects.filter(
             parts__fetch=fetch,
@@ -767,7 +771,7 @@ def test_multipart_refusal_reopens_all_sibling_batches_and_parts(
     )
     assert reopened.status == WeatherFetchBatch.Status.PENDING
     assert set(
-        WeatherFetchPart.objects.filter(fetch=fetch).values_list("status", flat=True)
+        WeatherFetchPart.objects.filter(fetch=fetch, batch__isnull=False).values_list("status", flat=True)
     ) == {WeatherFetchPart.Status.PENDING}
     assert set(
         WeatherFetchBatch.objects.filter(

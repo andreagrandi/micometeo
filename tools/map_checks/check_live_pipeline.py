@@ -175,8 +175,8 @@ def main() -> None:
                 day_count = snapshot.days.count()
                 summary_count = snapshot.summaries.count()
                 result_count = EstimateResult.objects.filter(update=update).count()
-                if day_count != 29 or summary_count != 8:
-                    raise RuntimeError("The saved snapshot needs 29 days and eight summaries.")
+                if day_count != 38 or summary_count != 8:
+                    raise RuntimeError("The saved snapshot needs 38 days and eight summaries.")
                 if result_count != update.row_count:
                     raise RuntimeError("The saved estimate row count does not match its update.")
                 detail_response = client.get(

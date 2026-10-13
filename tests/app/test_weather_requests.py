@@ -45,7 +45,7 @@ from weather_requests.provider import (
     get_or_create_request,
 )
 from weather_requests.quota import check_quota, reserve_attempt
-from weather_requests.services import _budget_weights
+from weather_requests.services import _budget_http_requests, _budget_weights
 from micometeo.weather.openmeteo import ARCHIVE_URL, FORECAST_URL
 
 
@@ -273,29 +273,31 @@ def test_fourteen_date_weight_keeps_nominal_and_conservative_closing_hour_distin
     ) == Decimal("1.071429")
 
 
-def test_budget_weights_are_hand_calculated_per_provider_batch() -> None:
+def test_budget_weights_follow_the_38_day_window_per_provider_batch() -> None:
     weights = _budget_weights(cell_count=20)
-    assert float(weights["first_nominal"]) == pytest.approx(20 * 29 / 14, abs=0.000001)
-    assert weights["daily_nominal"] == 20
-    assert float(weights["first_reserved"]) == pytest.approx(20 * 30 / 14, abs=0.000001)
-    assert weights["daily_reserved"] == 20
-    assert weights["steady_month_nominal"] == 31 * 20
-    assert weights["steady_month_reserved"] == 31 * 20
-    assert float(weights["first_month_nominal"]) == pytest.approx(
-        20 * 29 / 14 + 30 * 20,
-        abs=0.000001,
-    )
-    assert float(weights["first_month_reserved"]) == pytest.approx(
-        20 * 30 / 14 + 30 * 20,
-        abs=0.000001,
-    )
+    assert weights["initial_nominal"] == 4 * 20
+    assert weights["initial_reserved"] == 4 * 20
+    assert weights["refresh_nominal"] == 2 * 20
+    assert weights["refresh_reserved"] == 2 * 20
+    assert weights["steady_month_nominal"] == 31 * 2 * 20
+    assert weights["steady_month_reserved"] == 31 * 2 * 20
+    assert weights["first_month_nominal"] == 4 * 20 + 30 * 2 * 20
+    assert weights["first_month_reserved"] == 4 * 20 + 30 * 2 * 20
 
 
 def test_budget_weights_sum_each_batch_at_the_one_hundred_place_cap() -> None:
     weights = _budget_weights(cell_count=101)
-    assert float(weights["first_nominal"]) == pytest.approx(101 * 29 / 14, abs=0.00001)
-    assert float(weights["first_reserved"]) == pytest.approx(101 * 30 / 14, abs=0.00001)
-    assert weights["daily_reserved"] == 101
+    assert weights["initial_reserved"] == 4 * 101
+    assert weights["refresh_reserved"] == 2 * 101
+    assert _budget_http_requests(cell_count=101) == {"initial_load": 8, "nightly_refresh": 4}
+
+
+def test_tuscany_sized_budget_matches_the_documented_counted_calls() -> None:
+    weights = _budget_weights(cell_count=333)
+    assert weights["initial_reserved"] == 1332
+    assert weights["refresh_reserved"] == 666
+    assert _budget_http_requests(cell_count=333) == {"initial_load": 16, "nightly_refresh": 8}
+    assert _budget_http_requests(cell_count=0) == {"initial_load": 0, "nightly_refresh": 0}
 
 
 def test_request_identity_changes_when_any_provider_parameter_changes() -> None:

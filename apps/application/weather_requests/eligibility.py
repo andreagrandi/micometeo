@@ -10,6 +10,7 @@ from django.db.models import Q
 
 
 CENTRE_QUANTUM = Decimal("0.01")
+TUSCANY_ISTAT_CODE = "09"
 
 
 class WeatherEligibilityError(ValueError):
@@ -103,6 +104,39 @@ def weather_cells_for_forest_build(*, build_version: str) -> tuple[WeatherCell, 
             f"Forest build {build_version!r} is {build.status}, not completed."
         )
     forest_cells = ForestCell.objects.filter(build=build, is_forest=True)
+    if forest_cells.filter(
+        Q(weather_latitude__isnull=True) | Q(weather_longitude__isnull=True)
+    ).exists():
+        raise WeatherEligibilityError("A forest square is missing its weather cell centre.")
+    rows = forest_cells.values_list("weather_latitude", "weather_longitude").distinct().iterator(
+        chunk_size=10_000
+    )
+    return _cells_from_coordinates(rows=rows)
+
+
+def tuscany_weather_cells(
+    *, forest_build_version: str, region_code: str = TUSCANY_ISTAT_CODE
+) -> tuple[WeatherCell, ...]:
+    """Return the unique weather cells of Tuscany forest squares, each counted once."""
+    from national_forest.models import ForestBuild, ForestCell
+
+    if region_code != TUSCANY_ISTAT_CODE:
+        raise WeatherEligibilityError(
+            f"Scheduled weather runs only Tuscany, region code {TUSCANY_ISTAT_CODE}, "
+            f"not {region_code!r}."
+        )
+    build = ForestBuild.objects.filter(version=forest_build_version).first()
+    if build is None:
+        raise WeatherEligibilityError(f"No forest build exists for {forest_build_version!r}.")
+    if build.status != ForestBuild.Status.COMPLETED:
+        raise WeatherEligibilityError(
+            f"Forest build {forest_build_version!r} is {build.status}, not completed."
+        )
+    forest_cells = ForestCell.objects.filter(
+        build=build,
+        is_forest=True,
+        grid_build_cell__owner_region__istat_code=region_code,
+    )
     if forest_cells.filter(
         Q(weather_latitude__isnull=True) | Q(weather_longitude__isnull=True)
     ).exists():

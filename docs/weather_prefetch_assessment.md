@@ -163,12 +163,12 @@ completed national runs or clear the overlay between finished batches.
 
 ## Existing documentation that must not drive the new budget
 
-`weather_request_budget` and the opening paragraphs of `weather_updates.md`
-still describe a 29-day first request and an 11-day combined refresh. They
-predate the current 30-day history and separate history and forecast requests.
-Those budget figures underestimate the current scheduled workload. This
-assessment uses the live planner instead. Updating those contracts belongs with
-the scheduled refresh implementation.
+`weather_request_budget` and `weather_updates.md` now describe the 38-day
+window: three history pieces of 13, 13 and 4 days plus one forecast of 8 days
+for the first load, and yesterday plus one forecast of 8 days for a normal
+night. The budget report lists counted calls and HTTP requests as separate
+numbers. The Tuscany refresh command `refresh_tuscany_weather` follows the same
+plan.
 
 ## Immediate database changes
 
