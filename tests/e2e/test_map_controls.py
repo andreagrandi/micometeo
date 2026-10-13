@@ -687,15 +687,38 @@ def test_date_selector_collapses_and_preserves_state_on_reload(
 ) -> None:
     _open_map(page, base_url, viewport=viewport)
     toggle = page.locator("[data-fold='dates']")
+    expect(toggle).to_have_css("transform", "matrix(-1, 0, 0, -1, 0, 0)")
     toggle.click()
     expect(page.locator("#dates-body")).to_be_hidden()
     expect(toggle).to_have_attribute("aria-expanded", "false")
+    expect(toggle).to_have_css("transform", "none")
     page.reload(wait_until="domcontentloaded")
     expect(page.locator("#dates-body")).to_be_hidden()
     expect(toggle).to_be_in_viewport()
     toggle.click()
     expect(page.locator("#dates-body")).to_be_visible()
     expect(toggle).to_have_attribute("aria-expanded", "true")
+    expect(toggle).to_have_css("transform", "matrix(-1, 0, 0, -1, 0, 0)")
+
+
+@pytest.mark.parametrize("panel", ["legend", "layers"])
+def test_map_panel_arrows_point_toward_their_next_position(
+    page: Page, base_url: str, panel: str,
+) -> None:
+    _open_map(page, base_url, viewport=(1440, 900))
+    toggle = page.locator(f"[data-fold='{panel}']")
+    open_transform = "matrix(-1, 0, 0, -1, 0, 0)" if panel == "legend" else "none"
+    closed_transform = "none" if panel == "legend" else "matrix(-1, 0, 0, -1, 0, 0)"
+    expect(toggle).to_have_attribute("aria-expanded", "true")
+    expect(toggle).to_have_css("transform", open_transform)
+    toggle.click()
+    expect(toggle).to_have_attribute("aria-expanded", "false")
+    expect(toggle).to_have_css("transform", closed_transform)
+    page.reload(wait_until="domcontentloaded")
+    expect(toggle).to_have_attribute("aria-expanded", "false")
+    expect(toggle).to_have_css("transform", closed_transform)
+    toggle.click()
+    expect(toggle).to_have_css("transform", open_transform)
 
 
 def test_many_calculated_times_keep_date_strip_within_short_desktop_viewport(

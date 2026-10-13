@@ -244,8 +244,10 @@ Order and labels follow the agent mockup. The look follows Stitch.
 
 1. Place name in Newsreader, coordinate in JetBrains Mono with "Coordinata
    illustrativa del design" in the mockup. A close button at the top right.
-2. "Salva preferito" as a secondary button and "Apri navigazione" as a main
-   button, side by side.
+2. An outlined star saves a favorite. Its accessible name and tooltip say
+   "Salva preferito". "Apri navigazione" remains a main button beside it.
+   The star replaces the text save button following the owner's 13 October
+   2026 feedback.
 3. Selected date with the percentage in the dark Stitch badge.
 4. Experimental notice directly under the badge: `earth-100` background, a
    3 px `earth-600` left border, an info icon, no title. The text is the

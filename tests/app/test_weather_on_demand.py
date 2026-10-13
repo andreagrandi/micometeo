@@ -13,7 +13,8 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from django.conf import settings
-from django.db import IntegrityError, OperationalError, close_old_connections
+from django.db import IntegrityError, OperationalError, close_old_connections, connection
+from django.test.utils import CaptureQueriesContext
 from django_tasks_db.models import DBTaskResult
 
 import weather_on_demand.services as weather_services
@@ -412,6 +413,36 @@ def test_first_multi_cell_request_splits_history_and_forecast_and_repeat_is_cach
     assert [item.state for item in second.cells] == ["current", "current"]
     assert fake.call_count == 4
     assert WeatherRequestAttempt.objects.count() == 4
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize("cell_count", [2, 24])
+def test_ready_weather_uses_three_queries_regardless_of_cell_count(cell_count: int) -> None:
+    day = date(2026, 10, 11)
+    cells = tuple(_cell(index=index) for index in range(cell_count))
+    for cell in cells:
+        snapshot = WeatherSnapshot.objects.create(
+            cell_key=cell.key,
+            assessment_date=day,
+            pipeline_version=weather_services.PIPELINE_VERSION,
+            latest_retrieval=_clock(day=day),
+            source_ids=["stored-source"],
+        )
+        WeatherFetch.objects.create(
+            cell_key=cell.key,
+            assessment_date=day,
+            pipeline_version=weather_services.PIPELINE_VERSION,
+            status=WeatherFetch.Status.COMPLETED,
+            snapshot=snapshot,
+            estimate_callback_status="completed",
+        )
+    with CaptureQueriesContext(connection) as queries:
+        result = weather_services.request_weather(cells=cells, assessment_date=day)
+    assert len(queries) == 3
+    assert len(result.cells) == cell_count
+    assert {item.state for item in result.cells} == {"current"}
+    assert {item.source for item in result.cells} == {"stored-source"}
+    assert WeatherRequestAttempt.objects.count() == 0
 
 
 @pytest.mark.django_db(transaction=True)

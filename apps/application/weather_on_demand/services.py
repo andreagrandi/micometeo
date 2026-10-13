@@ -46,7 +46,7 @@ from weather_requests.provider import (
     request_spec_from_request,
 )
 from weather_requests.models import WeatherRequest, WeatherRequestAttempt
-from weather_summaries.models import WeatherDaily, WeatherSnapshot
+from weather_summaries.models import WeatherDaily, WeatherSnapshot, WeatherSnapshotDay
 from weather_summaries.provider_adapter import normalized_provider_responses
 from weather_summaries.services import (
     WeatherDailyConflictError,
@@ -1531,6 +1531,58 @@ def _cell_result(
     )
 
 
+def _ready_weather_results(
+    *, cells: Sequence[WeatherCell], assessment_date: date,
+) -> WeatherLookupResult | None:
+    """Read completed cells together without reopening their fetch planning."""
+    keys = {cell.key for cell in cells}
+    snapshots = {
+        row.cell_key: row
+        for row in WeatherSnapshot.objects.filter(
+            cell_key__in=keys,
+            assessment_date=assessment_date,
+            pipeline_version=PIPELINE_VERSION,
+            status=WeatherSnapshot.Status.READY,
+        )
+    }
+    if snapshots.keys() != keys:
+        return None
+    fetches = WeatherFetch.objects.filter(
+        cell_key__in=keys,
+        assessment_date=assessment_date,
+        pipeline_version=PIPELINE_VERSION,
+        status=WeatherFetch.Status.COMPLETED,
+    )
+    if _ESTIMATE_CALLBACK is not None:
+        fetches = fetches.filter(estimate_callback_status__in=["completed", "running"])
+    completed = dict(fetches.values_list("cell_key", "snapshot_id"))
+    if any(completed.get(key) != snapshot.id for key, snapshot in snapshots.items()):
+        return None
+    known_missing = set(WeatherSnapshotDay.objects.filter(
+        snapshot_id__in=[snapshot.id for snapshot in snapshots.values()],
+        daily__status=WeatherDaily.Status.CHECKED_KNOWN_MISSING,
+    ).values_list("snapshot_id", flat=True))
+    return WeatherLookupResult(
+        assessment_date=assessment_date,
+        cells=tuple(
+            CellWeatherResult(
+                cell_key=cell.key,
+                state="current",
+                assessment_date=assessment_date,
+                fetched_at=snapshots[cell.key].latest_retrieval,
+                source=next(iter(snapshots[cell.key].source_ids), None),
+                snapshot_id=str(snapshots[cell.key].id),
+                reason_code="known_missing" if snapshots[cell.key].id in known_missing else "ready",
+                full_reason=(
+                    "The provider returned a checked known gap for one or more daily values."
+                    if snapshots[cell.key].id in known_missing else ""
+                ),
+            )
+            for cell in sorted(cells, key=lambda item: item.key)
+        ),
+    )
+
+
 def request_weather(
     *,
     cells: Sequence[WeatherCell],
@@ -1551,6 +1603,9 @@ def request_weather(
     target_date = assessment_date or italian_assessment_date(clock=clock)
     if not isinstance(target_date, date) or isinstance(target_date, datetime):
         raise TypeError("assessment_date must be a date.")
+    ready = _ready_weather_results(cells=cells, assessment_date=target_date)
+    if ready is not None:
+        return ready
     visitor_hash = opaque_visitor_hash(visitor_id=visitor_id)
     now = _clock_now(clock)
     batches = _plan_batches(

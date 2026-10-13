@@ -990,7 +990,15 @@ def test_area_detail_sheet_stays_inside_supported_viewports(
     assert box["x"] + box["width"] <= viewport[0] + 1
     expect(page.locator("aside[data-live-details] #details-heading")).to_be_visible()
     expect(page.locator("aside[data-live-details] .live-details-close")).to_be_visible()
-    expect(page.locator("aside[data-live-details] [data-sheet-height]")).to_be_visible()
+    height_control = page.locator("aside[data-live-details] [data-sheet-height]")
+    if viewport[0] < 900:
+        expect(height_control).to_be_visible()
+    else:
+        expect(height_control).to_be_hidden()
+    favorite = page.locator("aside[data-live-details] [data-save]")
+    expect(favorite).to_have_accessible_name("Save favorite")
+    expect(favorite.locator("svg")).to_be_visible()
+    assert favorite.inner_text() == ""
 
 
 def test_area_detail_destination_events_keep_map_points_and_api_representatives(

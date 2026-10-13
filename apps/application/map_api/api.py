@@ -932,15 +932,6 @@ def squares(request: HttpRequest) -> HttpResponse:
     updates_by_key: dict[tuple[str, str], EstimateUpdate] = {}
     for update in updates:
         updates_by_key.setdefault((str(update.snapshot_id), update.cell_key), update)
-    update_ids = [update.id for update in updates]
-    forest_cell_ids = [cell.id for cell in cells]
-    estimate_rows = list(
-        EstimateResult.objects.filter(
-            update_id__in=update_ids,
-            forest_cell_id__in=forest_cell_ids,
-        )
-    ) if update_ids else []
-    estimate_by_key = {(row.update_id, row.forest_cell_id): row for row in estimate_rows}
     weather_identity = _weather_identity(
         cells=eligible_cells,
         by_cell=by_cell,
@@ -956,6 +947,14 @@ def squares(request: HttpRequest) -> HttpResponse:
     if cached is not None:
         return _squares_response(body=cached, key=key)
 
+    update_ids = [update.id for update in updates_by_key.values()]
+    estimate_rows = list(
+        EstimateResult.objects.filter(
+            update_id__in=update_ids,
+            forest_cell_id__in=[cell.id for cell in cells],
+        )
+    ) if update_ids else []
+    estimate_by_key = {(row.update_id, row.forest_cell_id): row for row in estimate_rows}
     features: list[dict[str, Any]] = []
     for cell in cells:
         cell_key = None

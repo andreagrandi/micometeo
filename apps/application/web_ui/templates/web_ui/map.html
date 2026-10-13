@@ -35,10 +35,11 @@
 <div class="toast" data-toast role="status" aria-live="polite"></div>
 {{ labels|json_script:"ui-labels" }}
 {% endblock %}
-{% block app_script %}{% if fixture %}<script src="{% static 'web_ui/app.js' %}" defer></script>{% endif %}{% endblock %}
+{% block app_script %}{% if fixture %}<script src="{% static 'web_ui/favorites.js' %}" defer></script><script src="{% static 'web_ui/app.js' %}" defer></script>{% endif %}{% endblock %}
 {% block scripts %}
   {% if not fixture %}
   <script type="module">
+    await import("{% static 'web_ui/favorites.js' %}");
     try {
       const maplibregl = await import("{% static 'maplibre-gl.mjs' %}");
       window.maplibregl = maplibregl;
