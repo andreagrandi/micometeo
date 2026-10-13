@@ -28,6 +28,7 @@ from weather_requests.planning import (
     combine_request_specs,
     nominal_weight,
     plan_cell_request_specs,
+    plan_current_weather_requests,
     request_compatibility_key,
     required_dates,
     reservation_weight,
@@ -45,6 +46,41 @@ from weather_requests.provider import (
 )
 from weather_requests.quota import check_quota, reserve_attempt
 from weather_requests.services import _budget_weights
+from micometeo.weather.openmeteo import ARCHIVE_URL, FORECAST_URL
+
+
+def test_current_weather_plan_routes_thirty_past_days_to_history_and_eight_to_forecast() -> None:
+    assessment = date(2026, 10, 13)
+    specs = plan_current_weather_requests(
+        locations=(weather_cell(latitude=43.95, longitude=10.85),),
+        assessment_date=assessment,
+    )
+    assert len(specs) == 4
+    assert all(spec.endpoint == ARCHIVE_URL for spec in specs[:-1])
+    assert specs[-1].endpoint == FORECAST_URL
+    assert specs[0].start_date == assessment - timedelta(days=30)
+    assert specs[-2].end_date == assessment - timedelta(days=1)
+    assert specs[-1].start_date == assessment
+    assert specs[-1].end_date == assessment + timedelta(days=7)
+    for left, right in zip(specs, specs[1:]):
+        assert left.end_date + timedelta(days=1) == right.start_date
+    assert sum(spec.days for spec in specs) == 38
+    assert sum(spec.reservation_weight for spec in specs) == Decimal("4")
+
+
+def test_current_weather_refresh_replaces_yesterdays_forecast_with_history() -> None:
+    assessment = date(2026, 10, 13)
+    specs = plan_current_weather_requests(
+        locations=(weather_cell(latitude=43.95, longitude=10.85),),
+        assessment_date=assessment,
+        completed_dates=tuple(assessment - timedelta(days=offset) for offset in range(2, 31)),
+    )
+    assert len(specs) == 2
+    assert specs[0].endpoint == ARCHIVE_URL
+    assert specs[0].start_date == assessment - timedelta(days=1)
+    assert specs[0].end_date == assessment - timedelta(days=1)
+    assert specs[1].endpoint == FORECAST_URL
+    assert specs[1].start_date == assessment
 
 
 def test_weather_cell_key_rounds_to_the_stored_two_decimal_centre() -> None:

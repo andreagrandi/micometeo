@@ -2,7 +2,7 @@
   "name": "micometeo-map-checks",
   "private": true,
   "dependencies": {
-    "maplibre-gl": "4.7.1",
+    "maplibre-gl": "6.4.1",
     "playwright": "1.64.0"
   }
 }

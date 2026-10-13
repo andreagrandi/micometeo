@@ -171,6 +171,9 @@ msgid "Status"
 msgstr "Stato"
 msgid "The sample layer explains the interface. It is not a forecast."
 msgstr "Il livello campione spiega l'interfaccia. Non è una previsione."
+
+msgid "The map shows experimental estimates from stored forest and weather data. The percentage has not been validated and is not your personal chance of finding porcini."
+msgstr "La mappa mostra stime sperimentali basate sui dati salvati della foresta e del meteo. La percentuale non è stata validata e non indica la tua probabilità personale di trovare porcini."
 msgid "Layers"
 msgstr "Livelli"
 msgid "Zoom in"
@@ -316,3 +319,84 @@ msgid "Save favorite"
 msgstr "Salva preferito"
 msgid "This square has less than 10% forest. No estimate is available."
 msgstr "Questa area ha meno del 10% di foresta. Nessuna stima disponibile."
+
+msgid "Loading the map data."
+msgstr "Caricamento dei dati della mappa."
+
+msgid "The map data could not be loaded. Try again."
+msgstr "Non è stato possibile caricare i dati della mappa. Riprova."
+
+msgid "The forest view could not be loaded. Try again."
+msgstr "Non è stato possibile caricare la vista forestale. Riprova."
+
+msgid "Area averages. Zoom in for individual scores."
+msgstr "Medie per area. Ingrandisci per vedere le singole stime."
+
+msgid "Zoom in until the map is about 50 km wide to see estimates."
+msgstr "Ingrandisci finché la mappa è larga circa 50 km per vedere le stime."
+
+msgid "Loading estimates for {date}."
+msgstr "Caricamento delle stime per {date}."
+
+msgid "No estimates are stored in this view."
+msgstr "Non ci sono stime salvate in questa vista."
+
+msgid "The estimates could not be loaded. Try again."
+msgstr "Non è stato possibile caricare le stime. Riprova."
+
+msgid "This view is outside the available map data."
+msgstr "Questa vista è fuori dai dati cartografici disponibili."
+
+msgid "The first weather update for this area is still pending."
+msgstr "Il primo aggiornamento meteo per quest'area è ancora in attesa."
+
+msgid "Target date"
+msgstr "Giorno della stima"
+
+msgid "Update"
+msgstr "Aggiornamento"
+
+msgid "multiple source dates"
+msgstr "date delle fonti multiple"
+
+msgid "Calculated"
+msgstr "Calcolato"
+
+msgid "Unavailable"
+msgstr "Non disponibile"
+
+msgid "Stored estimate for {target} uses assessment {assessment}; calculated {calculated}."
+msgstr "La stima salvata per {target} usa la valutazione del {assessment}; calcolata il {calculated}."
+
+msgid "Less than 10% forest. No estimate."
+msgstr "Meno del 10% di foresta. Nessuna stima."
+
+msgid "Estimate unavailable because required data is missing."
+msgstr "Stima non disponibile perché mancano dati obbligatori."
+
+msgid "This estimate is outside the stored update dates."
+msgstr "Questa stima è fuori dalle date dell'aggiornamento salvato."
+
+msgid "The visitor weather limit is reached. Try again later."
+msgstr "Il limite meteo per questo visitatore è stato raggiunto. Riprova più tardi."
+
+msgid "The weather service quota is exhausted. Try again later."
+msgstr "La quota del servizio meteo è esaurita. Riprova più tardi."
+
+msgid "The weather service refused this request. Try again later."
+msgstr "Il servizio meteo ha rifiutato la richiesta. Riprova più tardi."
+
+msgid "The weather service is unavailable. Try again later."
+msgstr "Il servizio meteo non è disponibile. Riprova più tardi."
+
+msgid "The interactive map library could not be loaded. Try again."
+msgstr "Non è stato possibile caricare la libreria della mappa interattiva. Riprova."
+
+msgid "The map background could not be loaded. Your current map is still available. Try again."
+msgstr "Non è stato possibile caricare lo sfondo della mappa. La mappa attuale è ancora disponibile. Riprova."
+
+msgid "Map data OpenStreetMap contributors · OpenFreeMap"
+msgstr "Dati cartografici dei contributori OpenStreetMap · OpenFreeMap"
+
+msgid "Estimate data credits"
+msgstr "Crediti dei dati della stima"

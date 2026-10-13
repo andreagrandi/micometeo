@@ -451,6 +451,7 @@ def complete_estimate_fixture() -> dict[str, object]:
     assessment = date(2026, 10, 11)
     snapshot = WeatherSnapshot.objects.create(
         cell_key="44.00,11.00",
+        pipeline_version=2,
         assessment_date=assessment,
         reference_elevation_m=500.0,
         latest_retrieval=datetime(2026, 10, 11, 10, tzinfo=UTC),
@@ -514,7 +515,7 @@ def _add_daily_temperatures(
     """Link daily temperature rows to a snapshot, from 21 days before through 7 days after."""
     attempt_id = uuid4()
     rows = []
-    for offset in range(-21, 8):
+    for offset in range(-30, 8):
         current = snapshot.assessment_date + timedelta(days=offset)
         if current in missing_dates:
             continue
@@ -534,8 +535,9 @@ def _add_daily_temperatures(
                 returned_latitude=44.0,
                 returned_longitude=11.0,
                 reference_elevation_m=500.0,
-                rain_mm=0.0,
-                mean_temperature_c=16.25,
+                rain_mm=5.0,
+                et0_mm=2.0,
+                mean_temperature_c=2.0 if current in frost_dates else 16.25,
                 min_temperature_c=-1.0 if current in frost_dates else 8.0,
                 status=WeatherDaily.Status.COMPLETE,
             )
@@ -555,6 +557,7 @@ def _create_followup_snapshot(
     """Create a second frozen weather assessment with the same input shape."""
     snapshot = WeatherSnapshot.objects.create(
         cell_key=source_snapshot.cell_key,
+        pipeline_version=source_snapshot.pipeline_version,
         assessment_date=assessment_date,
         reference_elevation_m=source_snapshot.reference_elevation_m,
         latest_retrieval=source_snapshot.latest_retrieval,
@@ -604,7 +607,7 @@ def _create_followup_snapshot(
 
 
 @pytest.mark.django_db(transaction=True)
-def test_default_method_stores_v3_with_twenty_day_temperatures(
+def test_default_method_stores_v4_with_thirty_preceding_weather_days(
     complete_estimate_fixture: dict[str, object],
 ) -> None:
     snapshot = complete_estimate_fixture["snapshot"]
@@ -632,10 +635,15 @@ def test_default_method_stores_v3_with_twenty_day_temperatures(
         terrain_build_version=terrain.version,
     )
 
-    assert prepared.method_version == "porcini-experimental-v3"
-    assert default_prepared.method_version == "porcini-experimental-v3"
+    assert prepared.method_version == "porcini-experimental-v4"
+    assert default_prepared.method_version == "porcini-experimental-v4"
     assert len(calculated_inputs) == 8
     for days_ahead, inputs in enumerate(calculated_inputs):
+        assert len(inputs.daily_weather) == 30
+        assert inputs.daily_weather[0].day == inputs.target_date - timedelta(days=30)
+        assert inputs.daily_weather[-1].day == inputs.target_date - timedelta(days=1)
+        assert all(day.et0_mm is not None for day in inputs.daily_weather)
+        assert sum(day.day >= inputs.assessment_date for day in inputs.daily_weather) == days_ahead
         record = inputs.period_temperatures
         assert len(record.daily_means) == 20
         assert len(record.daily_minimums) == 20
@@ -647,6 +655,23 @@ def test_default_method_stores_v3_with_twenty_day_temperatures(
         assert None not in record.daily_means
     values = decode_result_bytes(values=default_prepared.rows[0].values)
     assert all(isinstance(value, int) for value in values)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_current_method_rejects_legacy_weather_without_changing_saved_rows(
+    complete_estimate_fixture: dict[str, object],
+) -> None:
+    snapshot = complete_estimate_fixture["snapshot"]
+    WeatherSnapshot.objects.filter(id=snapshot.id).update(pipeline_version=1)
+    with pytest.raises(EstimateValidationError, match="30-day weather snapshot"):
+        calculate_estimate_update(
+            snapshot_id=snapshot.id, cell_key=snapshot.cell_key,
+            assessment_date=snapshot.assessment_date,
+            forest_build_version=complete_estimate_fixture["forest"].version,
+            terrain_build_version=complete_estimate_fixture["terrain"].version,
+        )
+    assert EstimateUpdate.objects.count() == 0
+    assert snapshot.days.count() == 38
 
 
 @pytest.mark.django_db(transaction=True)
@@ -698,7 +723,7 @@ def test_missing_daily_temperature_gives_period_temperature_reason(
     )
 
     decoded = decode_result_bytes(values=prepared.rows[0].values)
-    assert decoded == ("period_temperature",) * 8
+    assert decoded == ("weather_history",) * 8
     assert encode_result_bytes(
         percentages=[None] * 8,
         unavailable_reasons=list(decoded),

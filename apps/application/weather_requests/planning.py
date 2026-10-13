@@ -12,7 +12,8 @@ from typing import Any, Iterable, Mapping, Sequence
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
-from micometeo.weather.openmeteo import FORECAST_URL, HOURLY_VARIABLES, quota_weight
+from micometeo.weather.openmeteo import ARCHIVE_URL, FORECAST_URL, HOURLY_VARIABLES, quota_weight
+from micometeo.weather.policy import HISTORY_DAYS
 
 from .eligibility import WeatherCell
 
@@ -468,6 +469,30 @@ def plan_cell_request_specs(
         forest_build_version=forest_build_version,
     )
     return (*history_specs, normal_spec)
+
+
+def plan_current_weather_requests(
+    *, locations: Sequence[WeatherCell], assessment_date: date,
+    completed_dates: Iterable[date] = (), model: str = DEFAULT_MODEL,
+    endpoint: str = FORECAST_URL, history_endpoint: str = ARCHIVE_URL,
+    options: Mapping[str, str] | None = None, forest_build_version: str = "",
+) -> tuple[RequestSpec, ...]:
+    """Keep completed weather separate from today's and later forecasts."""
+    completed = set(completed_dates)
+    history = tuple(assessment_date - timedelta(days=offset) for offset in range(HISTORY_DAYS, 0, -1)
+                    if assessment_date - timedelta(days=offset) not in completed)
+    past = _history_request_specs(
+        locations=locations, missing_dates=history, model=DEFAULT_MODEL,
+        variables=HOURLY_VARIABLES, endpoint=history_endpoint, options=options,
+        forest_build_version=forest_build_version,
+    )
+    forecast = _build_request_spec_for_span(
+        locations=locations, start_date=assessment_date,
+        end_date=assessment_date + timedelta(days=7), model=model,
+        variables=HOURLY_VARIABLES, endpoint=endpoint, options=options,
+        forest_build_version=forest_build_version,
+    )
+    return (*past, forecast)
 
 
 def plan_requests(

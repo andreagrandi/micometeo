@@ -57,6 +57,7 @@ class WeatherFetch(models.Model):
 
     id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
     cell_key = models.CharField(max_length=120)
+    pipeline_version = models.PositiveSmallIntegerField(default=1)
     assessment_date = models.DateField()
     batch = models.ForeignKey(
         WeatherFetchBatch,
@@ -109,7 +110,7 @@ class WeatherFetch(models.Model):
         ordering = ["assessment_date", "cell_key"]
         constraints = [
             models.UniqueConstraint(
-                fields=["cell_key", "assessment_date"],
+                fields=["cell_key", "assessment_date", "pipeline_version"],
                 name="weather_fetch_cell_assessment_unique",
             ),
         ]

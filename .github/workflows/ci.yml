@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   frontend-checks:
     runs-on: ubuntu-latest
@@ -109,6 +113,10 @@ jobs:
 
   browser-tests:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
     services:
       database:
         image: imresamu/postgis:17-3.5-bookworm@sha256:35fe7dceda62bfe7d2965b0ba78d915ff9f901b5e0466d633ecc58421b5b5210
@@ -138,6 +146,14 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y gdal-bin libgdal-dev libgeos-dev libproj-dev gettext
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up Node for map checks
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: tools/map_checks/package-lock.json
+      - name: Install map check dependencies
+        run: npm ci --prefix tools/map_checks
       - name: Set up uv
         uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9
         with:
@@ -148,10 +164,10 @@ jobs:
       - name: Compile translation catalogs
         run: uv run python apps/application/manage.py compilemessages --ignore .venv --locale it --locale en
       - name: Install browsers
-        run: uv run playwright install --with-deps chromium webkit
+        run: uv run playwright install --with-deps ${{ matrix.browser }}
       - name: Apply migrations
         run: uv run python apps/application/manage.py migrate --noinput
       - name: Start application
         run: uv run python apps/application/manage.py runserver 127.0.0.1:8010 --noreload &
       - name: Run browser checks
-        run: uv run pytest tests/e2e
+        run: uv run pytest tests/e2e -o addopts="--allow-hosts=127.0.0.1,127.0.1.1,::1" --browser=${{ matrix.browser }} --durations=15

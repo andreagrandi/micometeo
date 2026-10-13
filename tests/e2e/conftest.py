@@ -6,6 +6,7 @@ import os
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 from collections.abc import Iterator
 from pathlib import Path
@@ -60,6 +61,8 @@ def app_server() -> Iterator[str]:
             "MICOMETEO_UI_FIXTURE_PAGES": "true",
         }
     )
+    # A pipe fills during the full browser suite and blocks Django's request log.
+    server_log = tempfile.TemporaryFile(mode="w+")
     process = subprocess.Popen(
         [
             sys.executable,
@@ -70,7 +73,7 @@ def app_server() -> Iterator[str]:
         ],
         cwd=PROJECT_ROOT,
         env=server_environment,
-        stdout=subprocess.PIPE,
+        stdout=server_log,
         stderr=subprocess.STDOUT,
         text=True,
     )
@@ -80,7 +83,9 @@ def app_server() -> Iterator[str]:
                 yield base_url
                 return
             if process.poll() is not None:
-                output, _ = process.communicate(timeout=1)
+                process.wait(timeout=1)
+                server_log.seek(0)
+                output = server_log.read()
                 raise RuntimeError(f"Django browser server exited early:\n{output}")
             time.sleep(0.2)
         raise RuntimeError(f"Django browser server did not answer at {base_url}")
@@ -92,6 +97,7 @@ def app_server() -> Iterator[str]:
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait(timeout=5)
+        server_log.close()
 
 
 @pytest.fixture(scope="session")

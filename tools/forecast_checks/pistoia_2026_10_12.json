@@ -1,0 +1,53 @@
+{
+  "assessment_date": "2026-10-12",
+  "checked_on": "2026-10-13",
+  "period_start": "2026-09-12",
+  "period_end": "2026-10-11",
+  "timezone": "Europe/Rome",
+  "requested_latitude": 43.95,
+  "requested_longitude": 10.85,
+  "square_altitude_m": 507.4,
+  "forest_share": 0.624,
+  "attribution": "Weather data by Open-Meteo, CC BY 4.0. SIR station data by Regione Toscana, provisional readings.",
+  "daily_query": "latitude=43.95&longitude=10.85&start_date=2026-09-12&end_date=2026-10-11&daily=precipitation_sum,temperature_2m_mean,temperature_2m_min,et0_fao_evapotranspiration&timezone=Europe%2FRome",
+  "units": {"rain_mm": "mm", "temperature_c": "deg_c", "minimum_c": "deg_c", "et0_mm": "mm"},
+  "providers": {
+    "forecast_endpoint": {
+      "endpoint": "https://api.open-meteo.com/v1/forecast",
+      "returned_latitude": 43.952393,
+      "returned_longitude": 10.85511,
+      "reference_altitude_m": 315.0,
+      "rain_mm": [0,0,0,0,0,5.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2.3,1.6,0.2,0,0],
+      "temperature_c": [21.3,20.6,21.3,22.2,21.2,19.5,19.1,20.7,21.3,21.1,20.5,17.8,17.9,18.6,18.5,20.1,20,20.5,20.3,20.3,20.9,20.2,19.6,18.2,18.5,18.5,17.7,17.6,15.7,16.3],
+      "minimum_c": [18.2,16.6,17.6,18.5,17.7,18,15.9,16.8,17.5,17.7,16.8,14.6,14.2,14.8,14.1,16.4,16.2,16.5,16.4,17.2,16.8,16.6,16,15.4,14.9,15.3,16.6,15.2,12.2,13.6],
+      "et0_mm": [4.07,4.13,3.8,4.43,3.55,1.37,2.38,3.53,3.93,3.24,3.88,3.59,3.29,3.71,3.97,4.04,3.8,3.75,3.52,2.8,4.1,4.12,3.53,2.37,3.22,1.95,1.12,2.09,2.32,2.16]
+    },
+    "historical_endpoint": {
+      "endpoint": "https://archive-api.open-meteo.com/v1/archive",
+      "returned_latitude": 43.971878,
+      "returned_longitude": 10.925645,
+      "reference_altitude_m": 315.0,
+      "rain_mm": [0.1,0,1.1,0,0,5.1,2.2,1.1,0,0.2,0,0,0,0,0,0,0,0,0,0.3,0,0,0,0,0.6,10.5,37,4.6,0.1,0.2],
+      "temperature_c": [19.8,19.5,20.8,20.8,20.9,19.5,18.6,19.4,20.8,21.1,19.9,17.3,18.2,17.7,18,19.4,19.9,19.8,19.7,19.9,20.1,18.8,18.9,18.3,17.5,18,16.3,16.5,15.4,16.1],
+      "minimum_c": [16.3,15,17.8,15.9,17.8,17.5,14.8,14.5,15.6,17.6,15.6,13,14.3,14.1,12.6,14.7,15.2,14.9,14.9,15.8,16.4,14.5,14.5,15.7,13.4,14.5,15.2,14,9.2,13],
+      "et0_mm": [3.6,3.88,3.4,3.88,3.47,2.47,2.79,3.12,3.56,3.11,3.84,3.48,3.16,3.7,4.09,3.98,3.36,3.48,3.37,2.6,4.07,3.87,3.31,1.77,2.69,1.96,1.2,1.97,2.23,2.26]
+    }
+  },
+  "sammomme": {
+    "station_id": "TOS03001241",
+    "coordinates_source": "https://www.sir.toscana.it/open_layers/ajax_stations.php?id=TOS03001241",
+    "daily_graph_source": "https://www.sir.toscana.it/monitoraggio/dettaglio.php?id=TOS03001241&type=pluvio_men",
+    "latitude": 44.037,
+    "longitude": 10.920,
+    "altitude_m": 785,
+    "period_start": "2026-10-05",
+    "period_end": "2026-10-11",
+    "gauge_daily_increase_mm": [0,3.8,8.9,32.9,3.4,0.2,0],
+    "forecast_daily_mm": [0,0,2.2,2.4,0.1,0,0],
+    "forecast_returned_coordinates": [44.04428,10.895042],
+    "historical_daily_mm": [0,0.2,9.3,30.1,5.4,0.4,0.9],
+    "historical_returned_coordinates": [44.04218,10.942249],
+    "provider_query": "latitude=44.037&longitude=10.920&start_date=2026-09-12&end_date=2026-10-11&daily=precipitation_sum&timezone=Europe%2FRome",
+    "limitations": "Gauge uses standard time; provider uses Europe/Rome. Whole-day boundary differences remain. Provider values describe nearby model cells, not the gauge itself. These are newly retrieved past-weather values, not a forecast saved before 12 October."
+  }
+}

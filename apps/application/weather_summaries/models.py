@@ -94,6 +94,7 @@ class WeatherSnapshot(ImmutableRecordMixin, models.Model):
 
     id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
     cell_key = models.CharField(max_length=120)
+    pipeline_version = models.PositiveSmallIntegerField(default=1)
     assessment_date = models.DateField()
     reference_elevation_m = models.FloatField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -106,7 +107,7 @@ class WeatherSnapshot(ImmutableRecordMixin, models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["cell_key", "assessment_date"],
+                fields=["cell_key", "assessment_date", "pipeline_version"],
                 name="weather_snapshot_cell_assessment_unique",
             ),
         ]

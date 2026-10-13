@@ -172,6 +172,7 @@ def _worker_environment(*, endpoint: str) -> dict[str, str]:
             "MICOMETEO_DB_HOST": str(database["HOST"]),
             "MICOMETEO_DB_PORT": str(database["PORT"]),
             "MICOMETEO_WEATHER_ENDPOINT": endpoint,
+            "MICOMETEO_WEATHER_HISTORY_ENDPOINT": endpoint,
             "PYTHONPATH": os.pathsep.join(
                 [
                     str(PROJECT_ROOT / "apps" / "application"),
@@ -202,11 +203,13 @@ def _worker_command(*, worker_id: str) -> list[str]:
 @pytest.fixture(autouse=True)
 def disable_cross_app_callbacks() -> Iterator[None]:
     """Keep weather tests independent from optional estimate storage."""
+    estimate_callback = weather_services._ESTIMATE_CALLBACK
+    cleanup_callback = weather_services._CLEANUP_CALLBACK
     configure_estimate_callback(None)
     configure_cleanup_callback(None)
     yield
-    configure_estimate_callback(None)
-    configure_cleanup_callback(None)
+    configure_estimate_callback(estimate_callback)
+    configure_cleanup_callback(cleanup_callback)
 
 
 def _cell(*, index: int = 0):
@@ -384,21 +387,21 @@ def test_failed_estimate_hook_retries_from_ready_snapshot_without_provider_refet
     fetch.refresh_from_db()
     assert fetch.estimate_callback_status == "completed"
     assert fetch.snapshot_id == snapshot_id
-    assert fake.call_count == 1
+    assert fake.call_count == 4
     assert len(calls) == 2
 
 
 @pytest.mark.django_db(transaction=True)
-def test_first_multi_cell_request_uses_one_provider_call_and_repeat_is_cached() -> None:
+def test_first_multi_cell_request_splits_history_and_forecast_and_repeat_is_cached() -> None:
     day = date(2026, 10, 11)
     cells = (_cell(index=0), _cell(index=1))
     fake = _FakeOpenMeteo()
 
     first = _request_weather(cells=cells, day=day, transport=fake)
     assert [item.state for item in first.cells] == ["current", "current"]
-    assert fake.call_count == 1
+    assert fake.call_count == 4
     assert WeatherSnapshot.objects.filter(assessment_date=day).count() == 2
-    assert WeatherRequestAttempt.objects.count() == 1
+    assert WeatherRequestAttempt.objects.count() == 4
 
     second = _request_weather(
         cells=cells,
@@ -407,8 +410,8 @@ def test_first_multi_cell_request_uses_one_provider_call_and_repeat_is_cached() 
     )
 
     assert [item.state for item in second.cells] == ["current", "current"]
-    assert fake.call_count == 1
-    assert WeatherRequestAttempt.objects.count() == 1
+    assert fake.call_count == 4
+    assert WeatherRequestAttempt.objects.count() == 4
 
 
 @pytest.mark.django_db(transaction=True)
@@ -428,7 +431,7 @@ def test_checked_known_missing_snapshot_is_ready_and_never_refetched() -> None:
         transport=lambda **kwargs: (_ for _ in ()).throw(AssertionError("ready refetch")),
     )
     assert second.cells[0].reason_code == "known_missing"
-    assert fake.call_count == 1
+    assert fake.call_count == 4
 
 
 @pytest.mark.django_db(transaction=True)
@@ -440,7 +443,9 @@ def test_subprocess_worker_uses_real_http_and_duplicate_weather_tasks_are_serial
     server_thread.start()
     endpoint = f"http://127.0.0.1:{server.server_port}/v1/forecast"
     previous_endpoint = os.environ.get("MICOMETEO_WEATHER_ENDPOINT")
+    previous_history_endpoint = os.environ.get("MICOMETEO_WEATHER_HISTORY_ENDPOINT")
     os.environ["MICOMETEO_WEATHER_ENDPOINT"] = endpoint
+    os.environ["MICOMETEO_WEATHER_HISTORY_ENDPOINT"] = endpoint
     try:
         result = weather_services.request_weather(
             cells=(_cell(),),
@@ -484,13 +489,17 @@ def test_subprocess_worker_uses_real_http_and_duplicate_weather_tasks_are_serial
             cell_key=_cell().key,
             assessment_date=day,
         ).count() == 1
-        assert fake.call_count == 1
+        assert fake.call_count == 4
         assert DBTaskResult.objects.filter(id=duplicate_task.id).exists()
         assert DBTaskResult.objects.filter(
             task_path="weather_on_demand.tasks.weather_fetch_task",
-        ).count() == 2
+        ).count() == 5
         assert batch.status == WeatherFetchBatch.Status.COMPLETED
     finally:
+        if previous_history_endpoint is None:
+            os.environ.pop("MICOMETEO_WEATHER_HISTORY_ENDPOINT", None)
+        else:
+            os.environ["MICOMETEO_WEATHER_HISTORY_ENDPOINT"] = previous_history_endpoint
         if previous_endpoint is None:
             os.environ.pop("MICOMETEO_WEATHER_ENDPOINT", None)
         else:
@@ -501,7 +510,7 @@ def test_subprocess_worker_uses_real_http_and_duplicate_weather_tasks_are_serial
 
 
 @pytest.mark.django_db(transaction=True)
-def test_yesterday_request_uses_eleven_day_refresh_and_accounted_weight() -> None:
+def test_yesterday_request_refreshes_completed_day_separately_from_forecast() -> None:
     first_day = date(2026, 10, 11)
     cell = _cell()
     fake = _FakeOpenMeteo(rain_values=(1.0, 3.0))
@@ -512,12 +521,12 @@ def test_yesterday_request_uses_eleven_day_refresh_and_accounted_weight() -> Non
 
     second_request = WeatherRequest.objects.order_by("created_at", "id").last()
     assert second_request is not None
-    assert second_request.canonical_spec["local_date_start"] == "2026-10-09"
+    assert second_request.canonical_spec["local_date_start"] == "2026-10-12"
     assert second_request.canonical_spec["local_date_end"] == "2026-10-19"
     second_spec = request_spec_from_request(request=second_request)
     second_attempt = second_request.attempts.get()
     assert second_attempt.reservation_weight == second_spec.reservation_weight
-    assert fake.call_count == 2
+    assert fake.call_count == 6
 
 
 @pytest.mark.django_db(transaction=True)
@@ -525,18 +534,18 @@ def test_ten_day_stale_snapshot_refreshes_old_forecast_days() -> None:
     first_day = date(2026, 10, 11)
     second_day = first_day + timedelta(days=10)
     cell = _cell()
-    fake = _FakeOpenMeteo(rain_values=(1.0, 9.0))
+    fake = _FakeOpenMeteo(rain_values=(1.0, 1.0, 1.0, 1.0, 9.0, 9.0))
 
     _request_weather(cells=(cell,), day=first_day, transport=fake)
     _request_weather(cells=(cell,), day=second_day, transport=fake)
     _wait_for_fetch(cell_key=cell.key, day=second_day)
 
-    refresh_requests = list(WeatherRequest.objects.order_by("created_at", "id"))[1:]
+    refresh_requests = list(WeatherRequest.objects.order_by("created_at", "id"))[4:]
     assert len(refresh_requests) == 2
     history_request, normal_request = refresh_requests
     assert history_request.canonical_spec["local_date_start"] == "2026-10-11"
-    assert history_request.canonical_spec["local_date_end"] == "2026-10-17"
-    assert normal_request.canonical_spec["local_date_start"] == "2026-10-18"
+    assert history_request.canonical_spec["local_date_end"] == "2026-10-20"
+    assert normal_request.canonical_spec["local_date_start"] == "2026-10-21"
     assert normal_request.canonical_spec["local_date_end"] == "2026-10-28"
     previous_forecast_day = first_day + timedelta(days=5)
     snapshots = WeatherSnapshot.objects.filter(cell_key=cell.key).order_by("assessment_date")
@@ -549,10 +558,10 @@ def test_ten_day_stale_snapshot_refreshes_old_forecast_days() -> None:
         .order_by("start_date")
         .values_list("start_date", "end_date", "status")
     ) == [
-        (date(2026, 10, 11), date(2026, 10, 17), WeatherFetchPart.Status.COMPLETED),
-        (date(2026, 10, 18), date(2026, 10, 28), WeatherFetchPart.Status.COMPLETED),
+        (date(2026, 10, 11), date(2026, 10, 20), WeatherFetchPart.Status.COMPLETED),
+        (date(2026, 10, 21), date(2026, 10, 28), WeatherFetchPart.Status.COMPLETED),
     ]
-    assert fake.call_count == 3
+    assert fake.call_count == 6
 
 
 @pytest.mark.django_db(transaction=True)
@@ -578,7 +587,7 @@ def test_concurrent_clients_share_one_cell_fetch() -> None:
         release.set()
         results = [future.result(timeout=15) for future in futures]
 
-    assert fake.call_count == 1
+    assert fake.call_count == 4
     assert all(result.cells[0].state == "current" for result in results)
     assert WeatherFetch.objects.filter(cell_key=_cell().key, assessment_date=day).count() == 1
 
@@ -632,7 +641,7 @@ def test_provider_down_preserves_previous_date_and_429_is_pending_with_full_mess
     assert result.cells[0].state == "previous"
     assert result.cells[0].assessment_date == first_day
     assert result.cells[0].reason_code == "provider_unavailable"
-    assert down.call_count == 1
+    assert down.call_count == 2
 
     refused_cell = _cell(index=1)
     message = "provider says too many places, preserve every byte"
@@ -683,11 +692,12 @@ def test_permanent_provider_refusal_stays_failed_until_explicit_reopen(
     fetch.refresh_from_db()
     assert batch.request.status == WeatherRequest.Status.PENDING
     assert fetch.status == WeatherFetch.Status.PENDING
-    assert weather_services.process_weather_fetch_batch(
-        batch_id=batch.id,
-        transport=_FakeOpenMeteo(),
-        clock=lambda: _clock(day=day),
-    )
+    for part in fetch.parts.select_related("batch").order_by("start_date"):
+        assert weather_services.process_weather_fetch_batch(
+            batch_id=part.batch_id,
+            transport=_FakeOpenMeteo(),
+            clock=lambda: _clock(day=day),
+        )
     fetch.refresh_from_db()
     assert fetch.status == WeatherFetch.Status.COMPLETED
 
@@ -917,7 +927,7 @@ def test_cleanup_keeps_two_latest_and_referenced_snapshots_without_provider_call
     assert not WeatherSnapshot.objects.filter(id=unreferenced.id).exists()
     assert WeatherSnapshot.objects.filter(cell_key=cell.key).count() == 3
     assert WeatherDaily.objects.count() < before_daily_count
-    assert fake.call_count == 11
+    assert fake.call_count == 14
 
 
 @pytest.mark.django_db(transaction=True)
@@ -940,7 +950,7 @@ def test_cleanup_callback_protects_estimate_snapshot_and_makes_no_http_call() ->
 
     assert cleanup["deleted_snapshot_count"] == 0
     assert WeatherSnapshot.objects.filter(id=old_snapshot.id).exists()
-    assert fake.call_count == 1
+    assert fake.call_count == 4
 
 
 @pytest.mark.django_db(transaction=True)
@@ -967,7 +977,7 @@ def test_recovery_requeues_pending_weather_and_cleanup_tasks_after_claim_gap() -
         transport=None,
         wait_seconds=0,
     )
-    batch = WeatherFetchBatch.objects.get(assessment_date=day)
+    batch = WeatherFetchBatch.objects.filter(assessment_date=day).earliest("first_requested_at")
     weather_task_id = batch.task_id
     assert weather_task_id is not None
     DBTaskResult.objects.get(id=weather_task_id).claim(worker_id="dead-weather-worker")
@@ -1017,7 +1027,7 @@ def test_cleanup_clears_each_terminal_snapshot_reference_before_deleting_old_cha
     fetches[1].refresh_from_db()
     assert fetches[1].previous_snapshot_id is None
     assert WeatherSnapshot.objects.filter(cell_key=cell.key).count() == 2
-    assert fake.call_count == 3
+    assert fake.call_count == 8
 
 
 @pytest.mark.django_db(transaction=True)
@@ -1044,11 +1054,12 @@ def test_storage_conflict_fails_without_requeue_or_second_provider_call() -> Non
     assert fetch.status == WeatherFetch.Status.FAILED
     assert fetch.reason_code == "storage_conflict"
     assert "elevation" in fetch.full_reason
-    assert fetch.batch is not None
-    assert fetch.batch.status == WeatherFetchBatch.Status.FAILED
-    request = WeatherRequest.objects.get(id=fetch.request_id)
+    failed_part = fetch.parts.filter(status=WeatherFetchPart.Status.FAILED).first()
+    assert failed_part is not None
+    assert failed_part.batch.status == WeatherFetchBatch.Status.FAILED
+    request = failed_part.batch.request
     assert request.attempts.count() == 1
-    assert conflicting_provider.call_count == 1
+    assert conflicting_provider.call_count == 2
 
 
 @pytest.mark.django_db(transaction=True)
@@ -1058,7 +1069,7 @@ def test_atomic_storage_failure_charges_new_attempt_then_recovers_completed_requ
     day = date(2026, 10, 11)
     cell = _cell()
     fake = _FakeOpenMeteo()
-    original_store = weather_services.store_weather_response
+    original_store = weather_services.store_weather_daily_rows
     failures = 0
 
     def fail_once(*args, **kwargs):
@@ -1068,11 +1079,15 @@ def test_atomic_storage_failure_charges_new_attempt_then_recovers_completed_requ
             raise OperationalError("storage failed after provider response")
         return original_store(*args, **kwargs)
 
-    monkeypatch.setattr(weather_services, "store_weather_response", fail_once)
-    result = _request_weather(cells=(cell,), day=day, transport=fake)
+    monkeypatch.setattr(weather_services, "store_weather_daily_rows", fail_once)
+    result = _request_weather(cells=(cell,), day=day, transport=None, wait_seconds=0)
     fetch = WeatherFetch.objects.get(cell_key=cell.key, assessment_date=day)
     batch = fetch.batch
     assert batch is not None
+    weather_services.process_weather_fetch_batch(
+        batch_id=batch.id, transport=fake, clock=lambda: _clock(day=day),
+    )
+    batch.refresh_from_db()
     assert result.cells[0].state == "not_available_yet"
     assert WeatherRequestAttempt.objects.filter(request=batch.request).count() == 1
     assert batch.request.status == WeatherRequest.Status.COMPLETED
@@ -1087,6 +1102,10 @@ def test_atomic_storage_failure_charges_new_attempt_then_recovers_completed_requ
         clock=lambda: _clock(day=day),
     )
     assert WeatherRequestAttempt.objects.filter(request=batch.request).count() == 2
+    for part in fetch.parts.exclude(batch_id=batch.id).order_by("start_date"):
+        weather_services.process_weather_fetch_batch(
+            batch_id=part.batch_id, transport=fake, clock=lambda: _clock(day=day),
+        )
     assert WeatherSnapshot.objects.filter(cell_key=cell.key, assessment_date=day).count() == 1
 
 
@@ -1101,10 +1120,15 @@ def test_unexpected_storage_exception_fails_without_requeue_or_second_provider_c
     def fail_unexpectedly(*args, **kwargs):
         raise IntegrityError("repeatable storage constraint failure")
 
-    monkeypatch.setattr(weather_services, "store_weather_response", fail_unexpectedly)
-    result = _request_weather(cells=(cell,), day=day, transport=fake)
+    monkeypatch.setattr(weather_services, "store_weather_daily_rows", fail_unexpectedly)
+    result = _request_weather(cells=(cell,), day=day, transport=None, wait_seconds=0)
 
     fetch = WeatherFetch.objects.get(cell_key=cell.key, assessment_date=day)
+    batch = fetch.batch
+    weather_services.process_weather_fetch_batch(
+        batch_id=batch.id, transport=fake, clock=lambda: _clock(day=day),
+    )
+    fetch.refresh_from_db()
     assert result.cells[0].state == "not_available_yet"
     assert fetch.status == WeatherFetch.Status.FAILED
     assert fetch.reason_code == "storage_failure"
@@ -1113,7 +1137,7 @@ def test_unexpected_storage_exception_fails_without_requeue_or_second_provider_c
     assert fetch.batch.status == WeatherFetchBatch.Status.FAILED
     assert fetch.batch.task_id is None
     assert fetch.request is not None
-    assert fetch.request.attempts.count() == 1
+    assert batch.request.attempts.count() == 1
     assert fake.call_count == 1
 
 
@@ -1127,7 +1151,7 @@ def test_recovery_returns_abandoned_batch_to_pending_and_uses_provider_retry_tim
         visitor_id="recovery",
         assessment_date=day,
         clock=lambda: _clock(day=day),
-        transport=fake,
+        transport=None,
         wait_seconds=0,
     )
     fetch = WeatherFetch.objects.get(cell_key=cell.key, assessment_date=day)

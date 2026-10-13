@@ -53,20 +53,21 @@ function parseArguments(argv) {
 
 function contentType(filePath) {
   if (filePath.endsWith(".html")) return "text/html; charset=utf-8";
-  if (filePath.endsWith(".js")) return "application/javascript; charset=utf-8";
+  if (filePath.endsWith(".js") || filePath.endsWith(".mjs")) return "application/javascript; charset=utf-8";
   if (filePath.endsWith(".css")) return "text/css; charset=utf-8";
   return "application/octet-stream";
 }
 
 function createServer({ dataDir }) {
   const pagePath = path.join(__dirname, "micometeo-map-drawing.html");
-  const maplibreEntry = require.resolve("maplibre-gl");
-  const maplibreDir = path.dirname(maplibreEntry);
+  const maplibreDir = path.dirname(require.resolve("maplibre-gl/dist/maplibre-gl.mjs"));
   const assets = new Map([
     ["/micometeo-map-drawing.html", pagePath],
-    ["/maplibre-gl.js", maplibreEntry],
     ["/maplibre-gl.css", path.join(maplibreDir, "maplibre-gl.css")],
   ]);
+  for (const asset of ["maplibre-gl.mjs", "maplibre-gl-shared.mjs", "maplibre-gl-worker.mjs"]) {
+    assets.set(`/${asset}`, path.join(maplibreDir, asset));
+  }
   for (const name of VIEW_NAMES) {
     assets.set(`/micometeo-map-${name}.geojson`, path.join(dataDir, `micometeo-map-${name}.geojson`));
   }

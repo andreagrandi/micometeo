@@ -27,12 +27,15 @@ from micometeo.forecast_method import (
     ForecastMethodConfig,
     ForecastMethodV2Config,
     ForecastMethodV3Config,
+    ForecastMethodV4Config,
     ForecastResult,
     NumericInput,
     HostTrees,
     calculate_forecast,
 )
 from national_forest.models import ForestBuild, ForestCell
+from micometeo.moisture_method import WeatherDay
+from micometeo.weather.policy import PIPELINE_VERSION
 from national_terrain.models import TerrainBuild, TerrainCell
 from weather_requests.eligibility import canonical_cell_key
 from weather_summaries.models import WeatherSnapshot, WeatherSnapshotDay, WeatherSummary
@@ -383,6 +386,14 @@ def _forecast_inputs(
             forecast_day_count=0,
         ),
         host_trees=host_trees,
+        daily_weather=tuple(
+            WeatherDay(day=day, rain_mm=daily_rows[day].rain_mm,
+                       temperature_c=daily_rows[day].mean_temperature_c,
+                       et0_mm=daily_rows[day].et0_mm)
+            for day in (target_date - timedelta(days=offset) for offset in range(30, 0, -1))
+            if day in daily_rows
+        ),
+        daily_weather_source_id=f"weather-snapshot-days:{snapshot.id}",
         forest_share=_numeric_input(
             value=forest_cell.forest_share,
             unit="fraction",
@@ -493,6 +504,8 @@ def calculate_estimate_update(
         assessment_date=assessment_date,
         status=WeatherSnapshot.Status.READY,
     )
+    if isinstance(method, ForecastMethodV4Config) and snapshot.pipeline_version != PIPELINE_VERSION:
+        raise EstimateValidationError("The current method requires a new 30-day weather snapshot.")
     forest_build = ForestBuild.objects.get(version=forest_build_version)
     terrain_build = TerrainBuild.objects.get(version=terrain_version)
     if forest_build.status != ForestBuild.Status.COMPLETED:
@@ -913,6 +926,7 @@ def recover_estimate_handoffs() -> int:
     recovered = 0
     snapshots = WeatherSnapshot.objects.filter(
         status=WeatherSnapshot.Status.READY,
+        pipeline_version=PIPELINE_VERSION,
     ).order_by("cell_key", "-assessment_date", "-created_at")
     for snapshot in snapshots.iterator(chunk_size=DEFAULT_BATCH_SIZE):
         count = selected.get(snapshot.cell_key, 0)

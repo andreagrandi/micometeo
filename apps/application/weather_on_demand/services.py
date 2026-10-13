@@ -26,13 +26,14 @@ from django.db.models import Count, Sum
 from django_tasks_db.models import DBTaskResult
 from django.utils import timezone
 
-from micometeo.weather.openmeteo import FORECAST_URL
+from micometeo.weather.openmeteo import ARCHIVE_URL, FORECAST_URL
+from micometeo.weather.policy import PIPELINE_VERSION, HISTORY_DAYS
 from weather_requests.eligibility import WeatherCell
 from weather_requests.planning import (
     DEFAULT_MODEL,
     MAX_LOCATIONS,
     combine_request_specs,
-    plan_cell_request_specs,
+    plan_current_weather_requests,
     request_compatibility_key,
 )
 from weather_requests.provider import (
@@ -361,6 +362,7 @@ def _previous_snapshot(*, cell_key: str, assessment_date: date) -> WeatherSnapsh
             cell_key=cell_key,
             assessment_date__lt=assessment_date,
             status=WeatherSnapshot.Status.READY,
+            pipeline_version=PIPELINE_VERSION,
         )
         .order_by("-assessment_date", "-created_at")
         .first()
@@ -372,6 +374,7 @@ def _snapshot_for_date(*, cell_key: str, assessment_date: date) -> WeatherSnapsh
         cell_key=cell_key,
         assessment_date=assessment_date,
         status=WeatherSnapshot.Status.READY,
+        pipeline_version=PIPELINE_VERSION,
     ).first()
 
 
@@ -457,13 +460,14 @@ def _ensure_fetch(
 ) -> tuple[WeatherFetch, bool]:
     fetch = (
         WeatherFetch.objects.select_for_update()
-        .filter(cell_key=cell_key, assessment_date=assessment_date)
+        .filter(cell_key=cell_key, assessment_date=assessment_date, pipeline_version=PIPELINE_VERSION)
         .first()
     )
     if fetch is None:
         try:
             with transaction.atomic():
                 fetch = WeatherFetch.objects.create(
+                    pipeline_version=PIPELINE_VERSION,
                     cell_key=cell_key,
                     assessment_date=assessment_date,
                     previous_snapshot=previous_snapshot,
@@ -474,6 +478,7 @@ def _ensure_fetch(
             return fetch, True
         except IntegrityError:
             fetch = WeatherFetch.objects.select_for_update().get(
+                pipeline_version=PIPELINE_VERSION,
                 cell_key=cell_key,
                 assessment_date=assessment_date,
             )
@@ -657,13 +662,13 @@ def _plan_batches(
                 completed_dates.update(
                     WeatherDaily.objects.filter(id__in=daily_ids).values_list("date", flat=True)
                 )
-            specs = plan_cell_request_specs(
+            specs = plan_current_weather_requests(
                 locations=[cells_by_key[cell_key]],
                 assessment_date=assessment_date,
-                has_previous_snapshot=previous is not None,
                 completed_dates=completed_dates,
                 model=model,
                 endpoint=endpoint,
+                history_endpoint=os.environ.get("MICOMETEO_WEATHER_HISTORY_ENDPOINT", ARCHIVE_URL),
                 options=options,
                 forest_build_version=forest_build_version,
             )
@@ -1212,7 +1217,7 @@ def _store_batch(
                 )
                 if stored.snapshot is None:
                     raise WeatherOnDemandError(
-                        f"The provider answer did not complete the 29-day snapshot for {fetch.cell_key}."
+                        f"The provider answer did not complete the weather snapshot for {fetch.cell_key}."
                     )
                 fetch.status = WeatherFetch.Status.COMPLETED
                 fetch.snapshot = stored.snapshot
@@ -1253,7 +1258,7 @@ def _store_batch(
                     raise WeatherOnDemandError(
                         f"The provider answer range did not match part {part.id}."
                     )
-                if len(parts) == 1 and part.fetch.previous_snapshot_id is None:
+                if len(parts) == 1 and part.fetch.previous_snapshot_id is None and part.fetch.pipeline_version == 1:
                     stored_result = store_weather_response(
                         response=response,
                         assessment_date=part.fetch.assessment_date,
@@ -1321,6 +1326,7 @@ def _store_batch(
                         f"Weather parts for {fetch.cell_key} have no stored daily rows."
                     )
                 stored = build_weather_snapshot(
+                    pipeline_version=fetch.pipeline_version,
                     cell_key=fetch.cell_key,
                     assessment_date=fetch.assessment_date,
                     reference_elevation_m=first_row.reference_elevation_m,
@@ -1332,7 +1338,7 @@ def _store_batch(
                     fetch.retry_at = None
                     fetch.reason_code = "snapshot_incomplete"
                     fetch.full_reason = (
-                        "Stored weather parts do not yet cover the full 29-day snapshot."
+                        "Stored weather parts do not yet cover the full snapshot."
                     )
                     fetch.save(
                         update_fields=[
@@ -1473,6 +1479,7 @@ def _cell_result(
     fetch = WeatherFetch.objects.filter(
         cell_key=cell_key,
         assessment_date=assessment_date,
+        pipeline_version=PIPELINE_VERSION,
     ).first()
     if current is not None:
         source = current.source_ids[0] if current.source_ids else None
@@ -1595,6 +1602,7 @@ def _recover_estimate_callbacks(*, now: datetime) -> None:
     fetches = WeatherFetch.objects.filter(
         status=WeatherFetch.Status.COMPLETED,
         snapshot__isnull=False,
+        pipeline_version=PIPELINE_VERSION,
     ).filter(
         estimate_callback_status__in=["pending", "running"],
     )
@@ -1853,7 +1861,7 @@ def cleanup_weather(
         snapshots_to_delete = WeatherSnapshot.objects.filter(id__in=deletable)
         deleted_snapshots = snapshots_to_delete.count()
         snapshots_to_delete.delete()
-        cutoff = cleanup_date - timedelta(days=21)
+        cutoff = cleanup_date - timedelta(days=HISTORY_DAYS)
         from weather_summaries.models import WeatherDaily
 
         deleted_daily_count = WeatherDaily.objects.filter(

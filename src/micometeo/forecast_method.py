@@ -1,16 +1,19 @@
 """Calculate the experimental porcini growth estimate for one 500 m square."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 import math
 from numbers import Real
 
+from micometeo.moisture_method import WeatherDay, calculate_candidate
+
 
 METHOD_VERSION_V1 = "porcini-experimental-v1"
 METHOD_VERSION_V2 = "porcini-experimental-v2"
 METHOD_VERSION_V3 = "porcini-experimental-v3"
-METHOD_VERSION = METHOD_VERSION_V3
+METHOD_VERSION_V4 = "porcini-experimental-v4"
+METHOD_VERSION = METHOD_VERSION_V4
 EVENT_KEY = "visible_porcini_fruiting_bodies_in_500m_cell_on_italian_date"
 
 OLD_RAIN_KEY = "older_rain"
@@ -86,6 +89,8 @@ class ForecastInputs:
     forest_share: NumericInput | None
     period_temperatures: DailyTemperatures | None = None
     host_trees: HostTrees | None = None
+    daily_weather: tuple[WeatherDay, ...] = ()
+    daily_weather_source_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -141,15 +146,24 @@ class ForecastMethodV3Config(ForecastMethodV2Config):
     host_weight: float = 0.5
 
 
+@dataclass(frozen=True)
+class ForecastMethodV4Config(ForecastMethodV3Config):
+    """Use thirty days of moisture history with one experimental score."""
+
+    version: str = METHOD_VERSION_V4
+
+
 METHOD_V1 = ForecastMethodConfig()
 METHOD_V2 = ForecastMethodV2Config()
 METHOD_V3 = ForecastMethodV3Config()
+METHOD_V4 = ForecastMethodV4Config()
 METHODS_BY_VERSION: dict[str, ForecastMethodConfig | ForecastMethodV2Config] = {
     METHOD_V1.version: METHOD_V1,
     METHOD_V2.version: METHOD_V2,
     METHOD_V3.version: METHOD_V3,
+    METHOD_V4.version: METHOD_V4,
 }
-CURRENT_METHOD = METHOD_V3
+CURRENT_METHOD = METHOD_V4
 
 
 @dataclass(frozen=True)
@@ -195,6 +209,10 @@ def _validate_date(*, value: object, name: str) -> date:
 
 
 def _validate_method(*, method: ForecastMethodConfig | ForecastMethodV2Config) -> None:
+    if isinstance(method, ForecastMethodV4Config):
+        if method != METHOD_V4:
+            raise ValueError(f"{METHOD_VERSION_V4} parameters are frozen")
+        return
     if isinstance(method, ForecastMethodV3Config):
         if method != METHOD_V3:
             raise ValueError(f"{METHOD_VERSION_V3} parameters are frozen")
@@ -717,6 +735,60 @@ def _host_facts(
     return tuple(facts), multiplier
 
 
+def _calculate_v4(*, inputs: ForecastInputs, method: ForecastMethodV4Config) -> ForecastResult:
+    forest = inputs.forest_share.value if inputs.forest_share else None
+    reference = inputs.reference_altitude.value if inputs.reference_altitude else None
+    altitude = inputs.square_altitude.value if inputs.square_altitude else None
+    missing = tuple(name for name, value in (
+        ("forest_share", forest), ("reference_altitude", reference), ("square_altitude", altitude),
+    ) if value is None)
+    if forest is not None and forest < 0.1:
+        reason = "forest_below_minimum"
+    elif missing:
+        reason = "missing_forest_data" if forest is None else missing[0]
+    elif len(inputs.daily_weather) != 30 or not inputs.daily_weather_source_id:
+        reason = "weather_history"
+        missing = (reason,)
+    else:
+        reason = None
+    if reason:
+        return ForecastResult(whole_percentage=None, unavailable_reason=reason, missing_inputs=missing,
+                              method_version=method.version, event_key=EVENT_KEY,
+                              experimental_unvalidated=True, ordered_facts=())
+    adjustment = method.temperature_lapse_rate_c_per_m * (altitude - reference)
+    days = tuple(replace(day, temperature_c=None if day.temperature_c is None else day.temperature_c - adjustment)
+                 for day in inputs.daily_weather)
+    result = calculate_candidate(target_date=inputs.target_date, days=days, forest_share=forest)
+    facts = []
+    if result.score is not None:
+        for role, value, unit, factor, length in (
+            ("rain_30_days", result.rain_totals_mm[-1], "mm", None, 30),
+            ("retained_water", result.retained_water_mm, "mm", result.moisture_factor, 30),
+            ("corrected_mean_temperature", sum(day.temperature_c for day in days[-7:]) / 7,
+             "deg_c", result.temperature_factor, 7),
+        ):
+            start = inputs.target_date - timedelta(days=length)
+            end = inputs.target_date - timedelta(days=1)
+            completed = sum(start + timedelta(days=index) < inputs.assessment_date for index in range(length))
+            facts.append(ForecastFact(
+                role_key=role, original_value=value, unit=unit,
+                source_id=inputs.daily_weather_source_id,
+                source_ids=(inputs.daily_weather_source_id, inputs.reference_altitude.source_id, inputs.square_altitude.source_id),
+                period_start=start, period_end=end, completed_day_count=completed,
+                forecast_day_count=length - completed, normalized_factor=factor,
+                translation_key=f"forecast.fact.{role}", quality="experimental_project_rule",
+                source_metadata={"initial_moisture_score_bounds": result.initial_moisture_score_bounds},
+            ))
+        facts.append(_make_fact(item=inputs.forest_share, role_key="forest_share",
+                                normalized_factor=1.0, translation_key="forecast.fact.forest_share"))
+        host_facts, _ = _host_facts(inputs=inputs, method=METHOD_V3)
+        facts.extend(fact for fact in host_facts if fact.role_key != "host_tree_factor")
+    return ForecastResult(whole_percentage=result.score, unavailable_reason=result.unavailable_reason,
+                          missing_inputs=() if result.score is not None else (result.unavailable_reason,),
+                          method_version=method.version, event_key=EVENT_KEY,
+                          experimental_unvalidated=True, ordered_facts=tuple(facts))
+
+
 def calculate_forecast(
     *,
     inputs: ForecastInputs,
@@ -799,6 +871,8 @@ def calculate_forecast(
         if not 0 <= inputs.forest_share.value <= 1:
             raise ValueError("forest_share value must be from zero to one")
 
+    if isinstance(method, ForecastMethodV4Config):
+        return _calculate_v4(inputs=inputs, method=method)
     if isinstance(method, ForecastMethodV2Config):
         facts, factors = _facts_and_factors_v2(inputs=inputs, method=method)
         temperature_missing = not _temperature_is_complete(record=inputs.period_temperatures)
