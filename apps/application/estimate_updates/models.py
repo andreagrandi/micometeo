@@ -188,3 +188,28 @@ class HostTreeCache(models.Model):
                 fields=["source_version", "cell_id"], name="host_tree_source_cell_unique",
             ),
         ]
+
+
+class TuscanyInputSet(models.Model):
+    """Record which source versions were verified for Tuscany and how many values were stored."""
+
+    region_code = models.CharField(max_length=20)
+    grid_build_version = models.CharField(max_length=120)
+    forest_build_version = models.CharField(max_length=120)
+    terrain_build_version = models.CharField(max_length=120)
+    host_tree_source_version = models.CharField(max_length=64)
+    jrc_manifest = models.JSONField(default=dict)
+    eligible_square_count = models.PositiveIntegerField()
+    host_tree_row_count = models.PositiveIntegerField()
+    prepared_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "grid_build_version", "forest_build_version",
+                    "terrain_build_version", "host_tree_source_version",
+                ],
+                name="tuscany_input_set_versions_unique",
+            ),
+        ]

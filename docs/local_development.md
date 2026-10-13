@@ -661,6 +661,41 @@ These are laptop measurements, not hosted service targets.
 
 The hosted one-time bootstrap is tracked separately in [#88](https://github.com/andreagrandi/micometeo/issues/88).
 
+## Tuscany input readiness
+
+Build the Tuscany subset database first with `prepare_tuscany_map_database`.
+Then check and prepare every stored input for the Tuscany map:
+
+```sh
+uv run python apps/application/manage.py prepare_tuscany_inputs --dry-run
+uv run python apps/application/manage.py prepare_tuscany_inputs
+```
+
+The report lists four sources: `administrative_geometry`, `forest`, `terrain`
+and `host_trees`. Each entry shows its state, source version, the action to
+take and the affected area, such as the number of squares without a row or the
+file that is missing or changed. The command only accepts a grid that holds
+ISTAT region 09 and nothing else.
+
+The dry run changes nothing and makes no remote request. A real run never
+rebuilds grid, forest or terrain data. If one of them fails, it stops and
+names the build command to run. When they are ready, it downloads the JRC
+files only if no manifest exists, then stores host-tree values for every forest
+square that has none under the current JRC version. Older versions keep their
+rows. A repeat run makes no request and adds no rows. It also records the
+verified source versions in `TuscanyInputSet`.
+
+Options:
+
+- `--json` prints the report as JSON.
+- `--allow-forest-only` accepts missing or damaged JRC files. The report shows
+  state `fallback`, estimates use forest only and nothing is downloaded.
+- `--terrain-cache-dir` sets the folder with the terrain tiles, default
+  `data/raw/mvp_terrain`.
+
+The command exits with an error when a source is not ready. The dry run always
+exits normally, so read its `ready` field in the JSON output.
+
 ## Shutdown
 
 Stop Django and the worker with `Ctrl+C` in their terminals. Let the worker
