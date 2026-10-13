@@ -530,7 +530,12 @@ def test_map_renders_eight_calendar_dates_and_preserves_an_older_target(
     root = page.locator("[data-map-app]")
     expect(root).to_have_attribute("data-target-date", "2026-10-15")
 
-    page.wait_for_timeout(500)
+    page.wait_for_function(
+        """() => window.MicometeoMap.map.querySourceFeatures('squares')
+          .some(feature => feature.properties.target_date === '2026-10-15'
+            && feature.properties.assessment_date === '2026-10-11')""",
+        timeout=10_000,
+    )
     source_snapshot = page.evaluate(
         """
         () => {
@@ -986,7 +991,11 @@ def test_map_uses_canonical_weather_cell_and_center_selects_missing_states(
         "() => window.MicometeoMap.map.jumpTo({center: [10.655, 44.13], zoom: 12})"
     )
     _wait_for_square_request(page, requests, "2026-10-12")
-    page.wait_for_timeout(700)
+    page.wait_for_function("""() => {
+      const map = window.MicometeoMap.map;
+      return map.queryRenderedFeatures(map.project(map.getCenter()), {layers: ['micometeo-noforest-line', 'micometeo-square-noforest']})
+        .some(feature => feature.properties.cell_id === 'cell-noforest');
+    }""", timeout=10_000)
     page.locator("#centre-btn").click()
     expect(page.locator("[data-map-app]")).to_have_attribute(
         "data-selected-square", "cell-noforest"
@@ -997,7 +1006,11 @@ def test_map_uses_canonical_weather_cell_and_center_selects_missing_states(
         "() => window.MicometeoMap.map.jumpTo({center: [10.650, 44.13], zoom: 12})"
     )
     _wait_for_square_request(page, requests, "2026-10-12")
-    page.wait_for_timeout(700)
+    page.wait_for_function("""() => {
+      const map = window.MicometeoMap.map;
+      return map.queryRenderedFeatures(map.project(map.getCenter()), {layers: ['micometeo-square-missing']})
+        .some(feature => feature.properties.cell_id === 'cell-missing');
+    }""", timeout=10_000)
     page.locator("#centre-btn").click()
     expect(page.locator("[data-map-app]")).to_have_attribute(
         "data-selected-square", "cell-missing"
@@ -1071,8 +1084,7 @@ def test_map_states_and_zoomed_out_scores_use_the_same_color_layer(
         () => window.MicometeoMap.map.jumpTo({center: [0, 0], zoom: 12})
         """
     )
-    page.wait_for_timeout(700)
-    assert "outside" in page.locator("#mapmsgs").inner_text().lower()
+    expect(page.locator("#mapmsgs")).to_contain_text("outside")
 
     page.evaluate(
         """
@@ -1229,7 +1241,9 @@ def test_delayed_date_responses_cannot_replace_the_latest_overlay(
         }
         """
     )
-    page.wait_for_timeout(900)
+    page.wait_for_function("""() => window.MicometeoMap.map.querySourceFeatures('squares')
+      .some(feature => feature.properties.target_date === '2026-10-18' && feature.properties.percentage === 100)
+    """, timeout=10_000)
     expect(page.locator("[data-map-app]")).to_have_attribute("data-target-date", "2026-10-18")
     expect(page.locator(".date-btn[aria-pressed='true']")).to_have_attribute(
         "data-date", "2026-10-18"
