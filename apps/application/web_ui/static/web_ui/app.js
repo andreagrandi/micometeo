@@ -67,6 +67,34 @@
   languageButtons.forEach((button) => button.addEventListener("click", () => setLanguage(button.dataset.language)));
   if (!root) return;
   const labels = JSON.parse(document.getElementById("ui-labels")?.textContent || "{}");
+  const estimateColors = [0, "#fff9f0", 60, "#e5ac43", 65, "#24958b", 80, "#7851b5", 90, "#432475"];
+  const colorKey = document.querySelector(".lg-scale");
+  if (colorKey) {
+    colorKey.replaceChildren();
+    for (let index = 0; index < estimateColors.length; index += 2) {
+      const chip = document.createElement("span");
+      chip.className = "lg-chip";
+      const swatch = document.createElement("i");
+      swatch.style.background = estimateColors[index + 1];
+      chip.append(swatch, String(estimateColors[index]) + (index === 8 ? "+" : ""));
+      colorKey.append(chip);
+    }
+    document.querySelector(".lg-full .legend-group")?.append(colorKey.cloneNode(true));
+  }
+
+  function setAssessmentLabel(value) {
+    const assessment = document.querySelector(".date-assess");
+    if (!assessment) return;
+    const strong = document.createElement("strong");
+    strong.textContent = value;
+    assessment.replaceChildren(`${labels.assessment}: `, strong);
+  }
+
+  function shortAssessmentDate(value) {
+    return new Intl.DateTimeFormat(locale(), {
+      day: "numeric", month: "short", year: "numeric", timeZone: "Europe/Rome",
+    }).format(new Date(`${value}T12:00:00Z`));
+  }
 
   function updateDateMetadata(features, loading = false, info = null) {
     const assessment = document.querySelector(".date-assess");
@@ -74,7 +102,7 @@
     const warning = document.querySelector("[data-date-warning]");
     if (!assessment || !calculated) return;
     if (loading) {
-      assessment.textContent = `${labels.assessment}: ${labels.map_loading || labels.loading}`;
+      setAssessmentLabel(labels.map_loading || labels.loading);
       calculated.hidden = true;
       calculated.textContent = "";
       if (warning) {
@@ -92,9 +120,9 @@
       }))
       .filter((record) => record.assessment || record.calculated);
     const assessmentDates = [...new Set(records.map((record) => record.assessment).filter(Boolean))].sort();
-    assessment.textContent = assessmentDates.length
-      ? `${labels.assessment}: ${compactDateRange(assessmentDates, date)}${assessmentDates.length > 1 ? ` (${labels.map_mixed_assessment})` : ""}`
-      : `${labels.assessment}: -`;
+    setAssessmentLabel(assessmentDates.length
+      ? compactDateRange(assessmentDates, shortAssessmentDate)
+      : "-");
     const calculatedAt = [...new Set(records.map((record) => record.calculated).filter(Boolean))].sort();
     calculated.hidden = !calculatedAt.length;
     calculated.textContent = calculatedAt.length
@@ -131,6 +159,7 @@
     opacity: Number(params.get("opacity") || "60"),
     foldedLayers: params.get("foldedLayers") === "true",
     foldedLegend: params.get("foldedLegend") === "true",
+    foldedDates: params.get("foldedDates") === "true",
     legendMore: params.get("legendMore") === "true",
   };
   if (!["short", "half", "tall"].includes(state.sheetHeight)) state.sheetHeight = "short";
@@ -168,6 +197,7 @@
       opacity: String(state.opacity),
       foldedLayers: String(state.foldedLayers),
       foldedLegend: String(state.foldedLegend),
+      foldedDates: String(state.foldedDates),
       legendMore: String(state.legendMore),
     };
     Object.entries(values).forEach(([key, value]) => {
@@ -254,7 +284,7 @@
     const folded = body.hidden = !body.hidden;
     card.classList.toggle("is-folded", folded);
     button.setAttribute("aria-expanded", String(!folded));
-    state[button.dataset.fold === "layers" ? "foldedLayers" : "foldedLegend"] = folded;
+    state[{layers: "foldedLayers", legend: "foldedLegend", dates: "foldedDates"}[button.dataset.fold]] = folded;
     persistState();
   }));
 
@@ -365,8 +395,8 @@
     root.classList.toggle("details-open", state.details);
     document.querySelector("#main")?.classList.toggle("details-open", state.details);
   }
-  for (const name of ["layers", "legend"]) {
-    const folded = state[name === "layers" ? "foldedLayers" : "foldedLegend"];
+  for (const name of ["layers", "legend", "dates"]) {
+    const folded = state[{layers: "foldedLayers", legend: "foldedLegend", dates: "foldedDates"}[name]];
     const body = document.getElementById(`${name}-body`);
     if (body) body.hidden = folded;
     document.querySelector(`[data-fold-card="${name}"]`)?.classList.toggle("is-folded", folded);
@@ -790,7 +820,7 @@
           source: "squares",
           filter: ["==", ["get", "state"], "available"],
           paint: {
-            "fill-color": ["interpolate", ["linear"], ["coalesce", ["get", "percentage"], 0], 0, "#fff9f0", 20, "#f3e6d0", 40, "#ebd6b5", 60, "#dcbc91", 80, "#c99e6b", 100, "#c99e6b"],
+            "fill-color": ["interpolate", ["linear"], ["coalesce", ["get", "percentage"], 0], ...estimateColors],
             "fill-opacity": 0.6,
             "fill-antialias": false,
           },
@@ -1011,7 +1041,6 @@
         [labels.map_target, properties.target_date ? date(properties.target_date) : ""],
         [labels.map_assessment, properties.assessment_date ? date(properties.assessment_date) : ""],
         [labels.map_calculated_at, properties.calculated_at ? dateTime(properties.calculated_at) : ""],
-        [labels.map_update, properties.update_id || ""],
       ];
       rows.forEach(([label, value]) => {
         const row = document.createElement("p");
@@ -1072,6 +1101,15 @@
     }
 
     function selectFeature(feature) {
+      if (feature.properties?.overview) {
+        const ring = feature.geometry.coordinates[0];
+        const west = Math.min(...ring.map(point => point[0]));
+        const east = Math.max(...ring.map(point => point[0]));
+        const south = Math.min(...ring.map(point => point[1]));
+        const north = Math.max(...ring.map(point => point[1]));
+        stateData.map.fitBounds([[west, south], [east, north]], { padding: 100, maxZoom: 12 });
+        return;
+      }
       const selection = plainFeature(feature);
       if (!selection?.geometry) return;
       stateData.selected = selection;
@@ -1222,14 +1260,7 @@
       if (!stateData.info || !stateData.map || generation !== stateData.generation) return;
       if (stateData.request) stateData.request.abort();
       const size = visibleSizeKm();
-      if (size.width > Number(stateData.info.max_width_km) || size.height > Number(stateData.info.max_height_km)) {
-        stateData.request = null;
-        if (!preserveData) clearSquares();
-        const loaded = await fetchForest(generation);
-        if (generation !== stateData.generation) return;
-        if (loaded) message(labels.map_zoom_in, "wait");
-        return;
-      }
+      const overview = size.width > Number(stateData.info.max_width_km) || size.height > Number(stateData.info.max_height_km);
       setForestVisible(false);
       if (outsideCoverage()) {
         clearSquares();
@@ -1246,7 +1277,7 @@
       if (!preserveData) clearSquares();
       message((labels.map_loading_estimates || labels.loading).replace("{date}", fullDate(state.date)), "wait");
       try {
-        const { response, body } = await fetchJson(`/api/v1/squares?${query}`, { signal: controller.signal });
+        const { response, body } = await fetchJson(`/api/v1/${overview ? "estimate-overview" : "squares"}?${query}`, { signal: controller.signal });
         if (requestGeneration !== stateData.generation || controller.signal.aborted) return;
         if (!response.ok) {
           const code = body?.code;
@@ -1263,7 +1294,7 @@
         stateData.map.getSource("squares")?.setData(stateData.squares);
         updateDateMetadata(stateData.squares.features, false, stateData.info);
         stateData.renderCount += 1;
-        const selectionMessage = handleSelectionAfterData(stateData.squares);
+        const selectionMessage = overview ? "" : handleSelectionAfterData(stateData.squares);
         revealSquaresWhenRendered(requestGeneration);
         const pending = stateData.squares.features.some((feature) => feature.properties?.state === "noresultyet" && feature.properties?.reason === "pending");
         const providerMessage = providerReasonMessage(stateData.squares.features);
@@ -1280,7 +1311,7 @@
         } else if (!stateData.squares.features.length) {
           message(labels.map_no_results, "wait");
         } else {
-          message("");
+          message(overview ? (labels.map_overview || "Area averages. Zoom in for individual scores.") : "");
         }
       } catch (error) {
         if (error.name === "AbortError") return;

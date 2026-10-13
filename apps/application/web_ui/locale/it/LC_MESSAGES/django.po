@@ -329,6 +329,9 @@ msgstr "Non è stato possibile caricare i dati della mappa. Riprova."
 msgid "The forest view could not be loaded. Try again."
 msgstr "Non è stato possibile caricare la vista forestale. Riprova."
 
+msgid "Area averages. Zoom in for individual scores."
+msgstr "Medie per area. Ingrandisci per vedere le singole stime."
+
 msgid "Zoom in until the map is about 50 km wide to see estimates."
 msgstr "Ingrandisci finché la mappa è larga circa 50 km per vedere le stime."
 

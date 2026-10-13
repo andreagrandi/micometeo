@@ -1230,6 +1230,7 @@ def test_area_detail_keeps_v1_update_on_v1_facts_and_serves_v2_facts_for_v2_upda
 @pytest.mark.django_db(transaction=True)
 def test_area_tree_facts_use_saved_inputs_after_the_source_changes(area_fixture, monkeypatch) -> None:
     from estimate_updates.services import calculate_and_publish_estimates
+    from micometeo.forecast_method import METHOD_V3
 
     old = area_fixture["update"]
     cell = area_fixture["forest_cell"]
@@ -1240,7 +1241,7 @@ def test_area_tree_facts_use_saved_inputs_after_the_source_changes(area_fixture,
         "cells": {str(cell.id): [0.8, 0.1, 0.2, 0.0, 0.0]},
     }
     monkeypatch.setattr("estimate_updates.services.tree_inputs_for_area", lambda **kwargs: inputs)
-    kwargs = dict(snapshot_id=old.snapshot_id, cell_key=old.cell_key, assessment_date=old.assessment_date,
+    kwargs = dict(method=METHOD_V3, snapshot_id=old.snapshot_id, cell_key=old.cell_key, assessment_date=old.assessment_date,
                   forest_build_version=old.forest_build.version, terrain_build_version=old.terrain_build.version)
     first = calculate_and_publish_estimates(**kwargs)
     assert first.created is True

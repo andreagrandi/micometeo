@@ -184,6 +184,7 @@ TEXT = {
         "map_info_error": "The map data could not be loaded. Try again.",
         "map_layer_error": "The forest view could not be loaded. Try again.",
         "map_zoom_in": "Zoom in until the map is about 50 km wide to see estimates.",
+        "map_overview": "Area averages. Zoom in for individual scores.",
         "map_loading_estimates": "Loading estimates for {date}.",
         "map_no_results": "No estimates are stored in this view.",
         "map_request_error": "The estimates could not be loaded. Try again.",

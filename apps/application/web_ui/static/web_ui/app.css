@@ -91,10 +91,10 @@ input:focus-visible {
   --pine-500: #3c6e59;
   --pine-50: #f2f6f4;
   --scale-0: #fff9f0;
-  --scale-1: #f3e6d0;
-  --scale-2: #ebd6b5;
-  --scale-3: #dcbc91;
-  --scale-4: #c99e6b;
+  --scale-1: #e5ac43;
+  --scale-2: #24958b;
+  --scale-3: #7851b5;
+  --scale-4: #432475;
   --square-border: #11221b40;
   --font-serif: "Newsreader", Georgia, serif;
   --text-caption: 12px;
@@ -353,11 +353,35 @@ body:has(.app) {
   grid-row: 1;
 }
 .date-head {
-  clip: rect(0 0 0 0);
-  height: 1px;
-  overflow: hidden;
-  position: absolute;
-  width: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  gap: 8px;
+}
+.date-head h2 {
+  font-size: var(--text-caption);
+}
+.date-head .date-assess {
+  margin-left: auto;
+}
+.date-head .date-update {
+  display: none;
+}
+.datecol .date-fold {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.datecol.is-folded .date-fold {
+  transform: rotate(180deg);
+}
+.datecol.is-folded .date-head {
+  border-bottom: 0;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+@media (max-width: 899px) {
+  .date-head .date-assess { display: none; }
 }
 .date-warning {
   background: #fff1c7;
@@ -1402,7 +1426,7 @@ body:has(.app) {
     border-bottom: 1px solid var(--parchment-200);
     clip: auto;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0 var(--space-3);
     height: auto;
     justify-content: space-between;
@@ -1415,6 +1439,8 @@ body:has(.app) {
   .date-head h2 {
     font-size: var(--text-body);
     font-weight: 700;
+    font-family: var(--font-serif);
+    white-space: nowrap;
   }
   .date-assess {
     color: var(--pine-800);
@@ -1422,6 +1448,7 @@ body:has(.app) {
     font-size: var(--text-caption);
   }
   .date-update {
+    display: none;
     color: var(--earth-700);
     font-family: var(--mono);
     font-size: var(--text-caption);
@@ -1446,7 +1473,7 @@ body:has(.app) {
     background: var(--parchment);
     min-height: 0;
     padding: 6px 2px;
-    width: auto;
+    width: 100%;
   }
   .date-btn[aria-pressed="true"] {
     background: var(--pine-800);
@@ -1463,7 +1490,7 @@ body:has(.app) {
   }
   .date-btn[aria-pressed="true"] .d-pct {
     background: var(--pine-900);
-    color: var(--parchment-200);
+    color: #ffe083;
   }
   .sheetwrap {
     display: contents;
@@ -1544,7 +1571,8 @@ body:has(.app) {
     grid-row: 1;
   }
   .date-head {
-    height: 1px;
+    height: auto;
+    min-height: 44px;
   }
   .maptop {
     left: var(--space-3);
@@ -1875,6 +1903,23 @@ body:has(.app) ul {
 }
 .live-details {
   gap: var(--space-3);
+}
+.lg-full .lg-scale {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: var(--space-2);
+}
+.lg-full .lg-chip {
+  text-align: center;
+  font-family: var(--mono);
+  font-size: var(--text-caption);
+}
+.lg-full .lg-chip i {
+  display: block;
+  height: 18px;
+  border: 1px solid var(--square-border);
+  border-radius: 2px;
 }
 .live-details-title {
   min-width: 0;

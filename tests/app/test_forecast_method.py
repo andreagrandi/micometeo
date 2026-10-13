@@ -11,15 +11,56 @@ from micometeo.forecast_method import (
     METHOD_V1,
     METHOD_V2,
     METHOD_V3,
+    METHOD_V4,
     HostTrees,
     DailyTemperatures,
     ForecastInputs,
     NumericInput,
-    calculate_forecast,
+    calculate_forecast as calculate_versioned_forecast,
 )
+from micometeo.moisture_method import WeatherDay
 
 
 ASSESSMENT = date(2026, 6, 15)
+
+
+def test_current_method_uses_recent_rain_without_the_v3_older_rain_veto() -> None:
+    days = tuple(
+        WeatherDay(day=ASSESSMENT - timedelta(days=offset),
+                   rain_mm=10.0 if offset <= 7 else 0.0,
+                   temperature_c=16.25, et0_mm=2.0)
+        for offset in range(30, 0, -1)
+    )
+    inputs = replace(make_inputs(old_rain=0.0, recent_rain=70.0),
+                     daily_weather=days, daily_weather_source_id="test:30-days")
+    current = calculate_versioned_forecast(inputs=inputs)
+    legacy = calculate_versioned_forecast(inputs=inputs, method=METHOD_V3)
+    assert current.method_version == METHOD_V4.version
+    assert current.whole_percentage > 5
+    assert legacy.whole_percentage == 5
+    assert current.experimental_unvalidated is True
+    rain = next(fact for fact in current.ordered_facts if fact.role_key == "rain_30_days")
+    assert rain.original_value == 70.0
+    assert rain.completed_day_count == 30
+    assert rain.forecast_day_count == 0
+
+
+def test_current_method_requires_et0_instead_of_assuming_no_drying() -> None:
+    days = tuple(
+        WeatherDay(day=ASSESSMENT - timedelta(days=offset), rain_mm=5.0,
+                   temperature_c=16.0, et0_mm=None if offset == 10 else 2.0)
+        for offset in range(30, 0, -1)
+    )
+    result = calculate_versioned_forecast(inputs=replace(
+        make_inputs(), daily_weather=days, daily_weather_source_id="test:30-days",
+    ))
+    assert result.whole_percentage is None
+    assert result.unavailable_reason == "missing_et0_mm"
+
+
+def calculate_forecast(*, inputs: ForecastInputs, method=METHOD_V3):
+    """Keep legacy regression examples on their original method version."""
+    return calculate_versioned_forecast(inputs=inputs, method=method)
 
 
 def make_input(
@@ -416,7 +457,7 @@ def test_v2_fixed_examples_return_expected_percentages_and_facts() -> None:
     assert frost.period_start == date(2026, 5, 27)
 
 
-def test_default_method_is_v3_and_ignores_target_temperature() -> None:
+def test_v3_ignores_target_temperature() -> None:
     default = calculate_forecast(inputs=make_inputs())
     without_target = calculate_forecast(inputs=make_inputs(target_temperature=None))
 

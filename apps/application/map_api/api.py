@@ -682,6 +682,82 @@ def _layer_error() -> JsonResponse:
     )
 
 
+@router.get("/estimate-overview", response={200: Any, 400: ApiErrorSchema, 503: ApiErrorSchema})
+def estimate_overview(request: HttpRequest) -> HttpResponse:
+    """Average stored forest-square scores into bounded overview areas."""
+    bbox, error = _parse_bbox(request.GET.get("bbox"))
+    if error is not None:
+        return error
+    target, error = _parse_date(request.GET.get("target_date"))
+    if error is not None:
+        return error
+    today = _today()
+    if target is None or not today <= target <= today + timedelta(days=MAX_DAYS_AHEAD):
+        return _error_response(status=400, code="unsupported_date", message="Unsupported target date.", message_key="map.unsupported_date")
+    build = _configured_build()
+    if build is None:
+        return _build_error()
+    width, height = _bbox_size_m(bbox=bbox)
+    size = max(2000, math.ceil(max(width, height) / 80 / 1000) * 1000)
+    updates = list(EstimateUpdate.objects.filter(
+        forest_build=build, assessment_date__lte=today,
+        assessment_date__gte=target - timedelta(days=MAX_DAYS_AHEAD),
+    ).order_by("cell_key", "-assessment_date", "-calculated_at", "-id").distinct("cell_key"))
+    identity = [build.version, str(target), bbox, size, [update.id for update in updates]]
+    key = "estimate-overview-v1:" + hashlib.sha256(json.dumps(identity).encode()).hexdigest()
+    cached = cache.get(key)
+    if cached is not None:
+        return _squares_response(body=cached, key=key)
+    cells = list(ForestCell.objects.filter(
+        build=build, is_forest=True, forest_share__gte=0.1,
+        grid_build_cell__cell__geometry__intersects=_bbox_geometry(bbox=bbox),
+    ).values_list("id", "grid_build_cell__cell__corner_e", "grid_build_cell__cell__corner_n"))
+    by_update = {update.id: update for update in updates}
+    scores = {}
+    for cell_id, update_id, values in EstimateResult.objects.filter(
+        update_id__in=by_update, forest_cell_id__in=[cell[0] for cell in cells],
+    ).values_list("forest_cell_id", "update_id", "values").iterator():
+        update = by_update[update_id]
+        try:
+            value = decode_result_bytes(values=values)[(target - update.assessment_date).days]
+        except (ValueError, IndexError):
+            continue
+        if isinstance(value, int):
+            scores[cell_id] = (value, update)
+    groups: dict[tuple[int, int], dict[str, Any]] = {}
+    for cell_id, east, north in cells:
+        group = groups.setdefault((east // size * size, north // size * size), {"scores": [], "count": 0, "updates": []})
+        group["count"] += 1
+        if cell_id in scores:
+            value, update = scores[cell_id]
+            group["scores"].append(value)
+            group["updates"].append(update)
+    features = []
+    for (east, north), group in groups.items():
+        values = group["scores"]
+        # A partly missing area must not look like a fully assessed area.
+        complete = len(values) == group["count"]
+        coordinates = [GRID_TO_WGS84.transform(x, y) for x, y in (
+            (east, north), (east + size, north), (east + size, north + size),
+            (east, north + size), (east, north),
+        )]
+        features.append({
+            "type": "Feature", "id": f"overview-{east}-{north}",
+            "geometry": {"type": "Polygon", "coordinates": [coordinates]},
+            "properties": {
+                "overview": True, "target_date": target.isoformat(),
+                "state": "available" if complete else "unavailable",
+                "percentage": round(sum(values) / len(values)) if complete else None,
+                "assessment_date": min((item.assessment_date for item in group["updates"]), default=None),
+                "calculated_at": min((item.calculated_at for item in group["updates"]), default=None),
+                "forest_square_count": group["count"], "scored_square_count": len(values),
+            },
+        })
+    body = {"type": "FeatureCollection", "target_date": target.isoformat(), "features": features, "area_size_m": size}
+    cache.set(key, body, timeout=MAP_CACHE_SECONDS)
+    return _squares_response(body=body, key=key)
+
+
 def _read_layer(*, build: ForestBuild) -> tuple[bytes, str] | JsonResponse:
     """Read and verify the immutable forest layer artifact."""
     if not build.layer_path or not build.layer_sha256:

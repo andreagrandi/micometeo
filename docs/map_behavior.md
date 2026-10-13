@@ -61,22 +61,24 @@ extends 0.05 degrees on each side. The client does not infer weather geometry
 from a map polygon. Squares without a stored weather cell have no outline.
 
 The client reads today's eight dates and the view limits from `/api/v1/info`.
-It requests estimates only when both visible dimensions fit those limits.
-The current API limits are 60 km on either axis and 16,000 squares. Broad
-views load the forest overview lazily and make no estimate request. Returning
-to a narrow view hides that forest layer.
+Individual-square requests have limits of 60 km on either axis and 16,000
+squares. Broad views request `/api/v1/estimate-overview`, which averages
+stored forest-square scores in larger areas for the selected date. It uses
+the same colors and never requests new weather. Partly missing areas remain
+marked as missing. Selecting an overview area zooms into individual squares.
 
 Viewport changes wait 280 milliseconds before requesting squares. Each
 request has an abort signal and a sequence number. Movement hides the previous
 estimate layers but keeps the selected area's panel and date percentages open,
 even when that area leaves the viewport. Changing the date clears the old
 selected result. Only the current response can restore estimate layers after
-rendering. Delayed forest responses
+rendering. Delayed overview responses
 also check the current sequence number.
 
 Missing estimates use a gray hatch. Squares below the forest threshold have
 no fill and a dotted gray outline. A stored zero remains an available
-percentage. Estimate colors run from warm white to warm light brown. The
+percentage. Estimate colors use fixed stops at 0, 60, 65, 80 and 90, from
+warm white through amber and teal to purple and dark purple. The
 renderer uses layer opacity rather than the mockup's per-layer CSS multiply
 blend, because MapLibre draws its layers in one canvas.
 
@@ -86,8 +88,9 @@ squares still reports unfinished work. Provider refusal, exhausted allowance
 and visitor limits have separate messages. Older results keep their original
 target and assessment dates. A changed selected update clears the old
 selection rather than combining it with a new result.
-The date card shows a bounded calculation-time range instead of listing every
-weather-cell update. Its older-result warning uses only the older results.
+The date card shows the assessment date in a compact heading and can collapse.
+Calculation times remain in the details panel. Internal update UUIDs do not
+appear in that panel. The older-result warning uses only the older results.
 
 Selecting a square loads its eight date percentages through the area API.
 Each request names the same square and stored update. Dates beyond an older

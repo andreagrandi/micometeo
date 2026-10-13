@@ -18,7 +18,7 @@ from weather_summaries.models import WeatherDaily, WeatherSnapshot, WeatherSnaps
 from .services import calculate_and_publish_estimates
 
 
-BENCHMARK_SOURCE = "synthetic-benchmark-29dweather"
+BENCHMARK_SOURCE = "synthetic-benchmark-38dweather-v4"
 
 
 def _database_sizes() -> dict[str, Any]:
@@ -66,10 +66,10 @@ def _database_sizes() -> dict[str, Any]:
 
 
 def _synthetic_daily_rows(*, snapshot: WeatherSnapshot, assessment_date: date) -> None:
-    """Link synthetic daily temperatures to the snapshot for the 20-day temperature period."""
+    """Link 30 past days and eight forecast days to a synthetic snapshot."""
     attempt_id = uuid.uuid4()
     retrieved_at = timezone.now()
-    days = [assessment_date + timedelta(days=offset) for offset in range(-21, 8)]
+    days = [assessment_date + timedelta(days=offset) for offset in range(-30, 8)]
     rows = [
         WeatherDaily(
             cell_key=snapshot.cell_key,
@@ -87,6 +87,7 @@ def _synthetic_daily_rows(*, snapshot: WeatherSnapshot, assessment_date: date) -
             returned_longitude=0.0,
             reference_elevation_m=snapshot.reference_elevation_m,
             rain_mm=0.0,
+            et0_mm=2.0,
             mean_temperature_c=16.25,
             min_temperature_c=8.0,
             status=WeatherDaily.Status.COMPLETE,
@@ -104,10 +105,11 @@ def _synthetic_snapshot(*, cell_key: str, assessment_date: date) -> WeatherSnaps
     metadata = {
         "benchmark": BENCHMARK_SOURCE,
         "network_used": False,
-        "date_start": (assessment_date - timedelta(days=21)).isoformat(),
+        "date_start": (assessment_date - timedelta(days=30)).isoformat(),
         "date_end": (assessment_date + timedelta(days=7)).isoformat(),
     }
     snapshot, created = WeatherSnapshot.objects.get_or_create(
+        pipeline_version=2,
         cell_key=cell_key,
         assessment_date=assessment_date,
         defaults={

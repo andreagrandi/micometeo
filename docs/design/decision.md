@@ -144,15 +144,22 @@ Colours from the Stitch `tailwind.config`:
 | error | `#BA1A1A` on `#FFDAD6` | Errors |
 | older result | `#7A4B00` on `#FFF1D6` | Older stored update |
 
-Estimate squares, from warm white to warm light brown:
+The owner revised the estimate colors on 13 October 2026 to distinguish
+scores above 60 to 65, especially 80 and higher. The map interpolates between
+these fixed stops. The legend uses the same stops on desktop and phone.
 
-| Range | Fill |
+| Score | Fill |
 | --- | --- |
-| 0 to 19% | `#FFF9F0` |
-| 20 to 39% | `#F3E6D0` |
-| 40 to 59% | `#EBD6B5` |
-| 60 to 79% | `#DCBC91` |
-| 80 to 100% | `#C99E6B` |
+| 0% | `#FFF9F0` |
+| 60% | `#E5AC43` |
+| 65% | `#24958B` |
+| 80% | `#7851B5` |
+| 90 to 100% | `#432475` |
+
+The same revision restores equal-width desktop date buttons with small gaps.
+The header keeps the date selector title and assessment date on one row, with
+the assessment value in bold. Calculation timestamps stay in the detail
+panel. Older-data warnings remain visible when needed.
 
 Square borders stay `rgba(17,34,27,0.25)`. Missing data uses a grey diagonal
 hatch with a dashed border. Less than 10% forest uses a dotted grey outline
@@ -214,10 +221,12 @@ Follow the agent mockup, with Stitch colours, type and controls:
 ### Map
 
 - OpenStreetMap background always, in the two styles from the brief.
-- Zoomed out: forest share across Italy, transparent where there is no
-  forest, and the hint "Zoom in until the map is about 50 km wide to see
-  estimates" with the current width.
-- Estimates switch on by map width, not zoom level, as in the agent mockup.
+- Owner revision on 13 October: show mushroom scores at every zoom.
+  Wide views show means of stored forest-square scores in larger areas,
+  with the same date and colors. Mark partly missing areas as missing.
+  Clicking an overview area zooms into individual squares.
+- The date selector can collapse to its heading. Preserve this choice in
+  the URL. Keep internal update identifiers out of the details panel.
 - The "Chiaro" background is the OpenStreetMap tiles muted to a light
   parchment tone with a CSS filter. "Alto contrasto" is the same tiles in
   grey with more contrast.

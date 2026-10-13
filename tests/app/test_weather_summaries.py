@@ -19,6 +19,33 @@ from weather_summaries.inputs import canonical_forecast_inputs
 ASSESSMENT = date(2026, 10, 11)
 
 
+@pytest.mark.django_db(transaction=True)
+def test_thirty_day_snapshot_coexists_with_unchanged_legacy_snapshot() -> None:
+    from weather_summaries.models import WeatherSnapshot
+    from weather_summaries.services import build_weather_snapshot, store_weather_daily_rows, store_weather_response
+
+    legacy = store_weather_response(response_for(
+        start=ASSESSMENT - timedelta(days=21), end=ASSESSMENT + timedelta(days=7), rain=0.0,
+    ), ASSESSMENT)
+    original_ids = tuple(legacy.snapshot.days.order_by("date").values_list("daily_id", flat=True))
+    start = ASSESSMENT - timedelta(days=30)
+    end = ASSESSMENT + timedelta(days=7)
+    rows = store_weather_daily_rows(response_for(start=start, end=end, rain=2.0), start=start, end=end)
+    current = build_weather_snapshot(
+        cell_key="cell-1", assessment_date=ASSESSMENT, reference_elevation_m=420.0,
+        new_daily_row_ids=[row.id for row in rows], pipeline_version=2,
+    )
+    assert current.snapshot is not None
+    assert current.snapshot.id != legacy.snapshot.id
+    assert current.snapshot.days.count() == 38
+    assert WeatherSnapshot.objects.filter(cell_key="cell-1", assessment_date=ASSESSMENT).count() == 2
+    legacy.snapshot.refresh_from_db()
+    assert legacy.snapshot.pipeline_version == 1
+    assert tuple(legacy.snapshot.days.order_by("date").values_list("daily_id", flat=True)) == original_ids
+    assert legacy.snapshot.summaries.get(days_ahead=0).recent_rain_mm == 0.0
+    assert current.snapshot.summaries.get(days_ahead=0).recent_rain_mm == 336.0
+
+
 def response_for(
     *,
     start: date,

@@ -20,7 +20,7 @@ Epic 1 investigated technical possibilities. Its experiments and reports supply 
 
 In particular, the MVP covers all Italy rather than the investigation's home area. It presents experimental growing-probability estimates. Validation against field observations is not a release condition. The historical reports and their results remain unchanged.
 
-Decisions D15 to D20 in [decisions.md](decisions.md) were made after this interview and replace the matching parts of this document. Weather is fetched on demand for each area. Weather cells are 0.1 degrees. Only squares with at least 10 percent forest get estimates. The weather window is 21 days back and 7 days ahead. The zoomed-out map shows only forests. Estimates are stored compactly and only the current and previous ones are kept.
+Decisions D15 to D21 in [decisions.md](decisions.md) were made after this interview and replace the matching parts of this document. Weather is fetched on demand for each area. Weather cells are 0.1 degrees. Only squares with at least 10 percent forest get estimates. D21 authorizes 30 days of weather history, replacing D18's 21-day limit. Method v4 uses reconstructed past weather for completed days and forecasts for today and the next seven days. Habitat and current conditions stay internal to one public score. The zoomed-out map shows only forests. Estimates are stored compactly and only the current and previous assessment dates are kept.
 
 | Interview decision | Agreed requirement |
 |---|---|
@@ -93,7 +93,7 @@ Use the same calculation and input requirements across Italy. National coverage 
 
 Use Italian local days in Europe/Rome. Language selection must not change which dates a forecast represents. The date control includes today and days one through seven ahead. Each selected area shows its target date and the time its estimate was produced.
 
-Fetch weather on demand, as decided in D15. The first request for an area on an Italian day fetches the weather of its weather cells once, and every later visitor that day uses the stored result. Keep the 21 previous days the method needs and the upcoming forecast. Retain usable recent weather between fetches so that the service never downloads the same days again without need.
+Fetch weather on demand, as decided in D15. The first request for an area on an Italian day fetches the weather of its weather cells once, and every later visitor that day uses the stored result. Keep 30 previous days and the upcoming forecast under D21. Reuse completed past days between fetches. Replace yesterday's forecast with reconstructed past weather before using it as a completed day.
 
 Show a completed update consistently across the map and area details. A failed fetch must not erase an area's last stored estimates. Mark older results with their actual date and update time. Never relabel yesterday's estimate as today's estimate or present a past run's seventh day as a forecast for a later date.
 
@@ -121,7 +121,7 @@ F14 includes switching between at least two readable background styles based on 
 
 Use the providers and restrictions already assessed in P6. Do not assume that permission to use OpenStreetMap data also grants unlimited use of the standard openstreetmap.org map server.
 
-Zoomed out, the map shows only where forests are and no estimates, as decided in D19. Estimates appear when the visible map is about 40 to 60 km across or closer, and the local areas can then be selected. Panning, zooming, changing dates and changing backgrounds must not leave mismatched results on the screen.
+The map shows mushroom scores at every zoom, as revised in D19. Wide views average stored forest-square scores into larger areas, using the same date and color scale as local views. Areas with missing scores are marked as missing. Selecting an overview area zooms into its individual 500 m squares. Overview reads do not request new weather. Panning, zooming, changing dates and changing backgrounds must not leave mismatched results on the screen.
 
 ### Favorites and external navigation
 

@@ -364,6 +364,42 @@ def map_fixture(tmp_path: Path) -> dict[str, object]:
     }
 
 
+@pytest.mark.django_db
+def test_overview_averages_latest_scores_and_marks_partial_coverage_missing(
+    map_fixture: dict[str, object], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
+
+    def forbid_weather(**kwargs: object) -> None:
+        pytest.fail("Overview must only read stored estimates")
+
+    monkeypatch.setattr(weather_services, "request_weather", forbid_weather)
+    build = map_fixture["build"]
+    client = Client()
+    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
+        query = {"bbox": "9,43,12,45", "target_date": MAP_DATE.isoformat()}
+        missing = client.get("/api/v1/estimate-overview", query)
+        assert missing.status_code == 200
+        feature = missing.json()["features"][0]["properties"]
+        assert feature["state"] == "unavailable"
+        assert feature["percentage"] is None
+        assert feature["forest_square_count"] == 2
+        assert feature["scored_square_count"] == 1
+        EstimateResult.objects.create(
+            update=map_fixture["new_update"], forest_cell=map_fixture["cells"][3],
+            values=bytes([80] + [100] * 7),
+        )
+        cache.clear()
+        current = client.get("/api/v1/estimate-overview", query)
+        assert current.json()["features"][0]["properties"]["percentage"] == 40
+        query["target_date"] = (MAP_DATE + timedelta(days=1)).isoformat()
+        tomorrow = client.get("/api/v1/estimate-overview", query)
+        assert tomorrow.json()["features"][0]["properties"]["percentage"] == 71
+        assert tomorrow.json()["features"][0]["properties"]["overview"] is True
+        query["target_date"] = (MAP_DATE + timedelta(days=8)).isoformat()
+        assert client.get("/api/v1/estimate-overview", query).status_code == 400
+
+
 def test_bbox_parser_requires_four_finite_wgs84_values() -> None:
     parsed, error = _parse_bbox(value="10,44,10.1,44.1")
 
@@ -606,6 +642,7 @@ def test_broad_view_returns_zoom_in_error_without_weather_call(
         raise AssertionError("broad views must not request weather")
 
     monkeypatch.setattr("map_api.api.weather_services.request_weather", fail_if_called)
+    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
     response = Client().get(
         "/api/v1/squares?bbox=10,44,11,44.5&target_date=2026-10-12",
         headers={"Host": "127.0.0.1"},
@@ -1060,16 +1097,18 @@ def test_squares_route_uses_real_weather_service_and_reuses_provider_fetch(
         url = f"/api/v1/squares?bbox={map_fixture['bbox']}&target_date={MAP_DATE.isoformat()}"
         first_response = client.get(url, REMOTE_ADDR="198.51.100.8")
         deadline = monotonic() + 10
-        while WeatherDaily.objects.count() < 29 and monotonic() < deadline:
+        while WeatherSnapshot.objects.filter(pipeline_version=2).count() < 2 and monotonic() < deadline:
             sleep(0.05)
         second_response = client.get(url, REMOTE_ADDR="198.51.100.8")
 
     assert first_response.status_code == 200
     assert second_response.status_code == 200
-    assert fake_transport.call_count == 1
-    assert WeatherRequest.objects.count() == 1
-    assert WeatherRequestAttempt.objects.count() == 1
-    assert WeatherDaily.objects.count() == 29
+    assert fake_transport.call_count == 4
+    assert WeatherRequest.objects.count() == 4
+    assert WeatherRequestAttempt.objects.count() == 4
+    assert WeatherDaily.objects.count() == 76
+    assert WeatherSnapshot.objects.filter(cell_key="44.00,11.00", assessment_date=MAP_DATE).count() == 2
+    assert WeatherDaily.objects.filter(cell_key="44.10,11.10").count() == 38
     assert WeatherSnapshot.objects.filter(
         cell_key="44.10,11.10",
         assessment_date=MAP_DATE,

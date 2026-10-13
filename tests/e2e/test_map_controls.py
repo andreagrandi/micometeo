@@ -315,6 +315,14 @@ def _install_map_routes(
         if parsed.path.endswith("/forest-layer"):
             fulfill_json(route, _forest_response())
             return
+        if parsed.path.endswith("/estimate-overview"):
+            target_date = query.get("target_date", [TARGET_DATES[0]])[0]
+            feature = _feature(cell_id="overview-test", center_x=10.65, center_y=44.14,
+                               state="available", percentage=80, target_date=target_date)
+            feature["geometry"]["coordinates"] = _polygon(10.65, 44.14, 0.1)
+            feature["properties"]["overview"] = True
+            fulfill_json(route, {"type": "FeatureCollection", "target_date": target_date, "features": [feature]})
+            return
         if "/areas/" in parsed.path:
             cell_id = parsed.path.rsplit("/", 1)[-1]
             target_date = query.get("target_date", [TARGET_DATES[0]])[0]
@@ -385,6 +393,7 @@ def _install_map_routes(
 
     page.route("**/api/v1/info**", api_route)
     page.route("**/api/v1/forest-layer**", api_route)
+    page.route("**/api/v1/estimate-overview**", api_route)
     page.route("**/api/v1/squares**", api_route)
     page.route("**/api/v1/areas/**", api_route)
 
@@ -419,7 +428,7 @@ def _open_map(
         {"Accept-Language": "it-IT,it;q=0.9" if language == "it" else "en-GB,en;q=0.9"}
     )
     page.goto(
-        url=f"{base_url}/map/?center=44.14,10.65&zoom=12",
+        url=f"{base_url}/map/?center=44.14,10.65&zoom=12&date={TARGET_DATES[0]}",
         wait_until="domcontentloaded",
     )
     page.wait_for_function(
@@ -443,6 +452,9 @@ def _open_map(
         """,
         timeout=15_000,
     )
+    first_date = page.locator(f".date-btn[data-date='{TARGET_DATES[0]}']")
+    first_date.click()
+    _wait_for_square_request(page, requests, TARGET_DATES[0])
     return requests
 
 
@@ -600,11 +612,8 @@ def test_map_shows_actual_mixed_assessment_dates_and_calculation_time(
     _wait_for_square_request(page, requests, "2026-10-15")
     expect(page.locator(".date-assess")).to_contain_text("11")
     expect(page.locator(".date-assess")).to_contain_text("12")
-    expect(page.locator(".date-assess")).to_contain_text(
-        "multiple source dates" if language == "en" else "date delle fonti multiple"
-    )
-    expect(page.locator("[data-date-update]")).to_be_visible()
-    expect(page.locator("[data-date-update]")).to_contain_text("10:30")
+    expect(page.locator(".date-assess strong")).to_contain_text("2026")
+    expect(page.locator("[data-date-update]")).to_be_hidden()
 
 
 @pytest.mark.parametrize("language", ["en", "it"])
@@ -660,6 +669,23 @@ def test_selected_square_loads_exact_date_percentages_and_older_warning(
     assert warning_box["y"] + warning_box["height"] <= datecol_box["y"] + datecol_box["height"]
 
 
+@pytest.mark.parametrize("viewport", [(390, 844), (1440, 900)])
+def test_date_selector_collapses_and_preserves_state_on_reload(
+    page: Page, base_url: str, viewport: tuple[int, int],
+) -> None:
+    _open_map(page, base_url, viewport=viewport)
+    toggle = page.locator("[data-fold='dates']")
+    toggle.click()
+    expect(page.locator("#dates-body")).to_be_hidden()
+    expect(toggle).to_have_attribute("aria-expanded", "false")
+    page.reload(wait_until="domcontentloaded")
+    expect(page.locator("#dates-body")).to_be_hidden()
+    expect(toggle).to_be_in_viewport()
+    toggle.click()
+    expect(page.locator("#dates-body")).to_be_visible()
+    expect(toggle).to_have_attribute("aria-expanded", "true")
+
+
 def test_many_calculated_times_keep_date_strip_within_short_desktop_viewport(
     page: Page, base_url: str
 ) -> None:
@@ -672,9 +698,7 @@ def test_many_calculated_times_keep_date_strip_within_short_desktop_viewport(
     date_buttons = page.locator(".date-btn")
     expect(date_buttons).to_have_count(8)
     update = page.locator("[data-date-update]")
-    expect(update).to_be_visible()
-    expect(update).to_contain_text("10:30")
-    expect(update).to_contain_text("15:30")
+    expect(update).to_be_hidden()
     expect(page.locator("[data-date-warning]")).to_be_hidden()
     viewport_height = page.evaluate("() => window.innerHeight")
     boxes = [date_buttons.nth(index).bounding_box() for index in range(8)]
@@ -879,7 +903,7 @@ def test_style_success_does_not_clear_a_newer_squares_error_or_retry_style(
 
     page.route("**/styles/**", overlapping_style_route)
     page.route("**/api/v1/squares**", overlapping_squares_route)
-    page.locator("input[name='background'][value='contrast']").check()
+    page.locator("input[name='background'][value='contrast']").click()
     expect(page.locator("[data-live-state='error']")).to_contain_text("background")
     page.locator("[data-live-state='error'] button").click()
     for _ in range(100):
@@ -992,7 +1016,7 @@ def test_map_reports_a_missing_local_map_library(
     )
 
 
-def test_map_states_and_zoomed_out_forest_view_use_separate_requests_and_styles(
+def test_map_states_and_zoomed_out_scores_use_the_same_color_layer(
     page: Page, base_url: str
 ) -> None:
     requests = _open_map(page, base_url)
@@ -1018,29 +1042,25 @@ def test_map_states_and_zoomed_out_forest_view_use_separate_requests_and_styles(
         """
     )
     for _ in range(100):
-        if _api_requests(requests, "/forest-layer"):
+        if _api_requests(requests, "/estimate-overview"):
             break
         page.wait_for_timeout(100)
     else:
-        pytest.fail("The map did not request the forest layer at broad zoom")
+        pytest.fail("The map did not request overview scores at broad zoom")
     page.wait_for_function(
         """
         () => {
           const map = window.MicometeoMap.map;
-          return map.querySourceFeatures('forest').length > 0 &&
-            map.queryRenderedFeatures({layers: ['micometeo-forest']}).length > 0;
+          return map.queryRenderedFeatures({layers: ['micometeo-square-estimates']})
+            .some(feature => feature.properties.overview && feature.properties.percentage === 80);
         }
         """,
         timeout=10_000,
     )
-    assert len(_api_requests(requests, "/forest-layer")) == 1
+    assert len(_api_requests(requests, "/forest-layer")) == 0
     assert page.evaluate(
         """
-        () => ['micometeo-square-estimates', 'micometeo-square-missing',
-          'micometeo-square-noforest', 'micometeo-noforest-line',
-          'micometeo-missing-line'].every((id) =>
-            window.MicometeoMap.map.getLayoutProperty(id, 'visibility') === 'none'
-          )
+        () => window.MicometeoMap.map.getLayoutProperty('micometeo-square-estimates', 'visibility') === 'visible'
         """
     )
     page.wait_for_timeout(600)
@@ -1062,7 +1082,7 @@ def test_map_states_and_zoomed_out_forest_view_use_separate_requests_and_styles(
         }
         """
     )
-    page.wait_for_timeout(700)
+    page.wait_for_function("""() => window.MicometeoMap.map.queryRenderedFeatures({layers: ['micometeo-square-estimates']}).some(f => f.properties.cell_id === 'cell-zero')""", timeout=10_000)
     features = page.evaluate(
         """
         () => {
@@ -1281,7 +1301,7 @@ def test_date_loading_clears_selected_details_until_the_new_overlay_arrives(
     expect(page.locator("aside[data-live-details]")).to_have_count(0)
 
 
-def test_delayed_forest_failure_cannot_replace_the_latest_map_state(
+def test_delayed_overview_failure_cannot_replace_the_latest_map_state(
     page: Page, base_url: str
 ) -> None:
     requests = _open_map(page, base_url)
@@ -1292,7 +1312,7 @@ def test_delayed_forest_failure_cannot_replace_the_latest_map_state(
           const pending = [];
           window.fetch = (input, init) => {
             const url = typeof input === 'string' ? input : input.url;
-            if (!url.includes('/api/v1/forest-layer')) return originalFetch(input, init);
+            if (!url.includes('/api/v1/estimate-overview')) return originalFetch(input, init);
             return new Promise((resolve, reject) => pending.push({resolve, reject}));
           };
           window.__mapTestPendingForest = pending;
@@ -1410,13 +1430,13 @@ def test_estimate_scale_has_exact_endpoints_and_separate_status_looks(
     page: Page, base_url: str
 ) -> None:
     _open_map(page, base_url)
-    swatches = page.locator(".lg-scale .lg-chip i")
+    swatches = page.locator(".lg-compact .lg-scale .lg-chip i")
     expect(swatches).to_have_count(5)
     colors = swatches.evaluate_all(
         "(items) => items.map((item) => getComputedStyle(item).backgroundColor)"
     )
     assert colors[0] in {"rgb(255, 249, 240)", "#fff9f0"}
-    assert colors[-1] in {"rgb(201, 158, 107)", "#c99e6b"}
+    assert colors[-1] in {"rgb(67, 36, 117)", "#432475"}
 
     layer_paint = page.evaluate(
         """
@@ -1442,7 +1462,7 @@ def test_estimate_scale_has_exact_endpoints_and_separate_status_looks(
         if isinstance(value, str)
     }
     assert "#fff9f0" in estimate_colors
-    assert "#c99e6b" in estimate_colors
+    assert {"#e5ac43", "#24958b", "#7851b5", "#432475"}.issubset(estimate_colors)
     status_layers = " ".join(item["id"] for item in layer_paint).lower()
     assert "missing" in status_layers
     assert "noforest" in status_layers or "no-forest" in status_layers

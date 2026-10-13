@@ -355,14 +355,16 @@ def _make_snapshot(
     assessment_date: date,
     reference_elevation_m: float | None,
     rows: Mapping[date, WeatherDaily],
+    pipeline_version: int = 1,
 ) -> tuple[WeatherSnapshot, tuple[WeatherSummary, ...]]:
     dates = _period_dates(
-        start=assessment_date - timedelta(days=21),
+        start=assessment_date - timedelta(days=30 if pipeline_version == 2 else 21),
         end=assessment_date + timedelta(days=7),
     )
     selected = tuple(rows[day] for day in dates)
     latest = max(row.retrieved_at for row in selected)
     snapshot = WeatherSnapshot(
+        pipeline_version=pipeline_version,
         cell_key=cell_key,
         assessment_date=assessment_date,
         reference_elevation_m=reference_elevation_m,
@@ -455,10 +457,11 @@ def build_weather_snapshot(
     reference_elevation_m: float | None,
     new_daily_row_ids: Iterable[UUID | str],
     previous_snapshot: WeatherSnapshot | None = None,
+    pipeline_version: int = 1,
 ) -> StoredWeatherResult:
     """Build a snapshot from explicit new rows and one safe prior snapshot."""
     required_dates = _period_dates(
-        start=assessment_date - timedelta(days=21),
+        start=assessment_date - timedelta(days=30 if pipeline_version == 2 else 21),
         end=assessment_date + timedelta(days=7),
     )
     requested_ids = tuple(UUID(str(row_id)) for row_id in new_daily_row_ids)
@@ -500,6 +503,7 @@ def build_weather_snapshot(
     existing_snapshot = WeatherSnapshot.objects.filter(
         cell_key=cell_key,
         assessment_date=assessment_date,
+        pipeline_version=pipeline_version,
     ).first()
     if existing_snapshot is not None:
         if existing_snapshot.reference_elevation_m != reference_elevation_m:
@@ -509,6 +513,7 @@ def build_weather_snapshot(
         summaries = tuple(existing_snapshot.summaries.order_by("days_ahead"))
         return StoredWeatherResult(daily=new_rows, snapshot=existing_snapshot, summaries=summaries)
     snapshot, summaries = _make_snapshot(
+        pipeline_version=pipeline_version,
         cell_key=cell_key,
         assessment_date=assessment_date,
         reference_elevation_m=reference_elevation_m,
