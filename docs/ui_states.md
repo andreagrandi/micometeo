@@ -32,6 +32,62 @@ place. The browser names are `formatDate`, `formatNumber` and
 `formatMeasurement`. Italian displays `12,5 mm` and `11 ottobre 2026`; English displays
 `12.5 mm` and `11 October 2026`.
 
+## Selected-area details
+
+The live details sheet opens after a map square is selected. Its identity is
+the square ID, target date and update UUID from the map response. The sheet
+requests `/api/v1/areas/{square_id}` with the target date and, when present,
+the same update UUID. The request omits `update_id` only when the map has no
+selected update. A request is current only while all three identity values
+match the current selection. A later response cannot replace a newer square,
+date or update.
+
+The sheet shows the whole percentage from `estimate.whole_percentage`, so zero
+is shown as `0%`. A missing estimate keeps the percentage unavailable and
+shows its stored reason. HTTP 404 and 409 responses classify the square as
+having no detail for that update. Other failed requests show a retry action.
+Old results retain their facts and sources and show the assessment and
+calculation dates.
+
+Facts use the response values, units and inclusive periods. The selected-day
+weather section is separate from recent rain. The rain controls show 7, 14 and
+21 completed days ending on the day before the assessment date. They never
+include rain from the selected target day or a later day. Optional weather
+values and recorded gaps remain visible as unavailable. The sheet renders no
+hail value, confidence percentage or accuracy label unless the API supplies a
+supported value. Weather source records include model, retrieval time, source
+points, detail limits and required credits. The selected square is 500 m wide,
+while a weather value can cover several kilometres.
+
+The API's `selection.representative_coordinates` is the selected destination
+for a square. An exact search, geolocation or map-click point remains separate
+from that representative. The current map centre is never used as a
+destination. Closing the sheet keeps the selected map day, invalidates its
+detail request and returns focus to the map. Escape follows the same path.
+
+Fixture pages remain gated behind `MICOMETEO_UI_FIXTURE_PAGES=true`. The
+normal `/map/` route renders only responses from the live API and does not use
+illustrative details.
+
+On 13 October 2026, a standalone headed Chromium session with a persistent
+profile checked the live panel with intercepted area API responses. The
+checks used English at 1440 by 900 and 320 by 568, and Italian at 390 by 844.
+The first phone check found a hidden square heading and close button. Both
+remain visible after the fix, including while scrolling through the sources.
+The final checks found no horizontal overflow or JavaScript errors. Selecting
+7, 14 and 21 days retained focus on the chosen rain button. Escape closed the
+panel, returned focus to the map and preserved the target date. Source credits
+and the weather detail explanation remained readable in the phone sheet.
+
+The full local run used `uv run pytest --tb=short -q` and finished with 727
+passes and two failures. Both failures came from a browser assertion that
+still expected English missing-data text in the Italian case. After correcting
+the assertion and the final weather-unit rendering, the 12 affected browser
+cases passed in Chromium and WebKit. The 18 focused retry, expired-update,
+destination and keyboard cases also passed. Django checks, translation checks,
+JavaScript syntax and repository file checks passed. Rebuilding the map CSS
+produced the same file. These results are local checks, not remote CI.
+
 ## Fixture states
 
 Fixture pages are disabled by default. Enable them locally with

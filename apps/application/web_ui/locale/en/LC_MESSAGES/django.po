@@ -142,8 +142,308 @@ msgstr "Map data OpenStreetMap contributors · OpenFreeMap"
 msgid "Estimate data credits"
 msgstr "Estimate data credits"
 
+msgid "Loading this area's estimate and explanation."
+msgstr "Loading this area's estimate and explanation."
+
+msgid "The area details could not be loaded."
+msgstr "The area details could not be loaded."
+
+msgid "The request failed. Try again to load this selected area."
+msgstr "The request failed. Try again to load this selected area."
+
+msgid "This area has no detail for the selected update."
+msgstr "This area has no detail for the selected update."
+
+msgid "The map still identifies this area, but the requested stored detail is unavailable."
+msgstr "The map still identifies this area, but the requested stored detail is unavailable."
+
+msgid "No estimate is available because required data is missing."
+msgstr "No estimate is available because required data is missing."
+
+msgid "This is an older result from {date}."
+msgstr "This is an older result from {date}."
+
+msgid "Not available"
+msgstr "Not available"
+
+msgid "inclusive"
+msgstr "inclusive"
+
+msgid "Input"
+msgstr "Input"
+
+msgid "The value for {label} is {value} for {period}."
+msgstr "The value for {label} is {value} for {period}."
+
+msgid "The value for {label} is {value}."
+msgstr "The value for {label} is {value}."
+
+msgid "Rain in the recent period"
+msgstr "Rain in the recent period"
+
+msgid "Rain in the earlier period"
+msgstr "Rain in the earlier period"
+
+msgid "Forest share"
+msgstr "Forest share"
+
+msgid "Temperature"
+msgstr "Temperature"
+
+msgid "Soil moisture"
+msgstr "Soil moisture"
+
+msgid "Drying"
+msgstr "Drying"
+
+msgid "Frost"
+msgstr "Frost"
+
+msgid "Weather date"
+msgstr "Weather date"
+
+msgid "Rain"
+msgstr "Rain"
+
+msgid "Minimum temperature"
+msgstr "Minimum temperature"
+
+msgid "Reference evaporation"
+msgstr "Reference evaporation"
+
+msgid "Soil temperature"
+msgstr "Soil temperature"
+
+msgid "Frost indicated"
+msgstr "Frost indicated"
+
+msgid "No frost indicated"
+msgstr "No frost indicated"
+
+msgid "Selected-day weather is incomplete. Missing values remain unavailable."
+msgstr "Selected-day weather is incomplete. Missing values remain unavailable."
+
+msgid "Weather variable"
+msgstr "Weather variable"
+
+msgid "Period unavailable"
+msgstr "Period unavailable"
+
+msgid "Native detail"
+msgstr "Native detail"
+
+msgid "Retrieved"
+msgstr "Retrieved"
+
+msgid "Credit"
+msgstr "Credit"
+
+msgid "Licence"
+msgstr "Licence"
+
+msgid "Requested weather point"
+msgstr "Requested weather point"
+
+msgid "Returned weather point"
+msgstr "Returned weather point"
+
+msgid "Data gap"
+msgstr "Data gap"
+
+msgid "Target temperature at the weather reference"
+msgstr "Target temperature at the weather reference"
+
+msgid "Mean temperature at the weather reference"
+msgstr "Mean temperature at the weather reference"
+
+msgid "Corrected temperature"
+msgstr "Corrected temperature"
+
+msgid "Corrected mean temperature"
+msgstr "Corrected mean temperature"
+
+msgid "Reference altitude"
+msgstr "Reference altitude"
+
+msgid "Square altitude"
+msgstr "Square altitude"
+
+msgid "Frost days"
+msgstr "Frost days"
+
+msgid "Host tree factor"
+msgstr "Host tree factor"
+
+msgid "Broadleaf host occurrence"
+msgstr "Broadleaf host occurrence"
+
+msgid "Conifer host occurrence"
+msgstr "Conifer host occurrence"
+
+msgid "Mixed host occurrence"
+msgstr "Mixed host occurrence"
+
+msgid "Beech host occurrence"
+msgstr "Beech host occurrence"
+
+msgid "Oak host occurrence"
+msgstr "Oak host occurrence"
+
+msgid "Rain in the 30-day period"
+msgstr "Rain in the 30-day period"
+
+msgid "Retained water"
+msgstr "Retained water"
+
+msgid "Source tile"
+msgstr "Source tile"
+
+msgid "Weather values can cover several kilometres, while this map area is 500 m wide."
+msgstr "Weather values can cover several kilometres, while this map area is 500 m wide."
+
+msgid "Chestnut host occurrence"
+msgstr "Chestnut host occurrence"
+
+msgid "Pine host occurrence"
+msgstr "Pine host occurrence"
+
+msgid "Spruce and fir host occurrence"
+msgstr "Spruce and fir host occurrence"
+
+msgid "Survey year"
+msgstr "Survey year"
+
+msgid "Survey age in years"
+msgstr "Survey age in years"
+
+msgid "Release"
+msgstr "Release"
+
+msgid "This optional weather value is absent."
+msgstr "This optional weather value is absent."
+
+msgid "The selected-day weather value is missing."
+msgstr "The selected-day weather value is missing."
+
+msgid "The recent rain total is missing."
+msgstr "The recent rain total is missing."
+
+msgid "The terrain source data is missing."
+msgstr "The terrain source data is missing."
+
 msgid "Try again"
 msgstr "Try again"
 
 msgid "The map shows experimental estimates from stored forest and weather data. The percentage has not been validated and is not your personal chance of finding porcini."
 msgstr "The map shows experimental estimates from stored forest and weather data. The percentage has not been validated and is not your personal chance of finding porcini."
+
+msgid "Refresh map"
+msgstr "Refresh map"
+
+msgid "This stored update has expired. Refresh the map to use the current update."
+msgstr "This stored update has expired. Refresh the map to use the current update."
+
+msgid "The selected area's response was incomplete. Try again."
+msgstr "The selected area's response was incomplete. Try again."
+
+msgid "This square has less than 10% forest. No estimate is available."
+msgstr "This square has less than 10% forest. No estimate is available."
+
+msgid "The forest share is below the method minimum. No estimate is available."
+msgstr "The forest share is below the method minimum. No estimate is available."
+
+msgid "The estimate is still being prepared. Try again later."
+msgstr "The estimate is still being prepared. Try again later."
+
+msgid "The weather visitor limit was reached. Try again later."
+msgstr "The weather visitor limit was reached. Try again later."
+
+msgid "No estimate is available because the earlier rain period is incomplete."
+msgstr "No estimate is available because the earlier rain period is incomplete."
+
+msgid "No estimate is available because the recent rain period is incomplete."
+msgstr "No estimate is available because the recent rain period is incomplete."
+
+msgid "No estimate is available because the target temperature is missing."
+msgstr "No estimate is available because the target temperature is missing."
+
+msgid "No estimate is available because the weather reference altitude is missing."
+msgstr "No estimate is available because the weather reference altitude is missing."
+
+msgid "No estimate is available because the square altitude is missing."
+msgstr "No estimate is available because the square altitude is missing."
+
+msgid "No estimate is available because the weather summary is missing."
+msgstr "No estimate is available because the weather summary is missing."
+
+msgid "No estimate is available because terrain data is missing."
+msgstr "No estimate is available because terrain data is missing."
+
+msgid "No estimate is available because the temperature period is incomplete."
+msgstr "No estimate is available because the temperature period is incomplete."
+
+msgid "No estimate is available because the weather history is incomplete."
+msgstr "No estimate is available because the weather history is incomplete."
+
+msgid "No estimate is available because rain data is missing."
+msgstr "No estimate is available because rain data is missing."
+
+msgid "No estimate is available because temperature data is missing."
+msgstr "No estimate is available because temperature data is missing."
+
+msgid "No estimate is available because reference evaporation data is missing."
+msgstr "No estimate is available because reference evaporation data is missing."
+
+msgid "No estimate is available because a required input is missing."
+msgstr "No estimate is available because a required input is missing."
+
+msgid "This target date is outside the stored update dates."
+msgstr "This target date is outside the stored update dates."
+
+msgid "Precipitation"
+msgstr "Precipitation"
+
+msgid "Completed days: {count}"
+msgstr "Completed days: {count}"
+
+msgid "Forecast days: {count}"
+msgstr "Forecast days: {count}"
+
+msgid "Reason: {reason}"
+msgstr "Reason: {reason}"
+
+msgid "Expected hours: {count}"
+msgstr "Expected hours: {count}"
+
+msgid "Present hours: {count}"
+msgstr "Present hours: {count}"
+
+msgid "hours"
+msgstr "hours"
+
+msgid "Period"
+msgstr "Period"
+
+msgid "A required weather value is absent."
+msgstr "A required weather value is absent."
+
+msgid "The stored weather hours are incomplete."
+msgstr "The stored weather hours are incomplete."
+
+msgid "The stored weather day is incomplete."
+msgstr "The stored weather day is incomplete."
+
+msgid "This weather value is unavailable."
+msgstr "This weather value is unavailable."
+
+msgid "Host tree source"
+msgstr "Host tree source"
+
+msgid "Modelled host occurrence at 1 km resolution, not tree cover or prediction accuracy."
+msgstr "Modelled host occurrence at 1 km resolution, not tree cover or prediction accuracy."
+
+msgid "Host occurrence is missing. The estimate uses forest data only."
+msgstr "Host occurrence is missing. The estimate uses forest data only."
+
+msgid "Experimental method factor."
+msgstr "Experimental method factor."

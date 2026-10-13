@@ -215,6 +215,10 @@
     zoom: Number(storedGeolocation?.zoom || (oldGeolocationUrl ? root.dataset.mapZoom || "11" : params.get("zoom") || root.dataset.mapZoom || "11")),
     point: initialPoint,
     representative: initialRepresentative,
+    detailRepresentative: null,
+    detailRepresentativeSquare: "",
+    detailRepresentativeDate: "",
+    detailRepresentativeUpdate: "",
     pointSource: storedGeolocation ? "geolocation" : (oldGeolocationUrl ? "" : params.get("point_source") || root.dataset.selectionSource || ""),
     panel: params.get("panel") || "",
     details: params.has("details") ? params.get("details") === "true" : root.dataset.detailsOpen === "true",
@@ -600,13 +604,21 @@
   function persistState() {
     root.classList.toggle("has-overlay", state.details || Boolean(state.panel));
     const next = new URL(window.location.href);
+    const hasVerifiedRepresentative = Boolean(
+      state.representative
+      && state.detailRepresentativeSquare === state.square
+      && state.detailRepresentativeDate === state.date
+      && state.detailRepresentativeUpdate
+      && String(state.detailRepresentativeUpdate) === String(state.updateId || ""),
+    );
+    const verifiedRepresentative = hasVerifiedRepresentative ? state.representative : null;
     const geolocationSelection = state.pointSource === "geolocation" && state.point;
     if (geolocationSelection) {
       try {
         window.sessionStorage.setItem(geolocationStateKey, JSON.stringify({
           source: "geolocation",
           point: state.point,
-          representative: state.representative,
+          representative: verifiedRepresentative,
           square: state.square,
           center: state.center,
           zoom: state.zoom,
@@ -640,8 +652,8 @@
         zoom: String(state.zoom),
         point_latitude: state.point ? String(state.point.latitude) : "",
         point_longitude: state.point ? String(state.point.longitude) : "",
-        representative_latitude: state.representative ? String(state.representative.latitude) : "",
-        representative_longitude: state.representative ? String(state.representative.longitude) : "",
+        representative_latitude: verifiedRepresentative ? String(verifiedRepresentative.latitude) : "",
+        representative_longitude: verifiedRepresentative ? String(verifiedRepresentative.longitude) : "",
         point_source: state.pointSource,
       });
     }
@@ -661,8 +673,8 @@
       mapZoom: String(state.zoom),
       pointLatitude: state.point ? String(state.point.latitude) : "",
       pointLongitude: state.point ? String(state.point.longitude) : "",
-      representativeLatitude: state.representative ? String(state.representative.latitude) : "",
-      representativeLongitude: state.representative ? String(state.representative.longitude) : "",
+      representativeLatitude: verifiedRepresentative ? String(verifiedRepresentative.latitude) : "",
+      representativeLongitude: verifiedRepresentative ? String(verifiedRepresentative.longitude) : "",
       selectionSource: state.pointSource,
       detailsOpen: String(state.details),
       panel: state.panel,
@@ -670,8 +682,8 @@
     window.dispatchEvent(new CustomEvent("micometeo:selectionchange", {
       detail: {
         point: state.point,
-        representative: state.representative,
-        destination: state.point || state.representative,
+        representative: verifiedRepresentative,
+        destination: state.point || verifiedRepresentative,
         square: state.square || null,
         source: state.pointSource || null,
         mapCentre: state.center ? parseMapCenter(state.center) : null,
@@ -797,6 +809,7 @@
   }));
 
   function setDetails(open) {
+    if (!open) liveMapController?.closeDetails();
     const details = document.querySelector(".details[data-details]");
     if (!details) return;
     state.details = open;
@@ -933,6 +946,10 @@
       estimateGeneration: 0,
       estimateCache: new Map(),
       estimateFeature: null,
+      detailRequest: null,
+      detailGeneration: 0,
+      detailData: null,
+      detailRainDays: 7,
       styleRequest: null,
       styleGeneration: 0,
       styleRestoreGeneration: -1,
@@ -1046,7 +1063,15 @@
       if (clearSource && wasVisible) emptySource("forest");
     }
 
+    function invalidateAreaDetails() {
+      stateData.detailGeneration += 1;
+      stateData.detailRequest?.abort();
+      stateData.detailRequest = null;
+      stateData.detailData = null;
+    }
+
     function clearVisibleSelection() {
+      invalidateAreaDetails();
       stateData.weatherLabel?.remove();
       stateData.weatherLabel = null;
       const hadSelection = Boolean(stateData.selected);
@@ -1080,7 +1105,9 @@
         stateData.pendingSelectionUpdateId = state.updateId;
         stateData.pendingSelectionDetails = state.details;
         stateData.pendingSelectionPoint = state.point;
-        stateData.pendingSelectionRepresentative = state.representative;
+        stateData.pendingSelectionRepresentative = ["map", "centre"].includes(state.pointSource)
+          ? null
+          : state.representative;
         stateData.pendingSelectionSource = state.pointSource;
         state.square = "";
         state.updateId = "";
@@ -1488,21 +1515,462 @@
       return details;
     }
 
-    function showDetails(feature, pointSelection = null) {
-      const properties = feature.properties || {};
+    function appendDetailText(parent, className, text) {
+      if (!text) return;
+      const item = document.createElement("p");
+      if (className) item.className = className;
+      item.textContent = text;
+      parent.append(item);
+    }
+
+    function factLabel(fact) {
+      const labelsByRole = {
+        recent_rain: labels.fact_recent_rain,
+        older_rain: labels.fact_older_rain,
+        forest_share: labels.fact_forest_share,
+        temperature: labels.fact_temperature,
+        soil_moisture: labels.fact_soil_moisture,
+        drying: labels.fact_drying,
+        frost: labels.fact_frost,
+        target_temperature_at_reference: labels.fact_target_temperature,
+        mean_temperature_at_reference: labels.fact_mean_temperature,
+        corrected_temperature: labels.fact_corrected_temperature,
+        corrected_mean_temperature: labels.fact_corrected_mean_temperature,
+        reference_altitude: labels.fact_reference_altitude,
+        square_altitude: labels.fact_square_altitude,
+        frost_days: labels.fact_frost_days,
+        host_tree_factor: labels.fact_host_tree_factor,
+        host_broadleaf: labels.fact_host_broadleaf,
+        host_conifer: labels.fact_host_conifer,
+        host_mixed: labels.fact_host_mixed,
+        host_beech: labels.fact_host_beech,
+        host_oak: labels.fact_host_oak,
+        host_chestnut: labels.fact_host_chestnut,
+        host_oaks: labels.fact_host_oaks,
+        host_pines: labels.fact_host_pines,
+        host_spruce_fir: labels.fact_host_spruce_fir,
+        rain_30_days: labels.fact_rain_30_days,
+        retained_water: labels.fact_retained_water,
+      };
+      if (labelsByRole[fact.role_key]) return labelsByRole[fact.role_key];
+      return labels.fact_input;
+    }
+
+    function factMeasurement(value, unit, roleKey) {
+      if (roleKey === "forest_share" || unit === "fraction" || unit === "relative_occurrence") {
+        return measurement(Number(value) <= 1 ? Number(value) * 100 : Number(value), "%");
+      }
+      const units = {
+        deg_c: "°C",
+        mm: "mm",
+        m: "m",
+        multiplier: "x",
+      };
+      return measurement(value, units[unit] || unit || "");
+    }
+
+    function factSentence(fact) {
+      const value = fact.actual_value ?? fact.value;
+      const actual = value === null || value === undefined
+        ? labels.detail_missing_value
+        : factMeasurement(value, fact.unit, fact.role_key);
+      const start = fact.period_start || fact.period?.start;
+      const end = fact.period_end || fact.period?.end;
+      const period = start && end
+        ? `${date(start)} - ${date(end)}${fact.period?.inclusive === false ? "" : `, ${labels.detail_inclusive}`}`
+        : "";
+      const template = period ? labels.fact_sentence : labels.fact_sentence_no_period;
+      const sentence = template
+        .replace("{label}", factLabel(fact))
+        .replace("{value}", actual)
+        .replace("{period}", period);
+      const quality = {
+        modelled_1km_not_tree_cover: labels.detail_quality_modelled_host,
+        forest_only_missing_host_data: labels.detail_quality_missing_host,
+        experimental_project_weight: labels.detail_quality_experimental,
+      }[fact.quality];
+      return quality ? `${sentence} ${quality}` : sentence;
+    }
+
+    function formatCoordinates(coordinates) {
+      if (!coordinates) return "";
+      const latitude = Number(coordinates.latitude);
+      const longitude = Number(coordinates.longitude);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return "";
+      const latDirection = latitude < 0 ? "S" : "N";
+      const lonDirection = longitude < 0 ? "W" : "E";
+      return `${Math.abs(latitude).toFixed(4)}° ${latDirection}, ${Math.abs(longitude).toFixed(4)}° ${lonDirection}`;
+    }
+
+    function classificationText(properties, detail) {
+      const propertyCode = properties?.reason || properties?.unavailable_reason;
+      const code = detail?.code === "estimate_not_available"
+        ? propertyCode || detail.code
+        : detail?.code || propertyCode;
+      return {
+        no_forest: labels.detail_no_forest,
+        noforest: labels.detail_no_forest,
+        forest_below_minimum: labels.detail_forest_below_minimum,
+        missing_forest_data: labels.detail_required_missing,
+        estimate_not_available: labels.detail_required_missing,
+        older_rain: labels.detail_older_rain,
+        recent_rain: labels.detail_recent_rain,
+        target_temperature: labels.detail_target_temperature,
+        reference_altitude: labels.detail_reference_altitude,
+        square_altitude: labels.detail_square_altitude,
+        weather_summary_missing: labels.detail_weather_summary_missing,
+        terrain_data_missing: labels.detail_terrain_data_missing,
+        period_temperature: labels.detail_period_temperature,
+        weather_history: labels.detail_weather_history,
+        missing_rain_mm: labels.detail_missing_rain_mm,
+        missing_temperature_c: labels.detail_missing_temperature_c,
+        missing_et0_mm: labels.detail_missing_et0_mm,
+        requiredgap: labels.detail_required_gap,
+        pending: labels.detail_pending,
+        noresultyet: labels.detail_pending,
+        visitor_limit: labels.detail_visitor_limit,
+        quota_exhausted: labels.detail_quota_exhausted,
+        provider_unavailable: labels.detail_provider_unavailable,
+        provider_refused: labels.detail_provider_refused,
+        target_outside_update_range: labels.detail_target_outside_update_range,
+        update_expired: labels.detail_update_expired,
+        square_unknown: labels.detail_no_detail,
+        update_square_mismatch: labels.detail_no_detail,
+      }[code] || labels.detail_required_missing;
+    }
+
+    function statusText(detail) {
+      const estimate = detail?.estimate;
+      if (estimate?.state === "available" && estimate.whole_percentage !== null && estimate.whole_percentage !== undefined) {
+        return `${estimate.whole_percentage}%`;
+      }
+      if (estimate?.state === "noforest") return labels.detail_no_forest;
+      if (estimate?.state === "noresultyet") return labels.detail_pending;
+      if (estimate?.state === "expired") return labels.map_expired;
+      const reason = estimate?.unavailable_reason;
+      return classificationText({}, { code: reason });
+    }
+
+    function addStatusCallout(details, text, kind = "info", retryAction = null, actionLabel = labels.detail_retry) {
+      const callout = document.createElement("div");
+      callout.className = `callout callout-${kind}`;
+      callout.setAttribute("role", kind === "error" ? "alert" : "status");
+      appendDetailText(callout, "", text);
+      if (retryAction) {
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "btn btn-secondary";
+        retry.textContent = actionLabel;
+        retry.addEventListener("click", retryAction);
+        callout.append(retry);
+      }
+      details.append(callout);
+    }
+
+    function appendExperimentalNotice(details) {
+      const notice = document.createElement("div");
+      notice.className = "notice-experimental";
+      notice.setAttribute("data-detail-experimental", "true");
+      const paragraph = document.createElement("p");
+      const title = document.createElement("strong");
+      title.textContent = labels.experimental_label;
+      paragraph.append(title, ` ${labels.experimental_body}`);
+      notice.append(paragraph);
+      details.append(notice);
+    }
+
+    function appendWeather(details, weather) {
+      const section = document.createElement("section");
+      section.className = "d-sec";
+      const heading = document.createElement("h3");
+      heading.textContent = labels.weather_heading;
+      section.append(heading);
+      const selected = weather?.selected_day;
+      const tileGrid = document.createElement("div");
+      tileGrid.className = "tiles detail-weather";
+      if (selected?.state === "available") {
+        const values = [
+          [labels.detail_weather_date, selected.date ? date(selected.date) : ""],
+          [labels.temperature, selected.mean_temperature_c === null || selected.mean_temperature_c === undefined ? "" : measurement(selected.mean_temperature_c, "°C")],
+          [labels.detail_weather_rain, selected.rain_mm === null || selected.rain_mm === undefined ? "" : measurement(selected.rain_mm, "mm")],
+          [labels.detail_weather_minimum, selected.min_temperature_c === null || selected.min_temperature_c === undefined ? "" : measurement(selected.min_temperature_c, "°C")],
+        ];
+        if (selected.et0_mm !== null && selected.et0_mm !== undefined) values.push([labels.detail_weather_et0, measurement(selected.et0_mm, "mm")]);
+        if (selected.mean_soil_temperature_c !== null && selected.mean_soil_temperature_c !== undefined) values.push([labels.detail_weather_soil_temperature, measurement(selected.mean_soil_temperature_c, "°C")]);
+        if (selected.mean_soil_moisture !== null && selected.mean_soil_moisture !== undefined) values.push([labels.detail_weather_soil_moisture, measurement(selected.mean_soil_moisture, "m³/m³")]);
+        if (selected.frost !== null && selected.frost !== undefined) values.push([labels.frost, selected.frost ? labels.detail_frost_yes : labels.detail_frost_no]);
+        values.forEach(([label, value]) => {
+          if (!value) return;
+          const tile = document.createElement("div");
+          tile.className = "tile";
+          appendDetailText(tile, "tile-label", label);
+          appendDetailText(tile, "tile-text", value);
+          tileGrid.append(tile);
+        });
+        const selectedCounts = document.createElement("p");
+        selectedCounts.className = "detail-weather-counts";
+        const completed = selected.completed_day_count;
+        const forecast = selected.forecast_day_count;
+        const countParts = [];
+        if (completed !== null && completed !== undefined) {
+          countParts.push(labels.detail_completed_days.replace("{count}", String(completed)));
+        }
+        if (forecast !== null && forecast !== undefined) {
+          countParts.push(labels.detail_forecast_days.replace("{count}", String(forecast)));
+        }
+        selectedCounts.textContent = countParts.join(". ");
+        if (countParts.length) section.append(selectedCounts);
+      } else {
+        addStatusCallout(section, labels.detail_weather_missing, "info");
+        if (selected?.missing_reason_key) {
+          appendDetailText(
+            section,
+            "detail-weather-reason",
+            labels.detail_missing_reason.replace("{reason}", weatherGapReason(selected.missing_reason_key)),
+          );
+        }
+      }
+      section.append(tileGrid);
+      const gaps = Array.isArray(weather?.variable_gaps) ? weather.variable_gaps : [];
+      if (gaps.length) {
+        const gapList = document.createElement("ul");
+        gapList.className = "detail-gaps";
+        gaps.forEach((gap) => {
+          const item = document.createElement("li");
+          const variable = {
+            et0: labels.detail_weather_et0,
+            frost: labels.frost,
+            rain: labels.detail_weather_rain,
+            precipitation: labels.detail_weather_precipitation,
+            temperature: labels.temperature,
+            temperature_c: labels.temperature,
+            min_temperature_c: labels.detail_weather_minimum,
+            soil_temperature: labels.detail_weather_soil_temperature,
+            soil_temperature_c: labels.detail_weather_soil_temperature,
+            soil_moisture: labels.detail_weather_soil_moisture,
+          }[gap.variable] || labels.detail_weather_variable;
+          const dateText = gap.date ? date(gap.date) : labels.detail_missing_value;
+          const unitText = gap.unit ? ` ${weatherUnit(gap.unit)}` : "";
+          const hours = [];
+          if (gap.expected_hours !== null && gap.expected_hours !== undefined) {
+            hours.push(labels.detail_expected_hours.replace("{count}", String(gap.expected_hours)));
+          }
+          if (gap.present_hours !== null && gap.present_hours !== undefined) {
+            hours.push(labels.detail_present_hours.replace("{count}", String(gap.present_hours)));
+          }
+          item.textContent = `${dateText}: ${variable}${unitText}. ${weatherGapReason(gap.reason_key)}${hours.length ? ` ${hours.join(". ")}.` : ""}`;
+          gapList.append(item);
+        });
+        section.append(gapList);
+      }
+      details.append(section);
+    }
+
+    function weatherGapReason(reason) {
+      return {
+        optional_variable_absent: labels.detail_gap_optional,
+        required_variable_absent: labels.detail_gap_required,
+        missing_hour: labels.detail_gap_missing_hours,
+        missing_hours: labels.detail_gap_missing_hours,
+        incomplete_day: labels.detail_gap_missing_day,
+        weather_selected_day_missing: labels.detail_gap_selected_weather,
+        weather_recent_rain_missing: labels.detail_gap_recent_rain,
+        "weather.recent_rain_missing": labels.detail_gap_recent_rain,
+        "weather.selected_day_missing": labels.detail_gap_selected_weather,
+      }[reason] || labels.detail_gap_unknown;
+    }
+
+    function weatherUnit(unit) {
+      return {
+        deg_c: "°C",
+        m3_m3: "m³/m³",
+        mm: "mm",
+        m: "m",
+      }[unit] || unit;
+    }
+
+    function appendRain(details, weather) {
+      const section = document.createElement("section");
+      section.className = "d-sec";
+      const heading = document.createElement("h3");
+      heading.textContent = labels.rain_heading;
+      section.append(heading);
+      const controls = document.createElement("div");
+      controls.className = "rain-periods";
+      [7, 14, 21].forEach((days) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "btn btn-secondary";
+        button.dataset.rainDays = String(days);
+        button.setAttribute("aria-pressed", String(stateData.detailRainDays === days));
+        button.textContent = `${days} ${labels.days}`;
+        button.addEventListener("click", () => {
+          stateData.detailRainDays = days;
+          if (stateData.detailData) renderDetailContent(stateData.detailData, stateData.detailFeature);
+        });
+        controls.append(button);
+      });
+      section.append(controls);
+      const key = `recent_rain_${stateData.detailRainDays}_days`;
+      const period = weather?.[key];
+      const row = document.createElement("div");
+      row.className = "rain-row detail-rain-value";
+      const title = document.createElement("span");
+      title.textContent = period?.period_start && period?.period_end
+        ? `${date(period.period_start)} - ${date(period.period_end)}`
+        : labels.detail_period_missing;
+      const value = document.createElement("strong");
+      value.textContent = period?.state === "available" && period.value !== null && period.value !== undefined
+        ? measurement(period.value, period.unit || "mm")
+        : labels.detail_missing_value;
+      row.append(title, value);
+      section.append(row);
+      const periodCounts = [];
+      if (period?.completed_day_count !== null && period?.completed_day_count !== undefined) {
+        periodCounts.push(labels.detail_completed_days.replace("{count}", String(period.completed_day_count)));
+      }
+      if (period?.forecast_day_count !== null && period?.forecast_day_count !== undefined) {
+        periodCounts.push(labels.detail_forecast_days.replace("{count}", String(period.forecast_day_count)));
+      }
+      if (periodCounts.length) appendDetailText(section, "rain-counts", periodCounts.join(". "));
+      if (period?.missing_reason_key) {
+        appendDetailText(
+          section,
+          "rain-missing-reason",
+          labels.detail_missing_reason.replace("{reason}", weatherGapReason(period.missing_reason_key)),
+        );
+      }
+      const note = labels.rain_note.replace("{until}", period?.period_end ? date(period.period_end) : labels.detail_missing_value);
+      appendDetailText(section, "rain-note", note);
+      details.append(section);
+    }
+
+    function appendSources(details, detail) {
+      const section = document.createElement("section");
+      section.className = "d-sec sources";
+      const heading = document.createElement("h3");
+      heading.textContent = labels.sources_heading;
+      section.append(heading);
+      const sources = detail?.sources || {};
+      const knownFactSources = new Set();
+      ["grid", "forest", "terrain", "weather"].forEach((key) => {
+        const source = sources[key];
+        if (!source) return;
+        (source.source_ids || []).forEach((sourceId) => knownFactSources.add(sourceId));
+        (source.ids || []).forEach((sourceId) => knownFactSources.add(sourceId));
+        const card = document.createElement("div");
+        card.className = "source-card";
+        appendDetailText(card, "source-name", source.name || source.provider || key);
+        appendDetailText(card, "source-release", source.release || source.model || "");
+        if (source.native_resolution_m) appendDetailText(card, "source-meta", `${labels.detail_resolution}: ${measurement(source.native_resolution_m, "m")}`);
+        if (source.retrieval_time) appendDetailText(card, "source-meta", `${labels.detail_retrieved}: ${dateTime(source.retrieval_time)}`);
+        if (typeof source.credit === "string") appendDetailText(card, "source-meta", `${labels.detail_credit}: ${source.credit}`);
+        if (source.licence) appendDetailText(card, "source-meta", `${labels.detail_licence}: ${source.licence}`);
+        if (source.requested_coordinates) appendDetailText(card, "source-meta", `${labels.detail_requested}: ${formatCoordinates(source.requested_coordinates)}`);
+        if (source.returned_coordinates) appendDetailText(card, "source-meta", `${labels.detail_returned}: ${formatCoordinates(source.returned_coordinates)}`);
+        const metadataLabels = {
+          survey_year: labels.detail_survey_year,
+          survey_age_years: labels.detail_survey_age,
+          source_release: labels.detail_release,
+          source_resolution_m: labels.detail_resolution,
+          native_resolution_m: labels.detail_resolution,
+        };
+        Object.entries(source.source_metadata || {}).forEach(([name, value]) => {
+          if (value === null || value === undefined || typeof value === "object") return;
+          if (!metadataLabels[name]) return;
+          const rendered = name.endsWith("_m") ? measurement(value, "m") : String(value);
+          appendDetailText(card, "source-meta", `${metadataLabels[name]}: ${rendered}`);
+        });
+        (source.source_tiles || []).forEach((tile) => {
+          appendDetailText(card, "source-meta", `${tile.tile_name || labels.detail_tile}: ${tile.release || tile.status || labels.detail_missing_value}`);
+          if (tile.retrieved_at) appendDetailText(card, "source-meta", `${labels.detail_retrieved}: ${dateTime(tile.retrieved_at)}`);
+          if (tile.credit) appendDetailText(card, "source-meta", `${labels.detail_credit}: ${tile.credit}`);
+          if (tile.error_detail) appendDetailText(card, "source-gap", `${labels.detail_gap}: ${tile.error_detail}`);
+        });
+        const gaps = [...(source.gaps || []), ...(source.variable_gaps || [])];
+        gaps.forEach((gap) => {
+          const reason = {
+            optional_variable_absent: labels.detail_gap_optional,
+            "terrain.data_missing": labels.detail_gap_terrain,
+            "terrain.source_gap": labels.detail_gap_terrain,
+          }[gap.reason_key] || labels.detail_missing_value;
+          appendDetailText(card, "source-gap", `${labels.detail_gap}: ${reason}`);
+        });
+        if (source.credit?.text) appendDetailText(card, "source-meta", `${source.credit.text} · ${source.credit.licence || ""}`);
+        [source.catalogue_url, source.service_url, source.url, source.credit?.url].filter(Boolean).forEach((url) => {
+          if (!/^https?:\/\//.test(url)) return;
+          const link = document.createElement("a");
+          link.href = url;
+          link.rel = "noreferrer";
+          link.textContent = url;
+          card.append(link);
+        });
+        section.append(card);
+      });
+      const hostFacts = (Array.isArray(detail?.facts) ? detail.facts : []).filter((fact) => {
+        const sourceId = fact.source_id;
+        return sourceId && !knownFactSources.has(sourceId) && fact.source_metadata && Object.keys(fact.source_metadata).length;
+      });
+      const hostSources = new Map();
+      hostFacts.forEach((fact) => {
+        const sourceId = fact.source_id;
+        if (!hostSources.has(sourceId)) hostSources.set(sourceId, []);
+        hostSources.get(sourceId).push(fact);
+      });
+      hostSources.forEach((facts, sourceId) => {
+        const card = document.createElement("div");
+        card.className = "source-card source-host-card";
+        appendDetailText(card, "source-name", labels.detail_source_host);
+        const metadata = facts.find((fact) => fact.source_metadata)?.source_metadata || {};
+        if (metadata.sampling_version) appendDetailText(card, "source-release", String(metadata.sampling_version));
+        if (metadata.credit) appendDetailText(card, "source-meta", `${labels.detail_credit}: ${metadata.credit}`);
+        if (metadata.licence) appendDetailText(card, "source-meta", `${labels.detail_licence}: ${metadata.licence}`);
+        if (metadata.resolution_m) appendDetailText(card, "source-meta", `${labels.detail_resolution}: ${measurement(metadata.resolution_m, "m")}`);
+        const periods = facts
+          .flatMap((fact) => [fact.period_start || fact.period?.start, fact.period_end || fact.period?.end])
+          .filter(Boolean)
+          .sort();
+        if (periods.length >= 2) appendDetailText(card, "source-meta", `${labels.detail_period}: ${date(periods[0])} - ${date(periods[periods.length - 1])}`);
+        const quality = facts.map((fact) => fact.quality).find(Boolean);
+        const qualityText = {
+          modelled_1km_not_tree_cover: labels.detail_quality_modelled_host,
+          forest_only_missing_host_data: labels.detail_quality_missing_host,
+        }[quality];
+        if (qualityText) appendDetailText(card, "source-gap", qualityText);
+        if (metadata.source_url && /^https?:\/\//.test(metadata.source_url)) {
+          const link = document.createElement("a");
+          link.href = metadata.source_url;
+          link.rel = "noreferrer";
+          link.textContent = metadata.source_url;
+          card.append(link);
+        }
+        section.append(card);
+      });
+      const limitationKeys = Array.isArray(sources.limitation_keys) ? sources.limitation_keys : [];
+      if (limitationKeys.includes("weather.shared_across_several_kilometres")) {
+        appendDetailText(section, "callout callout-info", labels.detail_weather_limit);
+      }
+      details.append(section);
+    }
+
+    function renderDetailContent(detail, feature) {
       const details = createLiveDetails();
       if (!details) return;
+      const focusedRainDays = document.activeElement?.dataset?.rainDays || "";
       details.replaceChildren();
+      const selection = detail?.selection || {};
+      const properties = feature?.properties || {};
       const top = document.createElement("div");
       top.className = "d-top";
-      const heading = document.createElement("h2");
-      heading.textContent = properties.cell_id || feature.id || labels.map_selected;
-      const coordinate = document.createElement("p");
-      coordinate.className = "d-coord";
-      const centre = featureCenter(feature);
-      coordinate.textContent = centre ? `${centre[1].toFixed(4)}° N, ${centre[0].toFixed(4)}° E` : "";
       const titleGroup = document.createElement("div");
       titleGroup.className = "live-details-title";
+      const heading = document.createElement("h2");
+      heading.textContent = selection.square_id || properties.cell_id || feature?.id || labels.map_selected;
+      heading.id = "details-heading";
+      heading.tabIndex = -1;
+      const coordinate = document.createElement("p");
+      coordinate.className = "d-coord";
+      coordinate.textContent = formatCoordinates(selection.representative_coordinates) || formatCoordinates(state.representative);
       titleGroup.append(heading, coordinate);
       top.append(titleGroup);
       const close = document.createElement("button");
@@ -1513,43 +1981,233 @@
       close.addEventListener("click", () => clearSelection());
       top.append(close);
       details.append(top);
-      const status = document.createElement("div");
-      status.className = "live-summary";
-      const stateName = properties.state || "unavailable";
-      const percent = properties.percentage === null || properties.percentage === undefined ? labels.estimate_unavailable : `${properties.percentage}%`;
-      const title = document.createElement("strong");
-      title.textContent = stateName === "available" ? percent : stateName === "noforest" ? labels.map_no_forest : stateName === "expired" ? labels.map_expired : stateName === "noresultyet" ? labels.map_pending : labels.map_missing;
-      status.append(title);
-      const rows = [
-        [labels.map_target, properties.target_date ? date(properties.target_date) : ""],
-        [labels.map_assessment, properties.assessment_date ? date(properties.assessment_date) : ""],
-        [labels.map_calculated_at, properties.calculated_at ? dateTime(properties.calculated_at) : ""],
-      ];
-      rows.forEach(([label, value]) => {
-        const row = document.createElement("p");
-        row.textContent = `${label}: ${value || "-"}`;
-        status.append(row);
-      });
-      details.append(status);
-      if (stateName === "available") {
-        const notice = document.createElement("div");
-        notice.className = "notice-experimental";
-        const noticeText = document.createElement("p");
-        const noticeTitle = document.createElement("strong");
-        noticeTitle.textContent = labels.experimental_label;
-        noticeText.append(noticeTitle, ` ${labels.experimental_body}`);
-        notice.append(noticeText);
-        details.append(notice);
+
+      const summary = document.createElement("div");
+      summary.className = "live-summary";
+      const stateName = detail?.estimate?.state || properties.state || "unavailable";
+      const percentage = detail?.estimate?.whole_percentage;
+      const summaryText = stateName === "available" && percentage !== null && percentage !== undefined
+        ? `${percentage}%`
+        : statusText(detail);
+      const strong = document.createElement("strong");
+      strong.textContent = summaryText;
+      summary.append(strong);
+      appendDetailText(summary, "detail-identity", `${labels.map_target}: ${selection.target_date ? date(selection.target_date) : date(state.date)}`);
+      appendDetailText(summary, "detail-identity", `${labels.assessment_date_label}: ${selection.assessment_date ? date(selection.assessment_date) : labels.detail_missing_value}`);
+      appendDetailText(summary, "detail-identity", `${labels.updated}: ${detail?.estimate?.calculated_at ? dateTime(detail.estimate.calculated_at) : labels.detail_missing_value}`);
+      details.append(summary);
+
+      if (stateName === "available") appendExperimentalNotice(details);
+      if (selection.assessment_date && stateData.info?.today && selection.assessment_date < stateData.info.today) {
+        addStatusCallout(details, labels.detail_old_result.replace("{date}", date(selection.assessment_date)), "older");
       }
+      if (stateName !== "available") addStatusCallout(details, statusText(detail), "info");
+
+      const facts = Array.isArray(detail?.facts) ? detail.facts : [];
+      if (facts.length) {
+        const section = document.createElement("section");
+        section.className = "d-sec";
+        const headingFacts = document.createElement("h3");
+        headingFacts.textContent = labels.facts_heading;
+        section.append(headingFacts);
+        const list = document.createElement("ul");
+        list.className = "facts";
+        facts.forEach((fact) => appendDetailText(list, "", factSentence(fact)));
+        section.append(list);
+        details.append(section);
+      }
+      appendWeather(details, detail?.weather);
+      appendRain(details, detail?.weather);
+      appendSources(details, detail);
+      const sizeRow = document.createElement("div");
+      sizeRow.className = "sizerow";
+      const sizeButton = document.createElement("button");
+      sizeButton.type = "button";
+      sizeButton.className = "btn btn-secondary";
+      sizeButton.dataset.sheetHeight = "true";
+      sizeButton.textContent = labels.sheet_size;
+      sizeButton.addEventListener("click", cycleSheetHeight);
       const closeButton = document.createElement("button");
       closeButton.type = "button";
       closeButton.className = "btn btn-quiet";
       closeButton.textContent = labels.back_to_map;
       closeButton.addEventListener("click", () => clearSelection());
-      details.append(closeButton);
+      sizeRow.append(sizeButton, closeButton);
+      details.append(sizeRow);
+      state.details = true;
+      root.classList.add("details-open");
+      document.querySelector("#main")?.classList.add("details-open");
+      details.hidden = false;
+      document.getElementById("centre-btn")?.removeAttribute("hidden");
+      if (selection.representative_coordinates) {
+        state.representative = selection.representative_coordinates;
+        persistState();
+        root.dataset.representativeLatitude = String(selection.representative_coordinates.latitude);
+        root.dataset.representativeLongitude = String(selection.representative_coordinates.longitude);
+      }
+      liveMapController?.resize();
+      if (focusedRainDays) details.querySelector(`[data-rain-days="${CSS.escape(focusedRainDays)}"]`)?.focus();
+    }
+
+    function cycleSheetHeight() {
+      const details = document.querySelector("aside[data-live-details]");
+      if (!details) return;
+      const sizes = ["short", "half", "tall"];
+      state.sheetHeight = sizes[(sizes.indexOf(state.sheetHeight) + 1) % sizes.length];
+      details.dataset.sheetHeight = state.sheetHeight;
+      details.dataset.size = state.sheetHeight;
+      persistState();
+      liveMapController?.resize();
+    }
+
+    function renderDetailError(feature, retryAction) {
+      renderLoadingDetails(
+        feature,
+        `${labels.detail_error} ${labels.detail_error_help}`,
+        "error",
+        retryAction,
+      );
+    }
+
+    function refreshSelectedArea() {
+      invalidateAreaDetails();
+      state.updateId = "";
+      stateData.pendingSelectionUpdateId = null;
+      stateData.pendingSelectionRepresentative = null;
+      state.detailRepresentative = null;
+      state.detailRepresentativeSquare = "";
+      state.detailRepresentativeDate = "";
+      state.detailRepresentativeUpdate = "";
+      persistState();
+      scheduleFetch(0);
+    }
+
+    function renderLoadingDetails(
+      feature,
+      text = labels.detail_loading,
+      kind = "wait",
+      retryAction = null,
+      actionLabel = labels.detail_retry,
+    ) {
+      const details = createLiveDetails();
+      if (!details) return;
+      details.replaceChildren();
+      const top = document.createElement("div");
+      top.className = "d-top";
+      const title = document.createElement("h2");
+      title.textContent = feature?.properties?.cell_id || feature?.id || labels.map_selected;
+      title.id = "details-heading";
+      title.tabIndex = -1;
+      top.append(title);
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "btn btn-secondary live-details-close";
+      close.textContent = "×";
+      close.setAttribute("aria-label", labels.close_details);
+      close.addEventListener("click", () => clearSelection());
+      top.append(close);
+      details.append(top);
+      const properties = feature?.properties || {};
+      const summary = document.createElement("div");
+      summary.className = "live-summary";
+      const strong = document.createElement("strong");
+      strong.textContent = properties.state === "available" && properties.percentage !== null && properties.percentage !== undefined
+        ? `${properties.percentage}%`
+        : kind === "wait" ? labels.detail_loading : text;
+      summary.append(strong);
+      appendDetailText(summary, "detail-identity", `${labels.map_target}: ${properties.target_date ? date(properties.target_date) : date(state.date)}`);
+      appendDetailText(summary, "detail-identity", `${labels.assessment_date_label}: ${properties.assessment_date ? date(properties.assessment_date) : labels.detail_missing_value}`);
+      appendDetailText(summary, "detail-identity", `${labels.updated}: ${properties.calculated_at ? dateTime(properties.calculated_at) : labels.detail_missing_value}`);
+      details.append(summary);
+      addStatusCallout(details, text, kind, retryAction, actionLabel);
+      const sizeRow = document.createElement("div");
+      sizeRow.className = "sizerow";
+      const sizeButton = document.createElement("button");
+      sizeButton.type = "button";
+      sizeButton.className = "btn btn-secondary";
+      sizeButton.dataset.sheetHeight = "true";
+      sizeButton.textContent = labels.sheet_size;
+      sizeButton.addEventListener("click", cycleSheetHeight);
+      sizeRow.append(sizeButton);
+      details.append(sizeRow);
+      details.hidden = false;
+      state.details = true;
+      root.classList.add("details-open");
+      document.querySelector("#main")?.classList.add("details-open");
+      liveMapController?.resize();
+    }
+
+    async function loadAreaDetails(feature) {
+      const properties = feature?.properties || {};
+      const squareId = state.square || properties.cell_id || feature?.id || "";
+      const targetDate = state.date || properties.target_date || "";
+      const updateId = state.updateId || properties.update_id || "";
+      if (!squareId || !targetDate) return;
+      invalidateAreaDetails();
+      const generation = stateData.detailGeneration;
+      const controller = new AbortController();
+      stateData.detailRequest = controller;
+      stateData.detailFeature = feature;
+      renderLoadingDetails(feature);
+      const query = new URLSearchParams({ target_date: targetDate });
+      if (updateId) query.set("update_id", updateId);
+      try {
+        const { response, body } = await fetchJson(`/api/v1/areas/${encodeURIComponent(squareId)}?${query}`, { signal: controller.signal });
+        if (generation !== stateData.detailGeneration || controller.signal.aborted) return;
+        if (!response.ok) {
+          if (response.status === 404 || response.status === 409) {
+            renderLoadingDetails(feature, classificationText(properties, body), "info");
+            addStatusCallout(createLiveDetails(), labels.detail_source_unavailable, "info");
+          } else if (response.status === 410 && body?.code === "update_expired") {
+            renderLoadingDetails(
+              feature,
+              labels.detail_update_expired,
+              "info",
+              refreshSelectedArea,
+              labels.detail_refresh_map,
+            );
+          } else {
+            renderDetailError(feature, () => loadAreaDetails(feature));
+          }
+          return;
+        }
+        if (!body?.selection || body.selection.square_id !== squareId || body.selection.target_date !== targetDate || (updateId && body.selection.update_id !== updateId)) {
+          renderDetailError(feature, () => loadAreaDetails(feature));
+          return;
+        }
+        stateData.detailData = body;
+        state.updateId = String(body.selection.update_id || updateId);
+        state.assessment = body.selection.assessment_date || state.assessment;
+        state.representative = body.selection.representative_coordinates || state.representative;
+        state.detailRepresentative = body.selection.representative_coordinates || state.representative;
+        state.detailRepresentativeSquare = squareId;
+        state.detailRepresentativeDate = targetDate;
+        state.detailRepresentativeUpdate = String(body.selection.update_id || updateId);
+        persistState();
+        renderDetailContent(body, feature);
+      } catch (error) {
+        if (error.name === "AbortError" || generation !== stateData.detailGeneration) return;
+        renderDetailError(feature, () => loadAreaDetails(feature));
+      } finally {
+        if (generation === stateData.detailGeneration) stateData.detailRequest = null;
+      }
+    }
+
+    function showDetails(feature, pointSelection = null) {
+      const properties = feature.properties || {};
       state.details = true;
       state.square = properties.cell_id || feature.id || "";
       state.updateId = properties.update_id || "";
+      const currentDetailMatchesSelection = state.detailRepresentativeSquare === state.square
+        && state.detailRepresentativeDate === state.date
+        && state.detailRepresentativeUpdate === String(state.updateId || "");
+      if ((pointSelection?.source === "map" || pointSelection?.source === "centre") && !currentDetailMatchesSelection) {
+        state.representative = null;
+        state.detailRepresentative = null;
+        state.detailRepresentativeSquare = "";
+        state.detailRepresentativeDate = "";
+        state.detailRepresentativeUpdate = "";
+      }
       state.assessment = properties.assessment_date || state.assessment;
       if (pointSelection?.source === "centre") {
         state.point = null;
@@ -1558,22 +2216,21 @@
         state.point = pointSelection.point;
         state.pointSource = pointSelection.source || state.pointSource || "map";
       }
-      if (pointSelection?.source === "map" || pointSelection?.source === "centre" || !state.representative) {
-        const representative = featureCenter(feature);
-        if (representative) {
-          state.representative = { latitude: representative[1], longitude: representative[0] };
-        }
-      }
       root.classList.add("details-open");
       document.querySelector("#main")?.classList.add("details-open");
       document.getElementById("centre-btn")?.removeAttribute("hidden");
       persistState();
+      const loadedDetailMatches = stateData.detailData?.selection?.square_id === state.square
+        && stateData.detailData.selection.target_date === state.date
+        && String(stateData.detailData.selection.update_id || "") === String(state.updateId || "");
+      if (!loadedDetailMatches) loadAreaDetails(feature);
       liveMapController?.resize();
     }
 
     function clearSelection() {
       beginSelectionIntent();
       clearStoredGeolocation();
+      invalidateAreaDetails();
       stateData.weatherLabel?.remove();
       stateData.weatherLabel = null;
       stateData.selected = null;
@@ -1592,11 +2249,16 @@
       state.updateId = "";
       state.point = null;
       state.representative = null;
+      state.detailRepresentative = null;
+      state.detailRepresentativeSquare = "";
+      state.detailRepresentativeDate = "";
+      state.detailRepresentativeUpdate = "";
       state.pointSource = "";
       root.classList.remove("details-open");
       document.querySelector("#main")?.classList.remove("details-open");
       persistState();
       liveMapController?.resize();
+      document.getElementById("map")?.focus();
     }
 
     function selectFeature(feature, pointSelection = null) {
@@ -1747,7 +2409,12 @@
       state.updateId = feature.properties?.update_id || selectedUpdateId || "";
       state.details = state.details || stateData.pendingSelectionDetails;
       state.point = stateData.pendingSelectionPoint || state.point;
-      state.representative = stateData.pendingSelectionRepresentative || state.representative;
+      state.representative = stateData.detailData?.selection?.square_id === selectedId
+        && stateData.detailData.selection.target_date === state.date
+        ? stateData.detailData.selection.representative_coordinates
+        : ["map", "centre"].includes(stateData.pendingSelectionSource)
+          ? null
+          : stateData.pendingSelectionRepresentative || state.representative;
       state.pointSource = stateData.pendingSelectionSource || state.pointSource;
       clearPendingSelection();
       persistState();
@@ -2134,12 +2801,18 @@
         if (!stateData.map) return;
         stateData.map.easeTo({ zoom: Math.max(1, Math.min(18, stateData.map.getZoom() + delta)) });
       },
-      setDate() {
+      setDate(targetDate) {
+        if (stateData.selected && state.details && targetDate !== stateData.detailData?.selection?.target_date) {
+          loadAreaDetails(stateData.selected);
+        }
         if (stateData.ready) scheduleFetch();
       },
       setOverlay(value) { applyOverlay(value); },
       setOpacity(value) { applyOpacity(value); },
       selectDestination,
+      closeDetails() {
+        if (state.details) clearSelection();
+      },
       centerSelection() {
         const map = stateData.map;
         if (!map || !stateData.squaresRendered) return false;
@@ -2222,6 +2895,8 @@
           invalidationCount: stateData.invalidationCount,
           ready: stateData.ready,
           targetDate: state.date,
+          representative: state.representative,
+          detailRepresentative: state.detailRepresentative,
           background: state.background,
           overlay: state.overlay,
           opacity: state.opacity,

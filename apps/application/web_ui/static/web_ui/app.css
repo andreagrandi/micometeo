@@ -1988,6 +1988,96 @@ body:has(.app) ul {
   font-size: var(--text-caption);
   margin-top: var(--space-1);
 }
+.detail-identity {
+  color: var(--earth-700);
+  font-family: var(--mono);
+  font-size: var(--text-caption);
+  margin-top: var(--space-1);
+}
+.detail-weather {
+  margin-top: var(--space-2);
+}
+.detail-gaps {
+  color: var(--earth-700);
+  font-size: var(--text-caption);
+  margin-top: var(--space-2);
+}
+.rain-periods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+.rain-periods .btn {
+  min-height: 36px;
+}
+.rain-periods .btn[aria-pressed="true"] {
+  background: var(--pine-800);
+  border-color: var(--pine-800);
+  color: #fff;
+}
+.detail-rain-value {
+  align-items: baseline;
+  margin-top: var(--space-2);
+}
+.detail-rain-value strong {
+  font-family: var(--mono);
+}
+.source-card {
+  background: #fff;
+  border: 1px solid var(--parchment-200);
+  border-radius: var(--radius-card);
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+}
+.source-name {
+  font-weight: 700;
+}
+.source-release,
+.source-meta,
+.source-gap {
+  color: var(--earth-700);
+  font-size: var(--text-caption);
+  margin-top: var(--space-1);
+  overflow-wrap: anywhere;
+}
+.source-gap {
+  color: var(--earth-900);
+}
+.source-card a {
+  display: block;
+  font-size: var(--text-caption);
+  margin-top: var(--space-1);
+  overflow-wrap: anywhere;
+}
+.live-details .callout .btn {
+  margin-top: var(--space-2);
+}
+@media (max-width: 899px) {
+  .details.live-details {
+    display: flex;
+  }
+  .details.live-details > * {
+    order: 0;
+  }
+  .details.live-details > .d-top {
+    background: var(--parchment);
+    flex: 0 0 auto;
+    padding-bottom: var(--space-2);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .details.live-details > .sizerow {
+    flex: 0 0 auto;
+  }
+  .live-details .source-card {
+    padding: var(--space-2);
+  }
+  .live-details .rain-periods .btn {
+    flex: 1 1 0;
+  }
+}
 .attribution a {
   text-decoration: underline;
   text-underline-offset: 2px;

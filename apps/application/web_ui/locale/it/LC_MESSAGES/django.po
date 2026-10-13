@@ -205,6 +205,114 @@ msgstr "Il livello campione spiega l'interfaccia. Non è una previsione."
 
 msgid "The map shows experimental estimates from stored forest and weather data. The percentage has not been validated and is not your personal chance of finding porcini."
 msgstr "La mappa mostra stime sperimentali basate sui dati salvati della foresta e del meteo. La percentuale non è stata validata e non indica la tua probabilità personale di trovare porcini."
+
+msgid "Refresh map"
+msgstr "Aggiorna la mappa"
+
+msgid "This stored update has expired. Refresh the map to use the current update."
+msgstr "Questo aggiornamento salvato è scaduto. Aggiorna la mappa per usare quello attuale."
+
+msgid "The selected area's response was incomplete. Try again."
+msgstr "La risposta dell'area selezionata è incompleta. Riprova."
+
+msgid "The forest share is below the method minimum. No estimate is available."
+msgstr "La quota forestale è sotto il minimo del metodo. Nessuna stima disponibile."
+
+msgid "The estimate is still being prepared. Try again later."
+msgstr "La stima è ancora in preparazione. Riprova più tardi."
+
+msgid "The weather visitor limit was reached. Try again later."
+msgstr "Il limite meteo per i visitatori è stato raggiunto. Riprova più tardi."
+
+msgid "No estimate is available because the earlier rain period is incomplete."
+msgstr "Nessuna stima disponibile perché il periodo di pioggia precedente è incompleto."
+
+msgid "No estimate is available because the recent rain period is incomplete."
+msgstr "Nessuna stima disponibile perché il periodo di pioggia recente è incompleto."
+
+msgid "No estimate is available because the target temperature is missing."
+msgstr "Nessuna stima disponibile perché manca la temperatura obiettivo."
+
+msgid "No estimate is available because the weather reference altitude is missing."
+msgstr "Nessuna stima disponibile perché manca l'altitudine di riferimento meteo."
+
+msgid "No estimate is available because the square altitude is missing."
+msgstr "Nessuna stima disponibile perché manca l'altitudine dell'area."
+
+msgid "No estimate is available because the weather summary is missing."
+msgstr "Nessuna stima disponibile perché manca il riepilogo meteo."
+
+msgid "No estimate is available because terrain data is missing."
+msgstr "Nessuna stima disponibile perché mancano i dati del terreno."
+
+msgid "No estimate is available because the temperature period is incomplete."
+msgstr "Nessuna stima disponibile perché il periodo della temperatura è incompleto."
+
+msgid "No estimate is available because the weather history is incomplete."
+msgstr "Nessuna stima disponibile perché la cronologia meteo è incompleta."
+
+msgid "No estimate is available because rain data is missing."
+msgstr "Nessuna stima disponibile perché mancano i dati della pioggia."
+
+msgid "No estimate is available because temperature data is missing."
+msgstr "Nessuna stima disponibile perché mancano i dati della temperatura."
+
+msgid "No estimate is available because reference evaporation data is missing."
+msgstr "Nessuna stima disponibile perché mancano i dati dell'evaporazione di riferimento."
+
+msgid "No estimate is available because a required input is missing."
+msgstr "Nessuna stima disponibile perché manca un dato obbligatorio."
+
+msgid "This target date is outside the stored update dates."
+msgstr "Questa data obiettivo è fuori dalle date dell'aggiornamento salvato."
+
+msgid "Precipitation"
+msgstr "Precipitazione"
+
+msgid "Completed days: {count}"
+msgstr "Giorni completati: {count}"
+
+msgid "Forecast days: {count}"
+msgstr "Giorni previsti: {count}"
+
+msgid "Reason: {reason}"
+msgstr "Motivo: {reason}"
+
+msgid "Expected hours: {count}"
+msgstr "Ore attese: {count}"
+
+msgid "Present hours: {count}"
+msgstr "Ore presenti: {count}"
+
+msgid "hours"
+msgstr "ore"
+
+msgid "Period"
+msgstr "Periodo"
+
+msgid "A required weather value is absent."
+msgstr "Manca un dato meteo obbligatorio."
+
+msgid "The stored weather hours are incomplete."
+msgstr "Le ore meteo salvate sono incomplete."
+
+msgid "The stored weather day is incomplete."
+msgstr "Il giorno meteo salvato è incompleto."
+
+msgid "This weather value is unavailable."
+msgstr "Questo dato meteo non è disponibile."
+
+msgid "Host tree source"
+msgstr "Fonte degli alberi ospiti"
+
+msgid "Modelled host occurrence at 1 km resolution, not tree cover or prediction accuracy."
+msgstr "Presenza modellata degli alberi ospiti a risoluzione di 1 km, non copertura arborea né accuratezza predittiva."
+
+msgid "Host occurrence is missing. The estimate uses forest data only."
+msgstr "Manca la presenza degli alberi ospiti. La stima usa solo i dati forestali."
+
+msgid "Experimental method factor."
+msgstr "Fattore del metodo sperimentale."
 msgid "Layers"
 msgstr "Livelli"
 msgid "Zoom in"
@@ -431,3 +539,180 @@ msgstr "Dati cartografici dei contributori OpenStreetMap · OpenFreeMap"
 
 msgid "Estimate data credits"
 msgstr "Crediti dei dati della stima"
+
+msgid "Loading this area's estimate and explanation."
+msgstr "Caricamento della stima e della spiegazione di quest'area."
+
+msgid "The area details could not be loaded."
+msgstr "Non è stato possibile caricare i dettagli dell'area."
+
+msgid "The request failed. Try again to load this selected area."
+msgstr "La richiesta non è riuscita. Riprova per caricare l'area selezionata."
+
+msgid "This area has no detail for the selected update."
+msgstr "Quest'area non ha dettagli per l'aggiornamento selezionato."
+
+msgid "The map still identifies this area, but the requested stored detail is unavailable."
+msgstr "La mappa identifica comunque quest'area, ma il dettaglio salvato richiesto non è disponibile."
+
+msgid "No estimate is available because required data is missing."
+msgstr "Nessuna stima disponibile perché mancano dati obbligatori."
+
+msgid "This is an older result from {date}."
+msgstr "Questo è un risultato meno recente del {date}."
+
+msgid "Not available"
+msgstr "Non disponibile"
+
+msgid "inclusive"
+msgstr "inclusivo"
+
+msgid "Input"
+msgstr "Dato di ingresso"
+
+msgid "The value for {label} is {value} for {period}."
+msgstr "Il valore di {label} è {value} per il periodo {period}."
+
+msgid "The value for {label} is {value}."
+msgstr "Il valore di {label} è {value}."
+
+msgid "Rain in the recent period"
+msgstr "Pioggia nel periodo recente"
+
+msgid "Rain in the earlier period"
+msgstr "Pioggia nel periodo precedente"
+
+msgid "Weather date"
+msgstr "Data del meteo"
+
+msgid "Rain"
+msgstr "Pioggia"
+
+msgid "Soil moisture"
+msgstr "Umidità del suolo"
+
+msgid "Minimum temperature"
+msgstr "Temperatura minima"
+
+msgid "Reference evaporation"
+msgstr "Evaporazione di riferimento"
+
+msgid "Soil temperature"
+msgstr "Temperatura del suolo"
+
+msgid "Frost indicated"
+msgstr "Gelo indicato"
+
+msgid "No frost indicated"
+msgstr "Nessun gelo indicato"
+
+msgid "Selected-day weather is incomplete. Missing values remain unavailable."
+msgstr "Il meteo del giorno selezionato è incompleto. I dati mancanti restano non disponibili."
+
+msgid "Weather variable"
+msgstr "Variabile meteo"
+
+msgid "Period unavailable"
+msgstr "Periodo non disponibile"
+
+msgid "Native detail"
+msgstr "Dettaglio originale"
+
+msgid "Retrieved"
+msgstr "Recuperato"
+
+msgid "Credit"
+msgstr "Credito"
+
+msgid "Licence"
+msgstr "Licenza"
+
+msgid "Requested weather point"
+msgstr "Punto meteo richiesto"
+
+msgid "Returned weather point"
+msgstr "Punto meteo restituito"
+
+msgid "Data gap"
+msgstr "Lacuna nei dati"
+
+msgid "Target temperature at the weather reference"
+msgstr "Temperatura obiettivo del riferimento meteo"
+
+msgid "Mean temperature at the weather reference"
+msgstr "Temperatura media del riferimento meteo"
+
+msgid "Corrected temperature"
+msgstr "Temperatura corretta"
+
+msgid "Corrected mean temperature"
+msgstr "Temperatura media corretta"
+
+msgid "Reference altitude"
+msgstr "Altitudine di riferimento"
+
+msgid "Square altitude"
+msgstr "Altitudine dell'area"
+
+msgid "Frost days"
+msgstr "Giorni di gelo"
+
+msgid "Host tree factor"
+msgstr "Fattore degli alberi ospiti"
+
+msgid "Broadleaf host occurrence"
+msgstr "Presenza di ospiti latifoglie"
+
+msgid "Conifer host occurrence"
+msgstr "Presenza di ospiti conifere"
+
+msgid "Mixed host occurrence"
+msgstr "Presenza di ospiti misti"
+
+msgid "Beech host occurrence"
+msgstr "Presenza di faggio"
+
+msgid "Oak host occurrence"
+msgstr "Presenza di quercia"
+
+msgid "Rain in the 30-day period"
+msgstr "Pioggia nel periodo di 30 giorni"
+
+msgid "Retained water"
+msgstr "Acqua trattenuta"
+
+msgid "Source tile"
+msgstr "Riquadro della fonte"
+
+msgid "Weather values can cover several kilometres, while this map area is 500 m wide."
+msgstr "I valori meteo possono coprire diversi chilometri, mentre quest'area della mappa è larga 500 m."
+
+msgid "Chestnut host occurrence"
+msgstr "Presenza di castagno"
+
+msgid "Pine host occurrence"
+msgstr "Presenza di pino"
+
+msgid "Spruce and fir host occurrence"
+msgstr "Presenza di abete rosso e abete"
+
+msgid "Survey year"
+msgstr "Anno del rilievo"
+
+msgid "Survey age in years"
+msgstr "Età del rilievo in anni"
+
+msgid "Release"
+msgstr "Versione"
+
+msgid "This optional weather value is absent."
+msgstr "Questo valore meteo opzionale è assente."
+
+msgid "The selected-day weather value is missing."
+msgstr "Manca il valore meteo del giorno selezionato."
+
+msgid "The recent rain total is missing."
+msgstr "Manca il totale della pioggia recente."
+
+msgid "The terrain source data is missing."
+msgstr "Mancano i dati della fonte del terreno."
