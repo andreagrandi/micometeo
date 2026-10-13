@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   frontend-checks:
     runs-on: ubuntu-latest
@@ -113,7 +117,6 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, webkit]
-        suite: [test_layout_language, test_map_controls]
     services:
       database:
         image: imresamu/postgis:17-3.5-bookworm@sha256:35fe7dceda62bfe7d2965b0ba78d915ff9f901b5e0466d633ecc58421b5b5210
@@ -167,4 +170,4 @@ jobs:
       - name: Start application
         run: uv run python apps/application/manage.py runserver 127.0.0.1:8010 --noreload &
       - name: Run browser checks
-        run: uv run pytest tests/e2e/${{ matrix.suite }}.py -o addopts="--allow-hosts=127.0.0.1,127.0.1.1,::1" --browser=${{ matrix.browser }} --durations=15
+        run: uv run pytest tests/e2e -o addopts="--allow-hosts=127.0.0.1,127.0.1.1,::1" --browser=${{ matrix.browser }} --durations=15
