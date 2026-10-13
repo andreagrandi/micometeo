@@ -283,6 +283,7 @@ def _install_map_routes(
     *,
     fail_first_squares_request: bool = False,
     fail_first_area_request: bool = False,
+    fail_area_target_date: str | None = None,
     pending_squares: bool = False,
     unique_calculated_times: bool = False,
 ) -> list[dict[str, object]]:
@@ -327,7 +328,11 @@ def _install_map_routes(
             cell_id = parsed.path.rsplit("/", 1)[-1]
             target_date = query.get("target_date", [TARGET_DATES[0]])[0]
             update_id = query.get("update_id", [""])[0]
-            if fail_first_area_request and not failed_area_request:
+            if (
+                fail_first_area_request
+                and not failed_area_request
+                and (not fail_area_target_date or target_date == fail_area_target_date)
+            ):
                 failed_area_request = True
                 fulfill_json(
                     route,
@@ -416,11 +421,13 @@ def _open_map(
     language: str = "en",
     viewport: tuple[int, int] = (1440, 900),
     fail_first_area_request: bool = False,
+    fail_area_target_date: str | None = None,
     unique_calculated_times: bool = False,
 ) -> list[dict[str, object]]:
     requests = _install_map_routes(
         page,
         fail_first_area_request=fail_first_area_request,
+        fail_area_target_date=fail_area_target_date,
         unique_calculated_times=unique_calculated_times,
     )
     page.set_viewport_size({"width": viewport[0], "height": viewport[1]})
@@ -713,7 +720,12 @@ def test_many_calculated_times_keep_date_strip_within_short_desktop_viewport(
 def test_selected_square_area_failure_can_retry_without_cached_unavailable_result(
     page: Page, base_url: str
 ) -> None:
-    requests = _open_map(page, base_url, fail_first_area_request=True)
+    requests = _open_map(
+        page,
+        base_url,
+        fail_first_area_request=True,
+        fail_area_target_date=TARGET_DATES[1],
+    )
     page.wait_for_function(
         """
         () => window.MicometeoMap.map.queryRenderedFeatures(
@@ -732,12 +744,14 @@ def test_selected_square_area_failure_can_retry_without_cached_unavailable_resul
         }
         """
     )
+    expect(page.locator(f".date-btn[data-date='{TARGET_DATES[1]}'] .d-pct")).to_have_text("")
     expect(page.locator("[data-live-state='error']")).to_contain_text("Try again")
     page.locator("[data-live-state='error'] button").click()
     page.wait_for_function(
         "() => document.querySelector(\".date-btn[data-date='2026-10-12'] .d-pct\")?.textContent === \"0%\"",
         timeout=10_000,
     )
+    expect(page.locator(f".date-btn[data-date='{TARGET_DATES[1]}'] .d-pct")).to_have_text("0%")
     area_requests = [request for request in requests if "/areas/" in request["path"]]
     assert len(area_requests) >= 8
 

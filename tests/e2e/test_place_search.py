@@ -822,12 +822,7 @@ def test_touch_place_selection_renders_square_and_preserves_day(
         search.fill("Pistoia")
         option = page.locator("[data-search-results] [role=option]").first
         expect(option).to_be_visible()
-        option_box = option.bounding_box()
-        assert option_box
-        page.touchscreen.tap(
-            x=option_box["x"] + option_box["width"] / 2,
-            y=option_box["y"] + option_box["height"] / 2,
-        )
+        option.tap()
         root = page.locator("[data-map-app]")
         page.wait_for_function(
             "() => document.querySelector('[data-map-app]').dataset.selectedSquare === 'cell-zero'",
