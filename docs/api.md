@@ -172,11 +172,20 @@ It never invents an update or silently chooses the newest one.
 
 | Response group | Stored content |
 | --- | --- |
-| `selection` | Square ID, polygon, bounds, centroid, representative coordinates, target date, assessment date, days ahead, update UUID and `run_id`, the current or previous published run that holds the update, or `null`. |
+| `selection` | Square ID, polygon, bounds, centroid, representative coordinates, target date, assessment date, days ahead, update UUID, `run_id`, the current or previous published run that holds the update, or `null`, and `municipality_name`, the municipality of the square, or `null`. |
 | `estimate` | State, `whole_percentage`, unavailable reason, calculation time, method version, `experimental_unvalidated`, availability translation key and `experimental_explanation_key`. |
 | `facts` | Actual method inputs and derived factors, units, inclusive periods, source IDs, completed and forecast day counts and translation keys. |
 | `weather` | Selected-day values, rain totals for the previous 7, 14 and 21 completed days, source metadata, missing values and limitations. |
 | `sources` | Exact ISTAT grid, forest, terrain and weather source records, release dates, retrieval dates, checksums, real source detail, credits and gaps. |
+
+`selection.municipality_name` comes from the ISTAT municipality borders, the
+folder `Com01012026` of the same archive as the region borders, under CC BY
+4.0. The command `load_municipalities` matches each square once to the
+municipality with the largest overlap and stores the match with the square. The
+name is `null` when no municipality is stored for the square. Finished details
+are cached by update, square and date without an expiry. The cache key changed
+with this field, so details cached before it are rebuilt. A detail cached
+before `load_municipalities` ran keeps a `null` name until its entry is removed.
 
 `selection.representative_coordinates` identifies the selected square. Use it
 for favorites and navigation. Do not replace it with the current map centre.

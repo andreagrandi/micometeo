@@ -180,6 +180,20 @@ uv run python apps/application/manage.py prepare_tuscany_map_database \
   --source-terrain-build-version italy-terrain-glo30-2021-v2
 ```
 
+Then store the municipality of each square. The command also works on a
+populated database and a second run changes nothing:
+
+```sh
+MICOMETEO_DB_NAME=micometeo_tuscany_56 \
+uv run python apps/application/manage.py load_municipalities
+```
+
+Run it again after every new subset copy, because the copy does not carry
+municipalities. Run it before the app serves area details. Finished details
+are cached by update, square and date without an expiry, so a detail cached
+earlier keeps the plain heading until its cache entry is removed, for example
+when the map cache is cleared.
+
 Append `--validate-only` to check the static subset before its first worker
 run. This check requires the absence of dynamic weather and estimate rows.
 Set the database name and both subset habitat versions in the application

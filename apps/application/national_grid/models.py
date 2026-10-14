@@ -61,6 +61,15 @@ class GridBuild(models.Model):
         super().save(*args, **kwargs)
 
 
+class Municipality(models.Model):
+    """Store one ISTAT municipality border, shared by every build."""
+
+    istat_code = models.CharField(max_length=6, primary_key=True)
+    name = models.CharField(max_length=120)
+    region_code = models.CharField(max_length=2)
+    geometry = models.MultiPolygonField(srid=3035, spatial_index=True)
+
+
 class GridCell(models.Model):
     """Store one stable 500 metre square shared by every build."""
 
@@ -68,6 +77,13 @@ class GridCell(models.Model):
     corner_e = models.IntegerField(validators=[validate_cell_corner])
     corner_n = models.IntegerField(validators=[validate_cell_corner])
     geometry = models.PolygonField(srid=3035, spatial_index=True)
+    municipality = models.ForeignKey(
+        Municipality,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="cells",
+    )
 
     def clean(self) -> None:
         """Check that the stable ID and stored lower-left corner agree."""

@@ -2550,8 +2550,10 @@
       const titleGroup = document.createElement("div");
       titleGroup.className = "live-details-title";
       const heading = document.createElement("h2");
-      // The square code means nothing to visitors, and no local place names exist yet.
-      heading.textContent = labels.map_selected;
+      // The square code means nothing to visitors, so name the municipality when the API sends one.
+      heading.textContent = typeof selection.municipality_name === "string" && selection.municipality_name.trim()
+        ? labels.map_selected_place.replace("{place}", selection.municipality_name.trim())
+        : labels.map_selected;
       heading.dataset.squareId = selection.square_id || properties.cell_id || feature?.id || "";
       heading.id = "details-heading";
       heading.tabIndex = -1;

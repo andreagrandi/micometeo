@@ -54,6 +54,7 @@ class SelectionSchema(Schema):
     days_ahead: int
     update_id: UUID
     run_id: UUID | None = None
+    municipality_name: str | None = None
 
 
 class EstimateSchema(Schema):
@@ -861,6 +862,11 @@ def _detail_response(
             assessment_date=update.assessment_date,
             days_ahead=(target_date - update.assessment_date).days,
             update_id=update.public_id,
+            municipality_name=(
+                municipality.name
+                if (municipality := forest_cell.grid_build_cell.cell.municipality) is not None
+                else None
+            ),
         ),
         estimate=EstimateSchema(
             state=read.status.value,
@@ -1008,7 +1014,9 @@ def area_detail(
             ),
         )
     forest_cell = (
-        ForestCell.objects.select_related("grid_build_cell__cell", "chunk")
+        ForestCell.objects.select_related(
+            "grid_build_cell__cell__municipality", "chunk"
+        )
         .filter(
             build_id=update.forest_build_id,
             grid_build_cell__cell__cell_id=square_id,

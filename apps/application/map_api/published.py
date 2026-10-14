@@ -781,7 +781,8 @@ def overview_points(*, run: PublishedRun, summary: RunSummary) -> OverviewPoints
 
 def detail_key(*, update_id: UUID, square_id: str, target_date: date) -> str:
     """Return the cache key of one area detail body."""
-    return f"{CACHE_VERSION}:detail:{update_id}:{square_id}:{target_date.isoformat()}"
+    # Version 2 adds the municipality name, so bodies stored before it are not reused.
+    return f"{CACHE_VERSION}:detail-v2:{update_id}:{square_id}:{target_date.isoformat()}"
 
 
 def cached_detail(*, update_id: UUID, square_id: str, target_date: date) -> dict[str, Any] | None:

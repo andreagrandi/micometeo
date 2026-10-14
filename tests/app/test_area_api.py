@@ -25,7 +25,7 @@ from estimate_updates.services import input_fingerprint
 from map_api.api import router as map_router
 from micometeo.finds.grid import format_cell_id
 from national_forest.models import ForestBuild, ForestCell, ForestChunk
-from national_grid.models import GridBuild, GridBuildCell, GridCell, GridChunk, GridRegion
+from national_grid.models import GridBuild, GridBuildCell, GridCell, GridChunk, GridRegion, Municipality
 from national_terrain.models import (
     TerrainBuild,
     TerrainCell,
@@ -731,6 +731,34 @@ def test_area_detail_uses_exact_update_and_exposes_frozen_facts(area_fixture: di
     assert facts["square_altitude"]["actual_value"] == 500.0
     assert facts["forest_share"]["actual_value"] == 0.8
     assert {fact["translation_key"] for fact in facts.values()}
+
+
+@pytest.mark.django_db(transaction=True)
+def test_area_detail_names_the_municipality_only_when_one_is_stored(
+    area_fixture: dict[str, object],
+) -> None:
+    update = area_fixture["update"]
+    square_id = area_fixture["square_id"]
+    query = {"target_date": "2026-10-12", "update_id": str(update.public_id)}
+
+    without = Client().get(f"/api/v1/areas/{square_id}", query)
+    caches["map"].clear()
+    cell = GridCell.objects.get(cell_id=square_id)
+    cell.municipality = Municipality.objects.create(
+        istat_code="047007",
+        name="Marliana",
+        region_code="09",
+        geometry=MultiPolygon(cell.geometry, srid=3035),
+    )
+    cell.save()
+    with CaptureQueriesContext(connection) as queries:
+        named = Client().get(f"/api/v1/areas/{square_id}", query)
+
+    assert without.status_code == named.status_code == 200
+    assert without.json()["selection"]["municipality_name"] is None
+    assert named.json()["selection"]["municipality_name"] == "Marliana"
+    # The name comes with the square query, not from an extra query on the municipality table.
+    assert not any(query["sql"].startswith('SELECT "national_grid_municipality"') for query in queries)
 
 
 @pytest.mark.django_db(transaction=True)

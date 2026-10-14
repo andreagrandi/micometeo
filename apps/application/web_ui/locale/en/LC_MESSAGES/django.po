@@ -88,6 +88,9 @@ msgstr "The first weather update for this area is still pending."
 msgid "Selected square"
 msgstr "Selected square"
 
+msgid "Area near {place}"
+msgstr "Area near {place}"
+
 msgid "Target date"
 msgstr "Target date"
 

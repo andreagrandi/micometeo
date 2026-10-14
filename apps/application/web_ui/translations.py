@@ -243,6 +243,7 @@ TEXT = {
         "map_pending": "The first weather update for this area is still pending.",
         "map_forecast_unavailable": "Estimates are not ready yet. Try again later.",
         "map_selected": "Selected square",
+        "map_selected_place": "Area near {place}",
         "map_target": "Target date",
         "map_assessment": "Assessment date",
         "map_mixed_assessment": "multiple source dates",

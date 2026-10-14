@@ -689,6 +689,18 @@ The hosted one-time bootstrap is tracked separately in [#88](https://github.com/
 ## Tuscany input readiness
 
 Build the Tuscany subset database first with `prepare_tuscany_map_database`.
+Then run `load_municipalities` on it. The command reads the `Com01012026`
+folder of `data/raw/mvp_boundaries/Limiti01012026.zip`, stores the 273 Tuscan
+municipalities and names the municipality of each square by largest overlap.
+It prints a JSON summary and a second run changes nothing. Run it before the
+app serves area details. Finished details are cached without an expiry, so a
+detail cached earlier keeps the plain heading until its cache entry is removed.
+
+```sh
+MICOMETEO_DB_NAME=micometeo_tuscany_56 \
+uv run python apps/application/manage.py load_municipalities
+```
+
 Then check and prepare every stored input for the Tuscany map:
 
 ```sh

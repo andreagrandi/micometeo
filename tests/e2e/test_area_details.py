@@ -30,6 +30,7 @@ def _full_area_response(
     host_facts: bool = False,
     missing_host_factor: bool = False,
     weather_gaps: list[dict[str, object]] | None = None,
+    municipality_name: str | None = None,
 ) -> dict[str, object]:
     end = date.fromisoformat(assessment_date) - timedelta(days=1)
     recent_start = end - timedelta(days=6)
@@ -150,6 +151,7 @@ def _full_area_response(
             "assessment_date": assessment_date,
             "days_ahead": (date.fromisoformat(target_date) - date.fromisoformat(assessment_date)).days,
             "update_id": update_id,
+            **({"municipality_name": municipality_name} if municipality_name is not None else {}),
         },
         "estimate": {
             "state": "available" if percentage is not None else "unavailable",
@@ -686,6 +688,37 @@ def test_area_detail_keeps_facts_and_sources_for_a_full_unavailable_estimate(
     weather_source = detail.locator(".source-card", has_text="Open-Meteo")
     expect(weather_source).to_be_visible()
     expect(weather_source).to_contain_text("CC BY 4.0")
+
+
+@pytest.mark.parametrize(
+    ("language", "municipality_name", "expected_heading"),
+    [
+        ("en", "Marliana", "Area near Marliana"),
+        ("it", "Marliana", "Area vicino a Marliana"),
+        ("en", None, "Selected square"),
+        ("it", None, "Area selezionata"),
+    ],
+)
+def test_area_detail_heading_names_the_municipality_when_the_api_sends_one(
+    page: Page, base_url: str, language: str, municipality_name: str | None, expected_heading: str
+) -> None:
+    _open_map(page, base_url, language=language)
+
+    def detail_route(route: Route) -> None:
+        parsed = urlparse(route.request.url)
+        query = parse_qs(parsed.query)
+        route.fulfill(
+            content_type="application/json",
+            body=json.dumps(_full_area_response(
+                cell_id=parsed.path.rsplit("/", 1)[-1],
+                target_date=query.get("target_date", [TARGET_DATES[0]])[0],
+                municipality_name=municipality_name,
+            )),
+        )
+
+    page.route("**/api/v1/areas/**", detail_route)
+    _click_square(page)
+    expect(page.locator("aside[data-live-details] #details-heading")).to_have_text(expected_heading, timeout=10_000)
 
 
 def test_area_detail_retries_a_failed_request_without_losing_the_selection(

@@ -38,6 +38,12 @@ REGION_MEMBERS = (
     "Reg01012026/Reg01012026_WGS84.dbf",
     "Reg01012026/Reg01012026_WGS84.prj",
 )
+MUNICIPALITY_MEMBERS = (
+    "Com01012026/Com01012026_WGS84.shp",
+    "Com01012026/Com01012026_WGS84.shx",
+    "Com01012026/Com01012026_WGS84.dbf",
+    "Com01012026/Com01012026_WGS84.prj",
+)
 
 
 @dataclass(frozen=True)
@@ -55,6 +61,16 @@ class BoundarySource:
 
     regions: tuple[RegionBoundary, ...]
     metadata: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class MunicipalityBoundary:
+    """Hold one validated municipality in the national grid CRS."""
+
+    istat_code: str
+    name: str
+    region_code: str
+    geometry: MultiPolygon
 
 
 class BoundarySourceError(ValueError):
@@ -122,9 +138,40 @@ def read_boundary_source(
     )
 
 
-def _validate_members(*, archive: zipfile.ZipFile) -> None:
+def read_municipalities(
+    *,
+    archive_path: Path,
+    region_code: str,
+    expected_sha256: str = ARCHIVE_SHA256,
+) -> tuple[MunicipalityBoundary, ...]:
+    """Return the municipalities of one region transformed to EPSG:3035."""
+    archive_path = Path(archive_path)
+    if not archive_path.is_file():
+        raise BoundarySourceError(f"Boundary archive does not exist: {archive_path}.")
+    actual_sha256 = archive_sha256(archive_path=archive_path)
+    if actual_sha256 != expected_sha256:
+        raise BoundarySourceError(
+            f"Boundary archive hash mismatch: expected {expected_sha256}, got {actual_sha256}."
+        )
+    try:
+        with zipfile.ZipFile(archive_path) as archive:
+            _validate_members(archive=archive, members=MUNICIPALITY_MEMBERS)
+            municipalities = _read_municipalities(archive=archive, region_code=region_code)
+    except (OSError, zipfile.BadZipFile, shapefile.ShapefileException) as exc:
+        raise BoundarySourceError(f"Cannot read the boundary archive: {exc}") from exc
+    if not municipalities:
+        raise BoundarySourceError(f"The boundary archive has no municipalities for region {region_code}.")
+    codes = [municipality.istat_code for municipality in municipalities]
+    if len(set(codes)) != len(codes):
+        raise BoundarySourceError("Municipality codes must be distinct.")
+    return tuple(sorted(municipalities, key=lambda municipality: municipality.istat_code))
+
+
+def _validate_members(
+    *, archive: zipfile.ZipFile, members: tuple[str, ...] = REGION_MEMBERS
+) -> None:
     names = set(archive.namelist())
-    missing = [member for member in REGION_MEMBERS if member not in names]
+    missing = [member for member in members if member not in names]
     if missing:
         raise BoundarySourceError(f"Boundary archive is missing members: {', '.join(missing)}.")
 
@@ -162,6 +209,54 @@ def _read_regions(*, archive: zipfile.ZipFile) -> list[RegionBoundary]:
             elif transformed.geom_type != "MultiPolygon":
                 raise BoundarySourceError(f"Unexpected geometry type for region {code}.")
             result.append(RegionBoundary(istat_code=code, name=name, geometry=transformed))
+        return result
+    finally:
+        for buffer in buffers.values():
+            buffer.close()
+
+
+def _read_municipalities(
+    *, archive: zipfile.ZipFile, region_code: str
+) -> list[MunicipalityBoundary]:
+    buffers = {member: io.BytesIO(archive.read(member)) for member in MUNICIPALITY_MEMBERS}
+    try:
+        reader = shapefile.Reader(
+            shp=buffers[MUNICIPALITY_MEMBERS[0]],
+            shx=buffers[MUNICIPALITY_MEMBERS[1]],
+            dbf=buffers[MUNICIPALITY_MEMBERS[2]],
+            encoding="utf-8",
+        )
+        fields = {field[0] for field in reader.fields[1:]}
+        if not {"COD_REG", "PRO_COM_T", "COMUNE"}.issubset(fields):
+            raise BoundarySourceError("The municipality DBF must contain COD_REG, PRO_COM_T and COMUNE.")
+        projection = CRS.from_wkt(buffers[MUNICIPALITY_MEMBERS[3]].getvalue().decode("utf-8"))
+        if projection != CRS.from_epsg(32632):
+            raise BoundarySourceError(f"Expected EPSG:32632 source CRS, got {projection.to_string()}.")
+        transformer = Transformer.from_crs(SOURCE_CRS, GRID_CRS, always_xy=True)
+        result: list[MunicipalityBoundary] = []
+        # Records are read first so that only the wanted region's shapes are decoded.
+        for index, record in enumerate(reader.records()):
+            if _istat_code(record["COD_REG"]) != region_code:
+                continue
+            code = str(record["PRO_COM_T"]).strip().zfill(6)
+            name = str(record["COMUNE"]).strip()
+            if not code or not name:
+                raise BoundarySourceError("Municipality records must have a code and name.")
+            geometry = shape(reader.shape(index).__geo_interface__)
+            if geometry.is_empty or not geometry.is_valid:
+                raise BoundarySourceError(f"Invalid geometry for municipality {code}.")
+            transformed = transform(geometry, transformer.transform, interleaved=False)
+            if transformed.is_empty or not transformed.is_valid:
+                raise BoundarySourceError(f"Invalid transformed geometry for municipality {code}.")
+            if transformed.geom_type == "Polygon":
+                transformed = MultiPolygon([transformed])
+            elif transformed.geom_type != "MultiPolygon":
+                raise BoundarySourceError(f"Unexpected geometry type for municipality {code}.")
+            result.append(
+                MunicipalityBoundary(
+                    istat_code=code, name=name, region_code=region_code, geometry=transformed
+                )
+            )
         return result
     finally:
         for buffer in buffers.values():
