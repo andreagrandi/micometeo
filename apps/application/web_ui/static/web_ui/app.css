@@ -628,10 +628,6 @@ body:has(.app) {
     transform: rotate(360deg);
   }
 }
-.map-centre {
-  box-shadow: var(--shadow-2);
-  text-align: left;
-}
 .zoombox {
   align-self: start;
   background: #fff;
@@ -1861,9 +1857,6 @@ body:has(.app) {
     padding-right: var(--space-3);
   }
 }
-.map-centre[hidden] {
-  display: none;
-}
 @media (min-width: 900px) {
   .h-phone {
     display: none;
@@ -1932,9 +1925,6 @@ body:has(.app) ul {
   }
 }
 @media (max-width: 899px) {
-  .main.details-open .map-centre {
-    display: none;
-  }
   .d-top .phone-only {
     min-width: 138px;
     white-space: nowrap;

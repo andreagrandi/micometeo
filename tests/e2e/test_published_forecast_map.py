@@ -333,22 +333,25 @@ def test_unchanged_run_in_the_info_refresh_keeps_the_data(page: Page, base_url: 
     assert len(_api_requests(current["requests"], "/squares")) == before
 
 
-def test_today_label_needs_the_real_date_and_an_old_run_shows_a_calm_note(
-    page: Page, base_url: str
+@pytest.mark.parametrize("viewport", ["desktop", "phone"])
+def test_old_run_shows_no_run_note_and_no_centre_button(
+    page: Page, base_url: str, viewport: str
 ) -> None:
     info = _info(
         today="2026-10-12",
         target_dates=TARGET_DATES[1:],
         assessment_date="2026-10-11",
     )
-    _open(page, base_url, current={"info": info, "run_id": "run-1"})
+    _open(page, base_url, viewport=viewport, current={"info": info, "run_id": "run-1"})
 
     first = page.locator(".date-btn").first
     expect(first).to_have_attribute("data-date", TARGET_DATES[1])
     expect(first.locator(".d-wd")).not_to_have_text("Today")
-    note = page.locator("[data-live-state='older']")
-    expect(note).to_contain_text("Estimates from 11 Oct")
+    expect(page.locator("#mapmsgs")).not_to_contain_text("Estimates from")
+    expect(page.locator("[data-live-state='older']")).to_have_count(0)
     expect(page.locator("[data-live-state='error']")).to_have_count(0)
+    expect(page.locator("#centre-btn")).to_have_count(0)
+    expect(page.locator(".maptop [data-center-select]")).to_have_count(0)
 
 
 def test_today_label_marks_the_date_equal_to_today(page: Page, base_url: str) -> None:

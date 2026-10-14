@@ -1041,7 +1041,7 @@ def test_map_uses_canonical_weather_cell_and_center_selects_missing_states(
       return map.queryRenderedFeatures(map.project(map.getCenter()), {layers: ['micometeo-noforest-line', 'micometeo-square-noforest']})
         .some(feature => feature.properties.cell_id === 'cell-noforest');
     }""", timeout=10_000)
-    page.locator("#centre-btn").click()
+    page.evaluate("() => window.MicometeoMap.centerSelection()")
     expect(page.locator("[data-map-app]")).to_have_attribute(
         "data-selected-square", "cell-noforest"
     )
@@ -1056,7 +1056,7 @@ def test_map_uses_canonical_weather_cell_and_center_selects_missing_states(
       return map.queryRenderedFeatures(map.project(map.getCenter()), {layers: ['micometeo-square-missing']})
         .some(feature => feature.properties.cell_id === 'cell-missing');
     }""", timeout=10_000)
-    page.locator("#centre-btn").click()
+    page.evaluate("() => window.MicometeoMap.centerSelection()")
     expect(page.locator("[data-map-app]")).to_have_attribute(
         "data-selected-square", "cell-missing"
     )

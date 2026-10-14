@@ -1040,7 +1040,7 @@ def test_area_detail_destination_events_keep_map_points_and_api_representatives(
         }""",
         timeout=10_000,
     )
-    page.locator("#centre-btn").click()
+    page.evaluate("() => window.MicometeoMap.centerSelection()")
     page.wait_for_function(
         "() => document.querySelector('aside[data-live-details]')?.textContent.includes('44.1312')",
         timeout=10_000,

@@ -1473,7 +1473,6 @@
       }
       document.querySelector("aside[data-live-details]")?.remove();
       if (!root.dataset.fixture) document.querySelector("aside[data-details]:not([data-live-details])")?.remove();
-      document.getElementById("centre-btn")?.setAttribute("hidden", "");
       const percentage = document.querySelector(".pct-badge .pct");
       if (percentage) percentage.textContent = "-";
       const unit = document.querySelector(".pct-badge .pct-unit");
@@ -1524,22 +1523,12 @@
       applyOpacity(state.opacity);
     }
 
-    function runNote() {
-      const assessment = stateData.info?.run?.assessment_date;
-      const today = stateData.info?.today;
-      if (!assessment || !today || assessment >= today) return "";
-      const shortDate = new Intl.DateTimeFormat(locale(), { day: "numeric", month: "short", timeZone: "Europe/Rome" })
-        .format(new Date(`${assessment}T12:00:00Z`));
-      return (labels.map_run_note || "Estimates from {date}.").replace("{date}", shortDate);
-    }
-
     function revealSquaresWhenRendered() {
       const map = stateData.map;
       if (!map) return;
       const reveal = () => {
         if (!stateData.squares) return;
         setSquareLayersVisible(true);
-        document.getElementById("centre-btn")?.removeAttribute("hidden");
       };
       map.once("idle", reveal);
       map.triggerRepaint();
@@ -2641,7 +2630,6 @@
       root.classList.add("details-open");
       document.querySelector("#main")?.classList.add("details-open");
       details.hidden = false;
-      document.getElementById("centre-btn")?.removeAttribute("hidden");
       if (selection.representative_coordinates) {
         state.representative = selection.representative_coordinates;
         persistState();
@@ -2875,7 +2863,6 @@
       }
       root.classList.add("details-open");
       document.querySelector("#main")?.classList.add("details-open");
-      document.getElementById("centre-btn")?.removeAttribute("hidden");
       persistState();
       const loadedDetailMatches = stateData.detailData?.selection?.square_id === state.square
         && stateData.detailData.selection.target_date === state.date
@@ -3196,9 +3183,7 @@
         } else if (!stateData.squares.features.length) {
           message(labels.map_no_results, "wait");
         } else {
-          const note = runNote();
-          const overviewText = overview ? (labels.map_overview || "Area averages. Zoom in for individual scores.") : "";
-          message([overviewText, note].filter(Boolean).join(" "), note ? "older" : "wait");
+          message(overview ? (labels.map_overview || "Area averages. Zoom in for individual scores.") : "", "wait");
         }
       } catch (error) {
         if (error.name === "AbortError") return;

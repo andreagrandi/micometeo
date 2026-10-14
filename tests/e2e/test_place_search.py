@@ -602,7 +602,7 @@ def test_search_selection_keeps_exact_point_through_date_map_and_centre_changes(
         """
     )
 
-    page.locator("#centre-btn").click()
+    page.evaluate("() => window.MicometeoMap.centerSelection()")
     expect(root).to_have_attribute("data-selection-source", "centre")
     expect(root).to_have_attribute("data-point-latitude", "")
     expect(root).to_have_attribute("data-point-longitude", "")

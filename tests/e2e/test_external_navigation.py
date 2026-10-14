@@ -127,7 +127,7 @@ def test_grid_navigation_waits_for_verified_area_representative(
         }
         """
     )
-    page.locator("#centre-btn").click()
+    page.evaluate("() => window.MicometeoMap.centerSelection()")
     expect(action).to_be_enabled()
     expect(action).to_have_attribute(
         "data-navigation-url",
@@ -171,7 +171,7 @@ def test_grid_navigation_does_not_reuse_stale_representative(
         }
         """
     )
-    page.locator("#centre-btn").click()
+    page.evaluate("() => window.MicometeoMap.centerSelection()")
     expect(action).to_have_attribute(
         "data-navigation-url",
         "https://www.google.com/maps/search/?api=1&query=44.1312%2C10.6413",
@@ -217,7 +217,7 @@ def test_grid_navigation_rejects_out_of_range_representative(
         }
         """
     )
-    page.locator("#centre-btn").click()
+    page.evaluate("() => window.MicometeoMap.centerSelection()")
     action = page.locator("aside[data-live-details] [data-navigation]")
     expect(action).to_be_disabled()
     expect(page.locator("[data-navigation-status]")).to_be_visible()

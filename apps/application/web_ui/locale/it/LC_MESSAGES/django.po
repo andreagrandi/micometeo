@@ -76,8 +76,6 @@ msgid "Estimate overlay"
 msgstr "Sovrapposizione stime"
 msgid "Overlay opacity"
 msgstr "Opacità della sovrapposizione"
-msgid "Select the area at the map centre"
-msgstr "Seleziona l'area al centro della mappa"
 msgid "Back to map"
 msgstr "Torna alla mappa"
 msgid "Close"
@@ -824,9 +822,6 @@ msgstr "Mancano i dati della fonte del terreno."
 
 msgid "Estimates are not ready yet. Try again later."
 msgstr "Le stime non sono ancora pronte. Riprova più tardi."
-
-msgid "Estimates from {date}."
-msgstr "Stime del {date}."
 
 msgid "This square is outside the area with prepared estimates."
 msgstr "Questo riquadro è fuori dall'area con stime preparate."
