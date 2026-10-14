@@ -336,7 +336,7 @@ def test_area_detail_renders_api_facts_weather_rain_sources_and_language(
     expect(page.locator("aside[data-live-details]")).to_be_visible()
     page.wait_for_function("() => Boolean(document.querySelector('[data-detail-experimental]'))")
     detail = page.locator("aside[data-live-details]")
-    expect(detail).to_contain_text("cell-zero")
+    expect(detail.locator("#details-heading")).to_have_attribute("data-square-id", "cell-zero")
     expect(detail).to_contain_text("0%")
     expect(detail).to_contain_text("12,5 mm" if language == "it" else "12.5 mm")
     detail.locator("[data-detail-disclosure='weather-extra'] > summary").click()
@@ -432,7 +432,10 @@ def test_area_detail_keeps_long_facts_and_sources_folded_and_accessible(
     expect(detail.locator(".detail-rain-value")).to_contain_text("24,5 mm" if language == "it" else "24.5 mm")
 
     _click_square(page, "cell-hundred")
-    expect(detail.locator("#details-heading")).to_have_text("cell-hundred")
+    expect(detail.locator("#details-heading")).to_have_attribute("data-square-id", "cell-hundred")
+    expect(detail.locator("#details-heading")).to_have_text(
+        "Area selezionata" if language == "it" else "Selected square"
+    )
     expect(facts).not_to_have_attribute("open", "")
     expect(sources).not_to_have_attribute("open", "")
 
@@ -550,7 +553,9 @@ def test_area_detail_ignores_a_late_response_from_a_previous_square(
     _click_square(page, "cell-zero")
     _click_square(page, "cell-hundred")
     detail = page.locator("aside[data-live-details]")
-    expect(detail).to_contain_text("cell-hundred", timeout=10_000)
+    expect(detail.locator("#details-heading")).to_have_attribute(
+        "data-square-id", "cell-hundred", timeout=10_000
+    )
     expect(detail).to_contain_text("100%")
     assert pending, "the first area response was not held"
 
@@ -564,7 +569,7 @@ def test_area_detail_ignores_a_late_response_from_a_previous_square(
         )),
     )
     page.wait_for_timeout(100)
-    expect(detail).to_contain_text("cell-hundred")
+    expect(detail.locator("#details-heading")).to_have_attribute("data-square-id", "cell-hundred")
     expect(detail).to_contain_text("100%")
 
 
@@ -721,7 +726,7 @@ def test_area_detail_retries_a_failed_request_without_losing_the_selection(
     failed = False
     detail.locator(".callout-error button").click()
     expect(detail).to_contain_text("12.5 mm", timeout=10_000)
-    expect(detail).to_contain_text("cell-zero")
+    expect(detail.locator("#details-heading")).to_have_attribute("data-square-id", "cell-zero")
 
 
 @pytest.mark.parametrize("language", ["en", "it"])

@@ -372,7 +372,7 @@ TEXT = {
         "detail_facts_more": "More input details",
         "detail_weather_more": "More weather values",
         "detail_weather_gaps": "Weather data gaps",
-        "detail_source_grid": "Statistical grid",
+        "detail_source_grid": "ISTAT regional boundaries",
         "detail_source_forest": "Copernicus forest map",
         "detail_source_terrain": "Copernicus elevation model",
         "detail_source_weather": "Open-Meteo modelled weather",

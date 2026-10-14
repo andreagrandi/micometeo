@@ -1761,6 +1761,10 @@ body:has(.app) {
   .floatbtns {
     display: flex;
   }
+  /* Keep the map credits above the Layers and Legend buttons. */
+  #map .maplibregl-ctrl-bottom-right {
+    bottom: 60px;
+  }
   .panel {
     align-self: end;
     margin: var(--space-2);

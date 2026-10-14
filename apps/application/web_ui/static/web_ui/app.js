@@ -2313,7 +2313,8 @@
       const longSourceBodies = new WeakMap();
 
       function sourceName(key, source) {
-        if (key === "weather" && source.provider === "Open-Meteo") return labels.detail_source_weather;
+        // Provider dataset names are in English. They stay visible on the version line.
+        if (sourceNames[key]) return sourceNames[key];
         const candidate = source?.name || source?.provider || "";
         return candidate && !/^\s*[\d._-]+\s*$/.test(String(candidate))
           ? String(candidate)
@@ -2549,7 +2550,9 @@
       const titleGroup = document.createElement("div");
       titleGroup.className = "live-details-title";
       const heading = document.createElement("h2");
-      heading.textContent = selection.square_id || properties.cell_id || feature?.id || labels.map_selected;
+      // The square code means nothing to visitors, and no local place names exist yet.
+      heading.textContent = labels.map_selected;
+      heading.dataset.squareId = selection.square_id || properties.cell_id || feature?.id || "";
       heading.id = "details-heading";
       heading.tabIndex = -1;
       const coordinate = document.createElement("p");
@@ -3252,6 +3255,8 @@
       if (stateData.initialising || stateData.map) return;
       stateData.initialising = true;
       message(labels.map_loading, "wait");
+      // The server renders today, which is wrong when the published run is older.
+      updateDateMetadata([], true);
       let styleFailed = false;
       try {
         const { response, body } = await fetchJson("/api/v1/info");

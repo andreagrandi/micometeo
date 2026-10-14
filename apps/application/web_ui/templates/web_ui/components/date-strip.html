@@ -1,7 +1,7 @@
 <section class="datecol" id="datecol" data-fold-card="dates" aria-labelledby="dates-heading">
   <div class="date-head">
     <h2 id="dates-heading">{{ labels.select_date }}</h2>
-    <p class="date-assess">{{ labels.assessment }}: <strong>{{ assessment_date_display }}</strong></p>
+    <p class="date-assess">{{ labels.assessment }}: <strong>{% if fixture %}{{ assessment_date_display }}{% else %}{{ labels.map_loading }}{% endif %}</strong></p>
     <p class="date-update" data-date-update hidden></p>
     <button class="fold-btn date-fold" type="button" data-fold="dates" aria-expanded="true" aria-controls="dates-body" aria-label="{{ labels.select_date }}">⌃</button>
   </div>

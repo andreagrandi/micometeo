@@ -463,8 +463,8 @@ msgstr "More weather values"
 msgid "Weather data gaps"
 msgstr "Weather data gaps"
 
-msgid "Statistical grid"
-msgstr "Statistical grid"
+msgid "ISTAT regional boundaries"
+msgstr "ISTAT regional boundaries"
 
 msgid "Copernicus forest map"
 msgstr "Copernicus forest map"

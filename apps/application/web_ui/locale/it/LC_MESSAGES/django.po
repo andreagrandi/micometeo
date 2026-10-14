@@ -324,8 +324,8 @@ msgstr "Altri valori meteo"
 msgid "Weather data gaps"
 msgstr "Lacune nei dati meteo"
 
-msgid "Statistical grid"
-msgstr "Griglia statistica"
+msgid "ISTAT regional boundaries"
+msgstr "Confini regionali ISTAT"
 
 msgid "Copernicus elevation model"
 msgstr "Modello altimetrico Copernicus"
