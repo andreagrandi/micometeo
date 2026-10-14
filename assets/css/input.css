@@ -410,18 +410,6 @@ body:has(.app) {
 @media (max-width: 899px) {
   .date-head .date-assess { display: none; }
 }
-.date-warning {
-  background: #fff1c7;
-  border-left: 3px solid #b7791f;
-  color: #744210;
-  display: block;
-  font-size: var(--text-caption);
-  margin: 0 var(--space-3) var(--space-2);
-  padding: var(--space-1) var(--space-2);
-}
-.date-warning[hidden] {
-  display: none;
-}
 .dates {
   display: flex;
   gap: var(--space-2);
@@ -623,10 +611,6 @@ body:has(.app) {
   to {
     transform: rotate(360deg);
   }
-}
-.map-centre {
-  box-shadow: var(--shadow-2);
-  text-align: left;
 }
 .zoombox {
   align-self: start;
@@ -1623,9 +1607,6 @@ body:has(.app) {
     font-family: var(--mono);
     font-size: var(--text-caption);
   }
-  .date-warning {
-    margin: var(--space-1) 0 var(--space-2);
-  }
   .date-hint {
     color: var(--earth-700);
     flex: 1 1 100%;
@@ -1856,9 +1837,6 @@ body:has(.app) {
     padding-right: var(--space-3);
   }
 }
-.map-centre[hidden] {
-  display: none;
-}
 @media (min-width: 900px) {
   .h-phone {
     display: none;
@@ -1927,9 +1905,6 @@ body:has(.app) ul {
   }
 }
 @media (max-width: 899px) {
-  .main.details-open .map-centre {
-    display: none;
-  }
   .d-top .phone-only {
     min-width: 138px;
     white-space: nowrap;
