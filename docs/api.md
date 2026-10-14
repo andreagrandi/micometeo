@@ -239,7 +239,7 @@ also helps inspect an API response.
 | 400 | `outside_coverage` | The view misses the Tuscany coverage or holds no grid square. |
 | 404 | `square_unknown` | The square does not belong to the requested update's forest build. |
 | 409 | `update_square_mismatch` | The square and update refer to different weather cells. |
-| 409 | `no_forest`, `missing_forest_data`, `estimate_not_available` | The square has no selected saved estimate. No unrelated weather is attached. |
+| 409 | `no_forest`, `missing_forest_data`, `outside_prepared_area` | The square has no selected saved estimate. No unrelated weather is attached. |
 | 410 | `update_expired` | The requested update UUID is no longer available. Refresh the map. |
 | 503 | `forest_build_unavailable`, `forest_layer_unavailable` | The configured completed build or checked artifact is unavailable. |
 | 503 | `forecast_unavailable` | No Tuscany run is published yet. |

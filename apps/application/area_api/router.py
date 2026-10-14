@@ -348,9 +348,9 @@ def _forest_state_without_update(
             target_date=target_date,
         )
     return _classification_error(
-        code="estimate_not_available",
-        message="Select a stored estimate update before opening this square.",
-        message_key="area.estimate_not_available",
+        code="outside_prepared_area",
+        message="The published run has no estimate for this square.",
+        message_key="area.outside_prepared_area",
         square_id=square_id,
         target_date=target_date,
     )

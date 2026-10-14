@@ -915,8 +915,8 @@ def test_area_detail_without_update_classifies_configured_square_without_weather
         )
 
     assert eligible.status_code == 409
-    assert eligible.json()["code"] == "estimate_not_available"
-    assert eligible.json()["message_key"] == "area.estimate_not_available"
+    assert eligible.json()["code"] == "outside_prepared_area"
+    assert eligible.json()["message_key"] == "area.outside_prepared_area"
     assert eligible.json()["details"] == {
         "square_id": square_id,
         "target_date": "2026-10-12",

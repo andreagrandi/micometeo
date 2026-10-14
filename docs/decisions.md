@@ -1,7 +1,8 @@
 # Decisions
 
 For the app after Epic 1, use the [product PRD](product_prd.md). The owner
-selected all-Italy coverage and accepted clearly labelled experimental
+selected all-Italy coverage as the goal, and D22 limits the first version to
+Tuscany. The owner accepted clearly labelled experimental
 percentages at launch. Field validation is not a release condition. The
 completed investigation and its historical decisions below remain evidence.
 Their earlier product suggestions do not override the later interview.
@@ -48,3 +49,4 @@ NOT TESTED.
 | D19 | 2026-10-13 | Show mushroom scores at every zoom. Wide views use averages of stored forest-square scores in larger areas. Local views show individual 500 m squares. Missing scores remain marked as missing. | Owner revision. Zoom changes detail, not the data type. Overview reads never trigger weather downloads. |
 | D20 | 2026-10-11 | Store estimates as one row per forest square holding all 8 dates. Keep only the current and the previous estimates of each area and daily weather values, not hourly ones. | One row per square and date would need about 400 MB per day of estimates instead of about 50 MB. The app shows only today and the next 7 days, so nothing older is needed. The estimated total is about 300 MB and does not grow. |
 | D21 | 2026-10-13 | Reassess the rules using the owner's document on ideal porcini conditions. Use 30 days of weather history where needed, replacing the 21-day history limit in D18. Keep habitat suitability and current fruiting conditions internal and show one final score. Preserve the versions and explanations of saved estimates. | Decided by the project owner during #91. The document describes moisture retained after rainfall, drying, temperature bands and compatible habitat. Its approximate ranges do not specify universal coefficients. Record additional numerical choices explicitly. The investigation, v4 implementation and remaining limits are documented in `reports/mvp/pistoia_formula_reassessment.md`. |
+| D22 | 2026-10-14 | The first version covers Tuscany, region 09, only. Other Italian regions come later, and the landing page says they are coming soon. Outside Tuscany the map and area details say why no estimate exists and show no percentage. All-Italy coverage stays the goal for a later version, and the national habitat builds and Italy planning figures stay as they are. This replaces the launch commitment of "at least all Italy" in the product PRD. | Decided by the project owner during #61. #96 prepared and published Tuscany estimates from local data. Italy would need 14,904 counted calls for a first load and 7,452 each night, against 1,092 and 666 for Tuscany, as recorded in `reports/mvp/tuscany_acceptance.md`. |

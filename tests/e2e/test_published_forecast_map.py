@@ -437,4 +437,4 @@ def test_square_outside_the_prepared_area_is_named_in_the_details(
         }
         """
     )
-    expect(page.locator("aside[data-live-details]")).to_contain_text("outside the area with prepared")
+    expect(page.locator("aside[data-live-details]")).to_contain_text("outside Tuscany")

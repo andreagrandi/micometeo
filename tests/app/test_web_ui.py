@@ -65,6 +65,30 @@ def test_english_landing_keeps_translated_sample_and_probability_scale() -> None
     assert "%%" not in body
 
 
+def test_italian_landing_names_tuscany_and_other_regions_coming_soon() -> None:
+    response = Client(HTTP_ACCEPT_LANGUAGE="it-IT,it;q=0.9").get(path="/")
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Toscana" in body
+    assert "Altre regioni in arrivo" in body
+    assert "Altre regioni arriveranno presto" in body
+    for text in ("tutta Italia", "tutta l'Italia", "Sicilia", "Sardegna"):
+        assert text not in body
+
+
+def test_english_landing_names_tuscany_and_other_regions_coming_soon() -> None:
+    response = Client(HTTP_ACCEPT_LANGUAGE="en-GB,en;q=0.9").get(path="/")
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Tuscany" in body
+    assert "Other regions coming soon" in body
+    assert "Other regions are coming soon" in body
+    for text in ("all Italy", "Sicily", "Sardinia"):
+        assert text not in body
+
+
 @override_settings(MICOMETEO_UI_FIXTURE_PAGES=True)
 @pytest.mark.parametrize("state", FIXTURE_STATES)
 def test_fixture_route_exposes_one_visible_named_state(state: str) -> None:
