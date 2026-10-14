@@ -9,6 +9,7 @@ from django.shortcuts import render
 from django.utils import formats, timezone, translation
 
 from .formatting import format_date, format_measurement, format_short_date, format_weekday
+from .landing_examples import landing_examples
 from .translations import labels_for
 
 
@@ -144,7 +145,9 @@ def _apply_fixture_dates(
 
 def landing(request: HttpRequest) -> HttpResponse:
     """Render the public landing page."""
-    return render(request, "web_ui/landing.html", _base_context(request))
+    context = _base_context(request)
+    context.update(landing_examples(language=str(context["language"])))
+    return render(request, "web_ui/landing.html", context)
 
 
 def map_page(request: HttpRequest, fixture: str | None = None) -> HttpResponse:

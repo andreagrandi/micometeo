@@ -9,9 +9,7 @@
 {% endblock %}
 {% block content %}
 <div class="landing-page scroll-smooth" id="top">
-<header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md min-w-0"><a class="flex items-center gap-space-sm group" data-lang-link href="/"><div class="w-9 h-9 shrink-0 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center transition-colors group-hover:bg-primary group-hover:text-on-primary"><span class="material-symbols-outlined text-[20px]">nature</span></div><span class="font-headline-md text-headline-md tracking-tight text-primary font-serif">Micometeo</span></a></div><nav class="hidden xl:flex items-center gap-space-lg"><a aria-current="page" class="transition-colors text-primary font-title-md relative after:content-[''] after:absolute after:-bottom-1.5 after:left-0 after:w-full after:h-[2px] after:bg-primary" href="#top">{% translate "Home" %}</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" data-app-link href="/map/">{% translate "Map / Explore" %}</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" href="#come-funziona-section">{% translate "How it works" %}</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" href="#fattori-section">{% translate "Weather factors" %}</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" href="#etica-section">{% translate "Ethics and safety" %}</a></nav><div class="flex items-center gap-space-sm sm:gap-space-md shrink-0">{% include "web_ui/components/language.html" %}<a class="inline-flex items-center gap-space-xs px-space-md py-2 bg-primary text-on-primary font-title-md text-title-md rounded-lg shadow-sm hover:bg-primary-container hover:text-on-primary-container transition-all" data-app-link href="/map/"><span class="hidden sm:inline">{% translate "Open the map" %}</span><span aria-hidden="true" class="material-symbols-outlined text-[18px]">arrow_forward</span></a><div aria-hidden="true" class="hidden sm:block w-8 h-8 shrink-0"></div></div></div></header><main class="w-full pt-16 bg-background"><div class="flex flex-col w-full">
-<!-- Design example notice -->
-<div class="w-full px-4 sm:px-6 lg:px-12 pt-4 bg-surface"><div class="max-w-7xl mx-auto"><p class="px-3 py-2 rounded-lg bg-surface-container-high text-on-surface-variant font-body-sm text-body-sm"><strong class="font-semibold text-on-surface">{% translate "Design example:" %}</strong> <span>{% translate "all values shown here are illustrative and are not from a live forecast." %}</span></p></div></div>
+<header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md min-w-0"><a class="flex items-center gap-space-sm group" data-lang-link href="/">{% include "web_ui/components/logo_mark.html" with mark_class="w-9 h-9 shrink-0 text-primary" %}<span class="font-headline-md text-headline-md tracking-tight text-primary font-serif">Micometeo</span></a></div><nav class="hidden xl:flex items-center gap-space-lg"><a aria-current="page" class="transition-colors text-primary font-title-md relative after:content-[''] after:absolute after:-bottom-1.5 after:left-0 after:w-full after:h-[2px] after:bg-primary" href="#top">{% translate "Home" %}</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" data-app-link href="/map/">{% translate "Map / Explore" %}</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" href="#come-funziona-section">{% translate "How it works" %}</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" href="#fattori-section">{% translate "Weather factors" %}</a><a class="text-on-surface-variant font-body-md text-body-md hover:text-on-surface transition-colors" href="#etica-section">{% translate "Ethics and safety" %}</a></nav><div class="flex items-center gap-space-sm sm:gap-space-md shrink-0">{% include "web_ui/components/language.html" %}<a class="inline-flex items-center gap-space-xs px-space-md py-2 bg-primary text-on-primary font-title-md text-title-md rounded-lg shadow-sm hover:bg-primary-container hover:text-on-primary-container transition-all" data-app-link href="/map/"><span class="hidden sm:inline">{% translate "Open the map" %}</span><span aria-hidden="true" class="material-symbols-outlined text-[18px]">arrow_forward</span></a><div aria-hidden="true" class="hidden sm:block w-8 h-8 shrink-0"></div></div></div></header><main class="w-full pt-16 bg-background"><div class="flex flex-col w-full">
 <!-- SECTION 1: HERO -->
 <section class="relative w-full overflow-hidden px-4 sm:px-6 lg:px-12 py-8 lg:py-16 bg-surface">
 <div aria-hidden="true" class="absolute inset-0 opacity-[0.035] pointer-events-none select-none overflow-hidden">
@@ -67,79 +65,82 @@
 <div class="relative bg-surface-container-low rounded-xl p-4 sm:p-6 lg:p-7 shadow-xl space-y-5">
 <div class="flex items-start justify-between gap-4">
 <div class="space-y-1 min-w-0">
-<span class="inline-block px-2.5 py-0.5 rounded bg-tertiary-container/10 text-on-tertiary-container font-caption-topo text-caption-topo uppercase tracking-wider font-semibold">{% translate "Illustrative example" %}</span>
+{% if older_notice %}<span class="inline-block px-2.5 py-0.5 rounded bg-tertiary-container/10 text-on-tertiary-container font-caption-topo text-caption-topo uppercase tracking-wider font-semibold" data-landing-older>{{ older_notice }}</span>{% endif %}
 <h2 class="font-headline-md text-headline-md text-primary font-serif">{% translate "Abetone, Tuscany" %}</h2>
-<p class="font-caption-topo text-caption-topo text-outline font-mono">{% translate "44.1318° N • 10.6625° E • 1,388 m above sea level" %}</p>
-<p class="font-body-sm text-body-sm text-on-surface-variant">{% translate "Illustrative design coordinate" %}</p>
+{% if hero.coordinates %}<p class="font-caption-topo text-caption-topo text-outline font-mono num">{{ hero.coordinates }}</p>{% endif %}
 </div>
 <div class="w-10 h-10 shrink-0 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary shadow-sm">
 <span class="material-symbols-outlined text-[22px]">forest</span>
 </div>
 </div>
+{% if hero.has_estimate %}
 <div class="p-4 rounded-lg bg-surface-container-lowest shadow-sm space-y-3">
-<div class="flex flex-wrap items-center justify-between gap-2 text-on-surface">
+{% if hero.has_last %}<div class="flex flex-wrap items-center justify-between gap-2 text-on-surface">
 <span class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1.5">
 <span class="material-symbols-outlined text-[16px] text-primary">calendar_today</span>
 <span>{% translate "Two dates compared" %}</span>
 </span>
-<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">{% translate "Today 12 Oct and Thu 15 Oct" %}</span>
-</div>
-<div class="grid grid-cols-2 gap-3 pt-1">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">{{ hero.dates_text }}</span>
+</div>{% endif %}
+<div class="grid {% if hero.has_last %}grid-cols-2{% else %}grid-cols-1{% endif %} gap-3 pt-1">
 <div class="p-3 rounded bg-surface-container-low flex flex-col justify-between min-w-0">
-<span class="font-caption-topo text-caption-topo uppercase text-outline">{% translate "Today, 12 Oct" %}</span>
-<div class="flex items-baseline gap-1 mt-1">
-<span class="font-headline-lg text-headline-lg font-mono text-primary num">42</span>
-<span class="font-title-md text-title-md text-on-surface-variant">%</span>
+<span class="font-caption-topo text-caption-topo uppercase text-outline">{{ hero.first_label }}</span>
+{% if hero.first_percent %}<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-lg text-headline-lg font-mono text-primary num" data-landing-hero-first>{{ hero.first_percent }}</span>
 </div>
 <div class="w-full h-1.5 rounded-full bg-surface-container-highest mt-2 overflow-hidden">
-<div class="h-full bg-primary-container rounded-full" style="width: 42%;"></div>
+<div class="h-full bg-primary-container rounded-full" style="width: {{ hero.first_width }}%;"></div>
+</div>{% else %}<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{% translate "No estimate" %}</p>{% endif %}
 </div>
-</div>
-<div class="p-3 rounded bg-secondary-container/40 flex flex-col justify-between min-w-0">
-<span class="font-caption-topo text-caption-topo uppercase text-secondary">{% translate "Thursday, 15 Oct" %}</span>
-<div class="flex items-baseline gap-1 mt-1">
-<span class="font-headline-lg text-headline-lg font-mono text-on-tertiary-container num">48</span>
-<span class="font-title-md text-title-md text-secondary">%</span>
+{% if hero.has_last %}<div class="p-3 rounded bg-secondary-container/40 flex flex-col justify-between min-w-0">
+<span class="font-caption-topo text-caption-topo uppercase text-secondary">{{ hero.last_label }}</span>
+{% if hero.last_percent %}<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-lg text-headline-lg font-mono text-on-tertiary-container num" data-landing-hero-last>{{ hero.last_percent }}</span>
 </div>
 <div class="w-full h-1.5 rounded-full bg-surface-container-highest mt-2 overflow-hidden">
-<div class="h-full bg-on-tertiary-container rounded-full" style="width: 48%;"></div>
-</div>
-</div>
+<div class="h-full bg-on-tertiary-container rounded-full" style="width: {{ hero.last_width }}%;"></div>
+</div>{% else %}<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{% translate "No estimate" %}</p>{% endif %}
+</div>{% endif %}
 </div>
 </div>
 <div class="flex items-start gap-2.5 p-3 rounded bg-surface-container-high border-l-[3px] border-on-tertiary-container">
 <span class="material-symbols-outlined text-[18px] text-on-tertiary-container shrink-0">info</span>
 <p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed"><strong class="font-semibold text-on-surface">{% translate "Experimental estimate:" %}</strong> <span>{% translate "this percentage is unvalidated. It does not mean your personal chance of finding porcini." %}</span></p>
 </div>
-<div class="space-y-2.5 font-body-sm text-body-sm">
-<div class="flex items-center justify-between gap-3 py-1.5 px-3 rounded bg-surface-container-lowest">
+{% if hero.has_facts %}<div class="space-y-2.5 font-body-sm text-body-sm">
+{% if hero.rain_7 %}<div class="flex items-center justify-between gap-3 py-1.5 px-3 rounded bg-surface-container-lowest">
 <span class="text-on-surface-variant flex items-center gap-2 min-w-0">
 <span class="material-symbols-outlined text-[16px] text-primary shrink-0">rainy</span>
 <span>{% translate "Rain, last 7 days" %}</span>
 </span>
-<span class="font-mono font-medium text-primary num shrink-0">18 mm</span>
-</div>
-<div class="flex items-center justify-between gap-3 py-1.5 px-3 rounded bg-surface-container-lowest">
+<span class="font-mono font-medium text-primary num shrink-0">{{ hero.rain_7 }}</span>
+</div>{% endif %}
+{% if hero.forest %}<div class="flex items-center justify-between gap-3 py-1.5 px-3 rounded bg-surface-container-lowest">
 <span class="text-on-surface-variant flex items-center gap-2 min-w-0">
 <span class="material-symbols-outlined text-[16px] text-primary shrink-0">park</span>
 <span>{% translate "Forest in the square" %}</span>
 </span>
-<span class="font-mono font-medium text-primary num shrink-0">68%</span>
-</div>
-<div class="flex items-center justify-between gap-3 py-1.5 px-3 rounded bg-surface-container-lowest">
+<span class="font-mono font-medium text-primary num shrink-0">{{ hero.forest }}</span>
+</div>{% endif %}
+{% if hero.temperature %}<div class="flex items-center justify-between gap-3 py-1.5 px-3 rounded bg-surface-container-lowest">
 <span class="text-on-surface-variant flex items-center gap-2 min-w-0">
 <span class="material-symbols-outlined text-[16px] text-primary shrink-0">device_thermostat</span>
 <span>{% translate "Modelled temperature" %}</span>
 </span>
-<span class="font-mono font-medium text-primary num text-right">{% translate "13°C, minimum 8°C" %}</span>
+<span class="font-mono font-medium text-primary num text-right">{{ hero.temperature }}</span>
+</div>{% endif %}
+</div>{% endif %}
+{% else %}
+<div class="p-4 rounded-lg bg-surface-container-lowest shadow-sm">
+<p class="font-body-md text-body-md text-on-surface-variant" data-landing-hero-empty>{{ hero.reason }}</p>
 </div>
-</div>
+{% endif %}
 <div class="pt-2 flex flex-wrap items-center justify-between gap-2">
-<span class="font-caption-topo text-caption-topo uppercase text-outline flex items-center gap-1">
+{% if hero.updated %}<span class="font-caption-topo text-caption-topo uppercase text-outline flex items-center gap-1">
 <span class="material-symbols-outlined text-[14px] shrink-0">history</span>
-<span>{% translate "Illustrative update: 12 Oct 2026, 10:30" %}</span>
-</span>
-<a class="font-title-md text-title-md text-primary hover:text-on-tertiary-container transition-colors inline-flex items-center gap-1 group" data-app-link href="/map/">
+<span>{{ hero.updated }}</span>
+</span>{% endif %}
+<a class="font-title-md text-title-md text-primary hover:text-on-tertiary-container transition-colors inline-flex items-center gap-1 group" data-app-link data-landing-hero-link href="{{ hero.map_url }}">
 <span>{% translate "Open Abetone on the map" %}</span>
 <span class="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">arrow_forward</span>
 </a>
@@ -237,7 +238,7 @@
 <span class="material-symbols-outlined text-primary text-[24px]">history_toggle_off</span>
 </div>
 <h3 class="font-title-md text-title-md text-primary">{% translate "Rain of recent days" %}</h3>
-<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "We count the rain that fell in the last 7, 14 and 21 completed days. These are past totals, not future rain. In the Abetone example they are 18, 37 and 54 mm." %}</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "We count the rain that fell in the last 7, 14 and 21 completed days. These are past totals, not future rain." %}{% if hero.rain_sentence %} {{ hero.rain_sentence }}{% endif %}</p>
 <div class="pt-2">
 <span class="inline-flex items-center gap-1 font-caption-topo text-caption-topo uppercase text-outline">
 <span class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span> <span>{% translate "History of 7, 14 and 21 days" %}</span>
@@ -304,14 +305,14 @@
 </div>
 </div>
 </section>
-<!-- SECTION 4: ILLUSTRATIVE AREAS -->
+<!-- SECTION 4: EXAMPLE AREAS -->
 <section class="w-full px-4 sm:px-6 lg:px-12 py-12 bg-surface-container-low">
 <div class="max-w-7xl mx-auto space-y-12">
 <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
 <div class="space-y-3 max-w-2xl">
-<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline">{% translate "Illustrative examples" %}</p>
+<p class="font-caption-topo text-caption-topo uppercase tracking-wider text-outline">{% translate "Examples from the latest update" %}</p>
 <h2 class="font-headline-lg-mobile text-headline-lg-mobile sm:text-headline-lg text-primary font-serif">{% translate "Forest areas of Tuscany" %}</h2>
-<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "Four forest zones with percentages made up for the design. They show how the map looks and are not forecasts." %}</p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "One fixed square in each of four forest areas, with its estimate for today. The numbers change with every nightly update." %}{% if older_notice %} {{ older_notice }}{% endif %}</p>
 </div>
 <a class="inline-flex items-center gap-2 text-primary hover:text-on-tertiary-container font-title-md text-title-md transition-colors group" data-app-link href="/map/">
 <span>{% translate "Open the map of Tuscany" %}</span>
@@ -323,9 +324,9 @@
 <div class="p-5 space-y-4">
 <div class="flex items-center justify-between gap-2">
 <span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">{% translate "Tuscany" %}</span>
-<div class="flex items-baseline gap-1 shrink-0">
-<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container num">48%</span>
-<span class="font-caption-topo text-caption-topo text-outline">{% translate "example" %}</span>
+<div class="flex items-baseline gap-1 min-w-0 justify-end text-right">
+{% if areas.apennines.has_estimate %}<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container num" data-landing-area="apennines">{{ areas.apennines.percent }}</span>
+<span class="font-caption-topo text-caption-topo text-outline">{{ areas.apennines.date_text }}</span>{% else %}<span class="font-body-sm text-body-sm text-on-surface-variant text-right">{{ areas.apennines.reason }}</span>{% endif %}
 </div>
 </div>
 <div>
@@ -338,7 +339,7 @@
 </div>
 </div>
 <div class="p-5 pt-0">
-<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link href="/map/">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link data-landing-area-link="apennines" href="{{ areas.apennines.map_url }}">
 <span class="material-symbols-outlined text-[16px]">map</span>
 <span>{% translate "Open on the map" %}</span>
 </a>
@@ -348,9 +349,9 @@
 <div class="p-5 space-y-4">
 <div class="flex items-center justify-between gap-2">
 <span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">{% translate "Tuscany, Garfagnana" %}</span>
-<div class="flex items-baseline gap-1 shrink-0">
-<span class="font-title-lg text-title-lg font-mono font-bold text-primary num">39%</span>
-<span class="font-caption-topo text-caption-topo text-outline">{% translate "example" %}</span>
+<div class="flex items-baseline gap-1 min-w-0 justify-end text-right">
+{% if areas.garfagnana.has_estimate %}<span class="font-title-lg text-title-lg font-mono font-bold text-primary num" data-landing-area="garfagnana">{{ areas.garfagnana.percent }}</span>
+<span class="font-caption-topo text-caption-topo text-outline">{{ areas.garfagnana.date_text }}</span>{% else %}<span class="font-body-sm text-body-sm text-on-surface-variant text-right">{{ areas.garfagnana.reason }}</span>{% endif %}
 </div>
 </div>
 <div>
@@ -363,7 +364,7 @@
 </div>
 </div>
 <div class="p-5 pt-0">
-<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link href="/map/">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link data-landing-area-link="garfagnana" href="{{ areas.garfagnana.map_url }}">
 <span class="material-symbols-outlined text-[16px]">map</span>
 <span>{% translate "Open on the map" %}</span>
 </a>
@@ -373,9 +374,9 @@
 <div class="p-5 space-y-4">
 <div class="flex items-center justify-between gap-2">
 <span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">{% translate "Tuscany, Casentino" %}</span>
-<div class="flex items-baseline gap-1 shrink-0">
-<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container num">51%</span>
-<span class="font-caption-topo text-caption-topo text-outline">{% translate "example" %}</span>
+<div class="flex items-baseline gap-1 min-w-0 justify-end text-right">
+{% if areas.casentino.has_estimate %}<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container num" data-landing-area="casentino">{{ areas.casentino.percent }}</span>
+<span class="font-caption-topo text-caption-topo text-outline">{{ areas.casentino.date_text }}</span>{% else %}<span class="font-body-sm text-body-sm text-on-surface-variant text-right">{{ areas.casentino.reason }}</span>{% endif %}
 </div>
 </div>
 <div>
@@ -388,7 +389,7 @@
 </div>
 </div>
 <div class="p-5 pt-0">
-<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link href="/map/">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link data-landing-area-link="casentino" href="{{ areas.casentino.map_url }}">
 <span class="material-symbols-outlined text-[16px]">map</span>
 <span>{% translate "Open on the map" %}</span>
 </a>
@@ -398,9 +399,9 @@
 <div class="p-5 space-y-4">
 <div class="flex items-center justify-between gap-2">
 <span class="font-caption-topo text-caption-topo px-2 py-0.5 rounded bg-surface-container text-primary font-mono uppercase">{% translate "Tuscany, Amiata" %}</span>
-<div class="flex items-baseline gap-1 shrink-0">
-<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container num">44%</span>
-<span class="font-caption-topo text-caption-topo text-outline">{% translate "example" %}</span>
+<div class="flex items-baseline gap-1 min-w-0 justify-end text-right">
+{% if areas.amiata.has_estimate %}<span class="font-title-lg text-title-lg font-mono font-bold text-on-tertiary-container num" data-landing-area="amiata">{{ areas.amiata.percent }}</span>
+<span class="font-caption-topo text-caption-topo text-outline">{{ areas.amiata.date_text }}</span>{% else %}<span class="font-body-sm text-body-sm text-on-surface-variant text-right">{{ areas.amiata.reason }}</span>{% endif %}
 </div>
 </div>
 <div>
@@ -413,7 +414,7 @@
 </div>
 </div>
 <div class="p-5 pt-0">
-<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link href="/map/">
+<a class="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-primary font-title-md text-title-md transition-colors" data-app-link data-landing-area-link="amiata" href="{{ areas.amiata.map_url }}">
 <span class="material-symbols-outlined text-[16px]">map</span>
 <span>{% translate "Open on the map" %}</span>
 </a>
@@ -518,6 +519,6 @@
 </div>
 </div>
 </section>
-</div></main><footer class="w-full bg-surface-container-low pt-space-xl pb-space-lg text-on-surface-variant"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12"><div class="p-space-lg mb-space-xl rounded-xl bg-surface-container-high border-l-4 border-tertiary-container flex flex-col md:flex-row items-start gap-space-md"><span class="material-symbols-outlined text-on-tertiary-container text-[24px] shrink-0 mt-0.5">info</span><div class="space-y-1"><h4 class="font-title-md text-title-md text-on-surface">{% translate "Before you go into the forest" %}</h4><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "Micometeo estimates are experimental and do not guarantee that porcini or other species will fruit. Mountain and forest environments carry real dangers. Only eat mushrooms whose safety has been checked by ASL mycology inspectors. Check the rules and permits of your region." %}</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-xl mb-space-xl"><div class="space-y-space-sm"><div class="flex items-center gap-space-sm"><div class="w-7 h-7 rounded bg-primary-container text-on-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-[18px]">nature</span></div><span class="font-headline-md text-headline-md tracking-tight text-primary font-serif">Micometeo</span></div><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "A free map with experimental estimates of porcini growth in the forests of Tuscany." %}</p><p class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider">{% translate "Free, no account, no advertising" %}</p></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">{% translate "Data sources" %}</h5><ul class="space-y-space-xs font-body-sm text-body-sm"><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">satellite_alt</span><span class="text-on-surface">{% translate "Copernicus forest map" %}</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">cloudy_snowing</span><span class="text-on-surface">{% translate "Open-Meteo modelled weather" %}</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">map</span><span class="text-on-surface">{% translate "OpenStreetMap map data" %}</span></li></ul></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">{% translate "Navigation" %}</h5><ul class="space-y-space-xs font-body-sm text-body-sm"><li><a class="hover:text-primary transition-colors" href="#come-funziona-section">{% translate "How the estimate is made" %}</a></li><li><a class="hover:text-primary transition-colors" href="#fattori-section">{% translate "Why Micometeo is different" %}</a></li><li><a class="hover:text-primary transition-colors" href="#etica-section">{% translate "Foraging ethics" %}</a></li><li><a class="hover:text-primary transition-colors" data-app-link href="/map/">{% translate "Map of Tuscany" %}</a></li></ul></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">{% translate "Account and favorites" %}</h5><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "Micometeo needs no account and shows no advertising. Favorites stay in your browser and do not sync between devices." %}</p></div></div><div class="pt-space-lg border-t border-surface-container-highest flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-sm font-body-sm text-body-sm text-outline"><p>{% translate "Micometeo, experimental porcini estimates." %}</p><p><strong class="font-semibold">{% translate "Design example:" %}</strong> <span>{% translate "all values shown here are illustrative and are not from a live forecast." %}</span></p></div></div></footer>
+</div></main><footer class="w-full bg-surface-container-low pt-space-xl pb-space-lg text-on-surface-variant"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12"><div class="p-space-lg mb-space-xl rounded-xl bg-surface-container-high border-l-4 border-tertiary-container flex flex-col md:flex-row items-start gap-space-md"><span class="material-symbols-outlined text-on-tertiary-container text-[24px] shrink-0 mt-0.5">info</span><div class="space-y-1"><h4 class="font-title-md text-title-md text-on-surface">{% translate "Before you go into the forest" %}</h4><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "Micometeo estimates are experimental and do not guarantee that porcini or other species will fruit. Mountain and forest environments carry real dangers. Only eat mushrooms whose safety has been checked by ASL mycology inspectors. Check the rules and permits of your region." %}</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-xl mb-space-xl"><div class="space-y-space-sm"><div class="flex items-center gap-space-sm">{% include "web_ui/components/logo_mark.html" with mark_class="w-8 h-8 shrink-0 text-primary" %}<span class="font-headline-md text-headline-md tracking-tight text-primary font-serif">Micometeo</span></div><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "A free map with experimental estimates of porcini growth in the forests of Tuscany." %}</p><p class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider">{% translate "Free, no account, no advertising" %}</p></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">{% translate "Data sources" %}</h5><ul class="space-y-space-xs font-body-sm text-body-sm"><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">satellite_alt</span><span class="text-on-surface">{% translate "Copernicus forest map" %}</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">cloudy_snowing</span><span class="text-on-surface">{% translate "Open-Meteo modelled weather" %}</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">map</span><span class="text-on-surface">{% translate "OpenStreetMap map data" %}</span></li></ul></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">{% translate "Navigation" %}</h5><ul class="space-y-space-xs font-body-sm text-body-sm"><li><a class="hover:text-primary transition-colors" href="#come-funziona-section">{% translate "How the estimate is made" %}</a></li><li><a class="hover:text-primary transition-colors" href="#fattori-section">{% translate "Why Micometeo is different" %}</a></li><li><a class="hover:text-primary transition-colors" href="#etica-section">{% translate "Foraging ethics" %}</a></li><li><a class="hover:text-primary transition-colors" data-app-link href="/map/">{% translate "Map of Tuscany" %}</a></li></ul></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">{% translate "Account and favorites" %}</h5><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "Micometeo needs no account and shows no advertising. Favorites stay in your browser and do not sync between devices." %}</p></div></div><div class="pt-space-lg border-t border-surface-container-highest flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-sm font-body-sm text-body-sm text-outline"><p>{% translate "Micometeo, experimental porcini estimates." %}</p></div></div></footer>
 </div>
 {% endblock %}

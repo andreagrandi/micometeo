@@ -83,6 +83,10 @@ uv run python apps/application/manage.py migrate
 uv run python apps/application/manage.py runserver 127.0.0.1:8010
 ```
 
+`runserver` serves the CSS, JavaScript and logo only when
+`MICOMETEO_DEBUG=true`. With debug off, the pages load without styles and the
+map stays blank. The application has no other static file server yet.
+
 In another terminal, check the API:
 
 ```sh

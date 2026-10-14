@@ -12,8 +12,8 @@ msgstr ""
 msgid "Home"
 msgstr "Home"
 
-msgid "44.1318° N • 10.6625° E • 1,388 m above sea level"
-msgstr "44.1318° N • 10.6625° E • 1.388 m s.l.m."
+msgid "{latitude}° N • {longitude}° E"
+msgstr "{latitude}° N • {longitude}° E"
 
 msgid "Micometeo probability scale"
 msgstr "Scala di Probabilità Micometeo"
@@ -75,12 +75,6 @@ msgstr "Etica e sicurezza"
 msgid "Open the map"
 msgstr "Apri la mappa"
 
-msgid "Design example:"
-msgstr "Esempio di design:"
-
-msgid "all values shown here are illustrative and are not from a live forecast."
-msgstr "tutti i valori mostrati sono illustrativi e non provengono da una previsione in tempo reale."
-
 msgid "Experimental estimate:"
 msgstr "Stima sperimentale:"
 
@@ -129,26 +123,32 @@ msgstr "Toscana"
 msgid "Other regions coming soon"
 msgstr "Altre regioni in arrivo"
 
-msgid "Illustrative example"
-msgstr "Esempio illustrativo"
-
 msgid "Abetone, Tuscany"
 msgstr "Abetone, Toscana"
-
-msgid "Illustrative design coordinate"
-msgstr "Coordinata illustrativa del design"
 
 msgid "Two dates compared"
 msgstr "Due date a confronto"
 
-msgid "Today 12 Oct and Thu 15 Oct"
-msgstr "Oggi 12 ott e gio 15 ott"
+msgid "Today {date}"
+msgstr "Oggi {date}"
 
-msgid "Today, 12 Oct"
-msgstr "Oggi, 12 ott"
+msgid "{first} and {last}"
+msgstr "{first} e {last}"
 
-msgid "Thursday, 15 Oct"
-msgstr "Giovedì, 15 ott"
+msgid "Today, {date}"
+msgstr "Oggi, {date}"
+
+msgid "{weekday}, {date}"
+msgstr "{weekday}, {date}"
+
+msgid "No estimate"
+msgstr "Nessuna stima"
+
+msgid "No estimate has been published yet."
+msgstr "Non è ancora stata pubblicata nessuna stima."
+
+msgid "There is no estimate for this square on this date."
+msgstr "Per questo quadrato non c'è una stima in questa data."
 
 msgid "Rain, last 7 days"
 msgstr "Pioggia, ultimi 7 giorni"
@@ -159,11 +159,11 @@ msgstr "Bosco nel quadrato"
 msgid "Modelled temperature"
 msgstr "Temperatura modellata"
 
-msgid "13°C, minimum 8°C"
-msgstr "13°C, minima 8°C"
+msgid "{mean}°C, minimum {minimum}°C"
+msgstr "{mean}°C, minima {minimum}°C"
 
-msgid "Illustrative update: 12 Oct 2026, 10:30"
-msgstr "Aggiornamento illustrativo: 12 ott 2026, 10:30"
+msgid "Updated {date} at {time}"
+msgstr "Aggiornato il {date} alle {time}"
 
 msgid "Open Abetone on the map"
 msgstr "Apri Abetone nella mappa"
@@ -234,8 +234,11 @@ msgstr "Almeno 10%% di bosco"
 msgid "Rain of recent days"
 msgstr "Pioggia dei giorni scorsi"
 
-msgid "We count the rain that fell in the last 7, 14 and 21 completed days. These are past totals, not future rain. In the Abetone example they are 18, 37 and 54 mm."
-msgstr "Contiamo la pioggia caduta negli ultimi 7, 14 e 21 giorni completati. Sono totali del passato, non pioggia futura. Nell'esempio di Abetone sono 18, 37 e 54 mm."
+msgid "We count the rain that fell in the last 7, 14 and 21 completed days. These are past totals, not future rain."
+msgstr "Contiamo la pioggia caduta negli ultimi 7, 14 e 21 giorni completati. Sono totali del passato, non pioggia futura."
+
+msgid "At Abetone they are {seven}, {fourteen} and {twenty_one} mm."
+msgstr "Ad Abetone sono {seven}, {fourteen} e {twenty_one} mm."
 
 msgid "History of 7, 14 and 21 days"
 msgstr "Storico di 7, 14 e 21 giorni"
@@ -312,20 +315,17 @@ msgstr "Marrone chiaro intenso."
 msgid "Squares with no estimate, because data is missing or forest is under 10%%, look different and come with a written reason. The map never shows 0%% in place of missing data."
 msgstr "I quadrati senza stima, per dati mancanti o per meno del 10%% di bosco, hanno un aspetto a parte e una spiegazione a parole. La mappa non mostra mai 0%% al posto di un dato mancante."
 
-msgid "Illustrative examples"
-msgstr "Esempi illustrativi"
+msgid "Examples from the latest update"
+msgstr "Esempi dall'ultimo aggiornamento"
 
 msgid "Forest areas of Tuscany"
 msgstr "Aree boschive della Toscana"
 
-msgid "Four forest zones with percentages made up for the design. They show how the map looks and are not forecasts."
-msgstr "Quattro zone boscose con percentuali inventate per il design. Servono a mostrare come appare la mappa, non sono previsioni."
+msgid "One fixed square in each of four forest areas, with its estimate for today. The numbers change with every nightly update."
+msgstr "Un quadrato fisso in ciascuna di quattro zone boscose, con la sua stima per oggi. I numeri cambiano a ogni aggiornamento notturno."
 
 msgid "Open the map of Tuscany"
 msgstr "Apri la mappa della Toscana"
-
-msgid "example"
-msgstr "esempio"
 
 msgid "Tuscan Apennines"
 msgstr "Appennino Toscano"

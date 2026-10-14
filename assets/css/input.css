@@ -148,14 +148,10 @@ body:has(.app) {
   order: 1;
 }
 .logo {
-  fill: none;
+  color: var(--parchment-200);
   flex: none;
-  height: 28px;
-  stroke: var(--parchment-200);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.8;
-  width: 28px;
+  height: 36px;
+  width: 36px;
 }
 .brand-text {
   display: flex;

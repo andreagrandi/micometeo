@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import re
 from datetime import date
 
 import pytest
 from django.test import Client, override_settings
 from django.urls import reverse
 
+from tests.app.test_map_api import MAP_DATE, map_fixture, publish_run  # noqa: F401
+from web_ui import landing_examples
 from web_ui.formatting import format_date, format_measurement
 
 
@@ -22,6 +25,7 @@ FIXTURE_STATES = (
 )
 
 
+@pytest.mark.django_db
 def test_anonymous_visitor_reaches_landing_and_map() -> None:
     client = Client()
 
@@ -34,12 +38,13 @@ def test_anonymous_visitor_reaches_landing_and_map() -> None:
     assert 'data-map-app' in map_response.content.decode()
 
 
+@pytest.mark.django_db
 def test_italian_landing_restores_sample_and_translates_percentage_copy() -> None:
     response = Client(HTTP_ACCEPT_LANGUAGE="it-IT,it;q=0.9").get(path="/")
     body = response.content.decode()
 
     assert response.status_code == 200
-    assert "1.388 m s.l.m." in body
+    assert "1.388 m s.l.m." not in body
     assert "Scala di Probabilità Micometeo" in body
     assert body.count("data-probability-card") == 4
     assert "Sfuggente / Secco" in body
@@ -53,18 +58,20 @@ def test_italian_landing_restores_sample_and_translates_percentage_copy() -> Non
     assert '<svg class="language-icon" width="20" height="20"' in body
 
 
+@pytest.mark.django_db
 def test_english_landing_keeps_translated_sample_and_probability_scale() -> None:
     response = Client(HTTP_ACCEPT_LANGUAGE="en-GB,en;q=0.9").get(path="/")
     body = response.content.decode()
 
     assert response.status_code == 200
-    assert "1,388 m above sea level" in body
+    assert "1,388 m above sea level" not in body
     assert "Micometeo probability scale" in body
     assert body.count("data-probability-card") == 4
     assert "At least 10% forest" in body
     assert "%%" not in body
 
 
+@pytest.mark.django_db
 def test_italian_landing_names_tuscany_and_other_regions_coming_soon() -> None:
     response = Client(HTTP_ACCEPT_LANGUAGE="it-IT,it;q=0.9").get(path="/")
     body = response.content.decode()
@@ -77,6 +84,7 @@ def test_italian_landing_names_tuscany_and_other_regions_coming_soon() -> None:
         assert text not in body
 
 
+@pytest.mark.django_db
 def test_english_landing_names_tuscany_and_other_regions_coming_soon() -> None:
     response = Client(HTTP_ACCEPT_LANGUAGE="en-GB,en;q=0.9").get(path="/")
     body = response.content.decode()
@@ -258,3 +266,81 @@ def test_api_response_keeps_fixed_language_headers() -> None:
     assert response.status_code in {200, 503}
     assert "Accept-Language" not in response.get("Vary", "")
     assert "Content-Language" not in response
+
+
+ILLUSTRATIVE_TEXTS = (
+    "illustrat",
+    "design example",
+    "esempio di design",
+    "made up",
+    "inventate",
+    "abetone example",
+    "nell'esempio",
+)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("language", ["en-GB,en;q=0.9", "it-IT,it;q=0.9"])
+def test_landing_shows_no_illustrative_text_in_either_language(language: str) -> None:
+    body = Client(HTTP_ACCEPT_LANGUAGE=language).get(path="/").content.decode().lower()
+
+    for text in ILLUSTRATIVE_TEXTS:
+        assert text not in body
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("language", "reason"),
+    [
+        ("en-GB,en;q=0.9", "No estimate has been published yet."),
+        ("it-IT,it;q=0.9", "Non è ancora stata pubblicata nessuna stima."),
+    ],
+)
+def test_landing_shows_no_percentage_and_a_reason_without_a_published_run(
+    language: str, reason: str
+) -> None:
+    body = Client(HTTP_ACCEPT_LANGUAGE=language).get(path="/").content.decode()
+
+    assert reason in body
+    assert "data-landing-hero-first" not in body
+    assert "data-landing-hero-last" not in body
+    assert "data-landing-area=" not in body
+    assert "data-landing-older" not in body
+    assert body.count('href="/map/"') >= 5
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize("language", ["en-GB,en;q=0.9", "it-IT,it;q=0.9"])
+def test_landing_cards_show_the_values_the_squares_api_returns(
+    map_fixture: dict[str, object], monkeypatch: pytest.MonkeyPatch, language: str,  # noqa: F811
+) -> None:
+    cells = map_fixture["cells"]
+    ids = [cell.grid_build_cell.cell.cell_id for cell in cells]
+    publish_run(fixture=map_fixture, updates={"44.00,11.00": map_fixture["new_update"]})
+    today = date(year=2026, month=10, day=13)
+    monkeypatch.setattr("weather_on_demand.services.italian_assessment_date", lambda *args, **kwargs: today)
+    monkeypatch.setattr(landing_examples, "HERO_SQUARE", ids[0])
+    monkeypatch.setattr(
+        landing_examples,
+        "AREA_SQUARES",
+        {"apennines": ids[0], "garfagnana": ids[3], "casentino": ids[1], "amiata": ids[2]},
+    )
+    client = Client(HTTP_ACCEPT_LANGUAGE=language)
+    api = client.get(
+        path=f"/api/v1/squares?bbox={map_fixture['bbox']}&target_date={today.isoformat()}"
+    ).json()
+    by_id = {feature["id"]: feature["properties"] for feature in api["features"]}
+
+    body = client.get(path="/").content.decode()
+
+    assert by_id[ids[0]]["percentage"] == 42
+    hero = re.search(r"data-landing-hero-first>(\d+)%<", body)
+    area = re.search(r'data-landing-area="apennines">(\d+)%<', body)
+    assert hero is not None
+    assert area is not None
+    assert int(hero.group(1)) == by_id[ids[0]]["percentage"]
+    assert int(area.group(1)) == by_id[ids[0]]["percentage"]
+    assert f"/map/?square={ids[0]}&amp;date={today.isoformat()}" in body
+    for key in ("garfagnana", "casentino", "amiata"):
+        assert f'data-landing-area="{key}"' not in body
+    assert "data-landing-older" in body

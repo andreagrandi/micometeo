@@ -224,7 +224,8 @@
     background: params.get("background") || "light",
     overlay: params.get("overlay") !== "false",
     opacity: Number(params.get("opacity") || "60"),
-    foldedLayers: params.get("foldedLayers") === "true",
+    // The layers box starts folded. Only an explicit unfold in the address keeps it open.
+    foldedLayers: params.get("foldedLayers") !== "false",
     foldedLegend: params.get("foldedLegend") === "true",
     foldedDates: params.get("foldedDates") === "true",
     legendMore: params.get("legendMore") === "true",
@@ -780,6 +781,14 @@
     if (!panel) return;
     const open = !panel.classList.contains("is-open");
     if (state.panel && state.panel !== name) closePanel(state.panel);
+    // The phone sheet has no fold button, so opening it must show the folded body.
+    const body = document.getElementById(`${name}-body`);
+    if (open && body?.hidden) {
+      body.hidden = false;
+      panel.classList.remove("is-folded");
+      document.querySelector(`[data-fold="${name}"]`)?.setAttribute("aria-expanded", "true");
+      state[{layers: "foldedLayers", legend: "foldedLegend", dates: "foldedDates"}[name]] = false;
+    }
     panel.classList.toggle("is-open", open);
     button.setAttribute("aria-expanded", String(open));
     state.panel = open ? name : "";

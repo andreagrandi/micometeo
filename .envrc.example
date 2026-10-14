@@ -8,7 +8,8 @@ export GBIF_EMAIL=
 
 # Local Micometeo Django and PostGIS settings. Keep these values local.
 export MICOMETEO_DJANGO_SECRET_KEY=replace-with-a-local-secret
-export MICOMETEO_DEBUG=false
+# runserver serves CSS and JavaScript only when debug is on. Keep it on locally.
+export MICOMETEO_DEBUG=true
 export MICOMETEO_DB_NAME=micometeo
 export MICOMETEO_DB_USER=micometeo
 export MICOMETEO_DB_PASSWORD=replace-with-a-local-password

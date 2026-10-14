@@ -319,7 +319,9 @@ def _switch_language(visitor: Visitor, *, language: str) -> None:
 
 def _open_layers_panel(visitor: Visitor) -> None:
     if not visitor.page.locator("input[name='background'][value='contrast']").is_visible():
-        visitor.press(visitor.page.locator("[data-open-panel='layers']"))
+        # The desktop box starts folded. The phone opens it as a sheet.
+        fold = visitor.page.locator("[data-fold='layers']")
+        visitor.press(fold if fold.is_visible() else visitor.page.locator("[data-open-panel='layers']"))
     expect(visitor.page.locator("input[name='background'][value='contrast']")).to_be_visible()
 
 
