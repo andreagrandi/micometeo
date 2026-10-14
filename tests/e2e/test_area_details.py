@@ -929,6 +929,15 @@ def test_area_detail_uses_map_reason_when_terminal_error_is_generic(
     # The map already holds the first response, so another date loads the changed one.
     page.locator(f".date-btn[data-date='{TARGET_DATES[1]}']").click()
     _wait_for_map_settled(page, TARGET_DATES[1])
+    # The map draws new data after the app stores it, so wait for the changed square on screen.
+    page.wait_for_function(
+        """() => window.MicometeoMap.map.queryRenderedFeatures(
+          window.MicometeoMap.map.project([10.64, 44.13]),
+          {layers: ['micometeo-square-estimates', 'micometeo-square-missing']}
+        ).some((feature) => feature.properties?.cell_id === 'cell-zero'
+          && feature.properties?.state === 'unavailable')""",
+        timeout=10_000,
+    )
     _click_square(page)
     detail = page.locator("aside[data-live-details]")
     expect(detail).to_contain_text(italian_text if language == "it" else english_text, timeout=10_000)
