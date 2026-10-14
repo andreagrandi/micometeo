@@ -225,7 +225,7 @@ def test_favorites_add_point_and_grid_reload_and_reopen(
     page.locator("[data-favorite-id]").filter(has_text="Abetone <north>").locator(
         "[data-favorite-open]"
     ).click()
-    expect(page.locator("aside[data-live-details] h2")).to_have_text("cell-zero")
+    expect(page.locator("aside[data-live-details] h2")).to_have_attribute("data-square-id", "cell-zero")
     grid_requests = requests[grid_request_start:]
     _assert_no_private_metadata(
         grid_requests, [item for item in stored_items if item["kind"] == "grid"]
@@ -342,7 +342,7 @@ def test_favorites_reopen_point_uses_current_result_and_point_source(
     assert page.evaluate("() => window.MicometeoFavorites.read().items.length") == 1
     _open_favorites(page)
     page.locator("[data-favorite-open]").click()
-    expect(page.locator("aside[data-live-details] h2")).to_have_text("cell-zero")
+    expect(page.locator("aside[data-live-details] h2")).to_have_attribute("data-square-id", "cell-zero")
     expect(page.locator("aside[data-live-details]")).to_contain_text("73%")
     assert resolve_requests
     assert resolve_requests[-1]["payload"] == {
@@ -388,7 +388,7 @@ def test_favorites_point_wins_over_delayed_geolocation_callback(
 
     _open_favorites(page)
     page.locator("[data-favorite-open]").click()
-    expect(page.locator("aside[data-live-details] h2")).to_have_text("cell-zero")
+    expect(page.locator("aside[data-live-details] h2")).to_have_attribute("data-square-id", "cell-zero")
     expect(page.locator("[data-map-app]")).to_have_attribute(
         "data-point-latitude", str(POINT_CENTER["latitude"])
     )
@@ -443,7 +443,7 @@ def test_grid_favorite_selects_exact_fresh_cell_and_does_not_use_neighbor(
     page.route("**/api/v1/areas/**", area_route)
     _open_favorites(page)
     page.locator("[data-favorite-open]").click()
-    expect(page.locator("aside[data-live-details] h2")).to_have_text("cell-hundred")
+    expect(page.locator("aside[data-live-details] h2")).to_have_attribute("data-square-id", "cell-hundred")
     assert any("/api/v1/areas/cell-hundred" in request for request in area_requests)
     assert all("/api/v1/areas/cell-zero" not in request for request in area_requests)
 
@@ -706,7 +706,7 @@ def test_favorites_missing_weather_stays_saved_and_opens_unavailable_state(
     _open_favorites(page)
     page.locator("[data-favorite-open]").click()
     detail = page.locator("aside[data-live-details]")
-    expect(detail.locator("h2")).to_have_text("cell-missing")
+    expect(detail.locator("h2")).to_have_attribute("data-square-id", "cell-missing")
     expect(detail).to_contain_text("No estimate")
     _open_favorites(page)
     expect(page.locator("[data-favorite-id] h3")).to_have_text("Missing weather")
