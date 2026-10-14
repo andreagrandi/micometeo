@@ -761,20 +761,31 @@ def test_offscreen_destination_survives_pan_and_date_change(
     search.press("ArrowDown")
     search.press("Enter")
     root = page.locator("[data-map-app]")
+    # Wait until the squares for Pistoia open the details, so the pan below
+    # always starts from the same state on slow and fast browsers.
     page.wait_for_function(
-        "() => document.querySelector('[data-map-app]').dataset.selectedSquare === 'cell-zero'",
+        """
+        () => document.querySelector('[data-map-app]').dataset.selectedSquare === 'cell-zero'
+          && !!document.querySelector('aside[data-live-details]')
+        """,
         timeout=10_000,
     )
     page.wait_for_function("() => !window.MicometeoMap.map.isMoving()")
 
-    page.evaluate(
-        "() => window.MicometeoMap.map.jumpTo({center: [11.5, 43.5], zoom: 12})"
-    )
+    with page.expect_response(
+        lambda response: "/api/v1/squares" in response.url
+        and float(parse_qs(urlparse(response.url).query)["bbox"][0].split(",")[0]) > 11,
+        timeout=10_000,
+    ):
+        page.evaluate(
+            "() => window.MicometeoMap.map.jumpTo({center: [11.5, 43.5], zoom: 12})"
+        )
     page.wait_for_function("() => !window.MicometeoMap.map.isMoving()")
+    # A selected area keeps its open details when it leaves the view.
     page.wait_for_function(
         """
         () => document.querySelector('[data-map-app]').dataset.selectedSquare === 'cell-zero'
-          && !document.querySelector('aside[data-live-details]')
+          && !!document.querySelector('aside[data-live-details]')
         """,
         timeout=10_000,
     )
