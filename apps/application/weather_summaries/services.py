@@ -560,7 +560,7 @@ def store_weather_response(
     start: date | None = None,
     end: date | None = None,
 ) -> StoredWeatherResult:
-    """Store one response and atomically create a ready 29-day snapshot.
+    """Store one response and atomically create a ready 38-day snapshot.
 
     The response range is the only range aggregated. An explicitly supplied
     ready snapshot can fill dates outside that range, while a prior forecast is

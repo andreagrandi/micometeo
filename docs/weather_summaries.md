@@ -62,11 +62,11 @@ windows contain completed days only. The recent method window for target
 days. The target weather is the separate 18 October row.
 
 The service creates one `WeatherSnapshot` for the assessment and references all
-29 daily dates from 21 days before the assessment through seven days after it.
+38 daily dates from 30 days before the assessment through seven days after it.
 It then creates exactly eight `WeatherSummary` rows, with `days_ahead` from
 zero through seven. The snapshot and its links and summaries are written in one
 transaction. A required hourly gap makes its daily row
-`checked_known_missing`. If all 29 dates have rows, the snapshot is still ready
+`checked_known_missing`. If all 38 dates have rows, the snapshot is still ready
 and the affected summary numbers are null. If a whole date has no row, no
 partial snapshot is marked ready.
 
@@ -86,7 +86,7 @@ several responses with separate attempts. `build_weather_snapshot` then accepts
 the explicit IDs of the new rows and one exact previous snapshot. It combines
 the new rows with only dates before both assessment dates in the previous
 snapshot. It rejects rows from another cell or elevation and rejects two new
-rows for the same date. It publishes the snapshot only when all 29 dates are
+rows for the same date. It publishes the snapshot only when all 38 dates are
 present. It never combines hourly arrays from separate responses under one
 attempt.
 
