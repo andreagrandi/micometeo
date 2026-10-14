@@ -6,7 +6,6 @@
     <button class="fold-btn date-fold" type="button" data-fold="dates" aria-expanded="true" aria-controls="dates-body" aria-label="{{ labels.select_date }}">⌃</button>
   </div>
   <div id="dates-body">
-  <p class="date-warning" data-date-warning role="status" hidden></p>
   <ol class="dates" id="dates">
     {% for item in dates %}
     <li><button type="button" class="date-btn{% if forloop.counter0 == date_selected_index|default:0 %} is-selected{% endif %}" data-date="{{ item.iso }}" data-intl-date="{{ item.iso }}" aria-pressed="{% if forloop.counter0 == date_selected_index|default:0 %}true{% else %}false{% endif %}"><span class="d-wd">{{ item.weekday }}</span><span class="d-dm">{{ item.short }}</span><span class="d-pct">{% if item.estimate %}{{ item.estimate }}%{% endif %}</span></button></li>

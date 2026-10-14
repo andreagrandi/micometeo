@@ -106,9 +106,6 @@ msgstr "Calculated"
 msgid "Unavailable"
 msgstr "Unavailable"
 
-msgid "Stored estimate for {target} uses assessment {assessment}; calculated {calculated}."
-msgstr "Stored estimate for {target} uses assessment {assessment}; calculated {calculated}."
-
 msgid "Less than 10% forest. No estimate."
 msgstr "Less than 10% forest. No estimate."
 

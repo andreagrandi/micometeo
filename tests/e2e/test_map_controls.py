@@ -638,7 +638,7 @@ def test_map_shows_actual_mixed_assessment_dates_and_calculation_time(
 
 @pytest.mark.parametrize("language", ["en", "it"])
 @pytest.mark.parametrize("viewport", [(390, 844), (1440, 900)])
-def test_selected_square_loads_exact_date_percentages_and_older_warning(
+def test_selected_square_loads_exact_date_percentages_without_stored_estimate_line(
     page: Page, base_url: str, language: str, viewport: tuple[int, int]
 ) -> None:
     requests = _open_map(page, base_url, language=language, viewport=viewport)
@@ -679,14 +679,15 @@ def test_selected_square_loads_exact_date_percentages_and_older_warning(
     area_requests = [request for request in requests if "/areas/" in request["path"]]
     assert area_requests
     assert {request["query"]["update_id"][0] for request in area_requests} == {"update-current"}
-    expect(page.locator("[data-date-warning]")).to_be_visible()
-    expect(page.locator("[data-date-warning]")).to_contain_text("10:30")
-    warning_box = page.locator("[data-date-warning]").bounding_box()
-    datecol_box = page.locator(".datecol").bounding_box()
-    assert warning_box and datecol_box
-    assert warning_box["height"] > 0
-    assert warning_box["y"] >= datecol_box["y"]
-    assert warning_box["y"] + warning_box["height"] <= datecol_box["y"] + datecol_box["height"]
+    expect(page.locator("[data-date-warning]")).to_have_count(0)
+    expect(page.locator(".datecol")).not_to_contain_text(
+        "Stored estimate" if language == "en" else "stima salvata"
+    )
+    assessment = page.locator(".date-head .date-assess")
+    expect(assessment).to_contain_text("Assessment" if language == "en" else "Valutazione")
+    expect(assessment.locator("strong")).not_to_have_text("-")
+    if viewport[0] >= 900:
+        expect(assessment).to_be_visible()
 
 
 @pytest.mark.parametrize("viewport", [(390, 844), (1440, 900)])
@@ -742,7 +743,6 @@ def test_many_calculated_times_keep_date_strip_within_short_desktop_viewport(
     expect(date_buttons).to_have_count(8)
     update = page.locator("[data-date-update]")
     expect(update).to_be_hidden()
-    expect(page.locator("[data-date-warning]")).to_be_hidden()
     viewport_height = page.evaluate("() => window.innerHeight")
     boxes = [date_buttons.nth(index).bounding_box() for index in range(8)]
     assert all(box and box["y"] + box["height"] <= viewport_height for box in boxes)

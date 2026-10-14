@@ -248,7 +248,6 @@ TEXT = {
         "map_mixed_assessment": "multiple source dates",
         "map_calculated_at": "Calculated",
         "map_date_unavailable": "Unavailable",
-        "map_older_warning": "Stored estimate for {target} uses assessment {assessment}; calculated {calculated}.",
         "map_update": "Update",
         "map_no_forest": "Less than 10% forest. No estimate.",
         "map_missing": "Estimate unavailable because required data is missing.",

@@ -117,19 +117,14 @@
     }).format(new Date(`${value}T12:00:00Z`));
   }
 
-  function updateDateMetadata(features, loading = false, info = null) {
+  function updateDateMetadata(features, loading = false) {
     const assessment = document.querySelector(".date-assess");
     const calculated = document.querySelector("[data-date-update]");
-    const warning = document.querySelector("[data-date-warning]");
     if (!assessment || !calculated) return;
     if (loading) {
       setAssessmentLabel(labels.map_loading || labels.loading);
       calculated.hidden = true;
       calculated.textContent = "";
-      if (warning) {
-        warning.hidden = true;
-        warning.textContent = "";
-      }
       return;
     }
     const values = Array.isArray(features) ? features : [];
@@ -137,7 +132,6 @@
       .map((feature) => ({
         assessment: feature.properties?.assessment_date,
         calculated: feature.properties?.calculated_at,
-        target: feature.properties?.target_date,
       }))
       .filter((record) => record.assessment || record.calculated);
     const assessmentDates = [...new Set(records.map((record) => record.assessment).filter(Boolean))].sort();
@@ -149,18 +143,6 @@
     calculated.textContent = calculatedAt.length
       ? `${labels.map_calculated_at}: ${compactDateRange(calculatedAt, dateTime)}`
       : "";
-    if (warning) {
-      const today = info?.today || root.dataset.assessmentDate;
-      const olderRecords = records.filter((record) => today && record.assessment && record.assessment < today);
-      const olderDates = [...new Set(olderRecords.map((record) => record.assessment).filter(Boolean))].sort();
-      const olderCalculatedAt = [...new Set(olderRecords.map((record) => record.calculated).filter(Boolean))].sort();
-      warning.hidden = !olderDates.length || !olderCalculatedAt.length;
-      warning.textContent = olderDates.length && olderCalculatedAt.length
-        ? (labels.map_older_warning || "").replace("{target}", olderRecords.map((record) => record.target).find(Boolean) || state.date)
-          .replace("{assessment}", compactDateRange(olderDates, date))
-          .replace("{calculated}", compactDateRange(olderCalculatedAt, dateTime))
-        : "";
-    }
   }
 
   const params = new URLSearchParams(window.location.search);
@@ -1485,7 +1467,7 @@
       stateData.displayedRunId = null;
       const keepSelection = state.details && stateData.selected?.properties?.target_date === state.date;
       if (!keepSelection) {
-        updateDateMetadata([], true, stateData.info);
+        updateDateMetadata([], true);
         stateData.estimateGeneration += 1;
         stateData.estimateRequest?.abort();
         stateData.estimateRequest = null;
@@ -3171,7 +3153,7 @@
         stateData.map.getSource("squares")?.setData(stateData.squares);
         stateData.squareSetCount += 1;
         updateStale();
-        updateDateMetadata(stateData.squares.features, false, stateData.info);
+        updateDateMetadata(stateData.squares.features);
         stateData.renderCount += 1;
         const selectionMessage = overview ? "" : handleSelectionAfterData(stateData.squares, runChanged);
         revealSquaresWhenRendered();
@@ -3551,7 +3533,7 @@
         stateData.map.easeTo({ zoom: Math.max(1, Math.min(18, stateData.map.getZoom() + delta)) });
       },
       setDate(targetDate) {
-        if (stateData.squares && stateData.displayedDate !== targetDate) updateDateMetadata([], true, stateData.info);
+        if (stateData.squares && stateData.displayedDate !== targetDate) updateDateMetadata([], true);
         updateStale();
         if (stateData.selected && state.details && targetDate !== stateData.detailData?.selection?.target_date) {
           // Show the loading state at once so old values never sit under the new date.
