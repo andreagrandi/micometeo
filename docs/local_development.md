@@ -352,9 +352,7 @@ test database, so running it with the full suite does not create a second test
 database.
 
 Pull requests and pushes to `master` run the browser checks in chromium only,
-with four parallel workers. Webkit runs every night in
-`.github/workflows/browser-webkit.yml`. Start it by hand from the Actions tab or
-with `gh workflow run browser-webkit.yml`.
+with four parallel workers. CI has no WebKit run.
 
 Run the checks in parallel locally with `uv run pytest tests/e2e -n 4`. This
 uses the browsers from the pytest settings in `pyproject.toml`, which are
