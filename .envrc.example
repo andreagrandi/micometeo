@@ -23,3 +23,7 @@ export MICOMETEO_CSRF_TRUSTED_ORIGINS=http://127.0.0.1:8010,http://localhost:801
 # macOS uses Rasterio's bundled GDAL to avoid a second Arrow library.
 # Use MICOMETEO_GDAL_LIBRARY_PATH only for a compatible custom GDAL build.
 # export GEOS_LIBRARY_PATH=/opt/homebrew/opt/geos/lib/libgeos_c.dylib
+
+# Use the uv project environment, Python 3.14, for python3 and tools.
+export VIRTUAL_ENV="$PWD/.venv"
+PATH_add .venv/bin
