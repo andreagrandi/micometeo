@@ -1,7 +1,8 @@
 # Local acceptance
 
 This report collects the local checks before the owner's acceptance in #63.
-#62 adds the browser, phone and nightly update sections.
+#62 adds the browser, phone and nightly update sections. #63 records the
+owner's decision.
 
 ## Tuscany launch
 
@@ -252,3 +253,83 @@ deployed, if it is deployed. No night ran for this report, so no times,
 counted calls, HTTP attempts, refusals or database sizes are recorded. The
 planned cost of a normal night stays 666 counted calls in 8 HTTP requests,
 from `refresh_tuscany_weather --dry-run` on 14 October.
+
+## Owner acceptance
+
+The owner accepted the local MVP on 14 October 2026, after testing the
+landing page and the map in the browser. The owner wrote: "I tested the app
+and I think it's a good starting point so I would publish it". The decision
+has no conditions. How the application gets published belongs to a later
+epic.
+
+This acceptance does not authorise buying a domain, renting a server,
+changing DNS or deploying the application. Each of those needs its own
+approval from the owner later.
+
+### What the owner saw
+
+| Item | Value |
+|---|---|
+| Revision | `3ce11b7` on master. The application code is the same as in `86a29a6`. `3ce11b7` only changes a test. |
+| Published run | `712b336a-e958-438a-b0b0-5b2ef871023e`, method `porcini-experimental-v4`, assessment date 13 October 2026, calculated on 14 October 2026 at 09:50 Rome time. |
+| Coverage | Tuscany, region 09: 71,031 forest squares in 333 weather cells. |
+| Region boundaries | ISTAT boundaries of 1 January 2026. |
+| Forest map | Copernicus forest map 2018, retrieved on 12 October 2026. |
+| Elevation | Copernicus DEM GLO-30 public AWS copy, 2021, retrieved on 12 October 2026. |
+| Weather | Open-Meteo, retrieved on 13 October 2026 at 11:13 Rome time. |
+| Database | `micometeo_native` on the Compose volume `micometeo_micometeo_pgdata_native`. |
+
+No night ran on 14 October, so the map offered seven dates, 14 to 20 October,
+and labelled them as an older result from 13 October.
+
+### Corrections made during the walkthrough
+
+The owner asked for these changes before deciding. All are on master.
+
+| Request or problem | Change |
+|---|---|
+| The map pages loaded without CSS. | `runserver` serves static files only with debug on. `.envrc.example` now sets `MICOMETEO_DEBUG=true`, and `docs/local_development.md` explains why. |
+| `docker compose up` started an empty database. The data was on the old volume `micometeo_micometeo_pgdata`. | The `micometeo` database was copied into `micometeo_native` on the native volume. The benchmark and test databases stayed on the old volume. |
+| The landing page showed made-up values and design example notices. | The hero card and the four area cards now read the published run. With no run they give a reason and no number. |
+| The new official logo should mark the brand. | The headers use a simple porcino drawing based on the logo. The full logo is in `assets/brand/micometeo-logo.png` for later use. |
+| The map and overlay box should start folded. | It starts folded on desktop. Opening it on the phone unfolds it. |
+| Two WebKit phone journey runs failed after the language switch. | The test read the details state before the details reopened. It now waits for them. The details reopen within one second. |
+
+### Limits the owner accepted
+
+- The percentages are experimental. Nobody has compared them with real finds.
+- Estimates cover Tuscany only.
+- No real iPhone was checked. The owner said on 14 October 2026 that the
+  first release targets desktop.
+- Nightly updates did not run on the local machine. They wait for a server.
+- Place search depends on Photon, which once took 31 seconds.
+- The map canvas does not select an area with Enter.
+
+### Restart the application locally
+
+`.envrc` must contain the local block from `.envrc.example`, with
+`MICOMETEO_DEBUG=true` and `MICOMETEO_DB_NAME=micometeo_native`.
+
+```sh
+direnv allow
+unset DOCKER_DEFAULT_PLATFORM
+docker compose up --wait database
+uv run python apps/application/manage.py runserver 127.0.0.1:8010
+```
+
+Open http://127.0.0.1:8010/ for the landing page and
+http://127.0.0.1:8010/map/ for the map. Stop the server with `Ctrl+C` and
+the database with `docker compose down`.
+
+### Later possibilities
+
+None of these blocks the local MVP. The wider feature list stays in #37.
+
+- Publish the application. A later epic covers this.
+- Run the nightly updates on two consecutive real nights on the server.
+- Check the map on a real iPhone with Safari.
+- Add an about page that uses the full logo.
+- Extend estimates beyond Tuscany.
+- Let a keyboard visitor select an area on the map canvas.
+- Delete the old volume `micometeo_micometeo_pgdata` once nothing on it is
+  needed.
