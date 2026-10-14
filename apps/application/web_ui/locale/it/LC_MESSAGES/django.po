@@ -821,3 +821,12 @@ msgstr "Manca il totale della pioggia recente."
 
 msgid "The terrain source data is missing."
 msgstr "Mancano i dati della fonte del terreno."
+
+msgid "Estimates are not ready yet. Try again later."
+msgstr "Le stime non sono ancora pronte. Riprova più tardi."
+
+msgid "Estimates from {date}."
+msgstr "Stime del {date}."
+
+msgid "This square is outside the area with prepared estimates."
+msgstr "Questo riquadro è fuori dall'area con stime preparate."

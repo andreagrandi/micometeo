@@ -298,7 +298,8 @@ def _install_unavailable_map_route(
 
 def _click_square(page: Page, square_id: str = "cell-zero") -> None:
     page.wait_for_function(
-        """squareId => window.MicometeoMap.map.queryRenderedFeatures(
+        """squareId => document.querySelector('[data-map-app]').dataset.mapStale !== 'true'
+        && window.MicometeoMap.map.queryRenderedFeatures(
           window.MicometeoMap.map.project([
             squareId === 'cell-missing' ? 10.65 : squareId === 'cell-hundred' ? 10.645 : 10.64,
             44.13,

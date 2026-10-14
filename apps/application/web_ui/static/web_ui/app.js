@@ -1312,8 +1312,11 @@
       destinationGeneration: 0,
       debounce: null,
       generation: 0,
-      pendingPolls: 0,
       requestCount: 0,
+      squareSetCount: 0,
+      displayedDate: null,
+      displayedRunId: null,
+      runRecheckId: null,
       renderCount: 0,
       styleLoads: 0,
       ready: false,
@@ -1479,6 +1482,8 @@
 
     function clearSquares() {
       const hadSquares = Boolean(stateData.squares);
+      stateData.displayedDate = null;
+      stateData.displayedRunId = null;
       const keepSelection = state.details && stateData.selected?.properties?.target_date === state.date;
       if (!keepSelection) {
         updateDateMetadata([], true, stateData.info);
@@ -1508,14 +1513,31 @@
       setSquareLayersVisible(false);
       if (!keepSelection) clearVisibleSelection();
       if (hadSquares) emptySource("squares");
+      updateStale();
       stateData.renderCount += 1;
     }
 
-    function revealSquaresWhenRendered(generation) {
+    function updateStale() {
+      const stale = Boolean(stateData.squares) && stateData.displayedDate !== state.date;
+      if (stale) root.dataset.mapStale = "true";
+      else delete root.dataset.mapStale;
+      applyOpacity(state.opacity);
+    }
+
+    function runNote() {
+      const assessment = stateData.info?.run?.assessment_date;
+      const today = stateData.info?.today;
+      if (!assessment || !today || assessment >= today) return "";
+      const shortDate = new Intl.DateTimeFormat(locale(), { day: "numeric", month: "short", timeZone: "Europe/Rome" })
+        .format(new Date(`${assessment}T12:00:00Z`));
+      return (labels.map_run_note || "Estimates from {date}.").replace("{date}", shortDate);
+    }
+
+    function revealSquaresWhenRendered() {
       const map = stateData.map;
       if (!map) return;
       const reveal = () => {
-        if (generation !== stateData.generation || !stateData.squares) return;
+        if (!stateData.squares) return;
         setSquareLayersVisible(true);
         document.getElementById("centre-btn")?.removeAttribute("hidden");
       };
@@ -1530,7 +1552,7 @@
         if (!button) return;
         const current = new Date(`${value}T12:00:00Z`);
         button.dataset.date = value;
-        button.querySelector(".d-wd").textContent = index === 0 ? labels.today : new Intl.DateTimeFormat(locale(), { weekday: "short", timeZone: "Europe/Rome" }).format(current);
+        button.querySelector(".d-wd").textContent = value === stateData.info?.today ? labels.today : new Intl.DateTimeFormat(locale(), { weekday: "short", timeZone: "Europe/Rome" }).format(current);
         button.querySelector(".d-dm").textContent = new Intl.DateTimeFormat(locale(), { day: "numeric", month: "short", timeZone: "Europe/Rome" }).format(current);
         button.querySelector(".d-pct").textContent = "";
       });
@@ -1587,7 +1609,7 @@
         return targetTime >= assessmentTime && targetTime <= assessmentTime + 7 * 86400000;
       });
       targetDates.filter((targetDate) => !eligibleDates.includes(targetDate)).forEach((targetDate) => setDateEstimate(targetDate, null, true));
-      const cacheKey = `${cellId}|${updateId}`;
+      const cacheKey = `${stateData.info?.run?.run_id || ""}|${cellId}|${updateId}`;
       let cached = stateData.estimateCache.get(cacheKey);
       if (!cached) {
         cached = new Map();
@@ -1791,7 +1813,7 @@
       if (stateData.selected) drawSelection(stateData.selected);
       setForestVisible(stateData.forestVisible);
       setSquareLayersVisible(false);
-      if (stateData.squares) revealSquaresWhenRendered(stateData.generation);
+      if (stateData.squares) revealSquaresWhenRendered();
       applyOverlay(state.overlay);
       applyOpacity(state.opacity);
     }
@@ -1817,7 +1839,9 @@
     function applyOpacity(value) {
       const map = stateData.map;
       if (!map) return;
-      const opacity = Math.max(0, Math.min(1, Number(value) / 100));
+      // Estimates of another date stay on screen, dimmed, until the new date arrives.
+      const dimming = root.dataset.mapStale === "true" ? 0.4 : 1;
+      const opacity = Math.max(0, Math.min(1, Number(value) / 100)) * dimming;
       if (map.getLayer("micometeo-square-estimates")) map.setPaintProperty("micometeo-square-estimates", "fill-opacity", opacity);
       if (map.getLayer("micometeo-square-missing")) map.setPaintProperty("micometeo-square-missing", "fill-opacity", opacity);
       if (map.getLayer("micometeo-square-noforest")) map.setPaintProperty("micometeo-square-noforest", "fill-opacity", 0);
@@ -2028,6 +2052,7 @@
         : detail?.code || propertyCode;
       return {
         no_forest: labels.detail_no_forest,
+        outside_prepared_area: labels.detail_outside_prepared_area,
         noforest: labels.detail_no_forest,
         forest_below_minimum: labels.detail_forest_below_minimum,
         missing_forest_data: labels.detail_required_missing,
@@ -2696,6 +2721,7 @@
       summary.className = "live-summary";
       const strong = document.createElement("strong");
       strong.textContent = properties.state === "available" && properties.percentage !== null && properties.percentage !== undefined
+        && (!properties.target_date || properties.target_date === state.date)
         ? `${properties.percentage}%`
         : kind === "wait" ? labels.detail_loading : text;
       summary.append(strong);
@@ -2765,7 +2791,7 @@
       liveMapController?.resize();
     }
 
-    async function loadAreaDetails(feature) {
+    async function loadAreaDetails(feature, silent = false) {
       const properties = feature?.properties || {};
       const squareId = state.square || properties.cell_id || feature?.id || "";
       const targetDate = state.date || properties.target_date || "";
@@ -2776,7 +2802,8 @@
       const controller = new AbortController();
       stateData.detailRequest = controller;
       stateData.detailFeature = feature;
-      renderLoadingDetails(feature);
+      // A silent reload keeps the current panel until the replacement arrives.
+      if (!silent) renderLoadingDetails(feature);
       const query = new URLSearchParams({ target_date: targetDate });
       if (updateId) query.set("update_id", updateId);
       try {
@@ -2852,8 +2879,13 @@
       persistState();
       const loadedDetailMatches = stateData.detailData?.selection?.square_id === state.square
         && stateData.detailData.selection.target_date === state.date
-        && String(stateData.detailData.selection.update_id || "") === String(state.updateId || "");
-      if (!loadedDetailMatches) loadAreaDetails(feature);
+        && String(stateData.detailData.selection.update_id || "") === String(state.updateId || "")
+        && (!stateData.detailData.selection.run_id || !stateData.info?.run?.run_id
+          || stateData.detailData.selection.run_id === stateData.info.run.run_id);
+      // The same square and date with a new update or run keeps the panel until the replacement arrives.
+      const sameSquareAndDate = stateData.detailData?.selection?.square_id === state.square
+        && stateData.detailData.selection.target_date === state.date;
+      if (!loadedDetailMatches) loadAreaDetails(feature, sameSquareAndDate);
       liveMapController?.resize();
     }
 
@@ -3021,10 +3053,11 @@
       return true;
     }
 
-    function handleSelectionAfterData(data) {
+    function handleSelectionAfterData(data, runChanged = false) {
       const selectedId = state.square || stateData.pendingSelectionId;
       if (!selectedId) return "";
-      const selectedUpdateId = state.updateId || stateData.pendingSelectionUpdateId;
+      // A new run brings new update ids, so the old one is not a sign of expiry.
+      const selectedUpdateId = runChanged ? "" : state.updateId || stateData.pendingSelectionUpdateId;
       const feature = data.features.find((item) => item.id === selectedId || item.properties?.cell_id === selectedId);
       if (!feature) {
         if (stateData.pendingFavoriteCell === selectedId) {
@@ -3089,7 +3122,7 @@
       }[reason] || "";
     }
 
-    async function fetchSquares(generation, preserveData = false) {
+    async function fetchSquares(generation) {
       if (!stateData.info || !stateData.map || generation !== stateData.generation) return;
       if (stateData.request) stateData.request.abort();
       const size = visibleSizeKm();
@@ -3118,7 +3151,6 @@
       stateData.request = controller;
       stateData.requestCount += 1;
       const requestGeneration = generation;
-      if (!preserveData) clearSquares();
       message((labels.map_loading_estimates || labels.loading).replace("{date}", fullDate(state.date)), "wait");
       try {
         const { response, body } = await fetchJson(`/api/v1/${overview ? "estimate-overview" : "squares"}?${query}`, { signal: controller.signal });
@@ -3127,35 +3159,46 @@
           const code = body?.code;
           if (code === "view_too_large" || code === "square_limit_exceeded") message(labels.map_zoom_in, "wait");
           else if (code === "outside_coverage") message(labels.map_outside_coverage, "error");
+          else if (code === "forecast_unavailable") message(labels.map_forecast_unavailable, "error", true, () => scheduleFetch(0));
           else if (providerReasonText(code)) message(providerReasonText(code), "error", true, () => scheduleFetch(0));
           else message(labels.map_request_error, "error", true, () => scheduleFetch(0));
           return;
         }
         if (!body || !Array.isArray(body.features)) throw new Error("squares");
         stateData.request = null;
+        if (body.target_date && body.target_date !== state.date) return;
+        const currentRunId = stateData.info.run?.run_id ?? null;
+        if (body.run_id && currentRunId && body.run_id !== currentRunId) {
+          // The info answer is older than this response, so check the info once for this run.
+          if (stateData.runRecheckId !== body.run_id) {
+            stateData.runRecheckId = body.run_id;
+            refreshInfo().catch(() => {});
+          }
+          return;
+        }
         stateData.lastRequest = { targetDate: state.date, bbox, generation: requestGeneration };
         stateData.squares = dataForDate(body, state.date);
+        stateData.displayedDate = state.date;
+        const runChanged = Boolean(stateData.displayedRunId && body.run_id && stateData.displayedRunId !== body.run_id);
+        stateData.displayedRunId = body.run_id ?? null;
         stateData.map.getSource("squares")?.setData(stateData.squares);
+        stateData.squareSetCount += 1;
+        updateStale();
         updateDateMetadata(stateData.squares.features, false, stateData.info);
         stateData.renderCount += 1;
-        const selectionMessage = overview ? "" : handleSelectionAfterData(stateData.squares);
-        revealSquaresWhenRendered(requestGeneration);
-        const pending = stateData.squares.features.some((feature) => feature.properties?.state === "noresultyet" && feature.properties?.reason === "pending");
+        const selectionMessage = overview ? "" : handleSelectionAfterData(stateData.squares, runChanged);
+        revealSquaresWhenRendered();
         const providerMessage = providerReasonMessage(stateData.squares.features);
         if (selectionMessage) {
           message(selectionMessage, "older");
         } else if (providerMessage) {
           message(providerMessage, "error", true, () => scheduleFetch(0));
-        } else if (pending && stateData.pendingPolls < 2) {
-          stateData.pendingPolls += 1;
-          message(labels.map_pending, "wait");
-          window.setTimeout(() => fetchSquares(requestGeneration, true), 2500);
-        } else if (pending) {
-          message(labels.map_pending, "error", true, () => scheduleFetch(0));
         } else if (!stateData.squares.features.length) {
           message(labels.map_no_results, "wait");
         } else {
-          message(overview ? (labels.map_overview || "Area averages. Zoom in for individual scores.") : "");
+          const note = runNote();
+          const overviewText = overview ? (labels.map_overview || "Area averages. Zoom in for individual scores.") : "";
+          message([overviewText, note].filter(Boolean).join(" "), note ? "older" : "wait");
         }
       } catch (error) {
         if (error.name === "AbortError") return;
@@ -3164,14 +3207,12 @@
       }
     }
 
-    function scheduleFetch(delay = 280, alreadyCleared = false) {
+    function scheduleFetch(delay = 280) {
       window.clearTimeout(stateData.debounce);
       stateData.generation += 1;
-      stateData.pendingPolls = 0;
       if (stateData.request) stateData.request.abort();
-      if (!alreadyCleared) clearSquares();
       const generation = stateData.generation;
-      stateData.debounce = window.setTimeout(() => fetchSquares(generation, true), delay);
+      stateData.debounce = window.setTimeout(() => fetchSquares(generation), delay);
     }
 
     function bindMapEvents() {
@@ -3181,11 +3222,8 @@
         stateData.invalidationCount += 1;
         stateData.movementInvalidated = true;
         stateData.generation += 1;
-        stateData.pendingPolls = 0;
         stateData.request?.abort();
         setForestVisible(false);
-        // Keep the panel width stable until the drag has finished.
-        setSquareLayersVisible(false);
       };
       listen("movestart", () => {
         stateData.moveStarts += 1;
@@ -3211,6 +3249,8 @@
         stateData.movementInvalidated = false;
       });
       listen("click", (event) => {
+        // Squares of another date are dimmed and not selectable.
+        if (root.dataset.mapStale === "true") return;
         const features = map.queryRenderedFeatures(event.point, { layers: ["micometeo-square-estimates", "micometeo-square-missing", "micometeo-square-noforest", "micometeo-noforest-line", "micometeo-missing-line"] });
         if (features[0] && event.lngLat) {
           selectFeature(features[0], {
@@ -3221,6 +3261,24 @@
       });
       listen("mouseenter", () => { map.getCanvas().style.cursor = "pointer"; }, "micometeo-square-estimates");
       listen("mouseleave", () => { map.getCanvas().style.cursor = ""; }, "micometeo-square-estimates");
+    }
+
+    async function refreshInfo() {
+      const { response, body: latest } = await fetchJson("/api/v1/info");
+      if (!response.ok) throw new Error("info-refresh");
+      if (latest?.today && latest.today !== stateData.info.today) {
+        window.location.reload();
+        return;
+      }
+      const latestRunId = latest?.run?.run_id ?? null;
+      if (latestRunId === (stateData.info.run?.run_id ?? null) || !latest?.target_dates?.length) return;
+      // A new run replaces the dates, then the view and open details load again and swap together.
+      stateData.info = latest;
+      stateData.runRecheckId = latestRunId;
+      if (!latest.target_dates.includes(state.date)) state.date = latest.target_dates[0];
+      renderDates(latest.target_dates);
+      stateData.estimateCache.clear();
+      scheduleFetch(0);
     }
 
     async function initialise() {
@@ -3235,12 +3293,7 @@
         window.clearTimeout(stateData.dateTimer);
         stateData.dateTimer = window.setTimeout(async function refreshDates() {
           try {
-            const { response, body: latest } = await fetchJson("/api/v1/info");
-            if (!response.ok) throw new Error("info-refresh");
-            if (latest?.today && latest.today !== stateData.info.today) {
-              window.location.reload();
-              return;
-            }
+            await refreshInfo();
           } catch (error) {
             message(labels.map_info_error, "error", true, () => window.location.reload());
           } finally {
@@ -3513,8 +3566,12 @@
         stateData.map.easeTo({ zoom: Math.max(1, Math.min(18, stateData.map.getZoom() + delta)) });
       },
       setDate(targetDate) {
+        if (stateData.squares && stateData.displayedDate !== targetDate) updateDateMetadata([], true, stateData.info);
+        updateStale();
         if (stateData.selected && state.details && targetDate !== stateData.detailData?.selection?.target_date) {
-          loadAreaDetails(stateData.selected);
+          // Show the loading state at once so old values never sit under the new date.
+          invalidateAreaDetails();
+          renderLoadingDetails(stateData.selected);
         }
         if (stateData.ready) scheduleFetch();
       },
@@ -3633,6 +3690,9 @@
           listenerCount: stateData.listenerCount,
           requestCount: stateData.requestCount,
           renderCount: stateData.renderCount,
+          squareSetCount: stateData.squareSetCount,
+          displayedDate: stateData.displayedDate,
+          displayedRunId: stateData.displayedRunId,
           styleLoads: stateData.styleLoads,
           generation: stateData.generation,
           moveStarts: stateData.moveStarts,

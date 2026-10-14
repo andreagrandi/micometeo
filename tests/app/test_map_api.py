@@ -1,4 +1,4 @@
-"""Focused checks for map request validation and stored result states."""
+"""Focused checks for map request validation and the published run states."""
 
 import gzip
 import json
@@ -6,14 +6,11 @@ from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
 from math import isclose
 from pathlib import Path
-from time import monotonic, sleep
-from types import SimpleNamespace
-from urllib.parse import parse_qs, urlsplit
 from uuid import uuid4
 
 import pytest
 from django.contrib.gis.geos import MultiPolygon, Polygon
-from django.core.cache import cache
+from django.core.cache import caches
 from django.db import connection
 from django.test import Client
 from django.test import override_settings
@@ -21,98 +18,111 @@ from django.test.utils import CaptureQueriesContext
 from shapely import transform as shapely_transform
 from shapely.wkb import loads as load_wkb
 
-from estimate_updates.models import EstimateResult, EstimateUpdate
+from estimate_updates.models import (
+    EstimateResult,
+    EstimateUpdate,
+    ForecastRun,
+    ForecastRunCell,
+    PublishedForecastRun,
+)
 from micometeo.finds.grid import format_cell_id
 from map_api.api import (
-    MAX_DAYS_AHEAD,
     MAX_VIEW_HEIGHT_M,
     MAX_VIEW_WIDTH_M,
     GRID_TO_WGS84,
     _coverage,
     _bbox_size_m,
-    _cache_key,
     _parse_bbox,
     _parse_date,
-    _result_properties,
 )
 from national_forest import layer
 from national_forest.models import ForestBuild, ForestCell, ForestChunk
 from national_grid.models import GridBuild, GridBuildCell, GridCell, GridChunk, GridRegion
 from national_terrain.models import TerrainBuild
-import weather_on_demand.services as weather_services
-from weather_requests.models import WeatherRequest, WeatherRequestAttempt
-from weather_summaries.models import WeatherDaily, WeatherSnapshot
+from weather_summaries.models import WeatherSnapshot
 
 
 MAP_DATE = date(2026, 10, 12)
 
 
-class _MapFakeOpenMeteo:
-    """Return a complete deterministic hourly response for #46."""
+def publish_run(
+    *,
+    fixture: dict[str, object],
+    updates: dict[str, EstimateUpdate],
+    assessment_date: date = MAP_DATE,
+    calculation_version: str = "map-calc-1",
+) -> ForecastRun:
+    """Create a published run that holds the given updates and move the pointer to it."""
+    run = ForecastRun.objects.create(
+        region_code="09",
+        assessment_date=assessment_date,
+        status=ForecastRun.Status.PUBLISHED,
+        forest_build=fixture["build"],
+        terrain_build=fixture["terrain"],
+        method_version="map-test",
+        calculation_version=calculation_version,
+        target_dates=[(assessment_date + timedelta(days=offset)).isoformat() for offset in range(8)],
+        expected_cell_count=len(updates),
+        expected_square_count=len(updates),
+        published_at=datetime(2026, 10, 12, 12, tzinfo=UTC),
+    )
+    for cell_key, update in updates.items():
+        ForecastRunCell.objects.create(
+            run=run,
+            cell_key=cell_key,
+            snapshot=update.snapshot,
+            expected_square_count=1,
+            state=ForecastRunCell.State.COMPLETED,
+            update=update,
+        )
+    pointer = PublishedForecastRun.objects.filter(region_code="09").first()
+    if pointer is None:
+        PublishedForecastRun.objects.create(
+            region_code="09",
+            current_run=run,
+            previous_run=None,
+            published_at=datetime(2026, 10, 12, 12, tzinfo=UTC),
+        )
+    else:
+        pointer.previous_run_id = pointer.current_run_id
+        pointer.current_run = run
+        pointer.save(update_fields=["previous_run", "current_run"])
+    return run
 
-    def __init__(self) -> None:
-        self.calls: list[dict[str, str]] = []
 
-    @property
-    def call_count(self) -> int:
-        """Return the number of provider requests made by the service."""
-        return len(self.calls)
-
-    def __call__(self, *, url: str, timeout: float) -> object:
-        del timeout
-        query = {
-            key: values[0]
-            for key, values in parse_qs(urlsplit(url).query).items()
-        }
-        self.calls.append(query)
-
-        def query_time(*, date_name: str, hour_name: str) -> datetime:
-            hour_value = query[hour_name]
-            if "T" in hour_value:
-                parsed = datetime.fromisoformat(hour_value.replace("Z", "+00:00"))
-                return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=UTC)
-            return datetime.fromisoformat(
-                f"{query[date_name]}T{int(hour_value):02d}:00:00+00:00"
-            )
-
-        start = query_time(date_name="start_date", hour_name="start_hour")
-        end = query_time(date_name="end_date", hour_name="end_hour")
-        hours = int((end - start).total_seconds() // 3600) + 1
-        variables = query["hourly"].split(",")
-        units = {
-            "precipitation": "mm",
-            "temperature_2m": "°C",
-            "soil_moisture_0_to_7cm": "m³/m³",
-            "soil_temperature_0_to_7cm": "°C",
-            "et0_fao_evapotranspiration": "mm",
-        }
-        times = [int((start + timedelta(hours=index)).timestamp()) for index in range(hours)]
-        latitudes = query["latitude"].split(",")
-        longitudes = query["longitude"].split(",")
-        return [
-            {
-                "latitude": float(latitude),
-                "longitude": float(longitude),
-                "elevation": 200,
-                "timezone": "GMT",
-                "hourly_units": {variable: units[variable] for variable in variables},
-                "hourly": {
-                    "time": times,
-                    **{
-                        variable: [
-                            1.0
-                            if variable == "precipitation"
-                            else 0.5
-                            if variable == "soil_moisture_0_to_7cm"
-                            else 10.0
-                        ]
-                        * hours
-                        for variable in variables
-                    },
-                },
-            }
-            for latitude, longitude in zip(latitudes, longitudes, strict=True)
-        ]
+def add_update(
+    *,
+    fixture: dict[str, object],
+    cell_key: str,
+    forest_cell: ForestCell,
+    values: bytes,
+    label: str,
+    assessment_date: date = MAP_DATE,
+) -> EstimateUpdate:
+    """Store one update with its snapshot and one result row."""
+    snapshot, _ = WeatherSnapshot.objects.get_or_create(
+        cell_key=cell_key,
+        assessment_date=assessment_date,
+        defaults={
+            "latest_retrieval": datetime(2026, 10, 12, 10, tzinfo=UTC),
+            "source_ids": [f"map:{label}"],
+            "source_attempt_ids": [f"map:{label}-attempt"],
+        },
+    )
+    update = EstimateUpdate.objects.create(
+        cell_key=cell_key,
+        assessment_date=assessment_date,
+        calculated_at=datetime(2026, 10, 12, 9, 30, tzinfo=UTC),
+        snapshot=snapshot,
+        forest_build=fixture["build"],
+        terrain_build=fixture["terrain"],
+        method_version=f"map-test-{label}",
+        row_count=1,
+        input_fingerprint=sha256(f"{label}-{uuid4()}".encode()).hexdigest(),
+        region_code="09",
+    )
+    EstimateResult.objects.create(update=update, forest_cell=forest_cell, values=values)
+    return update
 
 
 def _layer_metadata(*, path: Path, rows: list[dict[str, object]]) -> dict[str, object]:
@@ -129,6 +139,7 @@ def _layer_metadata(*, path: Path, rows: list[dict[str, object]]) -> dict[str, o
 @pytest.fixture
 def map_fixture(tmp_path: Path) -> dict[str, object]:
     """Create a compact national-build fixture with stored map states."""
+    caches["map"].clear()
     suffix = uuid4().hex[:10]
     west, south = 4_300_000, 2_300_000
     polygon = Polygon.from_bbox((west, south, west + 2_000, south + 500))
@@ -155,7 +166,7 @@ def map_fixture(tmp_path: Path) -> dict[str, object]:
     )
     region = GridRegion.objects.create(
         build=grid,
-        istat_code=f"R{suffix}",
+        istat_code="09",
         name=f"Map region {suffix}",
         geometry=multipolygon,
     )
@@ -366,62 +377,6 @@ def map_fixture(tmp_path: Path) -> dict[str, object]:
     }
 
 
-@pytest.mark.django_db
-def test_overview_averages_latest_scores_and_marks_partial_coverage_missing(
-    map_fixture: dict[str, object], monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
-
-    def forbid_weather(**kwargs: object) -> None:
-        pytest.fail("Overview must only read stored estimates")
-
-    monkeypatch.setattr(weather_services, "request_weather", forbid_weather)
-    build = map_fixture["build"]
-    client = Client()
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
-        query = {"bbox": "9,43,12,45", "target_date": MAP_DATE.isoformat()}
-        missing = client.get("/api/v1/estimate-overview", query)
-        assert missing.status_code == 200
-        feature = missing.json()["features"][0]["properties"]
-        assert feature["state"] == "unavailable"
-        assert feature["percentage"] is None
-        assert feature["forest_square_count"] == 2
-        assert feature["scored_square_count"] == 1
-        EstimateResult.objects.create(
-            update=map_fixture["new_update"], forest_cell=map_fixture["cells"][3],
-            values=bytes([80] + [100] * 7),
-        )
-        cache.clear()
-        current = client.get("/api/v1/estimate-overview", query)
-        assert current.json()["features"][0]["properties"]["percentage"] == 40
-        query["target_date"] = (MAP_DATE + timedelta(days=1)).isoformat()
-        tomorrow = client.get("/api/v1/estimate-overview", query)
-        assert tomorrow.json()["features"][0]["properties"]["percentage"] == 71
-        assert tomorrow.json()["features"][0]["properties"]["overview"] is True
-        query["target_date"] = (MAP_DATE + timedelta(days=8)).isoformat()
-        assert client.get("/api/v1/estimate-overview", query).status_code == 400
-
-
-@pytest.mark.django_db
-def test_overview_ignores_region_scoped_updates_until_the_published_run_is_read(
-    map_fixture: dict[str, object], monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
-    build = map_fixture["build"]
-    for update in (map_fixture["old_update"], map_fixture["new_update"]):
-        EstimateResult.objects.update_or_create(
-            update=update, forest_cell=map_fixture["cells"][3], defaults={"values": bytes([11] * 8)},
-        )
-    EstimateUpdate.objects.filter(id=map_fixture["new_update"].id).update(region_code="09")
-    query = {"bbox": "9,43,12,45", "target_date": MAP_DATE.isoformat()}
-
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
-        feature = Client().get("/api/v1/estimate-overview", query).json()["features"][0]["properties"]
-
-    assert feature["percentage"] == 11
-    assert feature["scored_square_count"] == 2
-
-
 def test_bbox_parser_requires_four_finite_wgs84_values() -> None:
     parsed, error = _parse_bbox(value="10,44,10.1,44.1")
 
@@ -556,96 +511,6 @@ def test_coverage_uses_the_transformed_extent_of_stored_cell_geometry() -> None:
     )
 
 
-def test_cache_key_changes_when_an_immutable_update_changes() -> None:
-    first = _cache_key(
-        build_version="forest-v1",
-        bbox=(10.0, 44.0, 10.1, 44.1),
-        target_date=date(2026, 10, 12),
-        weather_items=(
-            ("44.00,10.00", "current", "snapshot-a", "update-a", "ready"),
-        ),
-    )
-    second = _cache_key(
-        build_version="forest-v1",
-        bbox=(10.0, 44.0, 10.1, 44.1),
-        target_date=date(2026, 10, 12),
-        weather_items=(
-            ("44.00,10.00", "current", "snapshot-a", "update-b", "ready"),
-        ),
-    )
-
-    assert first != second
-
-
-def test_result_properties_keep_zero_distinct_from_no_forest() -> None:
-    update_id = uuid4()
-    update = SimpleNamespace(
-        assessment_date=date(2026, 10, 12),
-        public_id=update_id,
-        calculated_at=datetime(2026, 10, 12, 8, 0),
-    )
-    estimate = SimpleNamespace(values=bytes([0] + [20] * (MAX_DAYS_AHEAD)))
-    forest_cell = SimpleNamespace(
-        is_forest=True,
-        forest_share=1.0,
-        missing_reason="",
-        weather_latitude=44.0,
-        weather_longitude=10.0,
-        grid_build_cell=SimpleNamespace(cell=SimpleNamespace(cell_id="stable500m_E1_N2")),
-    )
-    properties = _result_properties(
-        cell=forest_cell,
-        target_date=date(2026, 10, 12),
-        weather_result=SimpleNamespace(state="current", assessment_date=date(2026, 10, 12)),
-        update=update,
-        estimate_result=estimate,
-    )
-
-    assert properties["state"] == "available"
-    assert properties["percentage"] == 0
-    assert properties["unavailable_reason"] is None
-
-    forest_cell.is_forest = False
-    forest_cell.forest_share = 0.0
-    no_forest = _result_properties(
-        cell=forest_cell,
-        target_date=date(2026, 10, 12),
-        weather_result=None,
-        update=None,
-        estimate_result=None,
-    )
-
-    assert no_forest["state"] == "noforest"
-    assert no_forest["percentage"] is None
-    assert no_forest["unavailable_reason"] == "noforest"
-
-
-def test_result_properties_mark_previous_update_outside_its_eight_day_range_expired() -> None:
-    forest_cell = SimpleNamespace(
-        is_forest=True,
-        forest_share=1.0,
-        missing_reason="",
-        weather_latitude=44.0,
-        weather_longitude=10.0,
-        grid_build_cell=SimpleNamespace(cell=SimpleNamespace(cell_id="stable500m_E1_N2")),
-    )
-    update = SimpleNamespace(
-        assessment_date=date(2026, 10, 1),
-        public_id=uuid4(),
-        calculated_at=None,
-    )
-    result = _result_properties(
-        cell=forest_cell,
-        target_date=date(2026, 10, 12),
-        weather_result=SimpleNamespace(state="previous", assessment_date=date(2026, 10, 1)),
-        update=update,
-        estimate_result=SimpleNamespace(values=bytes([25] * 8)),
-    )
-
-    assert result["state"] == "expired"
-    assert result["unavailable_reason"] == "target_outside_update_range"
-
-
 @pytest.mark.django_db
 def test_registered_squares_route_validates_before_database_reads() -> None:
     response = Client().get(
@@ -657,13 +522,13 @@ def test_registered_squares_route_validates_before_database_reads() -> None:
     assert response.json()["code"] == "missing_parameter"
 
 
-def test_broad_view_returns_zoom_in_error_without_weather_call(
+def test_broad_view_returns_zoom_in_error_without_any_database_read(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def fail_if_called(**kwargs: object) -> None:
-        raise AssertionError("broad views must not request weather")
+    def fail_if_called() -> None:
+        raise AssertionError("broad views must not read the published run")
 
-    monkeypatch.setattr("map_api.api.weather_services.request_weather", fail_if_called)
+    monkeypatch.setattr("map_api.published.published_run", fail_if_called)
     monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
     response = Client().get(
         "/api/v1/squares?bbox=10,44,11,44.5&target_date=2026-10-12",
@@ -684,7 +549,6 @@ def test_info_and_forest_layer_routes_expose_contract_and_revalidate(
     assert isinstance(build, ForestBuild)
     assert isinstance(terrain, TerrainBuild)
     monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
-    cache.clear()
 
     with override_settings(
         MICOMETEO_FOREST_BUILD_VERSION=build.version,
@@ -697,7 +561,7 @@ def test_info_and_forest_layer_routes_expose_contract_and_revalidate(
         assert info_body["today"] == MAP_DATE.isoformat()
         assert info_body["target_dates"] == [
             (MAP_DATE + timedelta(days=offset)).isoformat()
-            for offset in range(MAX_DAYS_AHEAD + 1)
+            for offset in range(8)
         ]
         assert "assessment_dates" not in info_body
         assert info_body["max_width_km"] == 60
@@ -860,424 +724,6 @@ def test_forest_layer_etag_changes_when_configured_completed_build_changes(
 
 
 @pytest.mark.django_db(transaction=True)
-def test_squares_route_uses_newest_publication_and_preserves_all_square_states(
-    map_fixture: dict[str, object],
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    build = map_fixture["build"]
-    snapshot = map_fixture["snapshot"]
-    new_update = map_fixture["new_update"]
-    cells = map_fixture["cells"]
-    requester_calls: list[dict[str, object]] = []
-
-    def fake_request_weather(**kwargs: object) -> SimpleNamespace:
-        requester_calls.append(kwargs)
-        return SimpleNamespace(
-            by_cell={
-                "44.00,11.00": SimpleNamespace(
-                    state="current",
-                    assessment_date=MAP_DATE,
-                    snapshot_id=str(snapshot.id),
-                ),
-                "44.10,11.10": SimpleNamespace(
-                    state="not_available_yet",
-                    assessment_date=None,
-                    snapshot_id=None,
-                ),
-            }
-        )
-
-    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
-    monkeypatch.setattr("map_api.api.weather_services.request_weather", fake_request_weather)
-    cache.clear()
-
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
-        client = Client()
-        url = f"/api/v1/squares?bbox={map_fixture['bbox']}&target_date={MAP_DATE.isoformat()}"
-        response = client.get(url, REMOTE_ADDR="198.51.100.7")
-        with CaptureQueriesContext(connection) as cached_queries:
-            repeated_response = client.get(url, REMOTE_ADDR="198.51.100.7")
-
-    assert response.status_code == 200
-    assert repeated_response.status_code == 200
-    assert response["Cache-Control"] == "no-cache"
-    assert response["ETag"] == repeated_response["ETag"]
-    assert not any(
-        EstimateResult._meta.db_table in query["sql"] for query in cached_queries
-    )
-    assert len(requester_calls) == 2
-    assert requester_calls[0]["visitor_id"] == "198.51.100.7"
-    assert requester_calls[0]["assessment_date"] == MAP_DATE
-    assert requester_calls[0]["wait_seconds"] == 3
-    assert requester_calls[0]["forest_build_version"] == build.version
-
-    features = response.json()["features"]
-    assert response.json()["target_date"] == MAP_DATE.isoformat()
-    assert response.json()["square_count"] == len(features)
-    assert [feature["id"] for feature in features] == sorted(
-        feature["id"] for feature in features
-    )
-    assert all(feature["geometry"]["type"] == "Polygon" for feature in features)
-    by_cell_id = {feature["id"]: feature["properties"] for feature in features}
-    assert by_cell_id[cells[0].grid_build_cell.cell.cell_id]["state"] == "available"
-    assert by_cell_id[cells[0].grid_build_cell.cell.cell_id]["percentage"] == 0
-    assert (
-        by_cell_id[cells[0].grid_build_cell.cell.cell_id]["target_date"]
-        == MAP_DATE.isoformat()
-    )
-    assert (
-        by_cell_id[cells[0].grid_build_cell.cell.cell_id]["assessment_date"]
-        == MAP_DATE.isoformat()
-    )
-    assert by_cell_id[cells[0].grid_build_cell.cell.cell_id]["update_id"] == str(
-        new_update.public_id
-    )
-    assert by_cell_id[cells[0].grid_build_cell.cell.cell_id]["weather_cell"] == {
-        "latitude": 44.0,
-        "longitude": 11.0,
-    }
-    assert by_cell_id[cells[0].grid_build_cell.cell.cell_id]["calculated_at"].startswith(
-        "2026-10-12T09:00:00"
-    )
-    assert by_cell_id[cells[1].grid_build_cell.cell.cell_id]["state"] == "noforest"
-    assert by_cell_id[cells[1].grid_build_cell.cell.cell_id]["percentage"] is None
-    assert by_cell_id[cells[1].grid_build_cell.cell.cell_id]["update_id"] is None
-    assert by_cell_id[cells[1].grid_build_cell.cell.cell_id]["weather_cell"] is None
-    assert (
-        by_cell_id[cells[2].grid_build_cell.cell.cell_id]["unavailable_reason"]
-        == "missing_forest_data"
-    )
-    assert by_cell_id[cells[2].grid_build_cell.cell.cell_id]["update_id"] is None
-    assert by_cell_id[cells[2].grid_build_cell.cell.cell_id]["weather_cell"] is None
-    assert by_cell_id[cells[3].grid_build_cell.cell.cell_id]["state"] == "noresultyet"
-    assert by_cell_id[cells[3].grid_build_cell.cell.cell_id]["unavailable_reason"] == "pending"
-    assert by_cell_id[cells[3].grid_build_cell.cell.cell_id]["update_id"] is None
-    assert by_cell_id[cells[3].grid_build_cell.cell.cell_id]["weather_cell"] == {
-        "latitude": 44.1,
-        "longitude": 11.1,
-    }
-    assert (
-        by_cell_id[cells[4].grid_build_cell.cell.cell_id]["unavailable_reason"]
-        == "missing_forest_data"
-    )
-    assert by_cell_id[cells[4].grid_build_cell.cell.cell_id]["update_id"] is None
-    assert by_cell_id[cells[4].grid_build_cell.cell.cell_id]["weather_cell"] is None
-
-
-@pytest.mark.django_db(transaction=True)
-@pytest.mark.parametrize(
-    ("reason_code", "expected_reason", "expected_message_key"),
-    [
-        ("fetch_pending", "pending", "estimate.result_not_ready"),
-        ("fetch_running", "pending", "estimate.result_not_ready"),
-        ("visitor_limit", "visitor_limit", "estimate.visitor_limit"),
-        ("quota_exhausted", "quota_exhausted", "estimate.quota_exhausted"),
-        (
-            "provider_unavailable",
-            "provider_unavailable",
-            "estimate.provider_unavailable",
-        ),
-        ("provider_refused", "provider_refused", "estimate.provider_refused"),
-        ("future_reason", "pending", "estimate.result_not_ready"),
-    ],
-)
-def test_squares_route_reports_reason_for_never_fetched_cell(
-    map_fixture: dict[str, object],
-    monkeypatch: pytest.MonkeyPatch,
-    reason_code: str,
-    expected_reason: str,
-    expected_message_key: str,
-) -> None:
-    build = map_fixture["build"]
-    snapshot = map_fixture["snapshot"]
-    pending_cell = map_fixture["cells"][3]
-
-    def fake_request_weather(**kwargs: object) -> SimpleNamespace:
-        del kwargs
-        return SimpleNamespace(
-            by_cell={
-                "44.00,11.00": SimpleNamespace(
-                    state="current",
-                    assessment_date=MAP_DATE,
-                    snapshot_id=str(snapshot.id),
-                    reason_code="ready",
-                ),
-                "44.10,11.10": SimpleNamespace(
-                    state="not_available_yet",
-                    assessment_date=None,
-                    snapshot_id=None,
-                    reason_code=reason_code,
-                ),
-            }
-        )
-
-    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
-    monkeypatch.setattr("map_api.api.weather_services.request_weather", fake_request_weather)
-    cache.clear()
-
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
-        response = Client().get(
-            f"/api/v1/squares?bbox={map_fixture['bbox']}&target_date={MAP_DATE.isoformat()}"
-        )
-
-    assert response.status_code == 200
-    properties = next(
-        feature["properties"]
-        for feature in response.json()["features"]
-        if feature["id"] == pending_cell.grid_build_cell.cell.cell_id
-    )
-    assert properties["state"] == "noresultyet"
-    assert properties["percentage"] is None
-    assert properties["reason"] == expected_reason
-    assert properties["unavailable_reason"] == expected_reason
-    assert properties["message_key"] == expected_message_key
-    assert properties["assessment_date"] is None
-    assert properties["update_id"] is None
-    assert properties["calculated_at"] is None
-
-
-@pytest.mark.django_db(transaction=True)
-def test_squares_cache_identity_changes_when_never_fetched_reason_changes(
-    map_fixture: dict[str, object],
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    build = map_fixture["build"]
-    snapshot = map_fixture["snapshot"]
-    pending_cell = map_fixture["cells"][3]
-    reason_code = "fetch_pending"
-
-    def fake_request_weather(**kwargs: object) -> SimpleNamespace:
-        del kwargs
-        return SimpleNamespace(
-            by_cell={
-                "44.00,11.00": SimpleNamespace(
-                    state="current",
-                    assessment_date=MAP_DATE,
-                    snapshot_id=str(snapshot.id),
-                    reason_code="ready",
-                ),
-                "44.10,11.10": SimpleNamespace(
-                    state="not_available_yet",
-                    assessment_date=None,
-                    snapshot_id=None,
-                    reason_code=reason_code,
-                ),
-            }
-        )
-
-    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
-    monkeypatch.setattr("map_api.api.weather_services.request_weather", fake_request_weather)
-    cache.clear()
-
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
-        client = Client()
-        url = f"/api/v1/squares?bbox={map_fixture['bbox']}&target_date={MAP_DATE.isoformat()}"
-        first_response = client.get(url)
-        reason_code = "provider_unavailable"
-        second_response = client.get(url)
-
-    assert first_response.status_code == 200
-    assert second_response.status_code == 200
-    assert first_response["ETag"] != second_response["ETag"]
-    assert first_response.content != second_response.content
-    first_properties = next(
-        feature["properties"]
-        for feature in first_response.json()["features"]
-        if feature["id"] == pending_cell.grid_build_cell.cell.cell_id
-    )
-    second_properties = next(
-        feature["properties"]
-        for feature in second_response.json()["features"]
-        if feature["id"] == pending_cell.grid_build_cell.cell.cell_id
-    )
-    assert first_properties["reason"] == "pending"
-    assert second_properties["reason"] == "provider_unavailable"
-
-
-@pytest.mark.django_db(transaction=True)
-def test_squares_route_uses_real_weather_service_and_reuses_provider_fetch(
-    map_fixture: dict[str, object],
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    build = map_fixture["build"]
-    snapshot = map_fixture["snapshot"]
-    fake_transport = _MapFakeOpenMeteo()
-    real_request_weather = weather_services.request_weather
-
-    def request_weather_with_fake_transport(**kwargs: object) -> object:
-        return real_request_weather(
-            transport=fake_transport,
-            clock=lambda: datetime(2026, 10, 12, 12, tzinfo=UTC),
-            **kwargs,
-        )
-
-    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
-    monkeypatch.setattr(
-        "map_api.api.weather_services.request_weather",
-        request_weather_with_fake_transport,
-    )
-    cache.clear()
-
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
-        client = Client()
-        url = f"/api/v1/squares?bbox={map_fixture['bbox']}&target_date={MAP_DATE.isoformat()}"
-        first_response = client.get(url, REMOTE_ADDR="198.51.100.8")
-        deadline = monotonic() + 10
-        while WeatherSnapshot.objects.filter(pipeline_version=2).count() < 2 and monotonic() < deadline:
-            sleep(0.05)
-        second_response = client.get(url, REMOTE_ADDR="198.51.100.8")
-
-    assert first_response.status_code == 200
-    assert second_response.status_code == 200
-    assert fake_transport.call_count == 4
-    assert WeatherRequest.objects.count() == 4
-    assert WeatherRequestAttempt.objects.count() == 4
-    assert WeatherDaily.objects.count() == 76
-    assert WeatherSnapshot.objects.filter(cell_key="44.00,11.00", assessment_date=MAP_DATE).count() == 2
-    assert WeatherDaily.objects.filter(cell_key="44.10,11.10").count() == 38
-    assert WeatherSnapshot.objects.filter(
-        cell_key="44.10,11.10",
-        assessment_date=MAP_DATE,
-    ).count() == 1
-    assert first_response["ETag"] == second_response["ETag"]
-    assert snapshot.cell_key == "44.00,11.00"
-
-
-
-@pytest.mark.django_db(transaction=True)
-def test_squares_cache_identity_changes_for_target_date_and_new_publication(
-    map_fixture: dict[str, object],
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    build = map_fixture["build"]
-    snapshot = map_fixture["snapshot"]
-    cell = map_fixture["cells"][0]
-    requester_calls: list[date] = []
-
-    def fake_request_weather(**kwargs: object) -> SimpleNamespace:
-        requester_calls.append(kwargs["assessment_date"])
-        return SimpleNamespace(
-            by_cell={
-                "44.00,11.00": SimpleNamespace(
-                    state="current",
-                    assessment_date=MAP_DATE,
-                    snapshot_id=str(snapshot.id),
-                ),
-                "44.10,11.10": SimpleNamespace(
-                    state="not_available_yet",
-                    assessment_date=None,
-                    snapshot_id=None,
-                ),
-            }
-        )
-
-    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
-    monkeypatch.setattr("map_api.api.weather_services.request_weather", fake_request_weather)
-    cache.clear()
-
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
-        client = Client()
-        current_url = f"/api/v1/squares?bbox={map_fixture['bbox']}&target_date={MAP_DATE.isoformat()}"
-        next_url = (
-            f"/api/v1/squares?bbox={map_fixture['bbox']}&target_date="
-            f"{(MAP_DATE + timedelta(days=1)).isoformat()}"
-        )
-        current_response = client.get(current_url)
-        next_response = client.get(next_url)
-        EstimateResult.objects.create(
-            update=EstimateUpdate.objects.create(
-                cell_key=snapshot.cell_key,
-                assessment_date=MAP_DATE,
-                calculated_at=datetime(2026, 10, 12, 10, tzinfo=UTC),
-                snapshot=snapshot,
-                forest_build=build,
-                terrain_build=map_fixture["new_update"].terrain_build,
-                method_version="map-test-newer",
-                row_count=1,
-                input_fingerprint=sha256(b"newer-publication").hexdigest(),
-            ),
-            forest_cell=cell,
-            values=bytes([77] * 8),
-        )
-        EstimateResult.objects.create(
-            update=EstimateUpdate.objects.create(
-                cell_key=snapshot.cell_key,
-                assessment_date=MAP_DATE,
-                calculated_at=datetime(2026, 10, 12, 10, tzinfo=UTC),
-                snapshot=snapshot,
-                forest_build=build,
-                terrain_build=map_fixture["new_update"].terrain_build,
-                method_version="map-test-newest-id",
-                row_count=1,
-                input_fingerprint=sha256(b"newest-id-publication").hexdigest(),
-            ),
-            forest_cell=cell,
-            values=bytes([88] * 8),
-        )
-        published_response = client.get(current_url)
-
-    assert current_response.status_code == 200
-    assert next_response.status_code == 200
-    assert published_response.status_code == 200
-    assert current_response["ETag"] != next_response["ETag"]
-    assert next_response.json()["features"][0]["properties"]["percentage"] == 42
-    assert published_response["ETag"] != current_response["ETag"]
-    assert published_response.json()["features"][0]["properties"]["percentage"] == 88
-    assert requester_calls == [MAP_DATE, MAP_DATE, MAP_DATE]
-
-
-@pytest.mark.django_db(transaction=True)
-def test_squares_route_rejects_outside_coverage_before_weather_request(
-    map_fixture: dict[str, object],
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    build = map_fixture["build"]
-    weather_calls: list[object] = []
-
-    def fail_if_called(**kwargs: object) -> None:
-        weather_calls.append(kwargs)
-        raise AssertionError("outside views must not request weather")
-
-    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
-    monkeypatch.setattr("map_api.api.weather_services.request_weather", fail_if_called)
-
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
-        response = Client().get(
-            f"/api/v1/squares?bbox=0,0,0.01,0.01&target_date={MAP_DATE.isoformat()}"
-        )
-
-    assert response.status_code == 400
-    assert response.json()["code"] == "outside_coverage"
-    assert weather_calls == []
-
-
-@pytest.mark.django_db(transaction=True)
-def test_squares_route_rejects_target_date_after_the_eight_supported_dates(
-    map_fixture: dict[str, object],
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    build = map_fixture["build"]
-    weather_calls: list[object] = []
-
-    def fail_if_called(**kwargs: object) -> None:
-        weather_calls.append(kwargs)
-        raise AssertionError("unsupported dates must not request weather")
-
-    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
-    monkeypatch.setattr("map_api.api.weather_services.request_weather", fail_if_called)
-
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
-        response = Client().get(
-            f"/api/v1/squares?bbox={map_fixture['bbox']}&target_date="
-            f"{(MAP_DATE + timedelta(days=8)).isoformat()}"
-        )
-
-    assert response.status_code == 400
-    assert response.json()["code"] == "unsupported_date"
-    assert weather_calls == []
-
-
-@pytest.mark.django_db(transaction=True)
 def test_forest_layer_returns_stable_error_for_a_hash_mismatch(
     map_fixture: dict[str, object],
 ) -> None:
@@ -1293,143 +739,221 @@ def test_forest_layer_returns_stable_error_for_a_hash_mismatch(
 
 
 @pytest.mark.django_db(transaction=True)
-def test_squares_route_marks_previous_weather_outside_range_as_expired(
-    map_fixture: dict[str, object],
-    monkeypatch: pytest.MonkeyPatch,
+def test_squares_route_reads_the_published_run_and_keeps_all_square_states(
+    map_fixture: dict[str, object], monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     build = map_fixture["build"]
-    cell = map_fixture["cells"][0]
-    terrain = map_fixture["new_update"].terrain_build
-    previous_date = MAP_DATE - timedelta(days=11)
-    previous_snapshot = WeatherSnapshot.objects.create(
-        cell_key="44.00,11.00",
-        assessment_date=previous_date,
-        latest_retrieval=datetime(2026, 10, 1, 10, tzinfo=UTC),
-        source_ids=["map:previous"],
-        source_attempt_ids=["map:previous-attempt"],
-    )
-    previous_update = EstimateUpdate.objects.create(
-        cell_key=previous_snapshot.cell_key,
-        assessment_date=previous_date,
-        calculated_at=datetime(2026, 10, 1, 11, tzinfo=UTC),
-        snapshot=previous_snapshot,
-        forest_build=build,
-        terrain_build=terrain,
-        method_version="map-test-previous",
-        row_count=1,
-        input_fingerprint=sha256(b"previous-publication").hexdigest(),
-    )
-    EstimateResult.objects.create(
-        update=previous_update,
-        forest_cell=cell,
-        values=bytes([25] * 8),
-    )
-
-    def fake_request_weather(**kwargs: object) -> SimpleNamespace:
-        return SimpleNamespace(
-            by_cell={
-                "44.00,11.00": SimpleNamespace(
-                    state="previous",
-                    assessment_date=previous_date,
-                    snapshot_id=str(previous_snapshot.id),
-                ),
-                "44.10,11.10": SimpleNamespace(
-                    state="not_available_yet",
-                    assessment_date=None,
-                    snapshot_id=None,
-                ),
-            }
-        )
-
+    cells = map_fixture["cells"]
+    new_update = map_fixture["new_update"]
+    run = publish_run(fixture=map_fixture, updates={"44.00,11.00": new_update})
     monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
-    monkeypatch.setattr("map_api.api.weather_services.request_weather", fake_request_weather)
-    cache.clear()
+    url = f"/api/v1/squares?bbox={map_fixture['bbox']}&target_date={MAP_DATE.isoformat()}"
 
     with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
-        response = Client().get(
-            f"/api/v1/squares?bbox={map_fixture['bbox']}&target_date={MAP_DATE.isoformat()}"
-        )
+        client = Client()
+        response = client.get(url)
+        with CaptureQueriesContext(connection) as cached_queries:
+            repeated = client.get(url)
 
     assert response.status_code == 200
-    properties = response.json()["features"][0]["properties"]
-    assert properties["state"] == "expired"
-    assert properties["unavailable_reason"] == "target_outside_update_range"
-    assert properties["update_id"] == str(previous_update.public_id)
-    assert properties["assessment_date"] == previous_date.isoformat()
+    assert repeated.content == response.content
+    assert response["ETag"] == repeated["ETag"]
+    assert response["Cache-Control"] == "no-cache"
+    assert not any(
+        EstimateResult._meta.db_table in query["sql"]
+        or ForestCell._meta.db_table in query["sql"]
+        for query in cached_queries
+    )
+    body = response.json()
+    assert body["run_id"] == str(run.id)
+    assert body["assessment_date"] == MAP_DATE.isoformat()
+    assert body["target_date"] == MAP_DATE.isoformat()
+    ids = [feature["id"] for feature in body["features"]]
+    assert body["square_count"] == len(ids) == 5
+    assert ids == sorted(ids)
+    assert all(feature["geometry"]["type"] == "Polygon" for feature in body["features"])
+    by_cell_id = {feature["id"]: feature["properties"] for feature in body["features"]}
+
+    available = by_cell_id[cells[0].grid_build_cell.cell.cell_id]
+    assert available["state"] == "available"
+    assert available["percentage"] == 0
+    assert available["unavailable_reason"] is None
+    assert available["target_date"] == MAP_DATE.isoformat()
+    assert available["assessment_date"] == MAP_DATE.isoformat()
+    assert available["update_id"] == str(new_update.public_id)
+    assert available["calculated_at"].startswith("2026-10-12T09:00:00")
+    assert available["weather_cell"] == {"latitude": 44.0, "longitude": 11.0}
+
+    no_forest = by_cell_id[cells[1].grid_build_cell.cell.cell_id]
+    assert no_forest["state"] == "noforest"
+    assert no_forest["percentage"] is None
+    assert no_forest["update_id"] is None
+    assert no_forest["weather_cell"] is None
+    for index in (2, 4):
+        missing = by_cell_id[cells[index].grid_build_cell.cell.cell_id]
+        assert missing["unavailable_reason"] == "missing_forest_data"
+        assert missing["update_id"] is None
+
+    outside = by_cell_id[cells[3].grid_build_cell.cell.cell_id]
+    assert outside["state"] == "unavailable"
+    assert outside["reason"] == "outside_prepared_area"
+    assert outside["unavailable_reason"] == "outside_prepared_area"
+    assert outside["message_key"] == "estimate.outside_prepared_area"
+    assert outside["update_id"] is None
+    assert outside["assessment_date"] is None
+    assert outside["weather_cell"] == {"latitude": 44.1, "longitude": 11.1}
 
 
 @pytest.mark.django_db(transaction=True)
-def test_squares_route_keeps_saved_estimate_when_provider_is_unavailable(
-    map_fixture: dict[str, object],
-    monkeypatch: pytest.MonkeyPatch,
+def test_squares_and_overview_return_a_clear_unavailable_error_without_a_published_run(
+    map_fixture: dict[str, object], monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    build = map_fixture["build"]
-    cell = map_fixture["cells"][0]
-    previous_date = MAP_DATE - timedelta(days=1)
-    previous_snapshot = WeatherSnapshot.objects.create(
-        cell_key="44.00,11.00",
-        assessment_date=previous_date,
-        latest_retrieval=datetime(2026, 10, 11, 10, tzinfo=UTC),
-        source_ids=["map:previous"],
-        source_attempt_ids=["map:previous-attempt"],
-    )
-    previous_update = EstimateUpdate.objects.create(
-        cell_key=previous_snapshot.cell_key,
-        assessment_date=previous_date,
-        calculated_at=datetime(2026, 10, 11, 11, tzinfo=UTC),
-        snapshot=previous_snapshot,
-        forest_build=build,
-        terrain_build=map_fixture["new_update"].terrain_build,
-        method_version="map-test-provider-unavailable",
-        row_count=1,
-        input_fingerprint=sha256(b"provider-unavailable-publication").hexdigest(),
-    )
-    EstimateResult.objects.create(
-        update=previous_update,
-        forest_cell=cell,
-        values=bytes([11, 37, 23, 41, 29, 17, 53, 31]),
-    )
-
-    def fake_request_weather(**kwargs: object) -> SimpleNamespace:
-        del kwargs
-        return SimpleNamespace(
-            by_cell={
-                "44.00,11.00": SimpleNamespace(
-                    state="previous",
-                    assessment_date=previous_date,
-                    snapshot_id=str(previous_snapshot.id),
-                    reason_code="provider_unavailable",
-                ),
-                "44.10,11.10": SimpleNamespace(
-                    state="not_available_yet",
-                    assessment_date=None,
-                    snapshot_id=None,
-                    reason_code="fetch_pending",
-                ),
-            }
-        )
-
     monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
-    monkeypatch.setattr("map_api.api.weather_services.request_weather", fake_request_weather)
-    cache.clear()
+    query = {"bbox": map_fixture["bbox"], "target_date": MAP_DATE.isoformat()}
+
+    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=map_fixture["build"].version):
+        client = Client()
+        squares = client.get("/api/v1/squares", query)
+        overview = client.get("/api/v1/estimate-overview", query)
+        info = client.get("/api/v1/info")
+
+    for response in (squares, overview):
+        assert response.status_code == 503
+        assert response.json()["code"] == "forecast_unavailable"
+        assert response.json()["message_key"] == "map.forecast_unavailable"
+    assert info.status_code == 200
+    assert info.json()["run"] is None
+
+
+@pytest.mark.django_db(transaction=True)
+def test_squares_route_rejects_dates_the_published_run_does_not_hold(
+    map_fixture: dict[str, object], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    publish_run(fixture=map_fixture, updates={"44.00,11.00": map_fixture["new_update"]})
+    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE + timedelta(days=2))
+
+    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=map_fixture["build"].version):
+        client = Client()
+        responses = {
+            offset: client.get(
+                "/api/v1/squares",
+                {
+                    "bbox": map_fixture["bbox"],
+                    "target_date": (MAP_DATE + timedelta(days=offset)).isoformat(),
+                },
+            )
+            for offset in (1, 2, 7, 8)
+        }
+
+    assert responses[1].status_code == 400
+    assert responses[1].json()["code"] == "unsupported_date"
+    assert responses[2].status_code == 200
+    assert responses[7].status_code == 200
+    assert responses[8].status_code == 400
+    assert responses[8].json()["details"]["available_dates"][0] == (
+        MAP_DATE + timedelta(days=2)
+    ).isoformat()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_squares_route_rejects_a_view_outside_the_tuscany_extent(
+    map_fixture: dict[str, object], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    publish_run(fixture=map_fixture, updates={"44.00,11.00": map_fixture["new_update"]})
+    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
+
+    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=map_fixture["build"].version):
+        with CaptureQueriesContext(connection) as queries:
+            response = Client().get(
+                f"/api/v1/squares?bbox=0,0,0.01,0.01&target_date={MAP_DATE.isoformat()}"
+            )
+
+    assert response.status_code == 400
+    assert response.json()["code"] == "outside_coverage"
+    assert not any(
+        ForestCell._meta.db_table in query["sql"]
+        or EstimateResult._meta.db_table in query["sql"]
+        for query in queries
+    )
+
+
+@pytest.mark.django_db(transaction=True)
+def test_overview_averages_run_scores_and_marks_a_mixed_group_unavailable(
+    map_fixture: dict[str, object], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
+    build = map_fixture["build"]
+    first = map_fixture["new_update"]
+    run = publish_run(fixture=map_fixture, updates={"44.00,11.00": first})
+    client = Client()
+    query = {"bbox": "9,43,12,45", "target_date": MAP_DATE.isoformat()}
 
     with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
-        response = Client().get(
-            f"/api/v1/squares?bbox={map_fixture['bbox']}&target_date={MAP_DATE.isoformat()}"
-        )
+        only_first = client.get("/api/v1/estimate-overview", query)
+        assert only_first.status_code == 200
+        assert only_first.json()["run_id"] == str(run.id)
+        assert only_first.json()["assessment_date"] == MAP_DATE.isoformat()
+        # The forest square without a result row is not part of the run, so it is left out.
+        feature = only_first.json()["features"][0]["properties"]
+        assert feature["state"] == "available"
+        assert feature["percentage"] == 0
+        assert feature["forest_square_count"] == 1
 
-    assert response.status_code == 200
-    properties = next(
-        feature["properties"]
-        for feature in response.json()["features"]
-        if feature["id"] == cell.grid_build_cell.cell.cell_id
+        second = add_update(
+            fixture=map_fixture,
+            cell_key="44.10,11.10",
+            forest_cell=map_fixture["cells"][3],
+            values=bytes([139] + [100] * 7),
+            label="overview-second",
+        )
+        new_run = publish_run(
+            fixture=map_fixture,
+            updates={"44.00,11.00": first, "44.10,11.10": second},
+            calculation_version="map-calc-2",
+        )
+        mixed = client.get("/api/v1/estimate-overview", query).json()
+        assert mixed["run_id"] == str(new_run.id)
+        feature = mixed["features"][0]["properties"]
+        assert feature["state"] == "unavailable"
+        assert feature["percentage"] is None
+        assert feature["forest_square_count"] == 2
+        assert feature["scored_square_count"] == 1
+        assert feature["assessment_date"] == MAP_DATE.isoformat()
+        query["target_date"] = (MAP_DATE + timedelta(days=1)).isoformat()
+        tomorrow = client.get("/api/v1/estimate-overview", query).json()
+        assert tomorrow["features"][0]["properties"]["percentage"] == 71
+        assert tomorrow["features"][0]["properties"]["overview"] is True
+        assert tomorrow["features"][0]["properties"]["calculated_at"].startswith("2026-10-12T09:")
+        query["target_date"] = (MAP_DATE + timedelta(days=8)).isoformat()
+        assert client.get("/api/v1/estimate-overview", query).status_code == 400
+
+
+@pytest.mark.django_db(transaction=True)
+def test_info_describes_the_published_run_and_the_tuscany_extent(
+    map_fixture: dict[str, object], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run = publish_run(fixture=map_fixture, updates={"44.00,11.00": map_fixture["new_update"]})
+    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE + timedelta(days=3))
+
+    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=map_fixture["build"].version):
+        body = Client().get("/api/v1/info").json()
+
+    assert body["today"] == (MAP_DATE + timedelta(days=3)).isoformat()
+    assert body["run"]["run_id"] == str(run.id)
+    assert body["run"]["assessment_date"] == MAP_DATE.isoformat()
+    assert body["run"]["published_at"].startswith("2026-10-12T12:00:00")
+    assert body["run"]["target_dates"] == [
+        (MAP_DATE + timedelta(days=offset)).isoformat() for offset in range(8)
+    ]
+    assert body["target_dates"] == [
+        (MAP_DATE + timedelta(days=offset)).isoformat() for offset in range(3, 8)
+    ]
+    region = GridRegion.objects.get(istat_code="09", build=map_fixture["build"].grid_build)
+    expected = shapely_transform(
+        load_wkb(bytes(region.geometry.wkb)), GRID_TO_WGS84.transform, interleaved=False,
+    ).bounds
+    coverage = body["coverage"]
+    assert all(
+        isclose(coverage[name], value, abs_tol=1e-7)
+        for name, value in zip(("west", "south", "east", "north"), expected, strict=True)
     )
-    assert properties["state"] == "available"
-    assert properties["percentage"] == 37
-    assert properties["reason"] is None
-    assert properties["unavailable_reason"] is None
-    assert properties["message_key"] == "estimate.available"
-    assert properties["target_date"] == MAP_DATE.isoformat()
-    assert properties["assessment_date"] == previous_date.isoformat()
-    assert properties["update_id"] == str(previous_update.public_id)
-    assert properties["calculated_at"].startswith("2026-10-11T11:00:00")

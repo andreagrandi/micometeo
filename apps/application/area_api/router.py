@@ -7,7 +7,7 @@ from typing import Any
 from uuid import UUID
 
 from django.conf import settings
-from django.http import HttpRequest
+from django.http import HttpRequest, JsonResponse
 from ninja import Field, Router, Schema, Status
 from pyproj import Transformer
 from shapely import transform as shapely_transform
@@ -18,6 +18,7 @@ from config.api_schemas import ApiErrorSchema
 from estimate_updates.contracts import EstimateRead, EstimateReadStatus
 from estimate_updates.models import EstimateUpdate
 from estimate_updates.services import facts_for_estimate, read_estimate
+from map_api import published
 from national_forest.models import ForestBuild, ForestCell
 from national_terrain.models import TerrainCell, TerrainSourceTile
 from weather_requests.eligibility import weather_cell
@@ -52,6 +53,7 @@ class SelectionSchema(Schema):
     assessment_date: date
     days_ahead: int
     update_id: UUID
+    run_id: UUID | None = None
 
 
 class EstimateSchema(Schema):
@@ -881,6 +883,12 @@ def _detail_response(
     )
 
 
+def _detail_json(*, body: dict[str, Any], update_id: UUID) -> JsonResponse:
+    """Answer with a stored body and the published run that holds the update right now."""
+    selection = {**body["selection"], "run_id": published.run_id_for_update(update_id=update_id)}
+    return JsonResponse({**body, "selection": selection})
+
+
 @router.get(
     "/areas/{square_id}",
     response={
@@ -961,6 +969,13 @@ def area_detail(
                 message_key="area.invalid_update_id",
             ),
         )
+    stored = published.cached_detail(
+        update_id=parsed_update,
+        square_id=square_id,
+        target_date=parsed_date,
+    )
+    if stored is not None:
+        return _detail_json(body=stored, update_id=parsed_update)
     update = (
         EstimateUpdate.objects.select_related(
             "snapshot", "forest_build__grid_build", "terrain_build"
@@ -1040,12 +1055,20 @@ def area_detail(
         forest_cell_id=forest_cell.id,
         target_date=parsed_date,
     )
-    return _detail_response(
+    detail = _detail_response(
         update=update,
         forest_cell=forest_cell,
         target_date=parsed_date,
         read=read,
     )
+    body = detail.model_dump(mode="json")
+    published.store_detail(
+        update_id=parsed_update,
+        square_id=square_id,
+        target_date=parsed_date,
+        body=body,
+    )
+    return _detail_json(body=body, update_id=parsed_update)
 
 
 __all__ = [

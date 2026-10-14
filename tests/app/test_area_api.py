@@ -1,16 +1,26 @@
 """Focused checks for selected-square detail responses."""
 
 from datetime import UTC, date, datetime, timedelta
+from hashlib import sha256
 import uuid
 
 import pytest
 from django.contrib.gis.geos import MultiPolygon, Polygon
+from django.core.cache import caches
+from django.db import connection
 from django.test import override_settings
+from django.test.utils import CaptureQueriesContext
 from django.test import Client
 
 from config.api import api
 from estimate_updates.contracts import encode_result_bytes
-from estimate_updates.models import EstimateResult, EstimateUpdate
+from estimate_updates.models import (
+    EstimateResult,
+    EstimateUpdate,
+    ForecastRun,
+    ForecastRunCell,
+    PublishedForecastRun,
+)
 from estimate_updates.services import input_fingerprint
 from map_api.api import router as map_router
 from micometeo.finds.grid import format_cell_id
@@ -1030,6 +1040,58 @@ def test_area_detail_exposes_supported_frost_without_inventing_hail_or_drying(
     assert "drying" not in selected
 
 
+def _other_update(*, update: EstimateUpdate, label: str) -> EstimateUpdate:
+    """Store a second update for the same weather cell so that another run can hold it."""
+    return EstimateUpdate.objects.create(
+        cell_key=update.cell_key,
+        assessment_date=update.assessment_date,
+        calculated_at=update.calculated_at + timedelta(hours=1),
+        snapshot=update.snapshot,
+        forest_build=update.forest_build,
+        terrain_build=update.terrain_build,
+        method_version=f"area-other-{label}",
+        row_count=1,
+        input_fingerprint=sha256(f"area-other-{label}".encode()).hexdigest(),
+    )
+
+
+def _publish_run_for(*, update: EstimateUpdate, calculation_version: str = "area-calc-1") -> ForecastRun:
+    """Publish a run that holds the update and move the pointer to it."""
+    run = ForecastRun.objects.create(
+        region_code="09",
+        assessment_date=update.assessment_date,
+        status=ForecastRun.Status.PUBLISHED,
+        forest_build=update.forest_build,
+        terrain_build=update.terrain_build,
+        method_version=update.method_version,
+        calculation_version=calculation_version,
+        target_dates=[
+            (update.assessment_date + timedelta(days=offset)).isoformat() for offset in range(8)
+        ],
+        expected_cell_count=1,
+        expected_square_count=1,
+        published_at=update.calculated_at,
+    )
+    ForecastRunCell.objects.create(
+        run=run,
+        cell_key=update.cell_key,
+        snapshot=update.snapshot,
+        expected_square_count=1,
+        state=ForecastRunCell.State.COMPLETED,
+        update=update,
+    )
+    pointer = PublishedForecastRun.objects.filter(region_code="09").first()
+    if pointer is None:
+        PublishedForecastRun.objects.create(
+            region_code="09", current_run=run, previous_run=None, published_at=update.calculated_at,
+        )
+    else:
+        pointer.previous_run_id = pointer.current_run_id
+        pointer.current_run = run
+        pointer.save(update_fields=["previous_run", "current_run"])
+    return run
+
+
 @pytest.mark.django_db(transaction=True)
 def test_area_detail_percentage_matches_real_map_square_for_same_update(
     area_fixture: dict[str, object], monkeypatch: pytest.MonkeyPatch
@@ -1040,6 +1102,7 @@ def test_area_detail_percentage_matches_real_map_square_for_same_update(
     assert isinstance(update, EstimateUpdate)
     assert isinstance(snapshot, WeatherSnapshot)
     monkeypatch.setattr("map_api.api._today", lambda: date(2026, 10, 12))
+    run = _publish_run_for(update=update)
     detail = Client().get(
         f"/api/v1/areas/{square_id}",
         {"target_date": "2026-10-12", "update_id": str(update.public_id)},
@@ -1047,25 +1110,6 @@ def test_area_detail_percentage_matches_real_map_square_for_same_update(
     detail_body = detail.json()
     bounds = detail_body["selection"]["bounds"]
 
-    from weather_on_demand.services import CellWeatherResult, WeatherLookupResult
-
-    weather_result = CellWeatherResult(
-        cell_key=snapshot.cell_key,
-        state="current",
-        assessment_date=snapshot.assessment_date,
-        fetched_at=snapshot.latest_retrieval,
-        source="weather:source",
-        snapshot_id=str(snapshot.id),
-        reason_code="ready",
-        full_reason="",
-    )
-    monkeypatch.setattr(
-        "map_api.api.weather_services.request_weather",
-        lambda **kwargs: WeatherLookupResult(
-            assessment_date=snapshot.assessment_date,
-            cells=(weather_result,),
-        ),
-    )
     with override_settings(MICOMETEO_FOREST_BUILD_VERSION=update.forest_build.version):
         map_response = Client().get(
             "/api/v1/squares",
@@ -1083,6 +1127,54 @@ def test_area_detail_percentage_matches_real_map_square_for_same_update(
     assert feature["id"] == square_id
     assert feature["properties"]["update_id"] == str(update.public_id)
     assert feature["properties"]["percentage"] == detail_body["estimate"]["whole_percentage"]
+    assert map_response.json()["run_id"] == str(run.id)
+    assert detail_body["selection"]["run_id"] == str(run.id)
+    assert detail_body["selection"]["target_date"] == feature["properties"]["target_date"]
+
+
+@pytest.mark.django_db(transaction=True)
+def test_area_detail_names_the_current_or_previous_run_and_null_for_older_updates(
+    area_fixture: dict[str, object],
+) -> None:
+    update = area_fixture["update"]
+    query = {"target_date": "2026-10-11", "update_id": str(update.public_id)}
+    url = f"/api/v1/areas/{area_fixture['square_id']}"
+
+    unpublished = Client().get(url, query).json()["selection"]["run_id"]
+    first = _publish_run_for(update=update, calculation_version="area-calc-1")
+    as_current = Client().get(url, query).json()["selection"]["run_id"]
+    _publish_run_for(update=_other_update(update=update, label="b"), calculation_version="area-calc-2")
+    as_previous = Client().get(url, query).json()["selection"]["run_id"]
+    _publish_run_for(update=_other_update(update=update, label="c"), calculation_version="area-calc-3")
+    as_older = Client().get(url, query).json()["selection"]["run_id"]
+
+    assert unpublished is None
+    assert as_current == str(first.id)
+    assert as_previous == str(first.id)
+    assert as_older is None
+
+
+@pytest.mark.django_db(transaction=True)
+def test_area_detail_repeated_open_is_served_from_the_shared_cache(
+    area_fixture: dict[str, object],
+) -> None:
+    update = area_fixture["update"]
+    query = {"target_date": "2026-10-11", "update_id": str(update.public_id)}
+    url = f"/api/v1/areas/{area_fixture['square_id']}"
+    client = Client()
+
+    first = client.get(url, query)
+    with CaptureQueriesContext(connection) as queries:
+        second = client.get(url, query)
+    caches["map"].clear()
+    with CaptureQueriesContext(connection) as rebuilt:
+        third = client.get(url, query)
+
+    assert first.status_code == second.status_code == third.status_code == 200
+    assert second.json() == first.json() == third.json()
+    assert len(queries) < 5
+    assert not any(EstimateResult._meta.db_table in query["sql"] for query in queries)
+    assert len(rebuilt) > len(queries)
 
 
 @pytest.mark.django_db(transaction=True)

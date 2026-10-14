@@ -10,15 +10,36 @@ unvalidated. It does not measure a visitor's chance of finding a mushroom.
 
 | Route | Purpose |
 | --- | --- |
-| `GET /info` | Today's Italian date, eight target dates, national coverage and map limits. |
+| `GET /info` | Today's Italian date, the published run, its dates, the Tuscany coverage and map limits. |
 | `GET /forest-layer` | The simplified national forest polygons, with no estimates or weather request. |
-| `GET /squares?bbox=west,south,east,north&target_date=YYYY-MM-DD` | Squares and stored estimates for the visible map. |
+| `GET /squares?bbox=west,south,east,north&target_date=YYYY-MM-DD` | Squares and stored estimates of the published run for the visible map. |
+| `GET /estimate-overview?bbox=west,south,east,north&target_date=YYYY-MM-DD` | Average scores of the published run in larger areas, for views wider than the square limit. |
 | `GET /areas/{square_id}?target_date=YYYY-MM-DD&update_id=UUID` | One exact saved estimate and the inputs behind it. Omit the UUID only to classify a square with no selected update. |
 
 Coordinates use WGS84 longitude and latitude. Square IDs identify the national
-500 m grid. Dates use Europe/Rome. The map accepts today through seven days
-ahead. Details accept the eight original dates of the requested update,
-including a retained previous assessment.
+500 m grid. Dates use Europe/Rome. The map accepts the dates of the published
+run from today onwards. Details accept the eight original dates of the
+requested update, including a retained previous assessment.
+
+## Published run
+
+The map, overview and details read one published Tuscany run, prepared at
+night by `run_tuscany_forecast`. A page request never fetches weather, never
+downloads habitat data and never calculates an estimate. The run pointer is
+read from the database on every request, and it changes only when a new run
+is published. A failed or incomplete run leaves the previous run on the map
+with its real assessment date. A value for 16 October always comes from the
+day of the run that is 16 October, so a day-old run is never moved forward.
+
+Finished responses and the data behind them are kept in the `map` cache, a
+database table shared by every process. Its entries do not expire. They are
+keyed by run ID, target date, view or 10 km tile, and forest build, so a new
+run uses new keys and never mixes with old entries.
+`MICOMETEO_MAP_CACHE_MAX_ENTRIES` bounds the table, 50,000 entries by default.
+An evicted entry is rebuilt from the database. After each publication a
+background task fills the cache for the new run, and
+`manage.py warm_published_map_cache` does the same by hand. Both accept only
+Tuscany.
 
 ## Metadata and forest layer
 
@@ -27,16 +48,21 @@ curl http://127.0.0.1:8010/api/v1/info
 curl --compressed http://127.0.0.1:8010/api/v1/forest-layer
 ```
 
-The metadata supplies `today`, `target_dates`, `coverage`,
+The metadata supplies `today`, `target_dates`, `run`, `coverage`,
 `forest_build_version`, `max_width_km`, `max_height_km`, `max_squares` and
-`forest_layer`. The layer descriptor contains its URL, SHA-256 and compressed
+`forest_layer`. `run` holds `run_id`, `assessment_date`, `published_at` and
+the eight `target_dates` of the published run, or `null` when no run is
+published. The top-level `target_dates` are the run dates from today
+onwards, so a run published yesterday offers seven dates. Without a run they
+are today and the next seven days. The layer descriptor contains its URL, SHA-256 and compressed
 and uncompressed sizes. The `attributions` list contains the ISTAT boundaries,
 Copernicus forest, Copernicus terrain when its configured completed build uses
 the same grid, and Open-Meteo. Each item has `name`, `credit`, `licence` and
 `url`. The website shows each `credit` and `licence` and links source text to
 `url`. Missing values are `null` when an older build did not store that field.
-Coverage is the national grid's bounding box, not a promise that every point
-inside the box is Italian land.
+Coverage is the bounding box of the Tuscany region of the grid, or the
+national grid's bounding box when the grid has no Tuscany region. It is not a
+promise that every point inside the box has estimates.
 
 The forest layer is the immutable artifact recorded by the completed forest
 build. Its only per-polygon value is `forest_share`. The endpoint checks its
@@ -51,7 +77,8 @@ curl --compressed \
 ```
 
 Replace the date with one returned by `/info`. A successful response is a
-GeoJSON `FeatureCollection` with `target_date`, `square_count` and `features`.
+GeoJSON `FeatureCollection` with `run_id`, `assessment_date`, `target_date`,
+`square_count` and `features`.
 Every feature has its square ID, WGS84 polygon and these properties. This is
 an illustrative available-result excerpt:
 
@@ -74,9 +101,9 @@ an illustrative available-result excerpt:
 ```
 
 The response also includes `cell_id`. Copy the feature ID, target date and
-update ID together when opening details. One view can contain updates from
-different assessment dates. An older estimate keeps its original dates and
-calculation time. It never gains a new eighth date when the clock advances.
+update ID together when opening details. Every square of one response comes
+from the same run and assessment date. Each weather cell has its own update
+ID and calculation time.
 `weather_cell` contains the stored weather cell centre for the forest square.
 It is `null` when either coordinate is missing. Use these coordinates directly
 instead of deriving a centre from the displayed polygon.
@@ -85,34 +112,20 @@ instead of deriving a centre from the displayed polygon.
 | --- | --- | --- |
 | `available` | Whole integer, including a valid zero | The stored result is available. |
 | `noforest` | `null` | The square has less than ten percent forest. |
-| `unavailable` | `null` | A required input is missing. The reason identifies it. |
-| `noresultyet` | `null` | Weather or estimate work has not produced a result yet. |
-| `expired` | `null` | The requested day lies outside the saved update's dates. |
+| `unavailable` | `null` | A required input is missing, or the square is outside the prepared area. The reason identifies it. |
 
 For example, no forest has `state: "noforest"` and `reason: "noforest"`.
 A missing old-rain input has `state: "unavailable"` and
-`reason: "older_rain"`. Pending work has `state: "noresultyet"` and
-`reason: "pending"`. None of these means zero percent. The current method
-normally produces values from 5 through 95. The storage and API contracts
-still preserve a valid stored zero.
-
-When no saved estimate exists and weather is still unavailable, `reason` and
-`unavailable_reason` use the same public value. The service maps both
-`fetch_pending` and `fetch_running` to `pending`.
-
-| Reason | Message key | Retry guidance |
-| --- | --- | --- |
-| `pending` | `estimate.result_not_ready` | The fetch is queued or running. Reload after a short delay. |
-| `visitor_limit` | `estimate.visitor_limit` | Wait at least 60 seconds before trying again. |
-| `quota_exhausted` | `estimate.quota_exhausted` | Do not poll automatically. Try later after the provider allowance is available. |
-| `provider_unavailable` | `estimate.provider_unavailable` | Reload later. The worker applies its existing delayed retry when appropriate. |
-| `provider_refused` | `estimate.provider_refused` | Do not poll automatically. Reload later. Some refusals need the server to reopen the request, and a 429 retry can use this reason. |
-
-An unknown weather reason uses `pending` and `estimate.result_not_ready`.
+`reason: "older_rain"`. A forest square that the published run does not
+cover, such as one outside Tuscany, has `state: "unavailable"`,
+`reason: "outside_prepared_area"` and
+`message_key: "estimate.outside_prepared_area"`. None of these means zero
+percent. The current method normally produces values from 5 through 95. The
+storage and API contracts still preserve a valid stored zero.
 
 The provisional view limit is 60 km on each axis and 16,000 squares. Bounds
 must be finite numbers in coordinate range, with west before east and south
-before north. A broader view returns HTTP 400 before any weather work:
+before north. A broader view returns HTTP 400 before any database read:
 
 ```json
 {
@@ -128,17 +141,16 @@ before north. A broader view returns HTTP 400 before any weather work:
 }
 ```
 
-A permitted view asks the weather service for its distinct forest weather
-cells. The service reuses today's completed work or queues the missing work.
-The map waits at most three seconds for weather. It reads stored estimate
-rows after that lookup. Calculation happens in the worker.
+A view that misses the Tuscany coverage returns 400 `outside_coverage`
+without reading squares. Without a published run, `/squares` and
+`/estimate-overview` return 503 `forecast_unavailable`.
 
-The server cache includes the date, bounds, forest build, weather state,
-weather reason, snapshot identities and estimate update UUIDs. A changed
-reason for a never-fetched cell produces a new response and ETag. Responses
-support gzip. Map and forest-layer responses use `Cache-Control: no-cache`,
-so a browser must revalidate them. Their ETags change with the selected update
-or artifact. Full weather histories and contributing facts belong to details
+A permitted view reads its squares from cached 10 km tiles. Missing tiles are
+loaded together with one forest square query and one stored result query. The
+finished body is cached by run, date and bounds, so a repeated view reads one
+cache entry. Responses support gzip. Map and forest-layer responses use
+`Cache-Control: no-cache`, so a browser must revalidate them. Their ETags
+change with the run, date and bounds, or with the artifact. Full weather histories and contributing facts belong to details
 and do not repeat for every polygon.
 
 ## Selected-area details
@@ -160,7 +172,7 @@ It never invents an update or silently chooses the newest one.
 
 | Response group | Stored content |
 | --- | --- |
-| `selection` | Square ID, polygon, bounds, centroid, representative coordinates, target date, assessment date, days ahead and update UUID. |
+| `selection` | Square ID, polygon, bounds, centroid, representative coordinates, target date, assessment date, days ahead, update UUID and `run_id`, the current or previous published run that holds the update, or `null`. |
 | `estimate` | State, `whole_percentage`, unavailable reason, calculation time, method version, `experimental_unvalidated`, availability translation key and `experimental_explanation_key`. |
 | `facts` | Actual method inputs and derived factors, units, inclusive periods, source IDs, completed and forecast day counts and translation keys. |
 | `weather` | Selected-day values, rain totals for the previous 7, 14 and 21 completed days, source metadata, missing values and limitations. |
@@ -172,7 +184,9 @@ for favorites and navigation. Do not replace it with the current map centre.
 Map `properties.percentage` and detail `estimate.whole_percentage` refer to
 the same stored byte. The detail rebuilds facts from that update's exact
 weather snapshot and habitat builds. A later update cannot change a retained
-previous update's explanation.
+previous update's explanation. The finished detail is kept in the `map` cache
+by update UUID, square and date, so the explanation of one square is built
+once. The percentage itself is never recalculated.
 
 A contributing fact has `role_key`, `actual_value`, `unit`, `period_start`,
 `period_end`, `source_id`, `source_ids`, `completed_day_count`,
@@ -220,14 +234,15 @@ also helps inspect an API response.
 | HTTP status | Code | Meaning |
 | --- | --- | --- |
 | 400 | `missing_parameter`, `invalid_bbox`, `invalid_date`, `invalid_update_id`, `invalid_square_id` | Malformed or missing input. |
-| 400 | `unsupported_date` | The map target is outside today's eight dates. |
+| 400 | `unsupported_date` | The map target is not a date of the published run from today onwards. `details.available_dates` lists the accepted dates. |
 | 400 | `view_too_large`, `square_limit_exceeded` | Zoom in before requesting estimates. |
-| 400 | `outside_coverage` | The view intersects no national grid square. |
+| 400 | `outside_coverage` | The view misses the Tuscany coverage or holds no grid square. |
 | 404 | `square_unknown` | The square does not belong to the requested update's forest build. |
 | 409 | `update_square_mismatch` | The square and update refer to different weather cells. |
 | 409 | `no_forest`, `missing_forest_data`, `estimate_not_available` | The square has no selected saved estimate. No unrelated weather is attached. |
 | 410 | `update_expired` | The requested update UUID is no longer available. Refresh the map. |
 | 503 | `forest_build_unavailable`, `forest_layer_unavailable` | The configured completed build or checked artifact is unavailable. |
+| 503 | `forecast_unavailable` | No Tuscany run is published yet. |
 
 A deleted update returns this shape, with the requested UUID in `details`:
 

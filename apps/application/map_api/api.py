@@ -1,10 +1,9 @@
-"""Typed map metadata, forest layer and square read endpoints."""
+"""Typed map metadata, forest layer and published run read endpoints."""
 
 from __future__ import annotations
 
 import gzip
 import hashlib
-import json
 import math
 from datetime import date, datetime, timedelta
 from functools import lru_cache
@@ -15,43 +14,25 @@ from uuid import UUID
 from django.conf import settings
 from django.contrib.gis.db.models import Extent
 from django.contrib.gis.db.models.functions import Transform
-from django.contrib.gis.geos import GEOSGeometry
-from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from ninja import Router, Schema
-from pyproj import Geod, Transformer
-from shapely import transform
-from shapely.geometry import mapping
-from shapely.wkb import loads
+from pyproj import Geod
 
 from config.api_schemas import ApiErrorSchema
-from estimate_updates.contracts import decode_result_bytes
-from estimate_updates.models import EstimateResult, EstimateUpdate
+from map_api import published
+from map_api.published import GRID_TO_WGS84, WGS84_TO_GRID, MapReadError
 from national_forest.layer import validate_layer
-from national_forest.models import ForestBuild, ForestCell
+from national_forest.models import ForestBuild
 from national_grid.models import GridBuildCell
 from national_terrain.models import TerrainBuild
 from weather_on_demand import services as weather_services
-from weather_requests.eligibility import WeatherCell, weather_cell
 
 
-WGS84_TO_GRID = Transformer.from_crs("EPSG:4326", "EPSG:3035", always_xy=True)
-GRID_TO_WGS84 = Transformer.from_crs("EPSG:3035", "EPSG:4326", always_xy=True)
 GEOD = Geod(ellps="WGS84")
 MAX_VIEW_WIDTH_M = 60_000.0
 MAX_VIEW_HEIGHT_M = 60_000.0
 MAX_SQUARES = 16_000
 MAX_DAYS_AHEAD = 7
-MAP_CACHE_SECONDS = 300
-
-_WEATHER_NOT_READY_REASONS: dict[str, tuple[str, str]] = {
-    "fetch_pending": ("pending", "estimate.result_not_ready"),
-    "fetch_running": ("pending", "estimate.result_not_ready"),
-    "visitor_limit": ("visitor_limit", "estimate.visitor_limit"),
-    "quota_exhausted": ("quota_exhausted", "estimate.quota_exhausted"),
-    "provider_unavailable": ("provider_unavailable", "estimate.provider_unavailable"),
-    "provider_refused": ("provider_refused", "estimate.provider_refused"),
-}
 
 router = Router(tags=["map"])
 
@@ -90,11 +71,21 @@ class WeatherCellSchema(Schema):
     longitude: float
 
 
+class RunSchema(Schema):
+    """Describe the published run that every map read comes from."""
+
+    run_id: UUID
+    assessment_date: date
+    published_at: datetime
+    target_dates: list[date]
+
+
 class InfoResponse(Schema):
     """Describe dates, coverage and limits for map reads."""
 
     today: date
     target_dates: list[date]
+    run: RunSchema | None
     coverage: CoverageSchema | None
     forest_build_version: str
     max_width_km: float
@@ -133,6 +124,8 @@ class SquaresResponse(Schema):
     """Describe one GeoJSON square collection."""
 
     type: Literal["FeatureCollection"]
+    run_id: UUID
+    assessment_date: date
     target_date: date
     square_count: int
     features: list[SquareFeatureSchema]
@@ -248,6 +241,27 @@ def _build_error(*, status: int = 503) -> JsonResponse:
     )
 
 
+def _forecast_unavailable() -> JsonResponse:
+    """Return the stable response for a map read before any run is published."""
+    return _error_response(
+        status=503,
+        code="forecast_unavailable",
+        message="No prepared forecast is published yet.",
+        message_key="map.forecast_unavailable",
+    )
+
+
+def _unsupported_date(*, available_dates: list[date]) -> JsonResponse:
+    """Return the stable response for a date that the published run does not hold."""
+    return _error_response(
+        status=400,
+        code="unsupported_date",
+        message="The target_date is not one of the available dates.",
+        message_key="map.unsupported_date",
+        details={"available_dates": [value.isoformat() for value in available_dates]},
+    )
+
+
 def _parse_date(value: str | None) -> tuple[date | None, JsonResponse | None]:
     if not value:
         return None, _error_response(
@@ -336,23 +350,6 @@ def _parse_bbox(
     return (west, south, east, north), None
 
 
-def _bbox_geometry(*, bbox: tuple[float, float, float, float]) -> GEOSGeometry:
-    """Transform a WGS84 box into the stored grid CRS."""
-    west, south, east, north = bbox
-    corners = [
-        WGS84_TO_GRID.transform(west, south),
-        WGS84_TO_GRID.transform(east, south),
-        WGS84_TO_GRID.transform(east, north),
-        WGS84_TO_GRID.transform(west, north),
-        WGS84_TO_GRID.transform(west, south),
-    ]
-    geometry = GEOSGeometry(
-        json.dumps({"type": "Polygon", "coordinates": [[list(point) for point in corners]]})
-    )
-    geometry.srid = 3035
-    return geometry
-
-
 def _bbox_size_m(*, bbox: tuple[float, float, float, float]) -> tuple[float, float]:
     west, south, east, north = bbox
     _, _, width = GEOD.inv(west, south, east, south)
@@ -381,10 +378,23 @@ def _coverage_cached(*, grid_build_id: str, forest_fingerprint: str) -> Coverage
     )
 
 
+_TUSCANY_EXTENTS: dict[str, CoverageSchema] = {}
+
+
 def _coverage(*, build: ForestBuild) -> CoverageSchema | None:
-    """Return the configured build's actual transformed geometry extent."""
+    """Return the Tuscany region extent when it exists, else the grid extent."""
+    grid_build_id = str(build.grid_build_id)
+    cached = _TUSCANY_EXTENTS.get(grid_build_id)
+    if cached is not None:
+        return cached
+    extent = published.tuscany_extent(grid_build_id=build.grid_build_id)
+    if extent is not None:
+        west, south, east, north = extent
+        cached = CoverageSchema(west=west, south=south, east=east, north=north)
+        _TUSCANY_EXTENTS[grid_build_id] = cached
+        return cached
     return _coverage_cached(
-        grid_build_id=str(build.grid_build_id),
+        grid_build_id=grid_build_id,
         forest_fingerprint=build.fingerprint,
     )
 
@@ -398,254 +408,22 @@ def _layer_info(*, build: ForestBuild) -> LayerInfoSchema:
     )
 
 
-def _json_value(value: Any) -> Any:
-    if isinstance(value, (date, datetime)):
-        return value.isoformat()
-    if isinstance(value, UUID):
-        return str(value)
-    return value
-
-
-def _square_properties(
-    *,
-    cell_id: str,
-    state: str,
-    percentage: int | None,
-    reason: str | None,
-    target_date: date,
-    assessment_date: date | None,
-    update_id: UUID | str | None,
-    calculated_at: datetime | None,
-    message_key: str,
-    weather_cell_coordinates: dict[str, float] | None,
-) -> dict[str, Any]:
-    """Return the stable public properties for one square."""
-    public_update_id = str(update_id) if update_id is not None else None
-    return {
-        "cell_id": cell_id,
-        "state": state,
-        "percentage": percentage,
-        "unavailable_reason": reason,
-        "reason": reason,
-        "target_date": target_date.isoformat(),
-        "assessment_date": _json_value(assessment_date),
-        "update_id": public_update_id,
-        "calculated_at": _json_value(calculated_at),
-        "message_key": message_key,
-        "weather_cell": weather_cell_coordinates,
-    }
-
-
-def _weather_cell_coordinates(*, cell: ForestCell) -> dict[str, float] | None:
-    """Return the stored weather cell centre when both coordinates exist."""
-    if cell.weather_latitude is None or cell.weather_longitude is None:
-        return None
-    return {
-        "latitude": float(cell.weather_latitude),
-        "longitude": float(cell.weather_longitude),
-    }
-
-
-def _geometry_wgs84(cell: ForestCell) -> dict[str, Any]:
-    geometry = loads(bytes(cell.grid_build_cell.cell.geometry.wkb))
-    transformed = transform(geometry, GRID_TO_WGS84.transform, interleaved=False)
-    return mapping(transformed)
-
-
-def _weather_cells(*, cells: list[ForestCell]) -> tuple[WeatherCell, ...]:
-    values: dict[str, WeatherCell] = {}
-    for cell in cells:
-        if cell.is_forest is not True:
-            continue
-        if cell.weather_latitude is None or cell.weather_longitude is None:
-            continue
-        value = weather_cell(latitude=cell.weather_latitude, longitude=cell.weather_longitude)
-        values[value.key] = value
-    return tuple(values[key] for key in sorted(values))
-
-
-def _cache_key(
-    *,
-    build_version: str,
-    bbox: tuple[float, float, float, float],
-    target_date: date,
-    weather_items: tuple[tuple[str, str, str | None, str | None, str | None], ...],
-) -> str:
-    normalized_bbox = ",".join(format(value, ".12g") for value in bbox)
-    identity = {
-        "forest_build_version": build_version,
-        "bbox": normalized_bbox,
-        "target_date": target_date.isoformat(),
-        "weather": weather_items,
-    }
-    digest = hashlib.sha256(
-        json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    ).hexdigest()
-    return f"micometeo-map-v2:{digest}"
-
-
-def _weather_identity(
-    *,
-    cells: tuple[WeatherCell, ...],
-    by_cell: dict[str, Any],
-    updates: dict[tuple[str, str], EstimateUpdate],
-) -> tuple[tuple[str, str, str | None, str | None, str | None], ...]:
-    values: list[tuple[str, str, str | None, str | None, str | None]] = []
-    for cell in cells:
-        result = by_cell.get(cell.key)
-        state = str(getattr(result, "state", "not_available_yet"))
-        reason_code = getattr(result, "reason_code", None)
-        reason_text = str(reason_code) if reason_code is not None else None
-        snapshot_id = getattr(result, "snapshot_id", None)
-        snapshot_text = str(snapshot_id) if snapshot_id is not None else None
-        update = updates.get((snapshot_text or "", cell.key))
-        marker = str(update.public_id) if update is not None else "pending"
-        values.append((cell.key, state, snapshot_text, marker, reason_text))
-    return tuple(values)
-
-
-def _weather_not_ready_properties(*, weather_result: Any) -> tuple[str, str]:
-    """Return the public reason and message key for a missing weather result."""
-    reason_code = str(getattr(weather_result, "reason_code", ""))
-    return _WEATHER_NOT_READY_REASONS.get(
-        reason_code,
-        ("pending", "estimate.result_not_ready"),
-    )
-
-
-def _squares_response(*, body: dict[str, Any], key: str) -> JsonResponse:
-    """Build a cached response for one stable square result."""
-    response = JsonResponse(body)
+def _body_response(*, body: published.CachedBody) -> HttpResponse:
+    """Build a response from a finished JSON body that is identified by its cache key."""
+    response = HttpResponse(body.content, content_type="application/json")
     response["Cache-Control"] = "no-cache"
     response["Vary"] = "Accept-Encoding"
-    response["ETag"] = f'"{hashlib.sha256(key.encode("utf-8")).hexdigest()}"'
+    response["ETag"] = f'"{hashlib.sha256(body.key.encode("utf-8")).hexdigest()}"'
     return response
 
 
-def _result_properties(
-    *,
-    cell: ForestCell,
-    target_date: date,
-    weather_result: Any,
-    update: EstimateUpdate | None,
-    estimate_result: EstimateResult | None,
-) -> dict[str, Any]:
-    """Resolve one stored row from bulk identities and bytes."""
-    cell_id = cell.grid_build_cell.cell.cell_id
-    weather_cell_coordinates = _weather_cell_coordinates(cell=cell)
-    if cell.is_forest is None or cell.forest_share is None:
-        return _square_properties(
-            cell_id=cell_id,
-            state="unavailable",
-            percentage=None,
-            reason="missing_forest_data",
-            target_date=target_date,
-            assessment_date=None,
-            update_id=None,
-            calculated_at=None,
-            message_key="estimate.missing_forest",
-            weather_cell_coordinates=weather_cell_coordinates,
-        )
-    if cell.is_forest is False or cell.forest_share < 0.1:
-        return _square_properties(
-            cell_id=cell_id,
-            state="noforest",
-            percentage=None,
-            reason="noforest",
-            target_date=target_date,
-            assessment_date=None,
-            update_id=None,
-            calculated_at=None,
-            message_key="estimate.no_forest",
-            weather_cell_coordinates=weather_cell_coordinates,
-        )
-
-    state = str(getattr(weather_result, "state", "not_available_yet"))
-    assessment_date = getattr(weather_result, "assessment_date", None)
-    if update is not None:
-        assessment_date = update.assessment_date
-    if update is None:
-        if assessment_date is not None and (target_date - assessment_date).days > MAX_DAYS_AHEAD:
-            state = "expired"
-            reason = "target_outside_update_range"
-            message_key = "estimate.target_outside_update_range"
-        elif state == "not_available_yet":
-            state = "noresultyet"
-            reason, message_key = _weather_not_ready_properties(weather_result=weather_result)
-        else:
-            state = "noresultyet"
-            reason = "pending"
-            message_key = "estimate.result_not_ready"
-        return _square_properties(
-            cell_id=cell_id,
-            state=state,
-            percentage=None,
-            reason=reason,
-            target_date=target_date,
-            assessment_date=assessment_date,
-            update_id=None,
-            calculated_at=None,
-            message_key=message_key,
-            weather_cell_coordinates=weather_cell_coordinates,
-        )
-    offset = (target_date - update.assessment_date).days
-    if offset < 0 or offset > MAX_DAYS_AHEAD or estimate_result is None:
-        return _square_properties(
-            cell_id=cell_id,
-            state="expired" if offset < 0 or offset > MAX_DAYS_AHEAD else "noresultyet",
-            percentage=None,
-            reason=("target_outside_update_range" if offset < 0 or offset > MAX_DAYS_AHEAD else "pending"),
-            target_date=target_date,
-            assessment_date=update.assessment_date,
-            update_id=update.public_id,
-            calculated_at=update.calculated_at,
-            message_key=(
-                "estimate.target_outside_update_range"
-                if offset < 0 or offset > MAX_DAYS_AHEAD
-                else "estimate.result_not_ready"
-            ),
-            weather_cell_coordinates=weather_cell_coordinates,
-        )
-    try:
-        decoded = decode_result_bytes(values=estimate_result.values)
-        value = decoded[offset]
-    except (IndexError, ValueError):
-        return _square_properties(
-            cell_id=cell_id,
-            state="unavailable",
-            percentage=None,
-            reason="requiredgap",
-            target_date=target_date,
-            assessment_date=update.assessment_date,
-            update_id=update.public_id,
-            calculated_at=update.calculated_at,
-            message_key="estimate.required_gap",
-            weather_cell_coordinates=weather_cell_coordinates,
-        )
-    if isinstance(value, int):
-        return _square_properties(
-            cell_id=cell_id,
-            state="available",
-            percentage=value,
-            reason=None,
-            target_date=target_date,
-            assessment_date=update.assessment_date,
-            update_id=update.public_id,
-            calculated_at=update.calculated_at,
-            message_key="estimate.available",
-            weather_cell_coordinates=weather_cell_coordinates,
-        )
-    return _square_properties(
-        cell_id=cell_id,
-        state="unavailable",
-        percentage=None,
-        reason=value,
-        target_date=target_date,
-        assessment_date=update.assessment_date,
-        update_id=update.public_id,
-        calculated_at=update.calculated_at,
-        message_key="estimate.unavailable",
-        weather_cell_coordinates=weather_cell_coordinates,
+def _read_error_response(*, error: MapReadError) -> JsonResponse:
+    return _error_response(
+        status=error.status,
+        code=error.code,
+        message=error.message,
+        message_key=error.message_key,
+        details=error.details,
     )
 
 
@@ -657,11 +435,16 @@ def info(request: HttpRequest) -> InfoResponse | HttpResponse:
     if build is None:
         return _build_error()
     today = _today()
-    dates = [today + timedelta(days=offset) for offset in range(MAX_DAYS_AHEAD + 1)]
+    run = published.published_run()
+    if run is None:
+        dates = [today + timedelta(days=offset) for offset in range(MAX_DAYS_AHEAD + 1)]
+    else:
+        dates = run.available_dates(today=today)
     coverage = _coverage(build=build)
     return {
         "today": today.isoformat(),
         "target_dates": [value.isoformat() for value in dates],
+        "run": published.run_info(run=run) if run is not None else None,
         "coverage": coverage.dict() if coverage is not None else None,
         "forest_build_version": build.version,
         "max_width_km": MAX_VIEW_WIDTH_M / 1_000,
@@ -684,78 +467,23 @@ def _layer_error() -> JsonResponse:
 
 @router.get("/estimate-overview", response={200: Any, 400: ApiErrorSchema, 503: ApiErrorSchema})
 def estimate_overview(request: HttpRequest) -> HttpResponse:
-    """Average stored forest-square scores into bounded overview areas."""
+    """Average stored forest-square scores of the published run into bounded overview areas."""
     bbox, error = _parse_bbox(request.GET.get("bbox"))
-    if error is not None:
+    if error is not None or bbox is None:
         return error
     target, error = _parse_date(request.GET.get("target_date"))
-    if error is not None:
+    if error is not None or target is None:
         return error
-    today = _today()
-    if target is None or not today <= target <= today + timedelta(days=MAX_DAYS_AHEAD):
-        return _error_response(status=400, code="unsupported_date", message="Unsupported target date.", message_key="map.unsupported_date")
-    build = _configured_build()
-    if build is None:
-        return _build_error()
+    run = published.published_run()
+    if run is None:
+        return _forecast_unavailable()
+    available_dates = run.available_dates(today=_today())
+    if target not in available_dates:
+        return _unsupported_date(available_dates=available_dates)
     width, height = _bbox_size_m(bbox=bbox)
     size = max(2000, math.ceil(max(width, height) / 80 / 1000) * 1000)
-    updates = list(EstimateUpdate.objects.filter(
-        forest_build=build, region_code="", assessment_date__lte=today,
-        assessment_date__gte=target - timedelta(days=MAX_DAYS_AHEAD),
-    ).order_by("cell_key", "-assessment_date", "-calculated_at", "-id").distinct("cell_key"))
-    identity = [build.version, str(target), bbox, size, [update.id for update in updates]]
-    key = "estimate-overview-v1:" + hashlib.sha256(json.dumps(identity).encode()).hexdigest()
-    cached = cache.get(key)
-    if cached is not None:
-        return _squares_response(body=cached, key=key)
-    cells = list(ForestCell.objects.filter(
-        build=build, is_forest=True, forest_share__gte=0.1,
-        grid_build_cell__cell__geometry__intersects=_bbox_geometry(bbox=bbox),
-    ).values_list("id", "grid_build_cell__cell__corner_e", "grid_build_cell__cell__corner_n"))
-    by_update = {update.id: update for update in updates}
-    scores = {}
-    for cell_id, update_id, values in EstimateResult.objects.filter(
-        update_id__in=by_update, forest_cell_id__in=[cell[0] for cell in cells],
-    ).values_list("forest_cell_id", "update_id", "values").iterator():
-        update = by_update[update_id]
-        try:
-            value = decode_result_bytes(values=values)[(target - update.assessment_date).days]
-        except (ValueError, IndexError):
-            continue
-        if isinstance(value, int):
-            scores[cell_id] = (value, update)
-    groups: dict[tuple[int, int], dict[str, Any]] = {}
-    for cell_id, east, north in cells:
-        group = groups.setdefault((east // size * size, north // size * size), {"scores": [], "count": 0, "updates": []})
-        group["count"] += 1
-        if cell_id in scores:
-            value, update = scores[cell_id]
-            group["scores"].append(value)
-            group["updates"].append(update)
-    features = []
-    for (east, north), group in groups.items():
-        values = group["scores"]
-        # A partly missing area must not look like a fully assessed area.
-        complete = len(values) == group["count"]
-        coordinates = [GRID_TO_WGS84.transform(x, y) for x, y in (
-            (east, north), (east + size, north), (east + size, north + size),
-            (east, north + size), (east, north),
-        )]
-        features.append({
-            "type": "Feature", "id": f"overview-{east}-{north}",
-            "geometry": {"type": "Polygon", "coordinates": [coordinates]},
-            "properties": {
-                "overview": True, "target_date": target.isoformat(),
-                "state": "available" if complete else "unavailable",
-                "percentage": round(sum(values) / len(values)) if complete else None,
-                "assessment_date": min((item.assessment_date for item in group["updates"]), default=None),
-                "calculated_at": min((item.calculated_at for item in group["updates"]), default=None),
-                "forest_square_count": group["count"], "scored_square_count": len(values),
-            },
-        })
-    body = {"type": "FeatureCollection", "target_date": target.isoformat(), "features": features, "area_size_m": size}
-    cache.set(key, body, timeout=MAP_CACHE_SECONDS)
-    return _squares_response(body=body, key=key)
+    body = published.read_overview(run=run, target_date=target, bbox=bbox, size=size)
+    return _body_response(body=body)
 
 
 def _read_layer(*, build: ForestBuild) -> tuple[bytes, str] | JsonResponse:
@@ -834,38 +562,13 @@ def forest_layer(request: HttpRequest) -> HttpResponse:
     },
 )
 def squares(request: HttpRequest) -> HttpResponse:
-    """Return exact stored estimate values for the requested map view."""
-    bbox = request.GET.get("bbox")
-    target_date = request.GET.get("target_date")
-    parsed_bbox, bbox_error = _parse_bbox(bbox)
+    """Return the stored values of the published run for the requested map view."""
+    parsed_bbox, bbox_error = _parse_bbox(request.GET.get("bbox"))
     if bbox_error is not None or parsed_bbox is None:
-        return bbox_error or _error_response(
-            status=400,
-            code="invalid_bbox",
-            message="The bbox is invalid.",
-            message_key="map.invalid_bbox",
-        )
-    parsed_date, date_error = _parse_date(target_date)
+        return bbox_error
+    parsed_date, date_error = _parse_date(request.GET.get("target_date"))
     if date_error is not None or parsed_date is None:
-        return date_error or _error_response(
-            status=400,
-            code="invalid_date",
-            message="The target date is invalid.",
-            message_key="map.invalid_date",
-        )
-    today = _today()
-    available_dates = [today + timedelta(days=offset) for offset in range(MAX_DAYS_AHEAD + 1)]
-    if parsed_date not in available_dates:
-        return _error_response(
-            status=400,
-            code="unsupported_date",
-            message=(
-                f"The target_date must be from {available_dates[0].isoformat()} "
-                f"through {available_dates[-1].isoformat()}."
-            ),
-            message_key="map.unsupported_date",
-            details={"available_dates": [value.isoformat() for value in available_dates]},
-        )
+        return date_error
     width_m, height_m = _bbox_size_m(bbox=parsed_bbox)
     if width_m > MAX_VIEW_WIDTH_M or height_m > MAX_VIEW_HEIGHT_M:
         return _error_response(
@@ -880,120 +583,27 @@ def squares(request: HttpRequest) -> HttpResponse:
                 "max_height_m": MAX_VIEW_HEIGHT_M,
             },
         )
-    build = _configured_build()
-    if build is None:
-        return _build_error()
-    geometry = _bbox_geometry(bbox=parsed_bbox)
-    cells = list(
-        ForestCell.objects.select_related("grid_build_cell__cell")
-        .filter(
-            build_id=build.id,
-            grid_build_cell__cell__geometry__intersects=geometry,
-        )
-        .order_by("grid_build_cell__cell__cell_id")
-    )
-    if not cells:
-        return _error_response(
-            status=400,
-            code="outside_coverage",
-            message="The bbox is outside the configured grid coverage.",
-            message_key="map.outside_coverage",
-        )
-    if len(cells) > MAX_SQUARES:
-        return _error_response(
-            status=400,
-            code="square_limit_exceeded",
-            message="Zoom in for estimates before requesting this many squares.",
-            message_key="map.square_limit_exceeded",
-            details={"square_count": len(cells), "max_squares": MAX_SQUARES},
-        )
-    eligible_cells = _weather_cells(cells=cells)
-    lookup = None
-    if eligible_cells:
-        lookup = weather_services.request_weather(
-            cells=eligible_cells,
-            visitor_id=request.META.get("REMOTE_ADDR"),
-            assessment_date=today,
-            wait_seconds=3,
-            forest_build_version=build.version,
-        )
-    by_cell = dict(getattr(lookup, "by_cell", {}) if lookup is not None else {})
-    snapshot_ids = [
-        str(getattr(by_cell.get(cell.key), "snapshot_id"))
-        for cell in eligible_cells
-        if getattr(by_cell.get(cell.key), "snapshot_id", None) is not None
-    ]
-    updates = list(
-        EstimateUpdate.objects.filter(
-            forest_build_id=build.id,
-            region_code="",
-            snapshot_id__in=snapshot_ids,
-        ).order_by("-calculated_at", "-id")
-    ) if snapshot_ids else []
-    updates_by_key: dict[tuple[str, str], EstimateUpdate] = {}
-    for update in updates:
-        updates_by_key.setdefault((str(update.snapshot_id), update.cell_key), update)
-    weather_identity = _weather_identity(
-        cells=eligible_cells,
-        by_cell=by_cell,
-        updates=updates_by_key,
-    )
-    key = _cache_key(
-        build_version=build.version,
-        bbox=parsed_bbox,
-        target_date=parsed_date,
-        weather_items=weather_identity,
-    )
-    cached = cache.get(key)
-    if cached is not None:
-        return _squares_response(body=cached, key=key)
-
-    update_ids = [update.id for update in updates_by_key.values()]
-    estimate_rows = list(
-        EstimateResult.objects.filter(
-            update_id__in=update_ids,
-            forest_cell_id__in=[cell.id for cell in cells],
-        )
-    ) if update_ids else []
-    estimate_by_key = {(row.update_id, row.forest_cell_id): row for row in estimate_rows}
-    features: list[dict[str, Any]] = []
-    for cell in cells:
-        cell_key = None
-        if cell.is_forest is True and cell.weather_latitude is not None and cell.weather_longitude is not None:
-            cell_key = weather_cell(
-                latitude=cell.weather_latitude,
-                longitude=cell.weather_longitude,
-            ).key
-        weather_result = by_cell.get(cell_key) if cell_key is not None else None
-        snapshot_id = str(getattr(weather_result, "snapshot_id", "")) if weather_result else ""
-        update = updates_by_key.get((snapshot_id, cell_key or ""))
-        estimate = estimate_by_key.get((update.id, cell.id)) if update is not None else None
-        properties = _result_properties(
-            cell=cell,
+    run = published.published_run()
+    if run is None:
+        return _forecast_unavailable()
+    available_dates = run.available_dates(today=_today())
+    if parsed_date not in available_dates:
+        return _unsupported_date(available_dates=available_dates)
+    try:
+        body = published.read_squares(
+            run=run,
             target_date=parsed_date,
-            weather_result=weather_result,
-            update=update,
-            estimate_result=estimate,
+            bbox=parsed_bbox,
+            max_squares=MAX_SQUARES,
         )
-        features.append(
-            {
-                "type": "Feature",
-                "id": cell.grid_build_cell.cell.cell_id,
-                "geometry": _geometry_wgs84(cell),
-                "properties": properties,
-            }
-        )
-    body = {
-        "type": "FeatureCollection",
-        "target_date": parsed_date.isoformat(),
-        "square_count": len(features),
-        "features": features,
-    }
-    cache.set(key, body, timeout=MAP_CACHE_SECONDS)
-    return _squares_response(body=body, key=key)
+    except MapReadError as error:
+        return _read_error_response(error=error)
+    return _body_response(body=body)
 
 
 __all__ = [
+    "GRID_TO_WGS84",
+    "WGS84_TO_GRID",
     "InfoResponse",
     "SquaresResponse",
     "forest_layer",

@@ -97,7 +97,17 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "micometeo-api",
-    }
+    },
+    # Completed map data shared by all processes. Entries do not expire, the table is bounded.
+    "map": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "micometeo_map_cache",
+        "TIMEOUT": None,
+        "OPTIONS": {
+            "MAX_ENTRIES": int(os.getenv("MICOMETEO_MAP_CACHE_MAX_ENTRIES", "50000")),
+            "CULL_FREQUENCY": 4,
+        },
+    },
 }
 
 MIDDLEWARE = [

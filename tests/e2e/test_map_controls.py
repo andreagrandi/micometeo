@@ -146,26 +146,6 @@ def _squares_response(target_date: str, *, include_pending: bool = False) -> dic
     }
 
 
-def _pending_squares_response(target_date: str) -> dict[str, object]:
-    return {
-        "type": "FeatureCollection",
-        "target_date": target_date,
-        "square_count": 1,
-        "features": [
-            _feature(
-                cell_id="cell-pending",
-                center_x=10.650,
-                center_y=44.130,
-                state="noresultyet",
-                percentage=None,
-                reason="pending",
-                update_id=None,
-                target_date=target_date,
-            )
-        ],
-    }
-
-
 def _info_response() -> dict[str, object]:
     return {
         "today": TARGET_DATES[0],
@@ -290,7 +270,6 @@ def _install_map_routes(
     fail_first_squares_request: bool = False,
     fail_first_area_request: bool = False,
     fail_area_target_date: str | None = None,
-    pending_squares: bool = False,
     include_pending: bool = False,
     unique_calculated_times: bool = False,
 ) -> list[dict[str, object]]:
@@ -366,9 +345,9 @@ def _install_map_routes(
                 fulfill_json(
                     route,
                     {
-                        "code": "provider_unavailable",
-                        "message": "The weather service is temporarily unavailable.",
-                        "message_key": "estimate.provider_unavailable",
+                        "code": "forecast_unavailable",
+                        "message": "No forecast run is published yet.",
+                        "message_key": "estimate.forecast_unavailable",
                         "details": {},
                     },
                     status=503,
@@ -391,11 +370,7 @@ def _install_map_routes(
                     status=400,
                 )
                 return
-            response = (
-                _pending_squares_response(target_date)
-                if pending_squares
-                else _squares_response(target_date, include_pending=include_pending)
-            )
+            response = _squares_response(target_date, include_pending=include_pending)
             if unique_calculated_times:
                 for index, feature in enumerate(response["features"]):
                     feature["properties"]["calculated_at"] = f"2026-10-12T{8 + index:02d}:30:00Z"
@@ -1336,7 +1311,7 @@ def test_delayed_date_responses_cannot_replace_the_latest_overlay(
     assert _api_requests(requests, "/squares")
 
 
-def test_date_loading_clears_selected_details_until_the_new_overlay_arrives(
+def test_date_loading_keeps_the_old_overlay_dimmed_and_hides_old_details_values(
     page: Page, base_url: str
 ) -> None:
     _open_map(page, base_url)
@@ -1381,8 +1356,13 @@ def test_date_loading_clears_selected_details_until_the_new_overlay_arrives(
         "() => (window.__mapTestPendingSquares || []).length >= 1", timeout=10_000
     )
     expect(page.locator("[data-live-state='wait']")).to_be_visible()
-    assert root.get_attribute("data-selected-square") != "cell-zero"
-    expect(page.locator("aside[data-live-details]")).to_have_count(0)
+    expect(root).to_have_attribute("data-map-stale", "true")
+    assert page.evaluate(
+        "() => window.MicometeoMap.map.getLayoutProperty('micometeo-square-estimates', 'visibility')"
+    ) == "visible"
+    details = page.locator("aside[data-live-details]")
+    expect(details).to_be_visible()
+    expect(details).not_to_contain_text("0%")
 
 
 def test_delayed_overview_failure_cannot_replace_the_latest_map_state(
@@ -1428,15 +1408,12 @@ def test_delayed_overview_failure_cannot_replace_the_latest_map_state(
 def test_failed_squares_request_offers_retry_without_losing_the_selected_date(
     page: Page, base_url: str
 ) -> None:
-    _open_map(page=page, base_url=base_url, include_pending=True)
-    expect(page.locator("[data-live-state='wait']")).to_contain_text("pending")
-    requests = _install_map_routes(
-        page=page, fail_first_squares_request=True, include_pending=True
-    )
+    _open_map(page=page, base_url=base_url)
+    requests = _install_map_routes(page=page, fail_first_squares_request=True)
     page.locator(".date-btn[data-date='2026-10-16']").click()
     _wait_for_square_request(page, requests, "2026-10-16")
     expect(page.locator("[data-live-state='error']")).to_be_visible()
-    expect(page.locator("[data-live-state='error']")).to_contain_text("Try again")
+    expect(page.locator("[data-live-state='error']")).to_contain_text("Estimates are not ready yet")
 
     retry = page.locator("[data-live-state='error'] button")
     expect(retry).to_be_visible()
@@ -1456,28 +1433,7 @@ def test_failed_squares_request_offers_retry_without_losing_the_selected_date(
     _wait_for_map_settled(page, "2026-10-16")
     expect(page.locator("[data-map-app]")).to_have_attribute("data-target-date", "2026-10-16")
     expect(page.locator("[data-live-state='error']")).to_have_count(0)
-    expect(page.locator("[data-live-state='wait']")).to_contain_text("pending")
     assert len(_api_requests(requests, "/squares")) >= 2
-
-
-def test_pending_results_offer_retry_after_automatic_waits_are_exhausted(
-    page: Page, base_url: str
-) -> None:
-    requests = _install_map_routes(page, pending_squares=True)
-    page.set_viewport_size({"width": 1440, "height": 900})
-    page.goto(
-        url=f"{base_url}/map/?center=44.14,10.65&zoom=12",
-        wait_until="domcontentloaded",
-    )
-    page.wait_for_function(
-        "() => Boolean(window.MicometeoMap?.map && document.querySelector('#map canvas.maplibregl-canvas'))",
-        timeout=15_000,
-    )
-    page.locator(".date-btn[data-date='2026-10-16']").click()
-    _wait_for_square_request(page, requests, "2026-10-16")
-    page.wait_for_timeout(6_200)
-    expect(page.locator("[data-live-state='error']")).to_be_visible()
-    expect(page.locator("[data-live-state='error'] button")).to_be_visible()
 
 
 def test_repeated_controls_keep_one_map_and_do_not_report_console_errors(

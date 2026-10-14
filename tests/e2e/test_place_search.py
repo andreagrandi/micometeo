@@ -321,12 +321,14 @@ def test_reselecting_same_place_fetches_after_noop_map_move(page: Page, base_url
         }
         """
     )
+    requests_before = page.evaluate("() => window.MicometeoMap.getDiagnostics().requestCount")
     search.fill("Pistoia")
     expect(page.locator("[data-search-results] [role=option]")).to_have_count(1)
     search.press("ArrowDown")
     search.press("Enter")
     page.wait_for_function(
-        "() => document.querySelector('[data-map-app]').dataset.selectedSquare === ''",
+        "(before) => window.MicometeoMap.getDiagnostics().requestCount > before",
+        arg=requests_before,
         timeout=10_000,
     )
     page.wait_for_function(

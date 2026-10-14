@@ -492,3 +492,12 @@ msgstr "credit page"
 
 msgid "More source details"
 msgstr "More source details"
+
+msgid "Estimates are not ready yet. Try again later."
+msgstr "Estimates are not ready yet. Try again later."
+
+msgid "Estimates from {date}."
+msgstr "Estimates from {date}."
+
+msgid "This square is outside the area with prepared estimates."
+msgstr "This square is outside the area with prepared estimates."

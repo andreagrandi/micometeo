@@ -6,6 +6,7 @@ published run until the next run passes validation and replaces the pointer.
 
 from __future__ import annotations
 
+import logging
 import resource
 import sys
 import time
@@ -49,6 +50,8 @@ from .services import (
     publish_estimate_update,
 )
 
+
+logger = logging.getLogger(__name__)
 
 TARGET_DAY_COUNT = 8
 PROBLEM_LIMIT = 5
@@ -521,7 +524,18 @@ def publish_forecast_run(*, run_id: uuid.UUID | str) -> ForecastRun:
             completed_at=run.completed_at or now,
             published_at=now,
         )
+        transaction.on_commit(lambda: _queue_map_cache_warming(region_code=run.region_code))
     return ForecastRun.objects.get(id=run.id)
+
+
+def _queue_map_cache_warming(*, region_code: str) -> None:
+    """Queue the cache warming task, and keep the publication when queueing fails."""
+    from .tasks import warm_published_map_cache_task
+
+    try:
+        warm_published_map_cache_task.enqueue(region_code=region_code)
+    except Exception:
+        logger.warning("Could not queue the map cache warming task.", exc_info=True)
 
 
 def published_forecast_run(*, region_code: str) -> PublishedRunRead | None:

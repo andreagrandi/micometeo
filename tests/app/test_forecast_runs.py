@@ -663,6 +663,38 @@ def test_publish_refuses_an_invalid_run_and_leaves_the_pointer_alone(tuscany: Si
     assert published_forecast_run(region_code="09").run.id == first.id
 
 
+def test_publishing_queues_the_map_cache_warming_once_after_the_commit(
+    tuscany: SimpleNamespace, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[dict[str, str]] = []
+    monkeypatch.setattr(
+        "estimate_updates.tasks.warm_published_map_cache_task",
+        SimpleNamespace(enqueue=lambda **kwargs: calls.append(kwargs)),
+    )
+
+    run = _publish_day(day=DAY)
+
+    assert run.status == ForecastRun.Status.PUBLISHED
+    assert calls == [{"region_code": "09"}]
+
+
+def test_a_failing_queue_does_not_undo_the_publication(
+    tuscany: SimpleNamespace, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def broken_queue(**kwargs: str) -> None:
+        raise RuntimeError("queue is down")
+
+    monkeypatch.setattr(
+        "estimate_updates.tasks.warm_published_map_cache_task",
+        SimpleNamespace(enqueue=broken_queue),
+    )
+
+    run = _publish_day(day=DAY)
+
+    assert run.status == ForecastRun.Status.PUBLISHED
+    assert published_forecast_run(region_code="09").run.id == run.id
+
+
 def test_publish_refuses_a_run_older_than_the_published_run(tuscany: SimpleNamespace) -> None:
     older = _publish_day(day=DAY)
     newer = _publish_day(day=DAY + timedelta(days=1))
