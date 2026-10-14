@@ -67,53 +67,65 @@ def _feature(
     }
 
 
-def _squares_response(target_date: str) -> dict[str, object]:
+def _squares_response(target_date: str, *, include_pending: bool = False) -> dict[str, object]:
     assessment_date = "2026-10-11" if target_date == "2026-10-15" else "2026-10-12"
-    return {
-        "type": "FeatureCollection",
-        "target_date": target_date,
-        "square_count": 6,
-        "features": [
-            _feature(
-                cell_id="cell-zero",
-                center_x=10.640,
-                center_y=44.130,
-                state="available",
-                percentage=0,
-                target_date=target_date,
-                assessment_date=assessment_date,
-            ),
-            _feature(
-                cell_id="cell-hundred",
-                center_x=10.645,
-                center_y=44.130,
-                state="available",
-                percentage=100,
-                target_date=target_date,
-                assessment_date="2026-10-12" if target_date == "2026-10-15" else assessment_date,
-            ),
-            _feature(
-                cell_id="cell-missing",
-                center_x=10.650,
-                center_y=44.130,
-                state="unavailable",
-                percentage=None,
-                reason="missing_forest_data",
-                update_id=None,
-                target_date=target_date,
-                assessment_date=assessment_date,
-            ),
-            _feature(
-                cell_id="cell-noforest",
-                center_x=10.655,
-                center_y=44.130,
-                state="noforest",
-                percentage=None,
-                reason="noforest",
-                update_id=None,
-                target_date=target_date,
-                assessment_date=assessment_date,
-            ),
+    features = [
+        _feature(
+            cell_id="cell-zero",
+            center_x=10.640,
+            center_y=44.130,
+            state="available",
+            percentage=0,
+            target_date=target_date,
+            assessment_date=assessment_date,
+        ),
+        _feature(
+            cell_id="cell-hundred",
+            center_x=10.645,
+            center_y=44.130,
+            state="available",
+            percentage=100,
+            target_date=target_date,
+            assessment_date="2026-10-12" if target_date == "2026-10-15" else assessment_date,
+        ),
+        _feature(
+            cell_id="cell-missing",
+            center_x=10.650,
+            center_y=44.130,
+            state="unavailable",
+            percentage=None,
+            reason="missing_forest_data",
+            update_id=None,
+            target_date=target_date,
+            assessment_date=assessment_date,
+        ),
+        _feature(
+            cell_id="cell-noforest",
+            center_x=10.655,
+            center_y=44.130,
+            state="noforest",
+            percentage=None,
+            reason="noforest",
+            update_id=None,
+            target_date=target_date,
+            assessment_date=assessment_date,
+        ),
+        _feature(
+            cell_id="cell-expired",
+            center_x=10.665,
+            center_y=44.130,
+            state="expired",
+            percentage=None,
+            reason="update_expired",
+            update_id=None,
+            target_date=target_date,
+            assessment_date=assessment_date,
+        ),
+    ]
+    if include_pending:
+        # The pending cell makes the page poll squares again, so only some tests ask for it.
+        features.insert(
+            4,
             _feature(
                 cell_id="cell-pending",
                 center_x=10.660,
@@ -125,18 +137,12 @@ def _squares_response(target_date: str) -> dict[str, object]:
                 target_date=target_date,
                 assessment_date=assessment_date,
             ),
-            _feature(
-                cell_id="cell-expired",
-                center_x=10.665,
-                center_y=44.130,
-                state="expired",
-                percentage=None,
-                reason="update_expired",
-                update_id=None,
-                target_date=target_date,
-                assessment_date=assessment_date,
-            ),
-        ],
+        )
+    return {
+        "type": "FeatureCollection",
+        "target_date": target_date,
+        "square_count": len(features),
+        "features": features,
     }
 
 
@@ -285,6 +291,7 @@ def _install_map_routes(
     fail_first_area_request: bool = False,
     fail_area_target_date: str | None = None,
     pending_squares: bool = False,
+    include_pending: bool = False,
     unique_calculated_times: bool = False,
 ) -> list[dict[str, object]]:
     requests: list[dict[str, object]] = []
@@ -387,7 +394,7 @@ def _install_map_routes(
             response = (
                 _pending_squares_response(target_date)
                 if pending_squares
-                else _squares_response(target_date)
+                else _squares_response(target_date, include_pending=include_pending)
             )
             if unique_calculated_times:
                 for index, feature in enumerate(response["features"]):
@@ -423,9 +430,11 @@ def _open_map(
     fail_first_area_request: bool = False,
     fail_area_target_date: str | None = None,
     unique_calculated_times: bool = False,
+    include_pending: bool = False,
 ) -> list[dict[str, object]]:
     requests = _install_map_routes(
         page,
+        include_pending=include_pending,
         fail_first_area_request=fail_first_area_request,
         fail_area_target_date=fail_area_target_date,
         unique_calculated_times=unique_calculated_times,
@@ -462,6 +471,7 @@ def _open_map(
     first_date = page.locator(f".date-btn[data-date='{TARGET_DATES[0]}']")
     first_date.click()
     _wait_for_square_request(page, requests, TARGET_DATES[0])
+    _wait_for_map_settled(page, TARGET_DATES[0])
     return requests
 
 
@@ -505,6 +515,29 @@ def _wait_for_square_request(page: Page, requests: list[dict[str, object]], date
             return
         page.wait_for_timeout(100)
     pytest.fail(f"The map did not request squares for {date}")
+
+
+def _wait_for_map_settled(page: Page, date: str) -> None:
+    """Wait until the squares for a date are applied and no refetch is scheduled.
+
+    A scheduled refetch raises the generation before the next response sets lastRequest.
+    """
+    page.wait_for_function(
+        """
+        (date) => {
+          const exposed = window.MicometeoMap;
+          const last = exposed?.lastRequest;
+          return Boolean(
+            last &&
+            last.targetDate === date &&
+            last.generation === exposed.getDiagnostics().generation &&
+            !exposed.map.isMoving()
+          );
+        }
+        """,
+        arg=date,
+        timeout=15_000,
+    )
 
 
 def _flatten(value: object) -> list[object]:
@@ -1069,7 +1102,7 @@ def test_map_reports_a_missing_local_map_library(
 def test_map_states_and_zoomed_out_scores_use_the_same_color_layer(
     page: Page, base_url: str
 ) -> None:
-    requests = _open_map(page, base_url)
+    requests = _open_map(page, base_url, include_pending=True)
     page.wait_for_function(
         """
         () => {
@@ -1395,9 +1428,11 @@ def test_delayed_overview_failure_cannot_replace_the_latest_map_state(
 def test_failed_squares_request_offers_retry_without_losing_the_selected_date(
     page: Page, base_url: str
 ) -> None:
-    _open_map(page=page, base_url=base_url)
+    _open_map(page=page, base_url=base_url, include_pending=True)
     expect(page.locator("[data-live-state='wait']")).to_contain_text("pending")
-    requests = _install_map_routes(page=page, fail_first_squares_request=True)
+    requests = _install_map_routes(
+        page=page, fail_first_squares_request=True, include_pending=True
+    )
     page.locator(".date-btn[data-date='2026-10-16']").click()
     _wait_for_square_request(page, requests, "2026-10-16")
     expect(page.locator("[data-live-state='error']")).to_be_visible()
@@ -1406,7 +1441,19 @@ def test_failed_squares_request_offers_retry_without_losing_the_selected_date(
     retry = page.locator("[data-live-state='error'] button")
     expect(retry).to_be_visible()
     retry.click()
-    page.wait_for_timeout(500)
+    for _ in range(100):
+        if len(
+            [
+                request
+                for request in _api_requests(requests, "/squares")
+                if request["query"].get("target_date") == ["2026-10-16"]
+            ]
+        ) >= 2:
+            break
+        page.wait_for_timeout(100)
+    else:
+        pytest.fail("The retry did not request squares for 2026-10-16 again")
+    _wait_for_map_settled(page, "2026-10-16")
     expect(page.locator("[data-map-app]")).to_have_attribute("data-target-date", "2026-10-16")
     expect(page.locator("[data-live-state='error']")).to_have_count(0)
     expect(page.locator("[data-live-state='wait']")).to_contain_text("pending")

@@ -347,6 +347,31 @@ product page. The e2e server is a subprocess and does not use pytest-django's
 test database, so running it with the full suite does not create a second test
 database.
 
+Pull requests and pushes to `master` run the browser checks in chromium only,
+with four parallel workers. Webkit runs every night in
+`.github/workflows/browser-webkit.yml`. Start it by hand from the Actions tab or
+with `gh workflow run browser-webkit.yml`.
+
+Run the checks in parallel locally with `uv run pytest tests/e2e -n 4`. This
+uses the browsers from the pytest settings in `pyproject.toml`, which are
+chromium and webkit. Each worker starts its own Django server.
+
+To look for unstable tests, repeat them with `--count`:
+
+```sh
+uv run pytest -n 6 --count=20 \
+  tests/e2e/test_favorites.py::test_favorites_missing_grid_cell_keeps_saved_location_without_neighbor \
+  tests/e2e/test_map_controls.py::test_failed_squares_request_offers_retry_without_losing_the_selected_date \
+  tests/e2e/test_area_details.py::test_area_detail_renders_host_source_provenance_and_quality \
+  tests/e2e/test_map_controls.py::test_selected_square_area_failure_can_retry_without_cached_unavailable_result \
+  tests/e2e/test_place_search.py::test_touch_place_selection_renders_square_and_preserves_day \
+  tests/e2e/test_map_controls.py::test_map_renders_eight_calendar_dates_and_preserves_an_older_target
+```
+
+CI machines are slower than a laptop. Set `MICOMETEO_E2E_CPU_SLOWDOWN` to a
+number such as `4` to make chromium run that many times slower and reproduce CI
+timing. Webkit ignores it.
+
 ### Full local suite
 
 After the two focused groups pass with PostGIS running, run the combined suite:

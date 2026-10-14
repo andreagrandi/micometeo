@@ -14,6 +14,7 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 import pytest
+from playwright.sync_api import Page
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -104,3 +105,16 @@ def app_server() -> Iterator[str]:
 def base_url(app_server: str) -> str:
     """Return the server URL used by browser checks."""
     return app_server
+
+
+@pytest.fixture
+def page(page: Page) -> Page:
+    """Slow down chromium when MICOMETEO_E2E_CPU_SLOWDOWN is set, for example to 4.
+
+    This reproduces slow CI timing locally. Webkit ignores the setting.
+    """
+    rate = os.environ.get("MICOMETEO_E2E_CPU_SLOWDOWN")
+    if rate and page.context.browser.browser_type.name == "chromium":
+        session = page.context.new_cdp_session(page)
+        session.send("Emulation.setCPUThrottlingRate", {"rate": float(rate)})
+    return page

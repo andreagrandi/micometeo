@@ -13,6 +13,7 @@ from tests.e2e.test_map_controls import (
     _open_map,
     _polygon,
     _squares_response,
+    _wait_for_map_settled,
 )
 
 
@@ -886,6 +887,9 @@ def test_area_detail_uses_map_reason_when_terminal_error_is_generic(
 
     page.route("**/api/v1/squares**", reason_map_route)
     page.route("**/api/v1/areas/**", reason_detail_route)
+    # The map already holds the first response, so another date loads the changed one.
+    page.locator(f".date-btn[data-date='{TARGET_DATES[1]}']").click()
+    _wait_for_map_settled(page, TARGET_DATES[1])
     _click_square(page)
     detail = page.locator("aside[data-live-details]")
     expect(detail).to_contain_text(italian_text if language == "it" else english_text, timeout=10_000)

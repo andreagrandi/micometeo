@@ -12,6 +12,7 @@ from tests.e2e.test_map_controls import (
     TARGET_DATES,
     _squares_response,
     _install_map_routes,
+    _wait_for_map_settled,
     _wait_for_square_request,
 )
 
@@ -173,6 +174,7 @@ def _open_controlled_map(
     first_date = page.locator(f".date-btn[data-date='{TARGET_DATES[0]}']")
     first_date.click()
     _wait_for_square_request(page, requests, TARGET_DATES[0])
+    _wait_for_map_settled(page, TARGET_DATES[0])
     return requests, resolve_requests
 
 

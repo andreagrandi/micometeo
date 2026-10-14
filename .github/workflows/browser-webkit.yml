@@ -1,0 +1,15 @@
+name: Webkit browser checks
+
+on:
+  schedule:
+    - cron: "23 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-tests:
+    uses: ./.github/workflows/browser-checks.yml
+    with:
+      browser: webkit

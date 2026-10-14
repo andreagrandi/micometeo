@@ -3496,8 +3496,14 @@
       document.querySelector("#main")?.classList.remove("details-open");
       persistState();
       const targetZoom = Math.max(13, Math.min(18, stateData.map.getZoom()));
+      const currentCentre = stateData.map.getCenter();
+      const sameView = currentCentre
+        && Math.abs(currentCentre.lng - valid.longitude) < 0.000001
+        && Math.abs(currentCentre.lat - valid.latitude) < 0.000001
+        && Math.abs(stateData.map.getZoom() - targetZoom) < 0.001;
       stateData.map.easeTo({ center: [valid.longitude, valid.latitude], zoom: targetZoom });
-      scheduleFetch(0);
+      // A request sent while the map moves would use the old view, so moveend fetches instead.
+      if (sameView || !stateData.map.isMoving()) scheduleFetch(0);
       return true;
     }
 
