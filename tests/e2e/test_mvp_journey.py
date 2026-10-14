@@ -447,10 +447,12 @@ def test_real_data_journey_from_search_to_favorite_and_language_switch(
     other_language = "en" if language == "it" else "it"
     _switch_language(visitor, language=other_language)
     language = other_language
+    # After the reload the details reopen once the square's data arrives, so wait for it.
+    root = page.locator("[data-map-app]")
+    expect(root).to_have_attribute("data-details-open", "true", timeout=SETTLE_SECONDS * 1000)
     state = _app_state(page)
     assert state["selectedSquare"] == cell_id
     assert state["targetDate"] == last_date
-    assert state["detailsOpen"] == "true"
     _expect_details(page, language=language, target_date=last_date, estimate=last_estimate)
     _expect_date_strip(page, language=language, dates=dates, selected=last_date)
     _choose_date(visitor, first_date)
