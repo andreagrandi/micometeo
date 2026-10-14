@@ -11,6 +11,7 @@ import re
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from datetime import date
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 import pytest
@@ -75,9 +76,15 @@ class Visitor:
 def published_run(base_url: str) -> None:
     """Skip when the database holds no published Tuscany run, as in the empty CI database.
 
-    Every test here reads real squares and details.
+    The empty CI database has no forest build either, so the info endpoint answers 503.
     """
-    if not _api_get(base_url, "/info").get("run"):
+    try:
+        info = _api_get(base_url, "/info")
+    except HTTPError as error:
+        if error.code != 503:
+            raise
+        pytest.skip("No forest build in this database")
+    if not info.get("run"):
         pytest.skip("No published Tuscany run in this database")
 
 

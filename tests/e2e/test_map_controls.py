@@ -450,6 +450,12 @@ def _open_map(
     return requests
 
 
+def _unfold_layers(page: Page) -> None:
+    """Open the desktop layers box, which starts folded."""
+    page.locator("[data-fold='layers']").click()
+    expect(page.locator("#layers-body")).to_be_visible()
+
+
 def _map_snapshot(page: Page) -> dict[str, object]:
     return page.evaluate(
         """
@@ -718,16 +724,19 @@ def test_map_panel_arrows_point_toward_their_next_position(
     toggle = page.locator(f"[data-fold='{panel}']")
     open_transform = "matrix(-1, 0, 0, -1, 0, 0)" if panel == "legend" else "none"
     closed_transform = "none" if panel == "legend" else "matrix(-1, 0, 0, -1, 0, 0)"
-    expect(toggle).to_have_attribute("aria-expanded", "true")
-    expect(toggle).to_have_css("transform", open_transform)
+    # The legend starts open and the layers box starts folded.
+    starts_open = panel == "legend"
+    first, second = (open_transform, closed_transform) if starts_open else (closed_transform, open_transform)
+    expect(toggle).to_have_attribute("aria-expanded", str(starts_open).lower())
+    expect(toggle).to_have_css("transform", first)
     toggle.click()
-    expect(toggle).to_have_attribute("aria-expanded", "false")
-    expect(toggle).to_have_css("transform", closed_transform)
+    expect(toggle).to_have_attribute("aria-expanded", str(not starts_open).lower())
+    expect(toggle).to_have_css("transform", second)
     page.reload(wait_until="domcontentloaded")
-    expect(toggle).to_have_attribute("aria-expanded", "false")
-    expect(toggle).to_have_css("transform", closed_transform)
+    expect(toggle).to_have_attribute("aria-expanded", str(not starts_open).lower())
+    expect(toggle).to_have_css("transform", second)
     toggle.click()
-    expect(toggle).to_have_css("transform", open_transform)
+    expect(toggle).to_have_css("transform", first)
 
 
 def test_many_calculated_times_keep_date_strip_within_short_desktop_viewport(
@@ -843,6 +852,7 @@ def test_initial_and_switched_style_failures_keep_the_working_map(
         )
 
     page.route("**/styles/**", fail_switched_style)
+    _unfold_layers(page)
     page.locator("input[name='background'][value='contrast']").click()
     expect(page.locator("[data-live-state='error']")).to_contain_text("background")
     expect(page.locator("input[name='background'][value='light']")).to_be_checked()
@@ -953,6 +963,7 @@ def test_style_success_does_not_clear_a_newer_squares_error_or_retry_style(
 
     page.route("**/styles/**", overlapping_style_route)
     page.route("**/api/v1/squares**", overlapping_squares_route)
+    _unfold_layers(page)
     page.locator("input[name='background'][value='contrast']").click()
     expect(page.locator("[data-live-state='error']")).to_contain_text("background")
     page.locator("[data-live-state='error'] button").click()
@@ -1194,6 +1205,7 @@ def test_background_overlay_opacity_and_credits_preserve_map_state(
     expect(root).to_have_attribute("data-selected-square", "cell-zero")
     canvas_count_before = page.locator("#map canvas.maplibregl-canvas").count()
 
+    _unfold_layers(page)
     page.locator("input[name='background'][value='contrast']").check()
     page.locator("[data-overlay]").click()
     page.locator("[data-opacity]").fill("35")
@@ -1444,6 +1456,7 @@ def test_repeated_controls_keep_one_map_and_do_not_report_console_errors(
     page.on("pageerror", lambda error: console_errors.append(str(error)))
     requests = _open_map(page, base_url)
     initial_snapshot = _map_snapshot(page)
+    _unfold_layers(page)
 
     for background in ("contrast", "light", "contrast", "light"):
         page.locator(f"input[name='background'][value='{background}']").check()
