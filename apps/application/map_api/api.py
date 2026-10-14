@@ -700,7 +700,7 @@ def estimate_overview(request: HttpRequest) -> HttpResponse:
     width, height = _bbox_size_m(bbox=bbox)
     size = max(2000, math.ceil(max(width, height) / 80 / 1000) * 1000)
     updates = list(EstimateUpdate.objects.filter(
-        forest_build=build, assessment_date__lte=today,
+        forest_build=build, region_code="", assessment_date__lte=today,
         assessment_date__gte=target - timedelta(days=MAX_DAYS_AHEAD),
     ).order_by("cell_key", "-assessment_date", "-calculated_at", "-id").distinct("cell_key"))
     identity = [build.version, str(target), bbox, size, [update.id for update in updates]]
@@ -926,6 +926,7 @@ def squares(request: HttpRequest) -> HttpResponse:
     updates = list(
         EstimateUpdate.objects.filter(
             forest_build_id=build.id,
+            region_code="",
             snapshot_id__in=snapshot_ids,
         ).order_by("-calculated_at", "-id")
     ) if snapshot_ids else []

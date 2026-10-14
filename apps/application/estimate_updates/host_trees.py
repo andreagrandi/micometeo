@@ -30,6 +30,15 @@ def calculation_version() -> str:
     return hashlib.sha256(f"{CURRENT_METHOD.version}:{source}".encode()).hexdigest()
 
 
+def host_tree_source_version() -> str:
+    """Return the version of the local JRC files, or an empty string when unusable."""
+    try:
+        selected = read_manifest(directory=Path(settings.MICOMETEO_JRC_DIRECTORY))
+    except (OSError, ValueError, KeyError):
+        return ""
+    return selected[1] if selected is not None else ""
+
+
 def tree_inputs_for_area(*, forest_cells: list[ForestCell]) -> dict[str, Any]:
     directory = Path(settings.MICOMETEO_JRC_DIRECTORY)
     try:

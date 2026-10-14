@@ -402,6 +402,26 @@ def test_overview_averages_latest_scores_and_marks_partial_coverage_missing(
         assert client.get("/api/v1/estimate-overview", query).status_code == 400
 
 
+@pytest.mark.django_db
+def test_overview_ignores_region_scoped_updates_until_the_published_run_is_read(
+    map_fixture: dict[str, object], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
+    build = map_fixture["build"]
+    for update in (map_fixture["old_update"], map_fixture["new_update"]):
+        EstimateResult.objects.update_or_create(
+            update=update, forest_cell=map_fixture["cells"][3], defaults={"values": bytes([11] * 8)},
+        )
+    EstimateUpdate.objects.filter(id=map_fixture["new_update"].id).update(region_code="09")
+    query = {"bbox": "9,43,12,45", "target_date": MAP_DATE.isoformat()}
+
+    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
+        feature = Client().get("/api/v1/estimate-overview", query).json()["features"][0]["properties"]
+
+    assert feature["percentage"] == 11
+    assert feature["scored_square_count"] == 2
+
+
 def test_bbox_parser_requires_four_finite_wgs84_values() -> None:
     parsed, error = _parse_bbox(value="10,44,10.1,44.1")
 

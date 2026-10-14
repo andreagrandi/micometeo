@@ -37,7 +37,7 @@ from national_forest.models import ForestBuild, ForestCell
 from micometeo.moisture_method import WeatherDay
 from micometeo.weather.policy import PIPELINE_VERSION
 from national_terrain.models import TerrainBuild, TerrainCell
-from weather_requests.eligibility import canonical_cell_key
+from weather_requests.eligibility import TUSCANY_ISTAT_CODE, canonical_cell_key
 from weather_summaries.models import WeatherSnapshot, WeatherSnapshotDay, WeatherSummary
 
 from .contracts import (
@@ -47,7 +47,14 @@ from .contracts import (
     decode_result_bytes,
     encode_result_bytes,
 )
-from .models import EstimateResult, EstimateTask, EstimateUpdate
+from .models import (
+    EstimateResult,
+    EstimateTask,
+    EstimateUpdate,
+    ForecastRun,
+    ForecastRunCell,
+    PublishedForecastRun,
+)
 from .host_trees import calculation_version, saved_host_trees, tree_inputs_for_area
 
 
@@ -89,6 +96,7 @@ class PreparedEstimateUpdate:
     input_fingerprint: str
     tree_inputs: dict = field(default_factory=dict)
     tree_fingerprint: str = ""
+    region_code: str = ""
 
     @property
     def row_count(self) -> int:
@@ -114,6 +122,7 @@ def input_fingerprint(
     terrain_build_id: uuid.UUID,
     method_version: str,
     tree_fingerprint: str = "",
+    region_code: str = "",
 ) -> str:
     """Return the stable identity for one immutable input tuple."""
     value = "|".join(
@@ -128,6 +137,8 @@ def input_fingerprint(
     )
     if tree_fingerprint:
         value += "|" + tree_fingerprint
+    if region_code:
+        value += "|region:" + region_code
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
@@ -424,6 +435,7 @@ def _forest_cells_for_weather_cell(
     forest_build: ForestBuild,
     cell_key: str,
     batch_size: int,
+    region_code: str = "",
 ) -> list[ForestCell]:
     try:
         latitude_text, longitude_text = cell_key.split(",", maxsplit=1)
@@ -433,13 +445,16 @@ def _forest_cells_for_weather_cell(
         raise EstimateValidationError(f"Invalid weather cell key: {cell_key!r}.") from exc
     if canonical_cell_key(latitude=latitude, longitude=longitude) != cell_key:
         raise EstimateValidationError(f"Invalid weather cell key: {cell_key!r}.")
+    squares = ForestCell.objects.filter(
+        build_id=forest_build.id,
+        is_forest=True,
+        weather_latitude=float(latitude),
+        weather_longitude=float(longitude),
+    )
+    if region_code:
+        squares = squares.filter(grid_build_cell__owner_region__istat_code=region_code)
     return list(
-        ForestCell.objects.filter(
-            build_id=forest_build.id,
-            is_forest=True,
-            weather_latitude=float(latitude),
-            weather_longitude=float(longitude),
-        )
+        squares
         .only(
             "id",
             "build_id",
@@ -492,8 +507,13 @@ def calculate_estimate_update(
     calculated_at: datetime | None = None,
     batch_size: int = DEFAULT_BATCH_SIZE,
     method: ForecastMethodConfig | ForecastMethodV2Config = CURRENT_METHOD,
+    region_code: str = "",
 ) -> PreparedEstimateUpdate:
     """Calculate all eligible squares and validate rows before any insert."""
+    if region_code and region_code != TUSCANY_ISTAT_CODE:
+        raise EstimateUpdateError(
+            f"Estimates run only for Tuscany, region code {TUSCANY_ISTAT_CODE}, not {region_code!r}."
+        )
     assessment_date = _require_date(assessment_date, name="assessment_date")
     terrain_version = terrain_build_version or _terrain_build_version()
     if batch_size <= 0:
@@ -520,6 +540,7 @@ def calculate_estimate_update(
         forest_build=forest_build,
         cell_key=cell_key,
         batch_size=batch_size,
+        region_code=region_code,
     )
     grid_cell_ids = [row.grid_build_cell_id for row in forest_cells]
     terrain_cells = {
@@ -594,6 +615,7 @@ def calculate_estimate_update(
         terrain_build_id=terrain_build.id,
         method_version=method.version,
         tree_fingerprint=tree_fingerprint,
+        region_code=region_code,
     )
     return PreparedEstimateUpdate(
         cell_key=cell_key,
@@ -607,6 +629,7 @@ def calculate_estimate_update(
         input_fingerprint=fingerprint,
         tree_inputs=tree_inputs,
         tree_fingerprint=tree_fingerprint,
+        region_code=region_code,
     )
 
 
@@ -631,7 +654,10 @@ def publish_estimate_update(*, prepared: PreparedEstimateUpdate) -> PublishedEst
             if repeated is not None:
                 return PublishedEstimate(update=repeated, created=False)
             newer = (
-                EstimateUpdate.objects.filter(cell_key=prepared.cell_key)
+                EstimateUpdate.objects.filter(
+                    cell_key=prepared.cell_key,
+                    region_code=prepared.region_code,
+                )
                 .order_by("-assessment_date", "-calculated_at", "-id")
                 .first()
             )
@@ -650,6 +676,7 @@ def publish_estimate_update(*, prepared: PreparedEstimateUpdate) -> PublishedEst
                 input_fingerprint=prepared.input_fingerprint,
                 tree_inputs=prepared.tree_inputs,
                 tree_fingerprint=prepared.tree_fingerprint,
+                region_code=prepared.region_code,
             )
             EstimateResult.objects.bulk_create(
                 [
@@ -950,6 +977,17 @@ def cleanup_estimate_updates(*, cleanup_date: date | None = None) -> tuple[str, 
     _require_date(target_date, name="cleanup_date")
     retained_snapshot_ids: set[str] = set()
     with transaction.atomic():
+        published = PublishedForecastRun.objects.values_list("current_run_id", "previous_run_id")
+        in_use = {run_id for pair in published for run_id in pair if run_id is not None}
+        ForecastRun.objects.exclude(id__in=in_use).exclude(
+            status=ForecastRun.Status.RUNNING,
+        ).filter(assessment_date__lt=target_date).delete()
+        run_update_ids = set(
+            ForecastRunCell.objects.exclude(update_id=None).values_list("update_id", flat=True)
+        )
+        retained_snapshot_ids.update(
+            str(value) for value in ForecastRunCell.objects.values_list("snapshot_id", flat=True)
+        )
         updates = list(
             EstimateUpdate.objects.select_for_update()
             .order_by("cell_key", "-assessment_date", "-calculated_at", "-id")
@@ -957,6 +995,9 @@ def cleanup_estimate_updates(*, cleanup_date: date | None = None) -> tuple[str, 
         kept_dates: dict[str, list[date]] = {}
         deletable: list[int] = []
         for update in updates:
+            if update.id in run_update_ids:
+                retained_snapshot_ids.add(str(update.snapshot_id))
+                continue
             if update.assessment_date > target_date:
                 retained_snapshot_ids.add(str(update.snapshot_id))
                 continue

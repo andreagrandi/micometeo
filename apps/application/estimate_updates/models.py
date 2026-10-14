@@ -39,6 +39,7 @@ class EstimateUpdate(models.Model):
     input_fingerprint = models.CharField(max_length=64, unique=True)
     tree_fingerprint = models.CharField(max_length=64, default="", blank=True)
     tree_inputs = models.JSONField(default=dict)
+    region_code = models.CharField(max_length=10, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -52,6 +53,7 @@ class EstimateUpdate(models.Model):
                     "terrain_build",
                     "method_version",
                     "tree_fingerprint",
+                    "region_code",
                 ],
                 name="estimate_update_input_tuple_unique",
             ),
@@ -213,3 +215,113 @@ class TuscanyInputSet(models.Model):
                 name="tuscany_input_set_versions_unique",
             ),
         ]
+
+
+class ForecastRun(models.Model):
+    """Track one regional run: its expected cells, input versions and progress."""
+
+    class Status(models.TextChoices):
+        RUNNING = "running", "Running"
+        FAILED = "failed", "Failed"
+        COMPLETED = "completed", "Completed"
+        PUBLISHED = "published", "Published"
+
+    id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
+    region_code = models.CharField(max_length=10)
+    assessment_date = models.DateField()
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.RUNNING)
+    input_set = models.ForeignKey(
+        TuscanyInputSet,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="forecast_runs",
+    )
+    host_tree_source_version = models.CharField(max_length=64, blank=True, default="")
+    forest_build = models.ForeignKey(
+        ForestBuild,
+        on_delete=models.PROTECT,
+        related_name="forecast_runs",
+    )
+    terrain_build = models.ForeignKey(
+        TerrainBuild,
+        on_delete=models.PROTECT,
+        related_name="forecast_runs",
+    )
+    method_version = models.CharField(max_length=120)
+    calculation_version = models.CharField(max_length=64)
+    target_dates = models.JSONField(default=list)
+    expected_cell_count = models.PositiveIntegerField()
+    expected_square_count = models.PositiveIntegerField()
+    completed_cell_count = models.PositiveIntegerField(default=0)
+    source_gap_cell_count = models.PositiveIntegerField(default=0)
+    runtime_seconds = models.FloatField(null=True, blank=True)
+    peak_memory_mb = models.FloatField(null=True, blank=True)
+    failure_reason = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "region_code", "assessment_date", "forest_build", "terrain_build",
+                    "calculation_version",
+                ],
+                name="forecast_run_identity_unique",
+            ),
+        ]
+
+
+class ForecastRunCell(models.Model):
+    """Hold the weather input and the finished update of one weather cell in a run."""
+
+    class State(models.TextChoices):
+        WAITING = "waiting", "Waiting"
+        COMPLETED = "completed", "Completed"
+        FAILED = "failed", "Failed"
+
+    run = models.ForeignKey(ForecastRun, on_delete=models.CASCADE, related_name="cells")
+    cell_key = models.CharField(max_length=120)
+    snapshot = models.ForeignKey(
+        WeatherSnapshot,
+        on_delete=models.PROTECT,
+        related_name="forecast_run_cells",
+    )
+    expected_square_count = models.PositiveIntegerField()
+    state = models.CharField(max_length=20, choices=State.choices, default=State.WAITING)
+    update = models.ForeignKey(
+        EstimateUpdate,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="forecast_run_cells",
+    )
+    source_gap_days = models.PositiveIntegerField(default=0)
+    failure_reason = models.TextField(blank=True, default="")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["run", "cell_key"], name="forecast_run_cell_unique"),
+        ]
+
+
+class PublishedForecastRun(models.Model):
+    """Point to the one run that readers use for a region, and the run before it."""
+
+    region_code = models.CharField(max_length=10, unique=True)
+    current_run = models.ForeignKey(
+        ForecastRun,
+        on_delete=models.PROTECT,
+        related_name="published_as_current",
+    )
+    previous_run = models.ForeignKey(
+        ForecastRun,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="published_as_previous",
+    )
+    published_at = models.DateTimeField()
