@@ -214,7 +214,9 @@ VPS.
 ### Forest layer file
 
 The map reads the Tuscany forest layer through `/api/v1/forest-layer`. Copy
-this 208,655 byte file to the same place under the repository on the VPS:
+this 208,655 byte file to the same place under the repository on the VPS. The
+image leaves out `data/`, so on the VPS the file sits in the `mvp_forest`
+storage folder that `docs/hosting.md` mounts:
 
 ```text
 data/processed/mvp_forest/tuscany-forest-italy-forest-copernicus-2018-v1-56/forest_layer_2000m.geojson.gz
