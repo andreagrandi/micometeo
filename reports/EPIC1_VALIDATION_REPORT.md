@@ -7,7 +7,7 @@ Issue #13. Written on 11 October 2026 from the experiments P1 to P6 on
 
 PIVOT.
 
-Micometeo can be built as a free web map that shows where weather and habitat
+SporaMeteo can be built as a free web map that shows where weather and habitat
 match published knowledge about porcini, and which weeks look good. Epic 1
 found no data that says where someone will find porcini or how likely a find
 is.
@@ -112,16 +112,16 @@ missing.
 
 | Result | Command | Needs |
 |---|---|---|
-| P1 finds, roads and paths, timing finds | `uv run micometeo run p1_observations` | GBIF download `0019331-260928105237408`, Geofabrik extracts of about 2.4 GB |
-| P1c search timing | `uv run micometeo run p1c_flush_signs` | Trends CSV files saved in `experiments/p1c_flush_signs/trends_exports/` |
-| P2 habitat grid | `uv run micometeo run p2_habitat` | Nothing, all layers are public downloads |
-| P3a past weather | `uv run micometeo run p3_weather` | Nothing, Open-Meteo needs no login |
-| P3b past forecasts | `uv run micometeo run p3b_forecasts` | Nothing |
-| P4a test cases and split | `uv run micometeo run p4_test_rules` | P1 outputs and GADM files, and the public Copernicus forest map |
-| P4b scores | `uv run micometeo run p4b_benchmark` | P4a outputs and a free Copernicus Climate Data Store account. The first download of 380 weather cells takes about 50 minutes and resumes across runs |
-| P4b Bielefeld counts | `uv run micometeo run p4b_bielefeld` | Zenodo record 20591123 |
-| P5 API sizes and memory | `uv run micometeo run p5_phone_map` | Nothing |
-| P6 sizes and requests | `uv run micometeo run p6_costs` | Nothing, it downloads the GADM outlines |
+| P1 finds, roads and paths, timing finds | `uv run sporameteo run p1_observations` | GBIF download `0019331-260928105237408`, Geofabrik extracts of about 2.4 GB |
+| P1c search timing | `uv run sporameteo run p1c_flush_signs` | Trends CSV files saved in `experiments/p1c_flush_signs/trends_exports/` |
+| P2 habitat grid | `uv run sporameteo run p2_habitat` | Nothing, all layers are public downloads |
+| P3a past weather | `uv run sporameteo run p3_weather` | Nothing, Open-Meteo needs no login |
+| P3b past forecasts | `uv run sporameteo run p3b_forecasts` | Nothing |
+| P4a test cases and split | `uv run sporameteo run p4_test_rules` | P1 outputs and GADM files, and the public Copernicus forest map |
+| P4b scores | `uv run sporameteo run p4b_benchmark` | P4a outputs and a free Copernicus Climate Data Store account. The first download of 380 weather cells takes about 50 minutes and resumes across runs |
+| P4b Bielefeld counts | `uv run sporameteo run p4b_bielefeld` | Zenodo record 20591123 |
+| P5 API sizes and memory | `uv run sporameteo run p5_phone_map` | Nothing |
+| P6 sizes and requests | `uv run sporameteo run p6_costs` | Nothing, it downloads the GADM outlines |
 
 The final set of P4b is locked again in `experiments/p4b_benchmark/config.toml`.
 Scoring it a second time needs `score_final = true`, which the test rules

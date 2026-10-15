@@ -305,7 +305,7 @@ def _click_square(page: Page, square_id: str = "cell-zero") -> None:
         page,
         lng_lat=(longitude, 44.13),
         cell_id=square_id,
-        layer=("micometeo-square-estimates", "micometeo-square-missing"),
+        layer=("sporameteo-square-estimates", "sporameteo-square-missing"),
     )
 
 
@@ -445,7 +445,7 @@ def test_area_detail_tracks_target_date_and_api_representative_after_date_change
     expect(page.locator("aside[data-live-details]")).to_contain_text("10 October 2026")
     assert any(request["query"].get("target_date") == ["2026-10-15"] for request in requests)
     root = page.locator("[data-map-app]")
-    diagnostics = page.evaluate("() => window.MicometeoMap.getDiagnostics()")
+    diagnostics = page.evaluate("() => window.SporaMeteoMap.getDiagnostics()")
     assert root.get_attribute("data-representative-latitude") == "44.1312", repr(diagnostics)
     assert root.get_attribute("data-representative-longitude") == "10.6413"
 
@@ -912,9 +912,9 @@ def test_area_detail_uses_map_reason_when_terminal_error_is_generic(
     _wait_for_map_settled(page, TARGET_DATES[1])
     # The map draws new data after the app stores it, so wait for the changed square on screen.
     page.wait_for_function(
-        """() => window.MicometeoMap.map.queryRenderedFeatures(
-          window.MicometeoMap.map.project([10.64, 44.13]),
-          {layers: ['micometeo-square-estimates', 'micometeo-square-missing']}
+        """() => window.SporaMeteoMap.map.queryRenderedFeatures(
+          window.SporaMeteoMap.map.project([10.64, 44.13]),
+          {layers: ['sporameteo-square-estimates', 'sporameteo-square-missing']}
         ).some((feature) => feature.properties?.cell_id === 'cell-zero'
           && feature.properties?.state === 'unavailable')""",
         timeout=10_000,
@@ -1042,7 +1042,7 @@ def test_area_detail_destination_events_keep_map_points_and_api_representatives(
     page.evaluate(
         """() => {
           window.__areaDetailSelectionEvents = [];
-          window.addEventListener('micometeo:selectionchange', (event) => {
+          window.addEventListener('sporameteo:selectionchange', (event) => {
             window.__areaDetailSelectionEvents.push(event.detail);
           });
         }"""
@@ -1056,19 +1056,19 @@ def test_area_detail_destination_events_keep_map_points_and_api_representatives(
     assert map_event["destination"] == map_event["point"]
 
     page.evaluate(
-        "() => window.MicometeoMap.map.jumpTo({center: [10.64, 44.13], zoom: 12})"
+        "() => window.SporaMeteoMap.map.jumpTo({center: [10.64, 44.13], zoom: 12})"
     )
     page.wait_for_function(
         """() => {
-          const map = window.MicometeoMap.map;
+          const map = window.SporaMeteoMap.map;
           const point = map.project([10.64, 44.13]);
           return map.queryRenderedFeatures(point, {
-            layers: ['micometeo-square-estimates', 'micometeo-square-missing'],
+            layers: ['sporameteo-square-estimates', 'sporameteo-square-missing'],
           }).some((feature) => feature.properties?.cell_id === 'cell-zero');
         }""",
         timeout=10_000,
     )
-    page.evaluate("() => window.MicometeoMap.centerSelection()")
+    page.evaluate("() => window.SporaMeteoMap.centerSelection()")
     page.wait_for_function(
         "() => document.querySelector('aside[data-live-details]')?.textContent.includes('44.1312')",
         timeout=10_000,

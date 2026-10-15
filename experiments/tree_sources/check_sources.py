@@ -20,8 +20,8 @@ import rasterio
 from rasterio.io import MemoryFile
 from rasterio.windows import from_bounds
 
-from micometeo.habitat.grid import build_grid
-from micometeo.habitat.inventory import read_points
+from sporameteo.habitat.grid import build_grid
+from sporameteo.habitat.inventory import read_points
 
 
 SPECIES = {

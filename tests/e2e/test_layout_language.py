@@ -334,7 +334,7 @@ def test_browser_formatting_helpers_keep_calendar_day_and_units(
     english_values = page.evaluate(
         """
         () => {
-          const formatting = window.MicometeoFormatting;
+          const formatting = window.SporaMeteoFormatting;
           return {
             date: formatting.formatDate('2026-10-11'),
             measurement: formatting.formatMeasurement(12.5, 'mm'),
@@ -347,7 +347,7 @@ def test_browser_formatting_helpers_keep_calendar_day_and_units(
     italian_values = page.evaluate(
         """
         () => {
-          const formatting = window.MicometeoFormatting;
+          const formatting = window.SporaMeteoFormatting;
           return {
             date: formatting.formatDate('2026-10-11'),
             measurement: formatting.formatMeasurement(12.5, 'mm'),

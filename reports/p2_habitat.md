@@ -56,7 +56,7 @@ woods. It would not separate beech from chestnut.
 ## How to rebuild
 
 ```
-uv run micometeo run p2_habitat
+uv run sporameteo run p2_habitat
 ```
 
 - The grid is written to `data/processed/p2_habitat/<run_id>/grid.parquet` and

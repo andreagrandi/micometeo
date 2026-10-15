@@ -1,9 +1,9 @@
-# Micometeo agent instructions
+# SporaMeteo agent instructions
 
 ## Scope
 
-- `Micometeo_PRD_Epic_1_Validation_EN.md` defines what Epic 1 covers.
-  `Micometeo_Context_Dossier_EN.md` is background only.
+- `SporaMeteo_PRD_Epic_1_Validation_EN.md` defines what Epic 1 covers.
+  `SporaMeteo_Context_Dossier_EN.md` is background only.
 - Epic 1 experiments check what is possible. They do not decide what goes into
   the first version of the app.
 - Never buy a domain, server, paid API or subscription.

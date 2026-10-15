@@ -10,8 +10,8 @@ from typing import Any
 
 from django.conf import settings
 
-from micometeo.forecast_method import CURRENT_METHOD, HostTrees
-from micometeo.host_trees import read_manifest, sample_squares
+from sporameteo.forecast_method import CURRENT_METHOD, HostTrees
+from sporameteo.host_trees import read_manifest, sample_squares
 from national_forest.models import ForestCell
 from national_grid.models import GridBuildCell
 
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 def calculation_version() -> str:
     try:
-        selected = read_manifest(directory=Path(settings.MICOMETEO_JRC_DIRECTORY))
+        selected = read_manifest(directory=Path(settings.SPORAMETEO_JRC_DIRECTORY))
         source = selected[1] if selected is not None else "missing"
     except (OSError, ValueError, KeyError):
         source = "missing"
@@ -33,14 +33,14 @@ def calculation_version() -> str:
 def host_tree_source_version() -> str:
     """Return the version of the local JRC files, or an empty string when unusable."""
     try:
-        selected = read_manifest(directory=Path(settings.MICOMETEO_JRC_DIRECTORY))
+        selected = read_manifest(directory=Path(settings.SPORAMETEO_JRC_DIRECTORY))
     except (OSError, ValueError, KeyError):
         return ""
     return selected[1] if selected is not None else ""
 
 
 def tree_inputs_for_area(*, forest_cells: list[ForestCell]) -> dict[str, Any]:
-    directory = Path(settings.MICOMETEO_JRC_DIRECTORY)
+    directory = Path(settings.SPORAMETEO_JRC_DIRECTORY)
     try:
         selected = read_manifest(directory=directory)
         if selected is None:

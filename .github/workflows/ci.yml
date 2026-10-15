@@ -63,24 +63,24 @@ jobs:
       database:
         image: imresamu/postgis:17-3.5-bookworm@sha256:35fe7dceda62bfe7d2965b0ba78d915ff9f901b5e0466d633ecc58421b5b5210
         env:
-          POSTGRES_DB: micometeo
-          POSTGRES_USER: micometeo
+          POSTGRES_DB: sporameteo
+          POSTGRES_USER: sporameteo
           POSTGRES_PASSWORD: replace-with-a-ci-password
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U micometeo -d micometeo"
+          --health-cmd "pg_isready -U sporameteo -d sporameteo"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 12
           --health-start-period 5s
     env:
-      MICOMETEO_DJANGO_SECRET_KEY: django-insecure-ci-placeholder
-      MICOMETEO_DB_NAME: micometeo
-      MICOMETEO_DB_USER: micometeo
-      MICOMETEO_DB_PASSWORD: replace-with-a-ci-password
-      MICOMETEO_DB_HOST: 127.0.0.1
-      MICOMETEO_DB_PORT: "5432"
+      SPORAMETEO_DJANGO_SECRET_KEY: django-insecure-ci-placeholder
+      SPORAMETEO_DB_NAME: sporameteo
+      SPORAMETEO_DB_USER: sporameteo
+      SPORAMETEO_DB_PASSWORD: replace-with-a-ci-password
+      SPORAMETEO_DB_HOST: 127.0.0.1
+      SPORAMETEO_DB_PORT: "5432"
     steps:
       - name: Install geographic libraries
         run: |

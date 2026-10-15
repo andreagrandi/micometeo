@@ -16,7 +16,7 @@ from django.core.management import CommandError, call_command
 from shapely.geometry import MultiPolygon as ShapelyMultiPolygon
 from shapely.geometry import box
 
-from micometeo.finds.grid import format_cell_id
+from sporameteo.finds.grid import format_cell_id
 from national_grid.models import (
     GridBuild,
     GridBuildCell,
@@ -234,11 +234,11 @@ def _real_database_rows() -> tuple[int, int]:
     """Count region 09 squares and those without a municipality in the configured database."""
     try:
         with psycopg.connect(
-            dbname=os.getenv("MICOMETEO_DB_NAME", "micometeo"),
-            user=os.getenv("MICOMETEO_DB_USER", "micometeo"),
-            password=os.getenv("MICOMETEO_DB_PASSWORD", "replace-with-a-local-password"),
-            host=os.getenv("MICOMETEO_DB_HOST", "127.0.0.1"),
-            port=os.getenv("MICOMETEO_DB_PORT", "5542"),
+            dbname=os.getenv("SPORAMETEO_DB_NAME", "sporameteo"),
+            user=os.getenv("SPORAMETEO_DB_USER", "sporameteo"),
+            password=os.getenv("SPORAMETEO_DB_PASSWORD", "replace-with-a-local-password"),
+            host=os.getenv("SPORAMETEO_DB_HOST", "127.0.0.1"),
+            port=os.getenv("SPORAMETEO_DB_PORT", "5542"),
             connect_timeout=5,
         ) as connection:
             return connection.execute(

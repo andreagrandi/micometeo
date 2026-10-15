@@ -6,7 +6,7 @@ Accessed on 2026-10-11. This inventory covers publicly documented features. I in
 
 ### Takeaway
 
-Italian products already combine growth maps, weather, terrain, saved places, explanations and alerts. Their displayed numbers vary between condition scores, species estimates and claimed probabilities. These meanings should remain separate in Micometeo's feature choices. [Meteo Funghi method](https://meteofunghi.fungocenter.it/how-it-works), [ilCercaFunghi features](https://ilcercafunghi.it/funzionalita-mappa), [FungRadar FAQ](https://it.fungradar.com/domande)
+Italian products already combine growth maps, weather, terrain, saved places, explanations and alerts. Their displayed numbers vary between condition scores, species estimates and claimed probabilities. These meanings should remain separate in SporaMeteo's feature choices. [Meteo Funghi method](https://meteofunghi.fungocenter.it/how-it-works), [ilCercaFunghi features](https://ilcercafunghi.it/funzionalita-mappa), [FungRadar FAQ](https://it.fungradar.com/domande)
 
 ### Cited Findings
 

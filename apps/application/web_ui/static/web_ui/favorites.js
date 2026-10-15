@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "micometeo.favorites";
+  const STORAGE_KEY = "sporameteo.favorites";
   const VERSION = 1;
   const COLORS = ["green", "amber", "violet", "blue", "rose"];
 
@@ -61,13 +61,13 @@
     try {
       wrapper = JSON.parse(raw);
     } catch (error) {
-      console.warn("Micometeo favorites could not be read as JSON");
+      console.warn("SporaMeteo favorites could not be read as JSON");
       return { status: "unreadable", items: [], invalid: [] };
     }
     if (!wrapper || typeof wrapper !== "object" || Array.isArray(wrapper)
       || Object.keys(wrapper).some((key) => !["version", "items"].includes(key))
       || wrapper.version !== VERSION || !Array.isArray(wrapper.items)) {
-      console.warn("Micometeo favorites use an unknown storage version");
+      console.warn("SporaMeteo favorites use an unknown storage version");
       return { status: "unknown", items: [], invalid: [] };
     }
     const items = [];
@@ -83,7 +83,7 @@
       }
       else invalid.push(item);
     });
-    if (invalid.length) console.warn("Micometeo favorites contain invalid entries");
+    if (invalid.length) console.warn("SporaMeteo favorites contain invalid entries");
     return { status: invalid.length ? "warning" : "ready", items, invalid };
   }
 
@@ -112,7 +112,7 @@
     return `favorite-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
 
-  window.MicometeoFavorites = {
+  window.SporaMeteoFavorites = {
     colors: COLORS,
     key: STORAGE_KEY,
     read,

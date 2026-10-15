@@ -14,7 +14,7 @@ height. Its native spacing is one arc second, about 30 m. Heights use metres
 above the EGM2008 reference, as described in the
 [Copernicus collection information](https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM).
 
-Micometeo resamples the data onto a 25 m processing grid to calculate altitude,
+SporaMeteo resamples the data onto a 25 m processing grid to calculate altitude,
 slope and slope direction for the 500 m squares. Resampling does not create
 finer source evidence. Each result joins the ISTAT grid by its build and cell
 identity. A missing source remains unavailable and never becomes zero height.

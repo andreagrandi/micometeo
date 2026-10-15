@@ -1,1 +1,1 @@
-"""Django pages for the Micometeo web application."""
+"""Django pages for the SporaMeteo web application."""

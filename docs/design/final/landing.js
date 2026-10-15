@@ -14,7 +14,7 @@ var COPY = {
     noteText: "questa percentuale non è stata validata. Non indica la tua probabilità personale di trovare porcini.",
     heroBadge: "Strumento sperimentale gratuito per i boschi italiani",
     heroTitle: "Ascolta il respiro del bosco. Scopri dove le condizioni per i porcini sono favorevoli.",
-    heroText: "Micometeo unisce la carta forestale <strong class=\"text-on-surface font-semibold\">Copernicus</strong> con il meteo modellato di <strong class=\"text-on-surface font-semibold\">Open-Meteo</strong> per stimare la probabilità che crescano porcini in quadrati di bosco da 500 metri, in tutta Italia. Senza registrazione, senza pubblicità, gratuito.",
+    heroText: "SporaMeteo unisce la carta forestale <strong class=\"text-on-surface font-semibold\">Copernicus</strong> con il meteo modellato di <strong class=\"text-on-surface font-semibold\">Open-Meteo</strong> per stimare la probabilità che crescano porcini in quadrati di bosco da 500 metri, in tutta Italia. Senza registrazione, senza pubblicità, gratuito.",
     heroOpen: "Esplora la mappa interattiva",
     heroHow: "Guarda come funziona",
     fig1Label: "Dettaglio",
@@ -40,7 +40,7 @@ var COPY = {
     cardUpdate: "Aggiornamento illustrativo: 12 ott 2026, 10:30",
     cardOpen: "Apri Abetone nella mappa",
     whyEyebrow: "Uno strumento sperimentale",
-    whyTitle: "Perché Micometeo è uno strumento differente",
+    whyTitle: "Perché SporaMeteo è uno strumento differente",
     whyText: "Nessuna app a pagamento da scaricare, nessuna previsione miracolosa. Una stima basata su carta forestale, meteo modellato e cartografia libera, con i limiti dichiarati.",
     why1Title: "Quadrati da 500 metri",
     why1Text: "Le stime esistono solo per i quadrati con almeno il 10% di bosco secondo la carta forestale di Copernicus, disegnati sopra la mappa di OpenStreetMap.",
@@ -56,7 +56,7 @@ var COPY = {
     why4Tag: "Sempre gratuito",
     howEyebrow: "Il metodo",
     howTitle: "Come viene elaborata la probabilità",
-    howText: "La stima usa tre tipi di dati. Ecco come Micometeo la calcola per ogni quadrato.",
+    howText: "La stima usa tre tipi di dati. Ecco come SporaMeteo la calcola per ogni quadrato.",
     step1Title: "Bosco dalla carta di Copernicus",
     step1Text: "La carta forestale dice quanta parte di ogni quadrato da 500 metri è bosco. I quadrati con meno del 10% di bosco non ricevono una stima.",
     step1Tag: "Almeno 10% di bosco",
@@ -112,8 +112,8 @@ var COPY = {
     ethTitle: "Etica di raccolta e stima sperimentale",
     ethText: "Il rispetto dell'ecosistema fungino e la prudenza in montagna contano per chiunque frequenti i boschi.",
     ethCardTitle: "Stima sperimentale",
-    ethCardText: "La percentuale di Micometeo è una <strong class=\"text-on-surface font-semibold\">stima sperimentale, non ancora validata</strong>. Indica la probabilità che i porcini crescano da qualche parte dentro il quadrato, non la tua probabilità personale di trovarli e non promette un fungo in un punto preciso.",
-    ethCardSmall: "La natura segue dinamiche complesse. Usa Micometeo come aiuto per scegliere dove andare, non come mappa del tesoro.",
+    ethCardText: "La percentuale di SporaMeteo è una <strong class=\"text-on-surface font-semibold\">stima sperimentale, non ancora validata</strong>. Indica la probabilità che i porcini crescano da qualche parte dentro il quadrato, non la tua probabilità personale di trovarli e non promette un fungo in un punto preciso.",
+    ethCardSmall: "La natura segue dinamiche complesse. Usa SporaMeteo come aiuto per scegliere dove andare, non come mappa del tesoro.",
     rulesTitle: "Le 4 regole del raccoglitore responsabile",
     rule1Title: "Permessi e tesserini",
     rule1Text: "Verifica sempre le normative regionali, provinciali o comunali e munisciti dell'apposito permesso di raccolta prima di inoltrarti nel bosco.",
@@ -126,13 +126,13 @@ var COPY = {
     closeBadge: "Mappa gratuita",
     closeTitle: "Pronto per la tua prossima uscita nel bosco?",
     closeText: "Controlla la pioggia dei giorni scorsi, il meteo del giorno e la stima per oggi e per i prossimi sette giorni, in tutta Italia. Gratuito, senza registrazione.",
-    closeOpen: "Avvia Micometeo",
+    closeOpen: "Avvia SporaMeteo",
     closeHow: "Approfondisci il metodo",
     trust1: "Nessuna app da installare",
     trust2: "Telefono e computer",
     trust3: "Gratuito e senza pubblicità",
     footWarnTitle: "Prima di andare nel bosco",
-    footWarnText: "Le stime di Micometeo sono sperimentali e non garantiscono la fruttificazione del porcino o di altre specie. L'ambiente montano e forestale comporta pericoli oggettivi. Raccogli solo funghi la cui commestibilità sia stata controllata dagli ispettori micologici dell'ASL. Controlla le regole e i permessi della tua regione.",
+    footWarnText: "Le stime di SporaMeteo sono sperimentali e non garantiscono la fruttificazione del porcino o di altre specie. L'ambiente montano e forestale comporta pericoli oggettivi. Raccogli solo funghi la cui commestibilità sia stata controllata dagli ispettori micologici dell'ASL. Controlla le regole e i permessi della tua regione.",
     footAbout: "Mappa gratuita con stime sperimentali sulla crescita dei porcini nei boschi d'Italia.",
     footTags: "Gratuito, senza account, senza pubblicità",
     footSourcesTitle: "Fonti dei dati",
@@ -141,12 +141,12 @@ var COPY = {
     footSource3: "Dati cartografici di OpenStreetMap",
     footNavTitle: "Navigazione",
     footNav1: "Come viene calcolata la stima",
-    footNav2: "Perché Micometeo è diverso",
+    footNav2: "Perché SporaMeteo è diverso",
     footNav3: "Etica di raccolta",
     footNav4: "Mappa di tutta Italia",
     footPrivacyTitle: "Account e preferiti",
-    footPrivacyText: "Micometeo non richiede un account e non mostra pubblicità. I preferiti restano nel tuo browser e non si sincronizzano tra dispositivi.",
-    footBottom1: "Micometeo, stime sperimentali sui porcini."
+    footPrivacyText: "SporaMeteo non richiede un account e non mostra pubblicità. I preferiti restano nel tuo browser e non si sincronizzano tra dispositivi.",
+    footBottom1: "SporaMeteo, stime sperimentali sui porcini."
   },
   en: {
     navHome: "Home",
@@ -161,7 +161,7 @@ var COPY = {
     noteText: "this percentage is unvalidated. It does not mean your personal chance of finding porcini.",
     heroBadge: "Free experimental tool for Italian forests",
     heroTitle: "Hear the forest breathe. Find where conditions for porcini look favourable.",
-    heroText: "Micometeo combines the <strong class=\"text-on-surface font-semibold\">Copernicus</strong> forest map with <strong class=\"text-on-surface font-semibold\">Open-Meteo</strong> modelled weather to estimate the chance that porcini are growing in 500 metre forest squares across Italy. No sign-up, no advertising, free.",
+    heroText: "SporaMeteo combines the <strong class=\"text-on-surface font-semibold\">Copernicus</strong> forest map with <strong class=\"text-on-surface font-semibold\">Open-Meteo</strong> modelled weather to estimate the chance that porcini are growing in 500 metre forest squares across Italy. No sign-up, no advertising, free.",
     heroOpen: "Explore the interactive map",
     heroHow: "See how it works",
     fig1Label: "Detail",
@@ -187,7 +187,7 @@ var COPY = {
     cardUpdate: "Illustrative update: 12 Oct 2026, 10:30",
     cardOpen: "Open Abetone on the map",
     whyEyebrow: "An experimental tool",
-    whyTitle: "Why Micometeo is a different kind of tool",
+    whyTitle: "Why SporaMeteo is a different kind of tool",
     whyText: "No paid app to download and no miracle forecast. An estimate built on a forest map, modelled weather and free mapping, with its limits stated.",
     why1Title: "500 metre squares",
     why1Text: "Estimates exist only for squares with at least 10% forest on the Copernicus forest map, drawn over the OpenStreetMap map.",
@@ -203,7 +203,7 @@ var COPY = {
     why4Tag: "Always free",
     howEyebrow: "The method",
     howTitle: "How the probability is made",
-    howText: "The estimate uses three kinds of data. This is how Micometeo works it out for each square.",
+    howText: "The estimate uses three kinds of data. This is how SporaMeteo works it out for each square.",
     step1Title: "Forest from the Copernicus map",
     step1Text: "The forest map says how much of each 500 metre square is forest. Squares with less than 10% forest get no estimate.",
     step1Tag: "At least 10% forest",
@@ -259,8 +259,8 @@ var COPY = {
     ethTitle: "Foraging ethics and the experimental estimate",
     ethText: "Respect for the fungal ecosystem and care in the mountains matter for everyone who visits the forest.",
     ethCardTitle: "Experimental estimate",
-    ethCardText: "The Micometeo percentage is an <strong class=\"text-on-surface font-semibold\">experimental estimate that has not been validated</strong>. It is the chance that porcini are growing somewhere inside the square. It is not your personal chance of finding them and it does not promise a mushroom at one point.",
-    ethCardSmall: "Nature follows complex dynamics. Use Micometeo to help choose where to go, not as a treasure map.",
+    ethCardText: "The SporaMeteo percentage is an <strong class=\"text-on-surface font-semibold\">experimental estimate that has not been validated</strong>. It is the chance that porcini are growing somewhere inside the square. It is not your personal chance of finding them and it does not promise a mushroom at one point.",
+    ethCardSmall: "Nature follows complex dynamics. Use SporaMeteo to help choose where to go, not as a treasure map.",
     rulesTitle: "The 4 rules of the responsible forager",
     rule1Title: "Permits and licences",
     rule1Text: "Always check regional, provincial or municipal rules and carry the right picking permit before you go into the forest.",
@@ -273,13 +273,13 @@ var COPY = {
     closeBadge: "Free map",
     closeTitle: "Ready for your next trip into the forest?",
     closeText: "Check the rain of recent days, the weather of the day and the estimate for today and the next seven days, across all Italy. Free, no sign-up.",
-    closeOpen: "Start Micometeo",
+    closeOpen: "Start SporaMeteo",
     closeHow: "Read about the method",
     trust1: "No app to install",
     trust2: "Phone and computer",
     trust3: "Free and no advertising",
     footWarnTitle: "Before you go into the forest",
-    footWarnText: "Micometeo estimates are experimental and do not guarantee that porcini or other species will fruit. Mountain and forest environments carry real dangers. Only eat mushrooms whose safety has been checked by ASL mycology inspectors. Check the rules and permits of your region.",
+    footWarnText: "SporaMeteo estimates are experimental and do not guarantee that porcini or other species will fruit. Mountain and forest environments carry real dangers. Only eat mushrooms whose safety has been checked by ASL mycology inspectors. Check the rules and permits of your region.",
     footAbout: "A free map with experimental estimates of porcini growth in the forests of Italy.",
     footTags: "Free, no account, no advertising",
     footSourcesTitle: "Data sources",
@@ -288,12 +288,12 @@ var COPY = {
     footSource3: "OpenStreetMap map data",
     footNavTitle: "Navigation",
     footNav1: "How the estimate is made",
-    footNav2: "Why Micometeo is different",
+    footNav2: "Why SporaMeteo is different",
     footNav3: "Foraging ethics",
     footNav4: "Map of all Italy",
     footPrivacyTitle: "Account and favorites",
-    footPrivacyText: "Micometeo needs no account and shows no advertising. Favorites stay in your browser and do not sync between devices.",
-    footBottom1: "Micometeo, experimental porcini estimates."
+    footPrivacyText: "SporaMeteo needs no account and shows no advertising. Favorites stay in your browser and do not sync between devices.",
+    footBottom1: "SporaMeteo, experimental porcini estimates."
   }
 };
 
@@ -308,7 +308,7 @@ function setLang(lang, updateUrl) {
   var copy = COPY[lang];
   currentLang = lang;
   document.documentElement.lang = lang;
-  document.title = lang === "it" ? "Micometeo: scegli un bosco per i porcini" : "Micometeo: choose a forest for porcini";
+  document.title = lang === "it" ? "SporaMeteo: scegli un bosco per i porcini" : "SporaMeteo: choose a forest for porcini";
   document.querySelectorAll("[data-i18n]").forEach(function (node) {
     node.textContent = copy[node.getAttribute("data-i18n")];
   });

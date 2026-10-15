@@ -1,7 +1,7 @@
 {
   "experiment": "p4_test_rules",
   "run_id": "20261011T082136Z-06759a",
-  "command": "micometeo run p4_test_rules",
+  "command": "sporameteo run p4_test_rules",
   "status": "completed",
   "error": null,
   "started_at": "2026-10-11T08:21:36Z",
@@ -38,7 +38,7 @@
   },
   "versions": {
     "python": "3.13.1",
-    "micometeo": "0.1.0",
+    "sporameteo": "0.1.0",
     "packages": {
       "affine": "3.0.1",
       "attrs": "26.1.0",
@@ -56,7 +56,7 @@
       "iniconfig": "2.3.1",
       "kiwisolver": "1.5.1",
       "matplotlib": "3.11.2",
-      "micometeo": "0.1.0",
+      "sporameteo": "0.1.0",
       "nodeenv": "1.11.0",
       "numpy": "2.5.3",
       "osmium": "4.3.1",

@@ -1,11 +1,11 @@
 # Google Stitch design prompt
 
-Create one coherent, polished design alternative for a free Micometeo website.
+Create one coherent, polished design alternative for a free SporaMeteo website.
 This prompt is complete on its own. Do not rely on another file or discussion.
 
 ## Product and audience
 
-Micometeo helps people in Italy choose a forest area to explore for porcini. It
+SporaMeteo helps people in Italy choose a forest area to explore for porcini. It
 shows a whole-number estimate for the chance that porcini are growing in a
 selected area on a selected day.
 

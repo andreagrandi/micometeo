@@ -25,7 +25,7 @@ from place_search.provider import (
     normalize_query,
     search_places,
 )
-from micometeo.finds.grid import format_cell_id
+from sporameteo.finds.grid import format_cell_id
 from national_forest.models import ForestBuild
 from national_grid.models import GridBuild, GridBuildCell, GridCell, GridChunk, GridRegion
 from pyproj import Transformer
@@ -114,7 +114,7 @@ def resolve_geometry_fixture() -> dict[str, tuple[float, float] | str]:
 
 
 @pytest.mark.django_db
-@override_settings(MICOMETEO_PLACE_SEARCH_REQUEST_INTERVAL=0)
+@override_settings(SPORAMETEO_PLACE_SEARCH_REQUEST_INTERVAL=0)
 def test_place_search_normalizes_query_and_reuses_durable_cache() -> None:
     data = {"features": [_photon_feature(name="Pistoia", longitude=10.92, latitude=43.93)]}
     with patch("place_search.provider._request", return_value=data) as request:
@@ -252,9 +252,9 @@ def test_cached_prefix_preview_is_incomplete_and_never_written_as_exact_cache() 
 
 @pytest.mark.django_db
 @override_settings(
-    MICOMETEO_PLACE_SEARCH_REQUEST_INTERVAL=0,
-    MICOMETEO_PLACE_SEARCH_CACHE_SECONDS=2_592_000,
-    MICOMETEO_PLACE_SEARCH_EMPTY_CACHE_SECONDS=900,
+    SPORAMETEO_PLACE_SEARCH_REQUEST_INTERVAL=0,
+    SPORAMETEO_PLACE_SEARCH_CACHE_SECONDS=2_592_000,
+    SPORAMETEO_PLACE_SEARCH_EMPTY_CACHE_SECONDS=900,
 )
 def test_place_search_uses_long_positive_and_short_empty_cache_ttls() -> None:
     with patch(
@@ -284,7 +284,7 @@ def test_short_place_query_does_not_call_provider() -> None:
 
 
 @pytest.mark.django_db
-@override_settings(MICOMETEO_PLACE_SEARCH_REQUEST_INTERVAL=0)
+@override_settings(SPORAMETEO_PLACE_SEARCH_REQUEST_INTERVAL=0)
 def test_fresh_search_removes_bounded_expired_entries_and_preserves_live_cache() -> None:
     now = timezone.now()
     PlaceSearchCache.objects.bulk_create(
@@ -316,7 +316,7 @@ def test_fresh_search_removes_bounded_expired_entries_and_preserves_live_cache()
 
 
 @pytest.mark.django_db
-@override_settings(MICOMETEO_PLACE_SEARCH_REQUEST_INTERVAL=0)
+@override_settings(SPORAMETEO_PLACE_SEARCH_REQUEST_INTERVAL=0)
 def test_place_search_api_returns_provider_timeout_without_credentials() -> None:
     client = Client()
     with patch(
@@ -330,7 +330,7 @@ def test_place_search_api_returns_provider_timeout_without_credentials() -> None
 
 
 @pytest.mark.django_db
-@override_settings(MICOMETEO_PLACE_SEARCH_REQUEST_INTERVAL=60)
+@override_settings(SPORAMETEO_PLACE_SEARCH_REQUEST_INTERVAL=60)
 def test_place_search_api_returns_local_throttle_for_a_second_provider_request() -> None:
     data = {"features": []}
     with patch("place_search.provider._request", return_value=data) as request:
@@ -345,7 +345,7 @@ def test_place_search_api_returns_local_throttle_for_a_second_provider_request()
 
 
 @pytest.mark.django_db
-@override_settings(MICOMETEO_PLACE_SEARCH_REQUEST_INTERVAL=0)
+@override_settings(SPORAMETEO_PLACE_SEARCH_REQUEST_INTERVAL=0)
 def test_provider_retry_after_blocks_other_queries_but_keeps_cache_available() -> None:
     with patch(
         "place_search.provider._request",
@@ -408,7 +408,7 @@ def test_provider_rejects_malformed_json_response() -> None:
 
 
 @pytest.mark.django_db
-@override_settings(MICOMETEO_PLACE_SEARCH_REQUEST_INTERVAL=0)
+@override_settings(SPORAMETEO_PLACE_SEARCH_REQUEST_INTERVAL=0)
 def test_expired_place_search_cache_calls_provider_again() -> None:
     PlaceSearchCache.objects.create(
         normalized_query="abetone",
@@ -510,7 +510,7 @@ def test_place_resolve_distinguishes_configured_coverage_from_italy() -> None:
 def test_place_resolve_covers_center_and_grid_edge_but_rejects_outside_point(
     resolve_geometry_fixture: dict[str, tuple[float, float] | str],
 ) -> None:
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=resolve_geometry_fixture["version"]):
+    with override_settings(SPORAMETEO_FOREST_BUILD_VERSION=resolve_geometry_fixture["version"]):
         center_latitude, center_longitude = resolve_geometry_fixture["center"]
         client = Client()
         center_response = _resolve_post(

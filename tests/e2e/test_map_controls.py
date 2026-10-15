@@ -243,7 +243,7 @@ def _area_response(*, cell_id: str, target_date: str, update_id: str) -> dict[st
 def _background_style(*, contrast: bool) -> dict[str, object]:
     return {
         "version": 8,
-        "name": "Micometeo browser fixture",
+        "name": "SporaMeteo browser fixture",
         "sources": {
             "osm": {
                 "type": "raster",
@@ -427,7 +427,7 @@ def _open_map(
     page.wait_for_function(
         """
         () => Boolean(
-          window.MicometeoMap?.map &&
+          window.SporaMeteoMap?.map &&
           document.querySelector('#map canvas.maplibregl-canvas')
         )
         """,
@@ -435,13 +435,13 @@ def _open_map(
     )
     page.wait_for_function(
         """
-        () => Boolean(window.MicometeoMap?.map?.isStyleLoaded?.())
+        () => Boolean(window.SporaMeteoMap?.map?.isStyleLoaded?.())
         """,
         timeout=15_000,
     )
     page.wait_for_function(
         """
-        () => Boolean(window.MicometeoMap?.map?.getSource?.('squares'))
+        () => Boolean(window.SporaMeteoMap?.map?.getSource?.('squares'))
         """,
         timeout=15_000,
     )
@@ -462,7 +462,7 @@ def _map_snapshot(page: Page) -> dict[str, object]:
     return page.evaluate(
         """
         () => {
-          const exposed = window.MicometeoMap;
+          const exposed = window.SporaMeteoMap;
           const diagnostics = typeof exposed?.getDiagnostics === 'function'
             ? exposed.getDiagnostics()
             : exposed?.diagnostics || {};
@@ -508,7 +508,7 @@ def _wait_for_map_settled(page: Page, date: str) -> None:
     page.wait_for_function(
         """
         (date) => {
-          const exposed = window.MicometeoMap;
+          const exposed = window.SporaMeteoMap;
           const last = exposed?.lastRequest;
           return Boolean(
             last &&
@@ -554,7 +554,7 @@ def test_map_renders_eight_calendar_dates_and_preserves_an_older_target(
     expect(root).to_have_attribute("data-target-date", "2026-10-15")
 
     page.wait_for_function(
-        """() => window.MicometeoMap.map.querySourceFeatures('squares')
+        """() => window.SporaMeteoMap.map.querySourceFeatures('squares')
           .some(feature => feature.properties.target_date === '2026-10-15'
             && feature.properties.assessment_date === '2026-10-11')""",
         timeout=10_000,
@@ -562,13 +562,13 @@ def test_map_renders_eight_calendar_dates_and_preserves_an_older_target(
     source_snapshot = page.evaluate(
         """
         () => {
-          const map = window.MicometeoMap?.map;
+          const map = window.SporaMeteoMap?.map;
           const source = map?.getSource('squares');
           return {
             source: Boolean(source),
             raw: source?._data || null,
             queried: map?.querySourceFeatures('squares') || [],
-            diagnostics: window.MicometeoMap?.getDiagnostics?.() || null,
+            diagnostics: window.SporaMeteoMap?.getDiagnostics?.() || null,
           };
         }
         """
@@ -593,26 +593,26 @@ def test_mouse_drag_moves_map_with_selected_area_open(page: Page, base_url: str)
     expect(page.locator("aside[data-live-details]")).to_have_count(0)
     click_square(page, lng_lat=(10.64, 44.13), cell_id="cell-zero")
     expect(page.locator("aside[data-live-details]")).to_be_visible()
-    before = page.evaluate("MicometeoMap.map.getCenter().toArray()")
+    before = page.evaluate("SporaMeteoMap.map.getCenter().toArray()")
     layout_before = page.locator("#map").bounding_box()
     page.mouse.move(x=350, y=350)
     page.mouse.down()
     page.mouse.move(x=370, y=350, steps=4)
     page.wait_for_timeout(250)
-    middle = page.evaluate("MicometeoMap.map.getCenter().lng")
+    middle = page.evaluate("SporaMeteoMap.map.getCenter().lng")
     page.mouse.move(x=470, y=350, steps=12)
     page.wait_for_timeout(100)
-    after = page.evaluate("MicometeoMap.map.getCenter().lng")
+    after = page.evaluate("SporaMeteoMap.map.getCenter().lng")
     page.mouse.up()
     assert abs(after - middle) > 0.005
     page.wait_for_function(
-        "before => Math.abs(MicometeoMap.map.getCenter().lng - before[0]) > 0.001",
+        "before => Math.abs(SporaMeteoMap.map.getCenter().lng - before[0]) > 0.001",
         arg=before,
     )
     page.wait_for_timeout(700)
     expect(page.locator("aside[data-live-details]")).to_be_visible()
     assert page.locator("#map").bounding_box() == layout_before
-    page.evaluate("MicometeoMap.map.jumpTo({center: [11.5, 43.5]})")
+    page.evaluate("SporaMeteoMap.map.jumpTo({center: [11.5, 43.5]})")
     page.wait_for_timeout(700)
     expect(page.locator("aside[data-live-details]")).to_be_visible()
     assert page.locator("#map").bounding_box() == layout_before
@@ -771,8 +771,8 @@ def test_initial_and_switched_style_failures_keep_the_working_map(
     page.goto(url=f"{base_url}/map/?center=44.14,10.65&zoom=12", wait_until="domcontentloaded")
     expect(page.locator("[data-live-state='error']")).to_contain_text("background")
     page.locator("[data-live-state='error'] button").click()
-    page.wait_for_function("() => Boolean(window.MicometeoMap?.map)", timeout=15_000)
-    assert page.evaluate("() => window.MicometeoMap.getDiagnostics().mapInstances") == 1
+    page.wait_for_function("() => Boolean(window.SporaMeteoMap?.map)", timeout=15_000)
+    assert page.evaluate("() => window.SporaMeteoMap.getDiagnostics().mapInstances") == 1
 
     requests = _open_map(page, base_url)
     click_square(page, lng_lat=(10.64, 44.13), cell_id="cell-zero")
@@ -796,11 +796,11 @@ def test_initial_and_switched_style_failures_keep_the_working_map(
     expect(page.locator("input[name='background'][value='light']")).to_be_checked()
     expect(page.locator("[data-map-app]")).to_have_attribute("data-selected-square", "cell-zero")
     assert page.locator("#map canvas.maplibregl-canvas").count() == 1
-    assert page.evaluate("() => window.MicometeoMap.getDiagnostics().mapInstances") == 1
+    assert page.evaluate("() => window.SporaMeteoMap.getDiagnostics().mapInstances") == 1
 
     page.locator("[data-live-state='error'] button").click()
     page.wait_for_function(
-        "() => window.MicometeoMap.map.getStyle()?.metadata?.micometeoStyle === 'contrast'",
+        "() => window.SporaMeteoMap.map.getStyle()?.metadata?.sporameteoStyle === 'contrast'",
         timeout=10_000,
     )
     expect(page.locator("input[name='background'][value='contrast']")).to_be_checked()
@@ -823,7 +823,7 @@ def test_initial_and_switched_style_failures_keep_the_working_map(
     )
     page.locator("input[name='background'][value='light']").check()
     page.wait_for_function(
-        "() => window.MicometeoMap.map.getStyle()?.metadata?.micometeoStyle === 'light'",
+        "() => window.SporaMeteoMap.map.getStyle()?.metadata?.sporameteoStyle === 'light'",
         timeout=10_000,
     )
     page.locator("input[name='background'][value='contrast']").check()
@@ -836,7 +836,7 @@ def test_initial_and_switched_style_failures_keep_the_working_map(
         () => window.__mapTestPendingStyle[0].resolve(new Response(
           JSON.stringify({
             version: 8,
-            metadata: {micometeoStyle: 'contrast'},
+            metadata: {sporameteoStyle: 'contrast'},
             sources: {},
             layers: [],
           }),
@@ -847,7 +847,7 @@ def test_initial_and_switched_style_failures_keep_the_working_map(
     page.wait_for_timeout(300)
     expect(page.locator("input[name='background'][value='light']")).to_be_checked()
     assert page.evaluate(
-        "() => window.MicometeoMap.map.getStyle()?.metadata?.micometeoStyle"
+        "() => window.SporaMeteoMap.map.getStyle()?.metadata?.sporameteoStyle"
     ) == "light"
     expect(page.locator("[data-live-state='error']")).to_have_count(0)
     page.evaluate("() => { window.fetch = window.__mapTestOriginalFetch; }")
@@ -920,7 +920,7 @@ def test_style_success_does_not_clear_a_newer_squares_error_or_retry_style(
         body=json.dumps(_background_style(contrast=True)),
     )
     page.wait_for_function(
-        "() => window.MicometeoMap.map.getStyle()?.metadata?.micometeoStyle === 'contrast'",
+        "() => window.SporaMeteoMap.map.getStyle()?.metadata?.sporameteoStyle === 'contrast'",
         timeout=10_000,
     )
     expect(page.locator("[data-live-state='error']")).to_contain_text("weather service")
@@ -944,12 +944,12 @@ def test_map_uses_canonical_weather_cell_and_center_selects_missing_states(
     requests = _open_map(page, base_url)
     click_square(page, lng_lat=(10.64, 44.13), cell_id="cell-zero")
     page.wait_for_function(
-        "() => window.MicometeoMap.map.querySourceFeatures('weather-area').length > 0",
+        "() => window.SporaMeteoMap.map.querySourceFeatures('weather-area').length > 0",
         timeout=10_000,
     )
     area = page.evaluate(
         """
-        () => window.MicometeoMap.map.getSource('weather-area')._data.geojson.features[0]
+        () => window.SporaMeteoMap.map.getSource('weather-area')._data.geojson.features[0]
         """
     )
     expected_area = [
@@ -965,30 +965,30 @@ def test_map_uses_canonical_weather_cell_and_center_selects_missing_states(
     )
 
     page.evaluate(
-        "() => window.MicometeoMap.map.jumpTo({center: [10.655, 44.13], zoom: 12})"
+        "() => window.SporaMeteoMap.map.jumpTo({center: [10.655, 44.13], zoom: 12})"
     )
     _wait_for_square_request(page, requests, "2026-10-12")
     page.wait_for_function("""() => {
-      const map = window.MicometeoMap.map;
-      return map.queryRenderedFeatures(map.project(map.getCenter()), {layers: ['micometeo-noforest-line', 'micometeo-square-noforest']})
+      const map = window.SporaMeteoMap.map;
+      return map.queryRenderedFeatures(map.project(map.getCenter()), {layers: ['sporameteo-noforest-line', 'sporameteo-square-noforest']})
         .some(feature => feature.properties.cell_id === 'cell-noforest');
     }""", timeout=10_000)
-    page.evaluate("() => window.MicometeoMap.centerSelection()")
+    page.evaluate("() => window.SporaMeteoMap.centerSelection()")
     expect(page.locator("[data-map-app]")).to_have_attribute(
         "data-selected-square", "cell-noforest"
     )
     expect(page.locator("aside[data-live-details]")).to_be_visible()
 
     page.evaluate(
-        "() => window.MicometeoMap.map.jumpTo({center: [10.650, 44.13], zoom: 12})"
+        "() => window.SporaMeteoMap.map.jumpTo({center: [10.650, 44.13], zoom: 12})"
     )
     _wait_for_square_request(page, requests, "2026-10-12")
     page.wait_for_function("""() => {
-      const map = window.MicometeoMap.map;
-      return map.queryRenderedFeatures(map.project(map.getCenter()), {layers: ['micometeo-square-missing']})
+      const map = window.SporaMeteoMap.map;
+      return map.queryRenderedFeatures(map.project(map.getCenter()), {layers: ['sporameteo-square-missing']})
         .some(feature => feature.properties.cell_id === 'cell-missing');
     }""", timeout=10_000)
-    page.evaluate("() => window.MicometeoMap.centerSelection()")
+    page.evaluate("() => window.SporaMeteoMap.centerSelection()")
     expect(page.locator("[data-map-app]")).to_have_attribute(
         "data-selected-square", "cell-missing"
     )
@@ -1013,7 +1013,7 @@ def test_map_states_and_zoomed_out_scores_use_the_same_color_layer(
     page.wait_for_function(
         """
         () => {
-          const map = window.MicometeoMap?.map;
+          const map = window.SporaMeteoMap?.map;
           if (!map) return false;
           const layers = map.getStyle().layers || [];
           return layers.some((layer) => String(layer.id).includes('forest'));
@@ -1028,7 +1028,7 @@ def test_map_states_and_zoomed_out_scores_use_the_same_color_layer(
 
     page.evaluate(
         """
-        () => window.MicometeoMap.map.jumpTo({center: [10.65, 44.14], zoom: 5})
+        () => window.SporaMeteoMap.map.jumpTo({center: [10.65, 44.14], zoom: 5})
         """
     )
     for _ in range(100):
@@ -1040,8 +1040,8 @@ def test_map_states_and_zoomed_out_scores_use_the_same_color_layer(
     page.wait_for_function(
         """
         () => {
-          const map = window.MicometeoMap.map;
-          return map.queryRenderedFeatures({layers: ['micometeo-square-estimates']})
+          const map = window.SporaMeteoMap.map;
+          return map.queryRenderedFeatures({layers: ['sporameteo-square-estimates']})
             .some(feature => feature.properties.overview && feature.properties.percentage === 80);
         }
         """,
@@ -1050,7 +1050,7 @@ def test_map_states_and_zoomed_out_scores_use_the_same_color_layer(
     assert len(_api_requests(requests, "/forest-layer")) == 0
     assert page.evaluate(
         """
-        () => window.MicometeoMap.map.getLayoutProperty('micometeo-square-estimates', 'visibility') === 'visible'
+        () => window.SporaMeteoMap.map.getLayoutProperty('sporameteo-square-estimates', 'visibility') === 'visible'
         """
     )
     page.wait_for_timeout(600)
@@ -1058,7 +1058,7 @@ def test_map_states_and_zoomed_out_scores_use_the_same_color_layer(
 
     page.evaluate(
         """
-        () => window.MicometeoMap.map.jumpTo({center: [0, 0], zoom: 12})
+        () => window.SporaMeteoMap.map.jumpTo({center: [0, 0], zoom: 12})
         """
     )
     expect(page.locator("#mapmsgs")).to_contain_text("outside")
@@ -1066,16 +1066,16 @@ def test_map_states_and_zoomed_out_scores_use_the_same_color_layer(
     page.evaluate(
         """
         () => {
-          const map = window.MicometeoMap.map;
+          const map = window.SporaMeteoMap.map;
           map.jumpTo({center: [10.65, 44.14], zoom: 12});
         }
         """
     )
-    page.wait_for_function("""() => window.MicometeoMap.map.queryRenderedFeatures({layers: ['micometeo-square-estimates']}).some(f => f.properties.cell_id === 'cell-zero')""", timeout=10_000)
+    page.wait_for_function("""() => window.SporaMeteoMap.map.queryRenderedFeatures({layers: ['sporameteo-square-estimates']}).some(f => f.properties.cell_id === 'cell-zero')""", timeout=10_000)
     features = page.evaluate(
         """
         () => {
-          const map = window.MicometeoMap.map;
+          const map = window.SporaMeteoMap.map;
           const layers = map.getStyle().layers || [];
           const ids = layers
             .filter((layer) => /square|noforest-line|missing-line/.test(String(layer.id)))
@@ -1117,12 +1117,12 @@ def test_background_overlay_opacity_and_credits_preserve_map_state(
     page.wait_for_function(
         """
         () => {
-          const map = window.MicometeoMap?.map;
+          const map = window.SporaMeteoMap?.map;
           return Boolean(
-            map?.getStyle?.()?.metadata?.micometeoStyle === 'contrast' &&
+            map?.getStyle?.()?.metadata?.sporameteoStyle === 'contrast' &&
             map?.getSource('squares') &&
-            map?.getLayer('micometeo-square-estimates') &&
-            map?.getLayer('micometeo-forest')
+            map?.getLayer('sporameteo-square-estimates') &&
+            map?.getLayer('sporameteo-forest')
           );
         }
         """,
@@ -1165,7 +1165,7 @@ def test_delayed_date_responses_cannot_replace_the_latest_overlay(
         "() => (window.__mapTestPendingSquares || []).length >= 1", timeout=10_000
     )
     page.evaluate(
-        "() => window.MicometeoMap.map.jumpTo({center: [10.70, 44.20], zoom: 12})"
+        "() => window.SporaMeteoMap.map.jumpTo({center: [10.70, 44.20], zoom: 12})"
     )
     page.wait_for_function(
         "() => (window.__mapTestPendingSquares || []).length >= 2", timeout=10_000
@@ -1202,7 +1202,7 @@ def test_delayed_date_responses_cannot_replace_the_latest_overlay(
         }
         """
     )
-    page.wait_for_function("""() => window.MicometeoMap.map.querySourceFeatures('squares')
+    page.wait_for_function("""() => window.SporaMeteoMap.map.querySourceFeatures('squares')
       .some(feature => feature.properties.target_date === '2026-10-18' && feature.properties.percentage === 100)
     """, timeout=10_000)
     expect(page.locator("[data-map-app]")).to_have_attribute("data-target-date", "2026-10-18")
@@ -1210,12 +1210,12 @@ def test_delayed_date_responses_cannot_replace_the_latest_overlay(
         "data-date", "2026-10-18"
     )
     latest_target = page.evaluate(
-        "() => window.MicometeoMap?.getDiagnostics?.().targetDate"
+        "() => window.SporaMeteoMap?.getDiagnostics?.().targetDate"
     )
     assert latest_target == "2026-10-18"
     rendered = page.evaluate(
         """
-        () => window.MicometeoMap.map.querySourceFeatures('squares')
+        () => window.SporaMeteoMap.map.querySourceFeatures('squares')
           .map((feature) => feature.properties)
         """
     )
@@ -1257,7 +1257,7 @@ def test_date_loading_keeps_the_old_overlay_dimmed_and_hides_old_details_values(
     expect(page.locator("[data-live-state='wait']")).to_be_visible()
     expect(root).to_have_attribute("data-map-stale", "true")
     assert page.evaluate(
-        "() => window.MicometeoMap.map.getLayoutProperty('micometeo-square-estimates', 'visibility')"
+        "() => window.SporaMeteoMap.map.getLayoutProperty('sporameteo-square-estimates', 'visibility')"
     ) == "visible"
     details = page.locator("aside[data-live-details]")
     expect(details).to_be_visible()
@@ -1283,13 +1283,13 @@ def test_delayed_overview_failure_cannot_replace_the_latest_map_state(
         """
     )
     page.evaluate(
-        "() => window.MicometeoMap.map.jumpTo({center: [10.65, 44.14], zoom: 5})"
+        "() => window.SporaMeteoMap.map.jumpTo({center: [10.65, 44.14], zoom: 5})"
     )
     page.wait_for_function(
         "() => (window.__mapTestPendingForest || []).length >= 1", timeout=10_000
     )
     page.evaluate(
-        "() => window.MicometeoMap.map.jumpTo({center: [10.65, 44.14], zoom: 12})"
+        "() => window.SporaMeteoMap.map.jumpTo({center: [10.65, 44.14], zoom: 12})"
     )
     page.locator(".date-btn[data-date='2026-10-17']").click()
     _wait_for_square_request(page, requests, "2026-10-17")
@@ -1355,7 +1355,7 @@ def test_repeated_controls_keep_one_map_and_do_not_report_console_errors(
         page.locator(".date-btn[data-date='2026-10-12']").click()
         page.evaluate(
             """
-            () => window.MicometeoMap.map.jumpTo({center: [10.65, 44.14], zoom: 12})
+            () => window.SporaMeteoMap.map.jumpTo({center: [10.65, 44.14], zoom: 12})
             """
         )
 
@@ -1388,7 +1388,7 @@ def test_estimate_scale_has_exact_endpoints_and_separate_status_looks(
     layer_paint = page.evaluate(
         """
         () => {
-          const map = window.MicometeoMap.map;
+          const map = window.SporaMeteoMap.map;
           const layers = map.getStyle().layers || [];
           return layers
             .filter((layer) => /square|noforest-line|missing-line/.test(String(layer.id)))
@@ -1417,14 +1417,14 @@ def test_estimate_scale_has_exact_endpoints_and_separate_status_looks(
     noforest_candidates = [item for item in layer_paint if "noforest" in item["id"]]
     assert noforest_candidates, layer_paint
     noforest_layer = noforest_candidates[-1]
-    assert missing_layer["pattern"] == "micometeo-missing"
+    assert missing_layer["pattern"] == "sporameteo-missing"
     assert noforest_layer["type"] == "line"
     assert noforest_layer["filter"] == ["==", ["get", "state"], "noforest"]
 
     forest_paint = page.evaluate(
         """
-        () => window.MicometeoMap.map.getStyle().layers
-          .find((layer) => layer.id === 'micometeo-forest')?.paint?.['fill-color']
+        () => window.SporaMeteoMap.map.getStyle().layers
+          .find((layer) => layer.id === 'sporameteo-forest')?.paint?.['fill-color']
         """
     )
     forest_colors = {

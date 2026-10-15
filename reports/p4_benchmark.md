@@ -134,7 +134,7 @@ Brejon Lamartiniere and Hoffman counted every porcino at a beech forest near
 Bielefeld, Germany, 2 to 4 times a week from August to November, 2015 to 2024.
 Their data is open on Zenodo, record 20591123, under CC BY 4.0. It records the
 days with no porcini, so it is free of the bias of where people search.
-`uv run micometeo run p4b_bielefeld` scores our rules on it with our own ERA5
+`uv run sporameteo run p4b_bielefeld` scores our rules on it with our own ERA5
 weather, from 5 August to 21 November of each year.
 
 | Prediction | Porcini days in top 20 percent of days |
@@ -177,8 +177,8 @@ in 10 years in one forest, so the ranges are wide.
 
 | Command | Run time | CPU | Peak memory |
 |---|---:|---:|---:|
-| `uv run micometeo run p4b_benchmark`, weather saved | 22 to 24 s | 25 to 29 s | 1.2 GB |
-| `uv run micometeo run p4b_bielefeld`, first run with one ERA5 download | 84 s | 1.7 s | 0.2 GB |
+| `uv run sporameteo run p4b_benchmark`, weather saved | 22 to 24 s | 25 to 29 s | 1.2 GB |
+| `uv run sporameteo run p4b_bielefeld`, first run with one ERA5 download | 84 s | 1.7 s | 0.2 GB |
 | ERA5 download, 380 cells, once | about 50 minutes | | |
 
 The ERA5 time series service of the Copernicus data store answers one place

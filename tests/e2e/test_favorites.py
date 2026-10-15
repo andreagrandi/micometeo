@@ -15,13 +15,13 @@ from tests.e2e.test_map_controls import (
 )
 
 
-STORAGE_KEY = "micometeo.favorites"
+STORAGE_KEY = "sporameteo.favorites"
 GRID_CENTER = {"latitude": 44.13, "longitude": 10.64}
 POINT_CENTER = {"latitude": 44.1305, "longitude": 10.6405}
 
 
 def _wait_for_live_map(page: Page) -> None:
-    page.wait_for_function("() => Boolean(window.MicometeoMap?.map?.getSource?.('squares'))")
+    page.wait_for_function("() => Boolean(window.SporaMeteoMap?.map?.getSource?.('squares'))")
 
 
 def _open_favorites(page: Page) -> None:
@@ -339,7 +339,7 @@ def test_favorites_reopen_point_uses_current_result_and_point_source(
             ],
         },
     )
-    assert page.evaluate("() => window.MicometeoFavorites.read().items.length") == 1
+    assert page.evaluate("() => window.SporaMeteoFavorites.read().items.length") == 1
     _open_favorites(page)
     page.locator("[data-favorite-open]").click()
     expect(page.locator("aside[data-live-details] h2")).to_have_attribute("data-square-id", "cell-zero")
@@ -742,10 +742,10 @@ def test_favorites_missing_grid_cell_keeps_saved_location_without_neighbor(
     expect(page.locator("aside[data-live-details]")).to_contain_text("not in the current map data")
     expect(page.locator("[data-map-app]")).to_have_attribute("data-point-latitude", "44.2")
     expect(page.locator("[data-map-app]")).to_have_attribute("data-point-longitude", "10.8")
-    page.wait_for_function("() => !window.MicometeoMap.map.isMoving()")
+    page.wait_for_function("() => !window.SporaMeteoMap.map.isMoving()")
     centre = page.evaluate(
         """() => {
-          const point = window.MicometeoMap.map.getCenter();
+          const point = window.SporaMeteoMap.map.getCenter();
           return {latitude: point.lat, longitude: point.lng};
         }"""
     )

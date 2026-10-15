@@ -6,7 +6,7 @@ Research date: 2026-10-11. This inventory records public publisher claims. I rea
 
 ### Takeaway
 
-The products combine maps with different sets of forecasts, explanations, saved places, trip records and field tools. Features below are candidates for the user's later selection. Their presence in another product does not make them requirements for Micometeo.
+The products combine maps with different sets of forecasts, explanations, saved places, trip records and field tools. Features below are candidates for the user's later selection. Their presence in another product does not make them requirements for SporaMeteo.
 
 ### Cited findings
 
@@ -93,7 +93,7 @@ The products use different meanings for numbers. A percentage requires a specifi
 
 ### Inferences
 
-- The product decision is whether Micometeo predicts favorable growing conditions, actual fruiting somewhere in an area, or the chance a person finds porcini during a defined search. These are different promises.
+- The product decision is whether SporaMeteo predicts favorable growing conditions, actual fruiting somewhere in an area, or the chance a person finds porcini during a defined search. These are different promises.
 - A visible percentage and a separate explanation of data quality are different features. A percentage alone cannot communicate both.
 - A map for today and a map seven days ahead require separate decisions about their purpose and acceptable uncertainty.
 

@@ -13,7 +13,7 @@ from typing import Any
 from django.conf import settings
 from django.db import transaction
 
-from micometeo.host_trees import checksum, prepare_sources, read_manifest, sample_squares
+from sporameteo.host_trees import checksum, prepare_sources, read_manifest, sample_squares
 from national_forest import layer
 from national_forest.models import ForestBuild, ForestCell, ForestChunk
 from national_grid.models import GridBuild, GridBuildCell, GridRegion
@@ -281,17 +281,17 @@ def _check_host_trees(*, forest: ForestBuild | None, ready: bool, directory: Pat
 def build_inventory(*, terrain_cache_dir: Path, allow_forest_only: bool = False, check_source_files: bool = True) -> tuple[TuscanyReport, dict | None, dict[str, tuple[float, float]]]:
     """Check each source without writing or contacting a provider.
     Also return the manifest and the squares that still need host-tree values."""
-    forest = ForestBuild.objects.filter(version=settings.MICOMETEO_FOREST_BUILD_VERSION).select_related("grid_build").first()
-    terrain = TerrainBuild.objects.filter(version=settings.MICOMETEO_TERRAIN_BUILD_VERSION).first()
+    forest = ForestBuild.objects.filter(version=settings.SPORAMETEO_FOREST_BUILD_VERSION).select_related("grid_build").first()
+    terrain = TerrainBuild.objects.filter(version=settings.SPORAMETEO_TERRAIN_BUILD_VERSION).first()
     grid = _check_grid(forest=forest)
-    forest_status = _check_forest(forest=forest, version=settings.MICOMETEO_FOREST_BUILD_VERSION, grid=grid, check_source_files=check_source_files)
+    forest_status = _check_forest(forest=forest, version=settings.SPORAMETEO_FOREST_BUILD_VERSION, grid=grid, check_source_files=check_source_files)
     terrain_status = _check_terrain(
-        terrain=terrain, version=settings.MICOMETEO_TERRAIN_BUILD_VERSION, grid=grid,
+        terrain=terrain, version=settings.SPORAMETEO_TERRAIN_BUILD_VERSION, grid=grid,
         forest=forest, cache_dir=terrain_cache_dir, check_source_files=check_source_files,
     )
     trees, manifest, needed = _check_host_trees(
         forest=forest, ready=grid.state == READY and forest_status.state == READY,
-        directory=Path(settings.MICOMETEO_JRC_DIRECTORY), allow_forest_only=allow_forest_only,
+        directory=Path(settings.SPORAMETEO_JRC_DIRECTORY), allow_forest_only=allow_forest_only,
     )
     report = TuscanyReport(
         region_code=TUSCANY_ISTAT_CODE, dry_run=True, sources=[grid, forest_status, terrain_status, trees],
@@ -300,7 +300,7 @@ def build_inventory(*, terrain_cache_dir: Path, allow_forest_only: bool = False,
 
 
 def _store_host_trees(*, manifest: dict, version: str, needed: dict[str, tuple[float, float]]) -> None:
-    directory = Path(settings.MICOMETEO_JRC_DIRECTORY)
+    directory = Path(settings.SPORAMETEO_JRC_DIRECTORY)
     keys = sorted(needed)
     for start in range(0, len(keys), BATCH_SIZE):
         centres = {key: needed[key] for key in keys[start:start + BATCH_SIZE]}
@@ -319,7 +319,7 @@ def prepare_tuscany_inputs(*, terrain_cache_dir: Path, dry_run: bool = False, al
     report.dry_run = dry_run
     trees = report.sources[3]
     if not dry_run and all(item.state == READY for item in report.sources[:3]):
-        directory = Path(settings.MICOMETEO_JRC_DIRECTORY)
+        directory = Path(settings.SPORAMETEO_JRC_DIRECTORY)
         if trees.state == MISSING and manifest is None and not trees.version:
             prepare_sources(directory=directory)
             report, manifest, needed = build_inventory(terrain_cache_dir=terrain_cache_dir, allow_forest_only=allow_forest_only, check_source_files=check_source_files)

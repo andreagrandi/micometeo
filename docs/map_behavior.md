@@ -13,12 +13,12 @@ assessed OpenFreeMap and a locally hosted Protomaps file for this use.
 
 Book Corners creates one Leaflet map and debounces viewport requests in
 `libraries/templates/libraries/map.html`. Its background uses raster tiles from
-the standard OpenStreetMap endpoint. Micometeo keeps the single-map and delayed
+the standard OpenStreetMap endpoint. SporaMeteo keeps the single-map and delayed
 request pattern, but D14 requires a different provider.
 
 [OpenFreeMap's integration guide](https://openfreemap.org/quick_start/)
 uses MapLibre for its vector tiles. Its Leaflet example requires Leaflet,
-MapLibre and a bridge between them. Micometeo uses MapLibre directly so that
+MapLibre and a bridge between them. SporaMeteo uses MapLibre directly so that
 one renderer draws the background, forest and estimates.
 
 The existing device measurements use MapLibre GL JS 4.7.1. On a physical
@@ -149,7 +149,7 @@ and percentages must come through the normal worker. The source national
 database stays unchanged by subset preparation. A Tuscany test does not
 establish national performance or complete national acceptance.
 
-The local database is `micometeo_tuscany_56`. Preparation copied 92,707 grid
+The local database is `sporameteo_tuscany_56`. Preparation copied 92,707 grid
 memberships owned by ISTAT region `09`, Toscana. It copied the same number of
 forest and terrain rows, 71 grid chunks and 11 terrain source tiles. Of those
 squares, 71,031 meet the forest threshold and share 333 weather cells.
@@ -172,8 +172,8 @@ Create an empty database and apply migrations before preparing another local
 copy. The command refuses to overwrite populated application tables:
 
 ```sh
-MICOMETEO_DB_NAME=micometeo_tuscany_56 \
-MICOMETEO_SOURCE_DB_NAME=micometeo \
+SPORAMETEO_DB_NAME=sporameteo_tuscany_56 \
+SPORAMETEO_SOURCE_DB_NAME=sporameteo \
 uv run python apps/application/manage.py prepare_tuscany_map_database \
   --source-grid-build-version italy-500m-istat-2026-01-01-v1 \
   --source-forest-build-version italy-forest-copernicus-2018-v1 \
@@ -184,7 +184,7 @@ Then store the municipality of each square. The command also works on a
 populated database and a second run changes nothing:
 
 ```sh
-MICOMETEO_DB_NAME=micometeo_tuscany_56 \
+SPORAMETEO_DB_NAME=sporameteo_tuscany_56 \
 uv run python apps/application/manage.py load_municipalities
 ```
 

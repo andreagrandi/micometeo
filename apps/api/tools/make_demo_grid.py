@@ -12,7 +12,7 @@ from pyproj import Transformer
 
 BOX = {"west": 10.62, "south": 43.72, "east": 11.05, "north": 44.18}
 SIZE_M = 500
-OUTPUT = Path(__file__).resolve().parent.parent / "micometeo_api" / "demo_grid.json.gz"
+OUTPUT = Path(__file__).resolve().parent.parent / "sporameteo_api" / "demo_grid.json.gz"
 
 
 def main() -> None:

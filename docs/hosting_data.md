@@ -1,7 +1,7 @@
 # Hosting data
 
 This page lists the data the VPS needs. The laptop database
-`micometeo_native` holds the national build, about 2.2 GB, plus laptop weather
+`sporameteo_native` holds the national build, about 2.2 GB, plus laptop weather
 and estimates. The VPS receives a Tuscany-only dump instead. Every table that
 `python manage.py migrate` creates appears below with one label, so a table
 cannot go missing without notice.
@@ -12,8 +12,8 @@ The dump was built on 15 October 2026 from `master` at commit `965bfd2` plus
 the changes that store the forest layer path relative to the repository and
 add `prepare_tuscany_inputs --skip-source-files`.
 
-- Source database: `micometeo_tuscany_vps`, 221 MB on the laptop.
-- Dump file: `data/processed/hosting/micometeo_tuscany_vps.dump`. Git ignores
+- Source database: `sporameteo_tuscany_vps`, 221 MB on the laptop.
+- Dump file: `data/processed/hosting/sporameteo_tuscany_vps.dump`. Git ignores
   `data/processed/`.
 - Dump size: 19,420,724 bytes, about 19 MB.
 - SHA-256: `83a61760f76cc47985f55b975f2eab8fb924690a86f0978c10bc41bb0de3f012`.
@@ -27,26 +27,26 @@ add `prepare_tuscany_inputs --skip-source-files`.
 ### Build the dump again
 
 Run these commands from the repository root with the database running. The
-national database `micometeo_native` must hold the completed national grid,
+national database `sporameteo_native` must hold the completed national grid,
 forest and terrain builds. The JRC files must already be in
 `data/raw/jrc_host_trees`, so the last preparation step downloads nothing.
 
 ```sh
 set -eu
-docker compose exec -T database createdb -U micometeo micometeo_tuscany_vps
-export MICOMETEO_DB_NAME=micometeo_tuscany_vps
-export MICOMETEO_SOURCE_DB_NAME=micometeo_native
+docker compose exec -T database createdb -U sporameteo sporameteo_tuscany_vps
+export SPORAMETEO_DB_NAME=sporameteo_tuscany_vps
+export SPORAMETEO_SOURCE_DB_NAME=sporameteo_native
 uv run python apps/application/manage.py migrate --noinput
 uv run python apps/application/manage.py prepare_tuscany_map_database
 uv run python apps/application/manage.py load_municipalities
-export MICOMETEO_FOREST_BUILD_VERSION=tuscany-forest-italy-forest-copernicus-2018-v1-56
-export MICOMETEO_TERRAIN_BUILD_VERSION=tuscany-terrain-italy-terrain-glo30-2021-v2-56
+export SPORAMETEO_FOREST_BUILD_VERSION=tuscany-forest-italy-forest-copernicus-2018-v1-56
+export SPORAMETEO_TERRAIN_BUILD_VERSION=tuscany-terrain-italy-terrain-glo30-2021-v2-56
 uv run python apps/application/manage.py prepare_tuscany_inputs --json
 mkdir -p data/processed/hosting
 docker compose exec -T database pg_dump \
   --format=custom --no-owner --no-acl \
-  -U micometeo -d micometeo_tuscany_vps \
-  > data/processed/hosting/micometeo_tuscany_vps.dump
+  -U sporameteo -d sporameteo_tuscany_vps \
+  > data/processed/hosting/sporameteo_tuscany_vps.dump
 ```
 
 On the laptop, `prepare_tuscany_map_database` took 41 seconds,
@@ -60,12 +60,12 @@ the old one.
 The dump was restored into a new empty database made from `template0`:
 
 ```sh
-docker compose exec -T database createdb -U micometeo \
-  --template=template0 micometeo_tuscany_restore_check
+docker compose exec -T database createdb -U sporameteo \
+  --template=template0 sporameteo_tuscany_restore_check
 docker compose exec -T database pg_restore \
   --no-owner --no-acl --exit-on-error \
-  -U micometeo -d micometeo_tuscany_restore_check \
-  < data/processed/hosting/micometeo_tuscany_vps.dump
+  -U sporameteo -d sporameteo_tuscany_restore_check \
+  < data/processed/hosting/sporameteo_tuscany_vps.dump
 ```
 
 The restore took 3 seconds. The check then ran from a copy of `apps/` in
@@ -74,10 +74,10 @@ layer file and the 37 JRC files the app reads. It held no forest source files
 and no terrain tiles:
 
 ```sh
-MICOMETEO_DB_NAME=micometeo_tuscany_restore_check \
-MICOMETEO_FOREST_BUILD_VERSION=tuscany-forest-italy-forest-copernicus-2018-v1-56 \
-MICOMETEO_TERRAIN_BUILD_VERSION=tuscany-terrain-italy-terrain-glo30-2021-v2-56 \
-MICOMETEO_JRC_DIRECTORY=/path/to/jrc \
+SPORAMETEO_DB_NAME=sporameteo_tuscany_restore_check \
+SPORAMETEO_FOREST_BUILD_VERSION=tuscany-forest-italy-forest-copernicus-2018-v1-56 \
+SPORAMETEO_TERRAIN_BUILD_VERSION=tuscany-terrain-italy-terrain-glo30-2021-v2-56 \
+SPORAMETEO_JRC_DIRECTORY=/path/to/jrc \
 python apps/application/manage.py prepare_tuscany_inputs \
   --dry-run --json --skip-source-files
 ```
@@ -109,7 +109,7 @@ The labels mean:
 - Left empty: nothing in the hosted app writes to the table.
 
 `migrate` creates 55 tables. The row counts come from
-`micometeo_tuscany_vps` before the dump.
+`sporameteo_tuscany_vps` before the dump.
 
 ### Restored
 
@@ -165,7 +165,7 @@ and the extension fills this table.
 | `estimate_updates_forecastrun` | 0 |
 | `estimate_updates_forecastruncell` | 0 |
 | `estimate_updates_publishedforecastrun` | 0 |
-| `micometeo_map_cache` | 0 |
+| `sporameteo_map_cache` | 0 |
 | `background_jobs_backgroundjob` | 0 |
 | `background_jobs_backgroundjobattempt` | 0 |
 | `django_tasks_database_dbtaskresult` | 0 |
@@ -201,7 +201,7 @@ belong to the worker example in `docs/local_development.md`.
 ### JRC files the app reads
 
 Copy these files from `data/raw/jrc_host_trees` to the folder that
-`MICOMETEO_JRC_DIRECTORY` names on the VPS:
+`SPORAMETEO_JRC_DIRECTORY` names on the VPS:
 
 - `manifest.json`,
 - the `.tif` file of each of the 18 species,

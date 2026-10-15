@@ -61,15 +61,15 @@ All scores are made up. Every API answer and the page say so.
 - The page and the API run as two programs on ports 8000 and 8080. The page
   gets all scores from the API. Only the background map comes from
   OpenFreeMap.
-- `docker build -t micometeo-api:p5 apps/api` builds the API as a container
-  image, and `docker run --rm -p 8080:8080 micometeo-api:p5` runs it. #12 can
+- `docker build -t sporameteo-api:p5 apps/api` builds the API as a container
+  image, and `docker run --rm -p 8080:8080 sporameteo-api:p5` runs it. #12 can
   use this image.
 
 ## Measurements
 
 ### Data size and answer time of the API
 
-`uv run micometeo run p5_phone_map` starts the API, asks for squares the way a
+`uv run sporameteo run p5_phone_map` starts the API, asks for squares the way a
 phone window of 390 by 844 pixels would, and writes
 `reports/p5_api_requests.csv` and `reports/p5_api_memory.csv`. Each view was
 asked for on the same day, 2 days ahead and 7 days ahead. The table shows the
@@ -97,7 +97,7 @@ would be half a megabyte.
 ### Time until the page is usable
 
 "Usable" means the first squares are drawn and the map has stopped loading.
-The page records this moment in `window.micometeoUsableMs`. Each load started
+The page records this moment in `window.sporameteoUsableMs`. Each load started
 with an empty browser cache, in Chromium through Playwright, with a phone
 window of 390 by 844 pixels, touch turned on and an iPhone user agent.
 

@@ -13,8 +13,8 @@ from django.conf import settings
 from django.contrib.gis.geos import MultiPolygon, Polygon
 from django.db import close_old_connections
 
-from micometeo.finds.grid import format_cell_id
-from micometeo.forecast_method import ForecastResult, calculate_forecast
+from sporameteo.finds.grid import format_cell_id
+from sporameteo.forecast_method import ForecastResult, calculate_forecast
 from national_forest.models import ForestBuild, ForestCell, ForestChunk
 from national_grid.models import GridBuild, GridBuildCell, GridCell, GridChunk, GridRegion
 from national_terrain.models import TerrainBuild, TerrainCell, TerrainChunk
@@ -57,7 +57,7 @@ def test_tree_cache_reads_only_requested_squares_and_reuses_values(
 ) -> None:
     from estimate_updates.host_trees import tree_inputs_for_area
     from estimate_updates.models import HostTreeCache
-    from micometeo.forecast_method import HostTrees
+    from sporameteo.forecast_method import HostTrees
 
     forest_cell = complete_estimate_fixture["forest_cell"]
     source = {"source_year": 2006, "resolution_m": 1000}
@@ -107,7 +107,7 @@ def test_tree_source_failure_uses_disclosed_fallback_without_caching_zero(
 def test_new_tree_source_queues_a_new_task_for_the_same_weather(complete_estimate_fixture, monkeypatch, settings) -> None:
     snapshot = complete_estimate_fixture["snapshot"]
     forest = complete_estimate_fixture["forest"]
-    settings.MICOMETEO_TERRAIN_BUILD_VERSION = complete_estimate_fixture["terrain"].version
+    settings.SPORAMETEO_TERRAIN_BUILD_VERSION = complete_estimate_fixture["terrain"].version
     monkeypatch.setattr("estimate_updates.services._schedule_estimate_task", lambda **kwargs: False)
     monkeypatch.setattr("estimate_updates.services.calculation_version", lambda: "a" * 64)
     kwargs = dict(snapshot_id=snapshot.id, cell_key=snapshot.cell_key,
@@ -1191,7 +1191,7 @@ def test_startup_recovery_recreates_missing_ready_weather_handoff(
     snapshot = complete_estimate_fixture["snapshot"]
     forest = complete_estimate_fixture["forest"]
     queued: list[object] = []
-    monkeypatch.setattr(settings, "MICOMETEO_FOREST_BUILD_VERSION", forest.version)
+    monkeypatch.setattr(settings, "SPORAMETEO_FOREST_BUILD_VERSION", forest.version)
 
     def fake_queue(*, task_id):
         queued.append(task_id)

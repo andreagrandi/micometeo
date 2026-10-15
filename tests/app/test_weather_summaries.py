@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-from micometeo.weather.features import day_start, hours_in_local_day
+from sporameteo.weather.features import day_start, hours_in_local_day
 from weather_summaries.aggregation import aggregate_response
 from weather_summaries.contracts import (
     HourlySeries,
@@ -405,7 +405,7 @@ def test_new_attempt_uses_exact_previous_snapshot_for_older_dates() -> None:
 
 
 @pytest.mark.django_db(transaction=True)
-def test_micometeo_issue45r_previous_forecast_requires_refetch() -> None:
+def test_sporameteo_issue45r_previous_forecast_requires_refetch() -> None:
     from weather_summaries.services import reusable_previous_daily_rows, store_weather_response
 
     first = store_weather_response(

@@ -19,7 +19,7 @@ from django.db.models import ProtectedError
 from django.test.utils import CaptureQueriesContext
 from rasterio.transform import from_origin
 
-from micometeo.habitat.forest import summarise_national_block
+from sporameteo.habitat.forest import summarise_national_block
 from national_forest import layer, source
 from national_forest.models import ForestBuild, ForestCell, ForestChunk
 from national_forest.services import (
@@ -33,7 +33,7 @@ from national_forest.services import (
     weather_cell,
 )
 from national_grid.models import GridBuild, GridBuildCell, GridCell, GridChunk, GridRegion
-from micometeo.finds.grid import format_cell_id
+from sporameteo.finds.grid import format_cell_id
 
 
 _VERSION_COUNTER = itertools.count()

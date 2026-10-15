@@ -18,9 +18,9 @@ alternatives that #54 compares. Nobody has chosen it as the app design.
 
 | Folder | Content |
 | --- | --- |
-| `micometeo_design_alternative_a/` | Map app: `code.html` and the desktop screenshot `screen.png` |
-| `micometeo_home_guida_esplorativa/` | Landing page: `code.html` and the full page screenshot `screen.png` |
-| `micometeo_fieldwork/` | `DESIGN.md`: colours, type scale, spacing, corner radius and components |
+| `sporameteo_design_alternative_a/` | Map app: `code.html` and the desktop screenshot `screen.png` |
+| `sporameteo_home_guida_esplorativa/` | Landing page: `code.html` and the full page screenshot `screen.png` |
+| `sporameteo_fieldwork/` | `DESIGN.md`: colours, type scale, spacing, corner radius and components |
 
 ## How to look at it
 
@@ -33,7 +33,7 @@ cd docs/design/stitch
 python3 -m http.server 8765 --bind 127.0.0.1
 ```
 
-Then open `http://127.0.0.1:8765/micometeo_design_alternative_a/code.html`.
+Then open `http://127.0.0.1:8765/sporameteo_design_alternative_a/code.html`.
 The bar at the top switches the language and the screen size. The
 "Audit & Required States" button shows the state messages. The pages load
 Tailwind and Google Fonts from the internet.
@@ -63,7 +63,7 @@ used by the app.
 - Phone map app: the details open as a sheet from the bottom with a close
   button. A "View estimate details" button sits over the map.
 - Landing page: a hero with a sample estimate card for Abetone, a "why
-  Micometeo" section, four method steps, a percentage scale, cards for four
+  SporaMeteo" section, four method steps, a percentage scale, cards for four
   forest regions, a picking ethics section and a closing call to open the map.
 
 ## Feature checklist
@@ -107,7 +107,7 @@ map or layer change is missing.
   bottom left.
 - The landing page copy is placeholder. It lacks the design and experimental
   notices, calls the sample "live", invents estimates for four regions and
-  states method details that Micometeo does not have, such as wind checks and
+  states method details that SporaMeteo does not have, such as wind checks and
   updates every 6 hours. Replace this text when the page is built.
 - The project link is private. The files in this folder are the only record
   others can open.

@@ -16,7 +16,7 @@ is ready. Do not redraw the overlay as individual weather batches finish.
 This is a proposed replacement for the on-demand decision D15. It does not
 change D16's weather detail or D17's minimum forest coverage. A national
 scheduler and publication switch have not been implemented by this assessment.
-The Tuscany implementation is tracked in [epic #96](https://github.com/andreagrandi/micometeo/issues/96).
+The Tuscany implementation is tracked in [epic #96](https://github.com/andreagrandi/sporameteo/issues/96).
 
 ## Coverage and provider accounting
 

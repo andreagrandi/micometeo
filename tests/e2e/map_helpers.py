@@ -13,7 +13,7 @@ def wait_for_map_settled(page: Page, *, date: str | None = None, timeout: int = 
     page.wait_for_function(
         """
         (date) => {
-          const exposed = window.MicometeoMap;
+          const exposed = window.SporaMeteoMap;
           if (!exposed?.map) return false;
           const diagnostics = exposed.getDiagnostics();
           return document.querySelector('[data-map-app]').dataset.mapStale !== 'true'
@@ -32,7 +32,7 @@ def click_square(
     lng_lat: tuple[float, float],
     cell_id: str,
     date: str | None = None,
-    layer: str | Sequence[str] = "micometeo-square-estimates",
+    layer: str | Sequence[str] = "sporameteo-square-estimates",
 ) -> None:
     """Click a square once the map shows its date and the square is drawn there.
 
@@ -43,7 +43,7 @@ def click_square(
     page.wait_for_function(
         """
         ({lngLat, cellId, layers}) => {
-          const map = window.MicometeoMap.map;
+          const map = window.SporaMeteoMap.map;
           return map.queryRenderedFeatures(map.project(lngLat), {layers})
             .some((feature) => feature.properties?.cell_id === cellId);
         }
@@ -54,7 +54,7 @@ def click_square(
     page.evaluate(
         """
         (lngLat) => {
-          const map = window.MicometeoMap.map;
+          const map = window.SporaMeteoMap.map;
           const point = map.project(lngLat);
           map.fire('click', {
             point,

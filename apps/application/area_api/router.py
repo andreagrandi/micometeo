@@ -303,7 +303,7 @@ def _classification_error(
 
 def _configured_square(*, square_id: str) -> ForestCell | None:
     """Find one square in the configured completed forest build."""
-    version = str(getattr(settings, "MICOMETEO_FOREST_BUILD_VERSION", ""))
+    version = str(getattr(settings, "SPORAMETEO_FOREST_BUILD_VERSION", ""))
     if not version:
         return None
     return (
@@ -934,7 +934,7 @@ def area_detail(
     """Return one square's exact stored estimate and explanation inputs."""
     target_date = request.GET.get("target_date")
     update_id = request.GET.get("update_id")
-    from micometeo.finds.grid import CELL_SIZE_M, parse_cell_id
+    from sporameteo.finds.grid import CELL_SIZE_M, parse_cell_id
 
     try:
         parse_cell_id(square_id, expected_size_m=CELL_SIZE_M)

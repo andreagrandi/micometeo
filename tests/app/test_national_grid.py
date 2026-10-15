@@ -11,7 +11,7 @@ import shapefile
 from pyproj import Transformer
 from shapely.geometry import MultiPolygon, Point, Polygon
 
-from micometeo.finds.grid import CELL_SIZE_M, cell_id, parse_cell_id
+from sporameteo.finds.grid import CELL_SIZE_M, cell_id, parse_cell_id
 from national_grid.geometry import GridChunkBounds, cells_for_chunk
 from national_grid.lookups import lookup_national_grid
 from national_grid.models import GridBuild, GridBuildCell

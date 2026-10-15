@@ -121,7 +121,7 @@ def _read_response(response: Any) -> _Response:
 def _default_transport(*, url: str, timeout: float) -> _Response:
     request = urllib.request.Request(
         url,
-        headers={"User-Agent": "micometeo-weather-requests/1"},
+        headers={"User-Agent": "sporameteo-weather-requests/1"},
     )
     with urllib.request.urlopen(request, timeout=timeout) as response:
         return _read_response(response)

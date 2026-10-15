@@ -11,7 +11,7 @@ from tests.e2e.test_map_controls import TARGET_DATES, _open_map
 
 
 def _wait_for_navigation_builder(page: Page) -> None:
-    page.wait_for_function("() => Boolean(window.MicometeoNavigation?.buildGoogleMapsUrl)")
+    page.wait_for_function("() => Boolean(window.SporaMeteoNavigation?.buildGoogleMapsUrl)")
 
 
 def test_google_maps_url_builder_validates_coordinates_and_keeps_precision(
@@ -22,7 +22,7 @@ def test_google_maps_url_builder_validates_coordinates_and_keeps_precision(
     values = page.evaluate(
         """
         () => {
-          const build = window.MicometeoNavigation.buildGoogleMapsUrl;
+          const build = window.SporaMeteoNavigation.buildGoogleMapsUrl;
           return {
             point: build({latitude: 44.131200123, longitude: -10.641300987}),
             edge: build({latitude: 90, longitude: -180}),
@@ -77,7 +77,7 @@ def test_point_navigation_uses_exact_selection_after_map_and_date_changes(
     expect(action).to_be_enabled()
     expected = page.evaluate(
         """
-        () => window.MicometeoNavigation.buildGoogleMapsUrl({
+        () => window.SporaMeteoNavigation.buildGoogleMapsUrl({
           latitude: Number(document.querySelector('[data-map-app]').dataset.pointLatitude),
           longitude: Number(document.querySelector('[data-map-app]').dataset.pointLongitude),
         })
@@ -85,7 +85,7 @@ def test_point_navigation_uses_exact_selection_after_map_and_date_changes(
     )
     expect(action).to_have_attribute("data-navigation-url", expected)
 
-    page.evaluate("() => window.MicometeoMap.map.jumpTo({center: [11.1, 44.5], zoom: 12})")
+    page.evaluate("() => window.SporaMeteoMap.map.jumpTo({center: [11.1, 44.5], zoom: 12})")
     page.locator(f".date-btn[data-date='{TARGET_DATES[1]}']").click()
     expect(action).to_have_attribute("data-navigation-url", expected)
 
@@ -114,20 +114,20 @@ def test_grid_navigation_waits_for_verified_area_representative(
     expect(action).to_be_visible()
     expect(action).to_be_enabled()
     page.evaluate(
-        "() => window.MicometeoMap.map.jumpTo({center: [10.64, 44.13], zoom: 12})"
+        "() => window.SporaMeteoMap.map.jumpTo({center: [10.64, 44.13], zoom: 12})"
     )
     page.wait_for_function(
         """
         () => {
-          const map = window.MicometeoMap.map;
+          const map = window.SporaMeteoMap.map;
           const point = map.project([10.64, 44.13]);
           return map.queryRenderedFeatures(point, {
-            layers: ['micometeo-square-estimates', 'micometeo-square-missing'],
+            layers: ['sporameteo-square-estimates', 'sporameteo-square-missing'],
           }).some((feature) => feature.properties?.cell_id === 'cell-zero');
         }
         """
     )
-    page.evaluate("() => window.MicometeoMap.centerSelection()")
+    page.evaluate("() => window.SporaMeteoMap.centerSelection()")
     expect(action).to_be_enabled()
     expect(action).to_have_attribute(
         "data-navigation-url",
@@ -158,20 +158,20 @@ def test_grid_navigation_does_not_reuse_stale_representative(
     action = page.locator("aside[data-live-details] [data-navigation]")
     expect(action).to_be_enabled()
     page.evaluate(
-        "() => window.MicometeoMap.map.jumpTo({center: [10.64, 44.13], zoom: 12})"
+        "() => window.SporaMeteoMap.map.jumpTo({center: [10.64, 44.13], zoom: 12})"
     )
     page.wait_for_function(
         """
         () => {
-          const map = window.MicometeoMap.map;
+          const map = window.SporaMeteoMap.map;
           const point = map.project([10.64, 44.13]);
           return map.queryRenderedFeatures(point, {
-            layers: ['micometeo-square-estimates', 'micometeo-square-missing'],
+            layers: ['sporameteo-square-estimates', 'sporameteo-square-missing'],
           }).some((feature) => feature.properties?.cell_id === 'cell-zero');
         }
         """
     )
-    page.evaluate("() => window.MicometeoMap.centerSelection()")
+    page.evaluate("() => window.SporaMeteoMap.centerSelection()")
     expect(action).to_have_attribute(
         "data-navigation-url",
         "https://www.google.com/maps/search/?api=1&query=44.1312%2C10.6413",
@@ -204,20 +204,20 @@ def test_grid_navigation_rejects_out_of_range_representative(
     page.route("**/api/v1/areas/**", detail_route)
     _click_square(page=page)
     page.evaluate(
-        "() => window.MicometeoMap.map.jumpTo({center: [10.64, 44.13], zoom: 12})"
+        "() => window.SporaMeteoMap.map.jumpTo({center: [10.64, 44.13], zoom: 12})"
     )
     page.wait_for_function(
         """
         () => {
-          const map = window.MicometeoMap.map;
+          const map = window.SporaMeteoMap.map;
           const point = map.project([10.64, 44.13]);
           return map.queryRenderedFeatures(point, {
-            layers: ['micometeo-square-estimates', 'micometeo-square-missing'],
+            layers: ['sporameteo-square-estimates', 'sporameteo-square-missing'],
           }).some((feature) => feature.properties?.cell_id === 'cell-zero');
         }
         """
     )
-    page.evaluate("() => window.MicometeoMap.centerSelection()")
+    page.evaluate("() => window.SporaMeteoMap.centerSelection()")
     action = page.locator("aside[data-live-details] [data-navigation]")
     expect(action).to_be_disabled()
     expect(page.locator("[data-navigation-status]")).to_be_visible()

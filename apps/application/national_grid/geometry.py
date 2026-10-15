@@ -10,7 +10,7 @@ from shapely.geometry import MultiPolygon, Polygon, box
 from shapely.ops import unary_union
 from shapely.strtree import STRtree
 
-from micometeo.finds.grid import format_cell_id
+from sporameteo.finds.grid import format_cell_id
 
 from .source import RegionBoundary
 

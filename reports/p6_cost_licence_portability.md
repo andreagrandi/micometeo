@@ -40,7 +40,7 @@ quotes. Nothing was bought and no account was opened.
   automated reads, the table says so and names the other source used.
 - Open-Meteo prices come from the Stripe price table that its pricing page
   loads. The page itself shows no amounts.
-- `uv run micometeo run p6_costs` measures the home area, the daily scoring
+- `uv run sporameteo run p6_costs` measures the home area, the daily scoring
   and the size of the stored scores, and writes `reports/p6_sizes.csv` and
   `reports/p6_users.csv`. Run record:
   [20261011T142322Z-4fe9ea](runs/p6_costs/20261011T142322Z-4fe9ea.json). It
@@ -100,7 +100,7 @@ give "private or non-profit websites or apps that do not have subscriptions or
 advertising" as an example of non-commercial use. Websites with ads or
 subscriptions, and use inside commercial products, are commercial.
 
-A Micometeo app that is free, has no ads and has no subscriptions fits the
+A SporaMeteo app that is free, has no ads and has no subscriptions fits the
 non-commercial example. Three cases are not covered by the terms: donations,
 a company or VAT number running the app, and links that earn money. Ask
 Open-Meteo in writing before launch and keep the answer.

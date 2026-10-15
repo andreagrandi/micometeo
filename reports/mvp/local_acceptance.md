@@ -34,7 +34,7 @@ planned at 666.
   a forest square that has no estimate in the published run. They returned
   `estimate_not_available` before.
 
-On the local database `micometeo`, a squares request near Rieti in Lazio
+On the local database `sporameteo`, a squares request near Rieti in Lazio
 returned `outside_coverage`. A request near Florence returned 20 squares that
 were either available or without forest. The landing page in both languages
 held the Tuscany wording and none of the removed phrases.
@@ -89,7 +89,7 @@ run, 21 October, could not be seen.
 
 | Kind of evidence | Environment |
 |---|---|
-| Live data, manual | Chromium from Playwright, desktop window 1280 by 800 and phone-sized window 390 by 844, against `runserver` on port 8010 and the local database `micometeo`. |
+| Live data, manual | Chromium from Playwright, desktop window 1280 by 800 and phone-sized window 390 by 844, against `runserver` on port 8010 and the local database `sporameteo`. |
 | Live data, automated | `tests/e2e/test_mvp_journey.py` in Chromium and WebKit from Playwright. The phone runs use a 390 by 844 window with touch and mobile mode. This is browser emulation, not a phone. |
 | Controlled fixtures, once | Checks that held, failed or changed single API answers with `page.route`. They ran once and are not kept. |
 | Real phone | Not performed. See "Not checked". |
@@ -277,7 +277,7 @@ approval from the owner later.
 | Forest map | Copernicus forest map 2018, retrieved on 12 October 2026. |
 | Elevation | Copernicus DEM GLO-30 public AWS copy, 2021, retrieved on 12 October 2026. |
 | Weather | Open-Meteo, retrieved on 13 October 2026 at 11:13 Rome time. |
-| Database | `micometeo_native` on the Compose volume `micometeo_micometeo_pgdata_native`. |
+| Database | `sporameteo_native` on the Compose volume `sporameteo_sporameteo_pgdata_native`. |
 
 No night ran on 14 October, so the map offered seven dates, 14 to 20 October,
 and labelled them as an older result from 13 October.
@@ -288,10 +288,10 @@ The owner asked for these changes before deciding. All are on master.
 
 | Request or problem | Change |
 |---|---|
-| The map pages loaded without CSS. | `runserver` serves static files only with debug on. `.envrc.example` now sets `MICOMETEO_DEBUG=true`, and `docs/local_development.md` explains why. |
-| `docker compose up` started an empty database. The data was on the old volume `micometeo_micometeo_pgdata`. | The `micometeo` database was copied into `micometeo_native` on the native volume. The benchmark and test databases stayed on the old volume. |
+| The map pages loaded without CSS. | `runserver` serves static files only with debug on. `.envrc.example` now sets `SPORAMETEO_DEBUG=true`, and `docs/local_development.md` explains why. |
+| `docker compose up` started an empty database. The data was on the old volume `sporameteo_sporameteo_pgdata`. | The `sporameteo` database was copied into `sporameteo_native` on the native volume. The benchmark and test databases stayed on the old volume. |
 | The landing page showed made-up values and design example notices. | The hero card and the four area cards now read the published run. With no run they give a reason and no number. |
-| The new official logo should mark the brand. | The headers use a simple porcino drawing based on the logo. The full logo is in `assets/brand/micometeo-logo.png` for later use. |
+| The new official logo should mark the brand. | The headers use a simple porcino drawing based on the logo. The full logo is in `assets/brand/sporameteo-logo.png` for later use. |
 | The map and overlay box should start folded. | It starts folded on desktop. Opening it on the phone unfolds it. |
 | Two WebKit phone journey runs failed after the language switch. | The test read the details state before the details reopened. It now waits for them. The details reopen within one second. |
 
@@ -308,7 +308,7 @@ The owner asked for these changes before deciding. All are on master.
 ### Restart the application locally
 
 `.envrc` must contain the local block from `.envrc.example`, with
-`MICOMETEO_DEBUG=true` and `MICOMETEO_DB_NAME=micometeo_native`.
+`SPORAMETEO_DEBUG=true` and `SPORAMETEO_DB_NAME=sporameteo_native`.
 
 ```sh
 direnv allow
@@ -331,5 +331,5 @@ None of these blocks the local MVP. The wider feature list stays in #37.
 - Add an about page that uses the full logo.
 - Extend estimates beyond Tuscany.
 - Let a keyboard visitor select an area on the map canvas.
-- Delete the old volume `micometeo_micometeo_pgdata` once nothing on it is
+- Delete the old volume `sporameteo_sporameteo_pgdata` once nothing on it is
   needed.

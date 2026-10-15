@@ -18,9 +18,9 @@ from django_tasks_db.models import DBTaskResult
 
 import weather_on_demand.services as weather_services
 import weather_summaries.services as summary_services
-from background_jobs.worker import MicometeoWorker
-from micometeo.weather.openmeteo import ARCHIVE_URL, FORECAST_URL
-from micometeo.weather.policy import WEATHER_HISTORY_VERSION
+from background_jobs.worker import SporaMeteoWorker
+from sporameteo.weather.openmeteo import ARCHIVE_URL, FORECAST_URL
+from sporameteo.weather.policy import WEATHER_HISTORY_VERSION
 from national_forest.models import ForestBuild, ForestCell, ForestChunk
 from national_grid.models import GridBuild, GridBuildCell, GridCell, GridChunk, GridRegion
 from national_grid.subset import TUSCANY_ISTAT_CODE as SUBSET_TUSCANY_CODE
@@ -121,8 +121,8 @@ def _never_called(**kwargs: object) -> object:
 @pytest.fixture(autouse=True)
 def isolate_environment(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     """Use the default sources and keep estimate callbacks out of these tests."""
-    monkeypatch.delenv("MICOMETEO_WEATHER_ENDPOINT", raising=False)
-    monkeypatch.delenv("MICOMETEO_WEATHER_HISTORY_ENDPOINT", raising=False)
+    monkeypatch.delenv("SPORAMETEO_WEATHER_ENDPOINT", raising=False)
+    monkeypatch.delenv("SPORAMETEO_WEATHER_HISTORY_ENDPOINT", raising=False)
     estimate_callback = weather_services._ESTIMATE_CALLBACK
     cleanup_callback = weather_services._CLEANUP_CALLBACK
     weather_services.configure_estimate_callback(None)
@@ -228,7 +228,7 @@ def forest(settings) -> dict[str, str]:
             weather_latitude=latitude,
             weather_longitude=longitude,
         )
-    settings.MICOMETEO_FOREST_BUILD_VERSION = forest_build.version
+    settings.SPORAMETEO_FOREST_BUILD_VERSION = forest_build.version
     return {"version": forest_build.version}
 
 
@@ -516,7 +516,7 @@ def test_worker_claims_a_scheduled_run_under_one_logical_key_per_run(forest) -> 
     run = _start(forest=forest, clock=_clock())
     task_result = DBTaskResult.objects.get(id=run.task_id)
 
-    keys = MicometeoWorker._logical_lock_keys_for_task(None, task_result)
+    keys = SporaMeteoWorker._logical_lock_keys_for_task(None, task_result)
 
     assert keys == (f"scheduled-weather-run:09:{DAY.isoformat()}",)
 
@@ -531,10 +531,10 @@ def test_worker_locks_a_forecast_task_by_region_and_date() -> None:
         args_kwargs={"args": [], "kwargs": {}},
     )
 
-    assert MicometeoWorker._logical_lock_keys_for_task(None, task_result) == (
+    assert SporaMeteoWorker._logical_lock_keys_for_task(None, task_result) == (
         f"tuscany-forecast:09:{DAY.isoformat()}",
     )
-    assert MicometeoWorker._logical_lock_keys_for_task(None, missing) == ()
+    assert SporaMeteoWorker._logical_lock_keys_for_task(None, missing) == ()
 
 
 # Forecast hand-off

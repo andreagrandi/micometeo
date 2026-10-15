@@ -22,7 +22,7 @@ in the comparison area and not enough at home.
   - OpenStreetMap extracts from Geofabrik, data of 8 October 2026, for roads and paths.
   - GADM 4.1 outlines, to draw random places inside each area.
 - Script: `experiments/p1_observations/run.py`, run with
-  `uv run micometeo run p1_observations`. It rebuilds every table and the map from the
+  `uv run sporameteo run p1_observations`. It rebuilds every table and the map from the
   saved downloads.
 - Run record: `reports/runs/p1_observations/20261010T181005Z-696b43.json`. It holds the
   GBIF download key and DOI, the iNaturalist query settings, the download dates, the

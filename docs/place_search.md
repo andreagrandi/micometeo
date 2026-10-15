@@ -1,22 +1,22 @@
 # Place search
 
-Micometeo sends place searches through its own `/api/v1/places/search` route.
+SporaMeteo sends place searches through its own `/api/v1/places/search` route.
 The browser never calls the provider and never receives a provider credential.
 The current provider is Photon, the free OpenStreetMap search service operated
-by Komoot. The endpoint can change through `MICOMETEO_PLACE_SEARCH_URL`.
+by Komoot. The endpoint can change through `SPORAMETEO_PLACE_SEARCH_URL`.
 
-Photon has no service level agreement and no numeric quota that Micometeo can
+Photon has no service level agreement and no numeric quota that SporaMeteo can
 rely on. Its public demo server has not met the desired autocomplete speed.
 On 2026-10-13, direct requests took 1.85 to 2.76 seconds, while an exact cached
-query through Micometeo took 76 milliseconds. Micometeo keeps successful exact
+query through SporaMeteo took 76 milliseconds. SporaMeteo keeps successful exact
 results for 30 days and empty exact results for 15 minutes. A read-only prefix
 preview can use another unexpired cached query, but it never becomes an exact
 cache row and does not avoid a provider request when the preview is incomplete.
-Photon asks clients to keep requests reasonable. Micometeo therefore uses a
+Photon asks clients to keep requests reasonable. SporaMeteo therefore uses a
 minimum query length, a 220 millisecond browser delay, a result limit, separate
 positive and empty database cache lifetimes, and one database locked request
 interval for all workers.
-These are Micometeo limits. They do not claim to be Photon policy.
+These are SporaMeteo limits. They do not claim to be Photon policy.
 Each fresh response removes up to 100 expired cache rows through an indexed
 expiry lookup. Exact cache hits and preview requests do not perform cleanup.
 
@@ -62,14 +62,14 @@ temporary entry.
 
 Local configuration uses these environment variables:
 
-- `MICOMETEO_PLACE_SEARCH_URL`, default `https://photon.komoot.io/api`.
-- `MICOMETEO_PLACE_SEARCH_TIMEOUT`, default `4` seconds.
-- `MICOMETEO_PLACE_SEARCH_CACHE_SECONDS`, default `2592000` seconds.
-- `MICOMETEO_PLACE_SEARCH_EMPTY_CACHE_SECONDS`, default `900` seconds.
-- `MICOMETEO_PLACE_SEARCH_REQUEST_INTERVAL`, default `1` second.
-- `MICOMETEO_PLACE_SEARCH_LIMIT`, default `8` results.
-- `MICOMETEO_PLACE_SEARCH_MIN_LENGTH`, default `2` characters.
-- `MICOMETEO_PLACE_SEARCH_USER_AGENT`, default `Micometeo/1.0 place search`.
+- `SPORAMETEO_PLACE_SEARCH_URL`, default `https://photon.komoot.io/api`.
+- `SPORAMETEO_PLACE_SEARCH_TIMEOUT`, default `4` seconds.
+- `SPORAMETEO_PLACE_SEARCH_CACHE_SECONDS`, default `2592000` seconds.
+- `SPORAMETEO_PLACE_SEARCH_EMPTY_CACHE_SECONDS`, default `900` seconds.
+- `SPORAMETEO_PLACE_SEARCH_REQUEST_INTERVAL`, default `1` second.
+- `SPORAMETEO_PLACE_SEARCH_LIMIT`, default `8` results.
+- `SPORAMETEO_PLACE_SEARCH_MIN_LENGTH`, default `2` characters.
+- `SPORAMETEO_PLACE_SEARCH_USER_AGENT`, default `SporaMeteo/1.0 place search`.
 
 On 2026-10-13, a live check of [Photon](https://photon.komoot.io/) returned
 Italian results for Pistoia, Abetone, Femminamorta and Momigno. The check used
@@ -81,7 +81,7 @@ tier of 3,000 credits per day and 5 requests per second, with an account
 required. Switching to it requires a separate API adapter and latency checks.
 The
 [Nominatim policy](https://operations.osmfoundation.org/policies/nominatim/)
-does not allow autocomplete, so Micometeo does not use it for this feature.
+does not allow autocomplete, so SporaMeteo does not use it for this feature.
 The map still credits OpenStreetMap and OpenFreeMap separately from the search
 provider.
 

@@ -23,7 +23,7 @@ from estimate_updates.models import (
 )
 from estimate_updates.services import input_fingerprint
 from map_api.api import router as map_router
-from micometeo.finds.grid import format_cell_id
+from sporameteo.finds.grid import format_cell_id
 from national_forest.models import ForestBuild, ForestCell, ForestChunk
 from national_grid.models import GridBuild, GridBuildCell, GridCell, GridChunk, GridRegion, Municipality
 from national_terrain.models import (
@@ -916,7 +916,7 @@ def test_area_detail_without_update_classifies_configured_square_without_weather
     monkeypatch.setattr("weather_requests.provider.fetch_weather", fail_transport, raising=False)
     client = Client()
     with override_settings(
-        MICOMETEO_FOREST_BUILD_VERSION=area_fixture["forest_cell"].build.version
+        SPORAMETEO_FOREST_BUILD_VERSION=area_fixture["forest_cell"].build.version
     ):
         eligible = client.get(
             f"/api/v1/areas/{square_id}",
@@ -1138,7 +1138,7 @@ def test_area_detail_percentage_matches_real_map_square_for_same_update(
     detail_body = detail.json()
     bounds = detail_body["selection"]["bounds"]
 
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=update.forest_build.version):
+    with override_settings(SPORAMETEO_FOREST_BUILD_VERSION=update.forest_build.version):
         map_response = Client().get(
             "/api/v1/squares",
             {
@@ -1350,7 +1350,7 @@ def test_area_detail_keeps_v1_update_on_v1_facts_and_serves_v2_facts_for_v2_upda
 @pytest.mark.django_db(transaction=True)
 def test_area_tree_facts_use_saved_inputs_after_the_source_changes(area_fixture, monkeypatch) -> None:
     from estimate_updates.services import calculate_and_publish_estimates
-    from micometeo.forecast_method import METHOD_V3
+    from sporameteo.forecast_method import METHOD_V3
 
     old = area_fixture["update"]
     cell = area_fixture["forest_cell"]

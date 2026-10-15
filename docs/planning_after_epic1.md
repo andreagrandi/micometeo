@@ -22,7 +22,7 @@ Read the investigation evidence in this order.
    checks to run before users see anything.
 2. [Decisions](decisions.md). The status of A1 to A7 and the historical
    decision log. Read product decisions alongside the later product PRD.
-3. [Epic 1 PRD](../Micometeo_PRD_Epic_1_Validation_EN.md). The scope and
+3. [Epic 1 PRD](../SporaMeteo_PRD_Epic_1_Validation_EN.md). The scope and
    rules of the completed investigation. Its validation requirements do not
    override the owner's acceptance of experimental estimates for the MVP.
    The no-purchase rule and honest handling of dates and evidence still hold.
@@ -36,6 +36,6 @@ Read the investigation evidence in this order.
 7. [P4b benchmark](../reports/p4_benchmark.md) and
    [its settings](../experiments/p4b_benchmark/config.toml). The rules from
    published studies and their sources, which the percentage of D13 builds on.
-8. [Context dossier](../Micometeo_Context_Dossier_EN.md). Background only.
+8. [Context dossier](../SporaMeteo_Context_Dossier_EN.md). Background only.
 
 File issues with the `gh-issue` skill in `.agents/skills/gh-issue/`.

@@ -15,8 +15,8 @@ from typing import Any
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from micometeo.finds.grid import CELL_SIZE_M
-from micometeo.habitat import terrain
+from sporameteo.finds.grid import CELL_SIZE_M
+from sporameteo.habitat import terrain
 
 from national_grid.models import GridBuild, GridBuildCell
 

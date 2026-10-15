@@ -2,7 +2,7 @@
 
 This report closes epic #96. It collects the results of #97, #98 and #99 and
 records the serving checks of #100. All figures come from the local database
-`micometeo` on 13 and 14 October 2026. No national job, purchase, deployment
+`sporameteo` on 13 and 14 October 2026. No national job, purchase, deployment
 or new provider was part of this work.
 
 ## Data versions
@@ -16,7 +16,7 @@ or new provider was part of this work.
 | Formula | `porcini-experimental-v4` |
 | Published run | `712b336a-e958-438a-b0b0-5b2ef871023e`, assessment date 13 October 2026 |
 
-The Tuscany-only database `micometeo_tuscany_56` holds the same sources under
+The Tuscany-only database `sporameteo_tuscany_56` holds the same sources under
 its own build names, recorded in `tuscany_inputs.md`.
 
 ## Coverage

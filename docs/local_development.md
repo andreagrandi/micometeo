@@ -1,6 +1,6 @@
 # Local development
 
-This guide runs the Micometeo Django application on the laptop and a PostGIS
+This guide runs the SporaMeteo Django application on the laptop and a PostGIS
 database in Docker. It needs no public domain, hosting account or paid service.
 
 ## Database image and volume
@@ -15,10 +15,10 @@ Docker must choose the native image on Apple Silicon. Remove any
 `DOCKER_DEFAULT_PLATFORM=linux/amd64` setting from `.envrc` and run
 `unset DOCKER_DEFAULT_PLATFORM` after loading the environment.
 
-The service now uses the `micometeo_pgdata_native` Compose volume. With the
+The service now uses the `sporameteo_pgdata_native` Compose volume. With the
 default project name, Docker names it
-`micometeo_micometeo_pgdata_native`. The old physical volume
-`micometeo_micometeo_pgdata` remains available. Compose does not copy data
+`sporameteo_sporameteo_pgdata_native`. The old physical volume
+`sporameteo_sporameteo_pgdata` remains available. Compose does not copy data
 between these volumes.
 
 ## Clean setup
@@ -42,7 +42,7 @@ if [ ! -e .envrc ]; then cp .envrc.example .envrc; fi
 
 If `.envrc` already exists, add the local application settings from
 `.envrc.example` without replacing the existing GBIF settings. Set
-`MICOMETEO_DJANGO_SECRET_KEY` and `MICOMETEO_DB_PASSWORD` to local values.
+`SPORAMETEO_DJANGO_SECRET_KEY` and `SPORAMETEO_DB_PASSWORD` to local values.
 Keep the database name, user and port at their defaults for the commands below.
 Add the Homebrew GEOS library path to `.envrc`:
 
@@ -53,7 +53,7 @@ export GEOS_LIBRARY_PATH="$(brew --prefix geos)/lib/libgeos_c.dylib"
 On macOS, Django uses the GDAL library bundled with the locked Rasterio wheel.
 Homebrew GDAL loads another Arrow library, which conflicts with PyArrow during
 Parquet reads and writes. The application therefore prefers the bundled copy
-over `GDAL_LIBRARY_PATH`. Use `MICOMETEO_GDAL_LIBRARY_PATH` only to select a
+over `GDAL_LIBRARY_PATH`. Use `SPORAMETEO_GDAL_LIBRARY_PATH` only to select a
 compatible custom build. On systems without the bundled library, Django uses
 `GDAL_LIBRARY_PATH` or its normal native-library discovery.
 
@@ -84,7 +84,7 @@ uv run python apps/application/manage.py runserver 127.0.0.1:8010
 ```
 
 `runserver` serves the CSS, JavaScript and logo only when
-`MICOMETEO_DEBUG=true`. With debug off, the pages load without styles and the
+`SPORAMETEO_DEBUG=true`. With debug off, the pages load without styles and the
 map stays blank. The production image serves static files with WhiteNoise, see
 the section on the production image below.
 
@@ -116,22 +116,22 @@ MapLibre files, compiles the translations and collects the static files. The
 
 Build the image and run the web process against the local database. A container
 reaches the laptop through `host.docker.internal`. The image reads the database
-from `DATABASE_URL`, which wins over the `MICOMETEO_DB_*` values:
+from `DATABASE_URL`, which wins over the `SPORAMETEO_DB_*` values:
 
 ```sh
-docker build -t micometeo:local .
+docker build -t sporameteo:local .
 docker run --rm -p 8020:8000 \
-  -e DATABASE_URL="postgis://${MICOMETEO_DB_USER}:${MICOMETEO_DB_PASSWORD}@host.docker.internal:${MICOMETEO_DB_PORT}/${MICOMETEO_DB_NAME}" \
-  -e MICOMETEO_ALLOWED_HOSTS=localhost,127.0.0.1 \
-  micometeo:local
+  -e DATABASE_URL="postgis://${SPORAMETEO_DB_USER}:${SPORAMETEO_DB_PASSWORD}@host.docker.internal:${SPORAMETEO_DB_PORT}/${SPORAMETEO_DB_NAME}" \
+  -e SPORAMETEO_ALLOWED_HOSTS=localhost,127.0.0.1 \
+  sporameteo:local
 ```
 
 The image starts gunicorn with 2 workers on port 8000, or on `PORT` when it is
 set.
 
 Then open `http://localhost:8020/`. The HTTPS settings stay off unless you set
-`MICOMETEO_SECURE_SSL_REDIRECT`, `MICOMETEO_SESSION_COOKIE_SECURE`,
-`MICOMETEO_CSRF_COOKIE_SECURE` or `MICOMETEO_SECURE_HSTS_SECONDS`. On Linux, the
+`SPORAMETEO_SECURE_SSL_REDIRECT`, `SPORAMETEO_SESSION_COOKIE_SECURE`,
+`SPORAMETEO_CSRF_COOKIE_SECURE` or `SPORAMETEO_SECURE_HSTS_SECONDS`. On Linux, the
 image uses the system GDAL library, and Parquet reads and writes work after
 Django loads it.
 
@@ -159,19 +159,19 @@ docker compose up --wait database
 curl --fail-with-body --silent --show-error http://127.0.0.1:8010/api/v1/health
 ```
 
-The named `micometeo_pgdata_native` volume keeps database contents across service
+The named `sporameteo_pgdata_native` volume keeps database contents across service
 restarts. Compare a migration row before and after recreating the container:
 
 ```sh
 docker compose exec database psql \
-  -U "${MICOMETEO_DB_USER:-micometeo}" \
-  -d "${MICOMETEO_DB_NAME:-micometeo}" \
+  -U "${SPORAMETEO_DB_USER:-sporameteo}" \
+  -d "${SPORAMETEO_DB_NAME:-sporameteo}" \
   -c "SELECT id, app, name, applied FROM django_migrations ORDER BY id LIMIT 1;"
 docker compose down
 docker compose up --wait database
 docker compose exec database psql \
-  -U "${MICOMETEO_DB_USER:-micometeo}" \
-  -d "${MICOMETEO_DB_NAME:-micometeo}" \
+  -U "${SPORAMETEO_DB_USER:-sporameteo}" \
+  -d "${SPORAMETEO_DB_NAME:-sporameteo}" \
   -c "SELECT id, app, name, applied FROM django_migrations ORDER BY id LIMIT 1;"
 ```
 
@@ -183,7 +183,7 @@ needed for a deliberate reset.
 
 The new volume starts empty. Run migrations and rebuild the local data for a
 fresh development setup. There is no user-data migration required.
-The old physical volume `micometeo_micometeo_pgdata` stays in place.
+The old physical volume `sporameteo_sporameteo_pgdata` stays in place.
 The optional commands below keep existing development and benchmark data
 without rebuilding it. Stop application writers while taking the dumps.
 These commands use the default Compose project name.
@@ -195,7 +195,7 @@ When the old database container still exists, record it before the first new
 set -eu
 OLD_CONTAINER="$(docker compose ps -q database)"
 test -n "$OLD_CONTAINER"
-test "$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/var/lib/postgresql/data"}}{{.Name}}{{end}}{{end}}' "$OLD_CONTAINER")" = micometeo_micometeo_pgdata
+test "$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/var/lib/postgresql/data"}}{{.Name}}{{end}}{{end}}' "$OLD_CONTAINER")" = sporameteo_sporameteo_pgdata
 ```
 
 Create custom dumps for the databases to keep. Add another dump command for
@@ -203,18 +203,18 @@ each database that the new volume must contain:
 
 ```sh
 set -eu
-MIGRATION_DIR=/tmp/micometeo-db-migration
+MIGRATION_DIR=/tmp/sporameteo-db-migration
 mkdir -p "$MIGRATION_DIR"
 docker exec "$OLD_CONTAINER" pg_dump \
   --format=custom --no-owner --no-acl \
-  --username="${MICOMETEO_DB_USER:-micometeo}" \
-  --dbname=micometeo \
-  > "$MIGRATION_DIR/micometeo.dump"
+  --username="${SPORAMETEO_DB_USER:-sporameteo}" \
+  --dbname=sporameteo \
+  > "$MIGRATION_DIR/sporameteo.dump"
 docker exec "$OLD_CONTAINER" pg_dump \
   --format=custom --no-owner --no-acl \
-  --username="${MICOMETEO_DB_USER:-micometeo}" \
-  --dbname=micometeo_estimate_benchmark_20261012 \
-  > "$MIGRATION_DIR/micometeo_estimate_benchmark_20261012.dump"
+  --username="${SPORAMETEO_DB_USER:-sporameteo}" \
+  --dbname=sporameteo_estimate_benchmark_20261012 \
+  > "$MIGRATION_DIR/sporameteo_estimate_benchmark_20261012.dump"
 ```
 
 Stop the old service, start the new volume, restore the application dump into
@@ -226,30 +226,30 @@ set -eu
 docker compose stop database
 docker compose up --wait database
 docker compose exec -T database createdb \
-  --username="${MICOMETEO_DB_USER:-micometeo}" \
+  --username="${SPORAMETEO_DB_USER:-sporameteo}" \
   --template=template0 \
-  micometeo_native
+  sporameteo_native
 docker compose exec -T database pg_restore \
   --no-owner --no-acl --exit-on-error \
-  --username="${MICOMETEO_DB_USER:-micometeo}" \
-  --dbname=micometeo_native \
-  < "$MIGRATION_DIR/micometeo.dump"
+  --username="${SPORAMETEO_DB_USER:-sporameteo}" \
+  --dbname=sporameteo_native \
+  < "$MIGRATION_DIR/sporameteo.dump"
 docker compose exec -T database createdb \
-  --username="${MICOMETEO_DB_USER:-micometeo}" \
+  --username="${SPORAMETEO_DB_USER:-sporameteo}" \
   --template=template0 \
-  micometeo_estimate_benchmark_20261012
+  sporameteo_estimate_benchmark_20261012
 docker compose exec -T database pg_restore \
   --no-owner --no-acl --exit-on-error \
-  --username="${MICOMETEO_DB_USER:-micometeo}" \
-  --dbname=micometeo_estimate_benchmark_20261012 \
-  < "$MIGRATION_DIR/micometeo_estimate_benchmark_20261012.dump"
-export MICOMETEO_DB_NAME=micometeo_native
+  --username="${SPORAMETEO_DB_USER:-sporameteo}" \
+  --dbname=sporameteo_estimate_benchmark_20261012 \
+  < "$MIGRATION_DIR/sporameteo_estimate_benchmark_20261012.dump"
+export SPORAMETEO_DB_NAME=sporameteo_native
 uv run python apps/application/manage.py migrate --noinput
 ```
 
-The new Compose volume keeps its initialized `micometeo` database. The
-restored application database uses `micometeo_native`, so no initialized
-database or PostGIS extension is removed. Set `MICOMETEO_DB_NAME=micometeo_native`
+The new Compose volume keeps its initialized `sporameteo` database. The
+restored application database uses `sporameteo_native`, so no initialized
+database or PostGIS extension is removed. Set `SPORAMETEO_DB_NAME=sporameteo_native`
 in `.envrc` as well when the restored database should be the default for later
 shells. The dump options restore data without depending on source ownership
 or access-control rows. The old database remains available on its old volume.
@@ -259,22 +259,22 @@ temporary old-image container on the preserved physical volume:
 
 ```sh
 docker compose stop database
-docker run --rm --detach --name micometeo-old-volume-recovery \
+docker run --rm --detach --name sporameteo-old-volume-recovery \
   --platform linux/amd64 \
-  --mount source=micometeo_micometeo_pgdata,target=/var/lib/postgresql/data \
+  --mount source=sporameteo_sporameteo_pgdata,target=/var/lib/postgresql/data \
   --publish 127.0.0.1:5543:5432 \
-  --env POSTGRES_DB="${MICOMETEO_DB_NAME:-micometeo}" \
-  --env POSTGRES_USER="${MICOMETEO_DB_USER:-micometeo}" \
-  --env POSTGRES_PASSWORD="${MICOMETEO_DB_PASSWORD:-replace-with-a-local-password}" \
+  --env POSTGRES_DB="${SPORAMETEO_DB_NAME:-sporameteo}" \
+  --env POSTGRES_USER="${SPORAMETEO_DB_USER:-sporameteo}" \
+  --env POSTGRES_PASSWORD="${SPORAMETEO_DB_PASSWORD:-replace-with-a-local-password}" \
   postgis/postgis:17-3.5
-until docker exec micometeo-old-volume-recovery pg_isready \
-  --username="${MICOMETEO_DB_USER:-micometeo}" --dbname=postgres; do sleep 1; done
-OLD_CONTAINER=micometeo-old-volume-recovery
+until docker exec sporameteo-old-volume-recovery pg_isready \
+  --username="${SPORAMETEO_DB_USER:-sporameteo}" --dbname=postgres; do sleep 1; done
+OLD_CONTAINER=sporameteo-old-volume-recovery
 ```
 
 Run the dump block above after setting `OLD_CONTAINER`, then run the restore
 block. Stop the temporary container after the restore with
-`docker stop micometeo-old-volume-recovery`. The `--rm` option removes that
+`docker stop sporameteo-old-volume-recovery`. The `--rm` option removes that
 temporary container only. It does not remove either database volume.
 
 If the benchmark database does not exist in the old volume, skip its dump and
@@ -353,7 +353,7 @@ pass. Check the workflow result after an authorized publication.
 Provider tests use fixed or generated responses. Later national acceptance with
 real weather and observation downloads belongs to #61 and needs its own data
 and credentials. The web UI serves `/` and `/map/`. Fixture pages are disabled
-by default and are enabled with `MICOMETEO_UI_FIXTURE_PAGES=true` for browser
+by default and are enabled with `SPORAMETEO_UI_FIXTURE_PAGES=true` for browser
 checks.
 
 ### Web UI checks
@@ -372,7 +372,7 @@ uv run pytest tests/e2e
 ```
 
 The e2e fixture starts Django on a free loopback port with
-`MICOMETEO_UI_FIXTURE_PAGES=true`. Set `MICOMETEO_BASE_URL` to reuse an
+`SPORAMETEO_UI_FIXTURE_PAGES=true`. Set `SPORAMETEO_BASE_URL` to reuse an
 existing local server. The fixture routes contain labelled sample states and
 values for checks only. The normal map shell does not copy mockup data into the
 product page. The e2e server is a subprocess and does not use pytest-django's
@@ -382,7 +382,7 @@ database.
 Pull requests and pushes to `master` run the browser checks in chromium only.
 CI splits them into three groups that run at the same time on separate
 machines, each with four parallel workers. CI has no WebKit run.
-`MICOMETEO_E2E_SHARD=2/3` runs the second of three groups locally. A checksum
+`SPORAMETEO_E2E_SHARD=2/3` runs the second of three groups locally. A checksum
 of each test id picks its group.
 
 Run the checks in parallel locally with `uv run pytest tests/e2e -n 4`. This
@@ -401,7 +401,7 @@ uv run pytest -n 6 --count=20 \
   tests/e2e/test_map_controls.py::test_map_renders_eight_calendar_dates_and_preserves_an_older_target
 ```
 
-CI machines are slower than a laptop. Set `MICOMETEO_E2E_CPU_SLOWDOWN` to a
+CI machines are slower than a laptop. Set `SPORAMETEO_E2E_CPU_SLOWDOWN` to a
 number such as `4` to make chromium run that many times slower and reproduce CI
 timing. Webkit ignores it.
 
@@ -434,8 +434,8 @@ public certificate logs. See the [Tailscale HTTPS documentation](https://tailsca
 Set the hostname in `.envrc` before starting or restarting Django:
 
 ```sh
-export MICOMETEO_ALLOWED_HOSTS=127.0.0.1,localhost,laptop.tailnet-name.ts.net
-export MICOMETEO_CSRF_TRUSTED_ORIGINS=https://laptop.tailnet-name.ts.net
+export SPORAMETEO_ALLOWED_HOSTS=127.0.0.1,localhost,laptop.tailnet-name.ts.net
+export SPORAMETEO_CSRF_TRUSTED_ORIGINS=https://laptop.tailnet-name.ts.net
 ```
 
 Replace the example hostname with the value from `tailscale status`. Reload the
@@ -450,7 +450,7 @@ tailscale serve status
 If Serve asks you to enable HTTPS, follow its setup link before continuing.
 If another application uses HTTPS port 443, choose port 8443 and add `:8443`
 to the trusted origin and phone URL. Use the same port in the Serve shutdown
-command. Keep the hostname without a port in `MICOMETEO_ALLOWED_HOSTS`.
+command. Keep the hostname without a port in `SPORAMETEO_ALLOWED_HOSTS`.
 
 On the phone, open this URL while it is connected to the same Tailscale
 network:
@@ -568,29 +568,29 @@ command -v uv
 
 The timezone path must end with `/Europe/Rome`. The schedule follows Italy's
 summer and winter clock changes. Use the paths printed by `command -v` in the
-example below. Replace `/path/to/micometeo` and `replace-with-input-uuid` with
+example below. Replace `/path/to/sporameteo` and `replace-with-input-uuid` with
 the repository path and an input ID created without forced failure. Store this
-file as `~/Library/LaunchAgents/it.micometeo.daily-job.plist`:
+file as `~/Library/LaunchAgents/it.sporameteo.daily-job.plist`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>Label</key><string>it.micometeo.daily-job</string>
-  <key>WorkingDirectory</key><string>/path/to/micometeo</string>
+  <key>Label</key><string>it.sporameteo.daily-job</string>
+  <key>WorkingDirectory</key><string>/path/to/sporameteo</string>
   <key>ProgramArguments</key>
   <array>
     <string>/opt/homebrew/bin/direnv</string>
-    <string>exec</string><string>/path/to/micometeo</string>
+    <string>exec</string><string>/path/to/sporameteo</string>
     <string>/opt/homebrew/bin/uv</string><string>run</string>
     <string>python</string><string>apps/application/manage.py</string>
     <string>enqueue_representative_job</string><string>replace-with-input-uuid</string>
   </array>
   <key>StartCalendarInterval</key>
   <dict><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>
-  <key>StandardOutPath</key><string>/tmp/micometeo-daily-job.log</string>
-  <key>StandardErrorPath</key><string>/tmp/micometeo-daily-job-error.log</string>
+  <key>StandardOutPath</key><string>/tmp/sporameteo-daily-job.log</string>
+  <key>StandardErrorPath</key><string>/tmp/sporameteo-daily-job-error.log</string>
 </dict>
 </plist>
 ```
@@ -599,9 +599,9 @@ Allow the repository's `.envrc` through direnv before installing the schedule.
 Validate, load and manually trigger the LaunchAgent:
 
 ```sh
-plutil -lint ~/Library/LaunchAgents/it.micometeo.daily-job.plist
-launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/it.micometeo.daily-job.plist
-launchctl kickstart "gui/$(id -u)/it.micometeo.daily-job"
+plutil -lint ~/Library/LaunchAgents/it.sporameteo.daily-job.plist
+launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/it.sporameteo.daily-job.plist
+launchctl kickstart "gui/$(id -u)/it.sporameteo.daily-job"
 ```
 
 This schedules enqueueing only. PostgreSQL must be running when it fires.
@@ -627,7 +627,7 @@ Replace the example date with the missed date. The default key is
 not repeat a completed logical job. Disable the schedule with:
 
 ```sh
-launchctl bootout "gui/$(id -u)" ~/Library/LaunchAgents/it.micometeo.daily-job.plist
+launchctl bootout "gui/$(id -u)" ~/Library/LaunchAgents/it.sporameteo.daily-job.plist
 ```
 
 Issue #46 can follow the same pattern with its own job name and persisted
@@ -694,7 +694,7 @@ uv run python apps/application/manage.py prepare_host_trees
 ```
 
 The default directory is `data/raw/jrc_host_trees`. Set
-`MICOMETEO_JRC_DIRECTORY` for a different persistent location. API and worker
+`SPORAMETEO_JRC_DIRECTORY` for a different persistent location. API and worker
 processes must use the same setting. `--directory` changes the setup command's
 destination only, so set the environment variable too when using that option.
 
@@ -717,7 +717,7 @@ Reading 504 Tuscany square centres took 0.575 seconds including initial
 checksum checks and 0.365 seconds on a repeat in the same process.
 These are laptop measurements, not hosted service targets.
 
-The hosted one-time bootstrap is tracked separately in [#88](https://github.com/andreagrandi/micometeo/issues/88).
+The hosted one-time bootstrap is tracked separately in [#88](https://github.com/andreagrandi/sporameteo/issues/88).
 
 ## Tuscany input readiness
 
@@ -730,7 +730,7 @@ app serves area details. Finished details are cached without an expiry, so a
 detail cached earlier keeps the plain heading until its cache entry is removed.
 
 ```sh
-MICOMETEO_DB_NAME=micometeo_tuscany_56 \
+SPORAMETEO_DB_NAME=sporameteo_tuscany_56 \
 uv run python apps/application/manage.py load_municipalities
 ```
 
@@ -794,7 +794,7 @@ apps/application/background_jobs/ queued jobs, attempts and operator commands
 apps/application/national_grid/   versioned national cells and build commands
 apps/api/                         P5 synthetic API experiment
 apps/web/                         P5 static demonstration
-src/micometeo/                    experiment package and CLI
+src/sporameteo/                    experiment package and CLI
 tests/app/                        Django and PostGIS foundation checks
 docker-compose.yml                local PostGIS service only
 ```
@@ -804,10 +804,10 @@ docker-compose.yml                local PostGIS service only
 The application follows [Book Corners](https://github.com/andreagrandi/book-corners)
 patterns from `config/settings.py`, `config/urls.py`, `config/api.py` and
 `docker-compose.yml` for environment settings, the PostGIS backend, API routing
-and database health checks. Micometeo adds an explicit database availability
+and database health checks. SporaMeteo adds an explicit database availability
 response to its health endpoint.
 
-Book Corners installs geographic libraries in its `Dockerfile`. Micometeo
+Book Corners installs geographic libraries in its `Dockerfile`. SporaMeteo
 uses host libraries because Django runs on the host through `uv`. On macOS,
 Rasterio supplies GDAL and Homebrew supplies GEOS.
 It keeps one lockfile for the application and experiments. Only PostGIS runs
@@ -815,19 +815,19 @@ in Compose. The pinned image selects ARM64 on Apple Silicon and AMD64 on
 x86-64 hosts without architecture emulation.
 
 Book Corners discovers dynamically assigned ports through `scripts/local_env.py`.
-Micometeo uses fixed ports 8010 and 5542, and `docker compose port` reports the
-database mapping. Change `MICOMETEO_DB_PORT` before starting Compose if 5542 is
+SporaMeteo uses fixed ports 8010 and 5542, and `docker compose port` reports the
+database mapping. Change `SPORAMETEO_DB_PORT` before starting Compose if 5542 is
 occupied. Choose another `runserver` port if 8010 is occupied, then update the
 local trusted origins and Tailscale forwarding target to match.
 
 The worker follows Book Corners `libraries/tasks.py` and `Procfile` by accepting
-persisted input IDs and running a separate database worker. Micometeo adds
+persisted input IDs and running a separate database worker. SporaMeteo adds
 logical job keys, attempt history and interruption recovery. The worker uses
 the same host environment as Django.
 
 The checks follow Book Corners `.github/workflows/ci.yml` and `noxfile.py` for
 the PostGIS service, native geographic libraries, migration checks and tests.
-Micometeo runs the commands directly through `uv` and keeps its existing
+SporaMeteo runs the commands directly through `uv` and keeps its existing
 pre-commit hooks. It adds a Git history secret scan and restricts Python test
 connections to loopback addresses. It omits Book Corners deployment steps and
 its frontend build because this application has no frontend yet.

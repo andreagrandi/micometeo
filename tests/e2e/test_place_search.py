@@ -112,7 +112,7 @@ def _open_controlled_map(
               configurable: true,
               get: () => maplibreValue,
               set: (value) => {
-                if (!value?.Map || value.Map.__micometeoDelayed) {
+                if (!value?.Map || value.Map.__sporameteoDelayed) {
                   maplibreValue = value;
                   return;
                 }
@@ -120,12 +120,12 @@ def _open_controlled_map(
                 class DelayedMap extends OriginalMap {
                   constructor(...args) {
                     super(...args);
-                    this.__micometeoConstructed = true;
+                    this.__sporameteoConstructed = true;
                     window.__constructedMap = this;
                   }
 
                   once(event, listener) {
-                    if (event === 'load' && this.__micometeoConstructed) {
+                    if (event === 'load' && this.__sporameteoConstructed) {
                       window.__releaseMapLoad = () => {
                         window.__releaseMapLoad = null;
                         listener.call(this, {type: 'load', target: this});
@@ -135,7 +135,7 @@ def _open_controlled_map(
                     return super.once(event, listener);
                   }
                 }
-                Object.defineProperty(DelayedMap, '__micometeoDelayed', {value: true});
+                Object.defineProperty(DelayedMap, '__sporameteoDelayed', {value: true});
                 maplibreValue = {...value, Map: DelayedMap};
               },
             });
@@ -158,18 +158,18 @@ def _open_controlled_map(
     page.wait_for_function(
         """
         () => Boolean(
-          window.MicometeoMap?.map &&
+          window.SporaMeteoMap?.map &&
           document.querySelector('#map canvas.maplibregl-canvas')
         )
         """,
         timeout=15_000,
     )
     page.wait_for_function(
-        "() => Boolean(window.MicometeoMap?.map?.isStyleLoaded?.())",
+        "() => Boolean(window.SporaMeteoMap?.map?.isStyleLoaded?.())",
         timeout=15_000,
     )
     page.wait_for_function(
-        "() => Boolean(window.MicometeoMap?.map?.getSource?.('squares'))",
+        "() => Boolean(window.SporaMeteoMap?.map?.getSource?.('squares'))",
         timeout=15_000,
     )
     first_date = page.locator(f".date-btn[data-date='{TARGET_DATES[0]}']")
@@ -257,7 +257,7 @@ def test_cached_prefix_stays_selectable_when_fresh_request_fails(page: Page, bas
     expect(page.locator(".result-name")).to_have_text("Femminamorta")
     search.press("ArrowDown")
     search.press("Enter")
-    assert page.evaluate("window.__micometeoPendingDestination.latitude") == 43.97
+    assert page.evaluate("window.__sporameteoPendingDestination.latitude") == 43.97
 
 
 def test_search_combobox_supports_context_and_keyboard_selection(page: Page, base_url: str) -> None:
@@ -289,7 +289,7 @@ def test_search_combobox_supports_context_and_keyboard_selection(page: Page, bas
     )
     search.press("Enter")
     expect(search).to_have_value("Pistoia")
-    assert page.evaluate("() => window.__micometeoPendingDestination?.source") == "search"
+    assert page.evaluate("() => window.__sporameteoPendingDestination?.source") == "search"
 
 
 def test_reselecting_same_place_fetches_after_noop_map_move(page: Page, base_url: str) -> None:
@@ -304,31 +304,31 @@ def test_reselecting_same_place_fetches_after_noop_map_move(page: Page, base_url
         "() => document.querySelector('[data-map-app]').dataset.selectedSquare === 'cell-zero'",
         timeout=10_000,
     )
-    page.wait_for_function("() => !window.MicometeoMap.map.isMoving()")
+    page.wait_for_function("() => !window.SporaMeteoMap.map.isMoving()")
     page.evaluate(
         """
         () => {
-          const map = window.MicometeoMap.map;
+          const map = window.SporaMeteoMap.map;
           window.__noopEaseToCalls = 0;
           map.easeTo = () => {
             window.__noopEaseToCalls += 1;
-            map.__micometeoNoopMoving = true;
+            map.__sporameteoNoopMoving = true;
             window.setTimeout(() => {
-              map.__micometeoNoopMoving = false;
+              map.__sporameteoNoopMoving = false;
               map.fire('moveend');
             }, 0);
           };
-          map.isMoving = () => Boolean(map.__micometeoNoopMoving);
+          map.isMoving = () => Boolean(map.__sporameteoNoopMoving);
         }
         """
     )
-    requests_before = page.evaluate("() => window.MicometeoMap.getDiagnostics().requestCount")
+    requests_before = page.evaluate("() => window.SporaMeteoMap.getDiagnostics().requestCount")
     search.fill("Pistoia")
     expect(page.locator("[data-search-results] [role=option]")).to_have_count(1)
     search.press("ArrowDown")
     search.press("Enter")
     page.wait_for_function(
-        "(before) => window.MicometeoMap.getDiagnostics().requestCount > before",
+        "(before) => window.SporaMeteoMap.getDiagnostics().requestCount > before",
         arg=requests_before,
         timeout=10_000,
     )
@@ -459,7 +459,7 @@ def test_editing_search_clears_old_active_result_before_selection(
     expect(page.locator("[data-search-results] [role=option]").first).to_contain_text("Abetone")
     search.press("ArrowDown")
     search.press("Enter")
-    pending = page.evaluate("() => window.__micometeoPendingDestination")
+    pending = page.evaluate("() => window.__sporameteoPendingDestination")
     assert pending["source"] == "search"
     assert pending["latitude"] == pytest.approx(44.14)
 
@@ -494,7 +494,7 @@ def test_search_selection_keeps_exact_point_through_date_map_and_centre_changes(
         """
         () => {
           window.__selectionEvents = [];
-          window.addEventListener('micometeo:selectionchange', (event) => {
+          window.addEventListener('sporameteo:selectionchange', (event) => {
             window.__selectionEvents.push(event.detail);
           });
         }
@@ -550,9 +550,9 @@ def test_search_selection_keeps_exact_point_through_date_map_and_centre_changes(
     wait_for_map_settled(page)
     page.wait_for_function(
         """
-        () => window.MicometeoMap.map.queryRenderedFeatures(
-          window.MicometeoMap.map.project([10.6415, 44.131]),
-          {layers: ['micometeo-square-estimates']}
+        () => window.SporaMeteoMap.map.queryRenderedFeatures(
+          window.SporaMeteoMap.map.project([10.6415, 44.131]),
+          {layers: ['sporameteo-square-estimates']}
         ).some((feature) => feature.properties?.cell_id === 'cell-zero')
         """
     )
@@ -560,7 +560,7 @@ def test_search_selection_keeps_exact_point_through_date_map_and_centre_changes(
     map_point = page.evaluate(
         """
         () => {
-          const point = window.MicometeoMap.map.project([10.6415, 44.131]);
+          const point = window.SporaMeteoMap.map.project([10.6415, 44.131]);
           return {x: point.x, y: point.y};
         }
         """
@@ -580,9 +580,9 @@ def test_search_selection_keeps_exact_point_through_date_map_and_centre_changes(
 
     previous_squares = len([request for request in requests if request["path"].endswith("/squares")])
     page.evaluate(
-        "() => window.MicometeoMap.map.jumpTo({center: [10.641, 44.131], zoom: 12})"
+        "() => window.SporaMeteoMap.map.jumpTo({center: [10.641, 44.131], zoom: 12})"
     )
-    page.wait_for_function("() => !window.MicometeoMap.map.isMoving()")
+    page.wait_for_function("() => !window.SporaMeteoMap.map.isMoving()")
     for _ in range(100):
         square_requests = [request for request in requests if request["path"].endswith("/squares")]
         if len(square_requests) > previous_squares:
@@ -596,14 +596,14 @@ def test_search_selection_keeps_exact_point_through_date_map_and_centre_changes(
     )
     page.wait_for_function(
         """
-        () => window.MicometeoMap.map.queryRenderedFeatures(
-          window.MicometeoMap.map.project([10.641, 44.131]),
-          {layers: ['micometeo-square-estimates']}
+        () => window.SporaMeteoMap.map.queryRenderedFeatures(
+          window.SporaMeteoMap.map.project([10.641, 44.131]),
+          {layers: ['sporameteo-square-estimates']}
         ).some((feature) => feature.properties?.cell_id === 'cell-zero')
         """
     )
 
-    page.evaluate("() => window.MicometeoMap.centerSelection()")
+    page.evaluate("() => window.SporaMeteoMap.centerSelection()")
     expect(root).to_have_attribute("data-selection-source", "centre")
     expect(root).to_have_attribute("data-point-latitude", "")
     expect(root).to_have_attribute("data-point-longitude", "")
@@ -727,9 +727,9 @@ def test_stale_location_callbacks_cannot_replace_newer_search_or_map_selection(
     wait_for_map_settled(page)
     page.wait_for_function(
         """
-        () => window.MicometeoMap.map.queryRenderedFeatures(
-          window.MicometeoMap.map.project([10.6415, 44.131]),
-          {layers: ['micometeo-square-estimates']}
+        () => window.SporaMeteoMap.map.queryRenderedFeatures(
+          window.SporaMeteoMap.map.project([10.6415, 44.131]),
+          {layers: ['sporameteo-square-estimates']}
         ).some((feature) => feature.properties?.cell_id === 'cell-zero')
         """
     )
@@ -737,7 +737,7 @@ def test_stale_location_callbacks_cannot_replace_newer_search_or_map_selection(
     map_point = page.evaluate(
         """
         () => {
-          const point = window.MicometeoMap.map.project([10.6415, 44.131]);
+          const point = window.SporaMeteoMap.map.project([10.6415, 44.131]);
           return {x: point.x, y: point.y};
         }
         """
@@ -773,7 +773,7 @@ def test_offscreen_destination_survives_pan_and_date_change(
         """,
         timeout=10_000,
     )
-    page.wait_for_function("() => !window.MicometeoMap.map.isMoving()")
+    page.wait_for_function("() => !window.SporaMeteoMap.map.isMoving()")
 
     with page.expect_response(
         lambda response: "/api/v1/squares" in response.url
@@ -781,9 +781,9 @@ def test_offscreen_destination_survives_pan_and_date_change(
         timeout=10_000,
     ):
         page.evaluate(
-            "() => window.MicometeoMap.map.jumpTo({center: [11.5, 43.5], zoom: 12})"
+            "() => window.SporaMeteoMap.map.jumpTo({center: [11.5, 43.5], zoom: 12})"
         )
-    page.wait_for_function("() => !window.MicometeoMap.map.isMoving()")
+    page.wait_for_function("() => !window.SporaMeteoMap.map.isMoving()")
     # A selected area keeps its open details when it leaves the view.
     page.wait_for_function(
         """
@@ -828,7 +828,7 @@ def test_touch_place_selection_renders_square_and_preserves_day(
             """
             () => {
               window.__selectionEvents = [];
-              window.addEventListener('micometeo:selectionchange', (event) => {
+              window.addEventListener('sporameteo:selectionchange', (event) => {
                 window.__selectionEvents.push(event.detail);
               });
             }
@@ -844,12 +844,12 @@ def test_touch_place_selection_renders_square_and_preserves_day(
             "() => document.querySelector('[data-map-app]').dataset.selectedSquare === 'cell-zero'",
             timeout=10_000,
         )
-        page.wait_for_function("() => !window.MicometeoMap.map.isMoving()")
+        page.wait_for_function("() => !window.SporaMeteoMap.map.isMoving()")
         page.wait_for_function(
             """
-            () => window.MicometeoMap.map.queryRenderedFeatures(
-              window.MicometeoMap.map.project([10.6415, 44.131]),
-              {layers: ['micometeo-square-estimates']}
+            () => window.SporaMeteoMap.map.queryRenderedFeatures(
+              window.SporaMeteoMap.map.project([10.6415, 44.131]),
+              {layers: ['sporameteo-square-estimates']}
             ).some((feature) => feature.properties?.cell_id === 'cell-zero')
             """
         )
@@ -871,7 +871,7 @@ def test_touch_place_selection_renders_square_and_preserves_day(
         map_point = page.evaluate(
             """
             () => {
-              const point = window.MicometeoMap.map.project([10.6415, 44.131]);
+              const point = window.SporaMeteoMap.map.project([10.6415, 44.131]);
               return {x: point.x, y: point.y};
             }
             """
@@ -977,7 +977,7 @@ def test_geolocation_state_stays_out_of_url_and_restores_after_language_change(
         "point_source",
     }
     assert forbidden.isdisjoint(query)
-    assert page.evaluate("() => JSON.parse(sessionStorage.getItem('micometeo.currentGeolocation')).source") == "geolocation"
+    assert page.evaluate("() => JSON.parse(sessionStorage.getItem('sporameteo.currentGeolocation')).source") == "geolocation"
     assert resolve_requests[-1]["source"] == "geolocation"
     assert not parse_qs(urlparse(str(resolve_requests[-1]["_url"])).query)
 
@@ -998,4 +998,4 @@ def test_geolocation_state_stays_out_of_url_and_restores_after_language_change(
         "() => document.querySelector('[data-map-app]').dataset.selectionSource === 'search'",
         timeout=10_000,
     )
-    assert page.evaluate("() => sessionStorage.getItem('micometeo.currentGeolocation')") is None
+    assert page.evaluate("() => sessionStorage.getItem('sporameteo.currentGeolocation')") is None

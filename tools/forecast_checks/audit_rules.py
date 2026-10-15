@@ -7,7 +7,7 @@ from dataclasses import replace
 from datetime import date, timedelta
 import json
 
-from micometeo.forecast_method import (
+from sporameteo.forecast_method import (
     DailyTemperatures,
     ForecastInputs,
     HostTrees,

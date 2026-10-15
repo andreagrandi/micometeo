@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const API = window.MICOMETEO_CONFIG.apiBase;
+  const API = window.SPORAMETEO_CONFIG.apiBase;
   const DEBOUNCE_MS = 250;
   const OUTLINE_MIN_ZOOM = 13;
   const SCORE_COLOURS = ["#fff3b0", "#ffd166", "#f4a259", "#e0603c", "#9b1d20"];
@@ -131,7 +131,7 @@
         return;
       }
 
-      window.micometeoLastRequest = {
+      window.sporameteoLastRequest = {
         url,
         bytes,
         squares: body.features.length,
@@ -158,8 +158,8 @@
     state.map.once("idle", () => {
       if (state.usableReported) return;
       state.usableReported = true;
-      performance.mark("micometeo-usable");
-      window.micometeoUsableMs = performance.now();
+      performance.mark("sporameteo-usable");
+      window.sporameteoUsableMs = performance.now();
     });
   }
 

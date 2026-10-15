@@ -1,7 +1,7 @@
 # Tuscany estimate run
 
 This report covers issue #99. It records the first real run of
-`run_tuscany_forecast` on the local database `micometeo` on 14 October 2026.
+`run_tuscany_forecast` on the local database `sporameteo` on 14 October 2026.
 The run used the weather that the #98 run stored for 13 October. The forest
 build `italy-forest-copernicus-2018-v1` covers Italy, and the run kept only
 the 71,031 forest squares of ISTAT region 09. No national calculation, new
@@ -18,7 +18,7 @@ provider or deployment was part of this run.
 | Formula | `porcini-experimental-v4`, unchanged |
 
 This database has no `TuscanyInputSet` row, because #97 recorded its row in
-the Tuscany-only database `micometeo_tuscany_56`. The run stores the forest,
+the Tuscany-only database `sporameteo_tuscany_56`. The run stores the forest,
 terrain and host-tree versions itself and links an input set only when one
 matches.
 

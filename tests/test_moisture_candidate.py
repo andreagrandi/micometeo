@@ -9,7 +9,7 @@ from datetime import date, timedelta
 import pytest
 
 from tools.forecast_checks.moisture_candidate import CandidateResult, WeatherDay, calculate_candidate
-from micometeo.forecast_method import CURRENT_METHOD, METHOD_V4
+from sporameteo.forecast_method import CURRENT_METHOD, METHOD_V4
 
 
 TARGET = date(2026, 10, 12)

@@ -10,9 +10,9 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from micometeo.benchmark import features, models, scoring, timing
-from micometeo.context import RunContext
-from micometeo.habitat.grid import read_download_note
+from sporameteo.benchmark import features, models, scoring, timing
+from sporameteo.context import RunContext
+from sporameteo.habitat.grid import read_download_note
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 FINAL_SETS = ("final", "home_final")

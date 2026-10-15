@@ -1,7 +1,7 @@
 # Experimental porcini forecast method
 
 This document defines `porcini-experimental-v3` in
-`src/micometeo/forecast_method.py`. It calculates one whole percentage for one
+`src/sporameteo/forecast_method.py`. It calculates one whole percentage for one
 500 m square and one Italian local date. The percentage is an experimental,
 unvalidated estimate. It is not a measured probability and it is not a chance
 that a visitor will find a mushroom.
@@ -23,7 +23,7 @@ the centre of each requested 500 m square. Adjacent squares can share a value.
 The values do not measure forest cover or identify the dominant tree.
 
 The source set contains beech, chestnut, seven oaks, seven pines, Norway spruce
-and silver fir. `GROUP_SPECIES` in `src/micometeo/host_trees.py` lists all 18
+and silver fir. `GROUP_SPECIES` in `src/sporameteo/host_trees.py` lists all 18
 species. Every selected dataset's JRC catalogue title was checked for the
 2006 date and C-SMFAv0-3-2 release. The
 [source assessment](../reports/mvp/tree_species_coverage.md) records the choice

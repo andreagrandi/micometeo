@@ -11,7 +11,7 @@ from typing import Any, Callable, Sequence
 
 from django.db.models import Q
 
-from micometeo.weather.openmeteo import HOURLY_VARIABLES
+from sporameteo.weather.openmeteo import HOURLY_VARIABLES
 
 from .eligibility import (
     WeatherCell,

@@ -21,7 +21,7 @@ or different restriction. Redistribution must credit ISTAT, link the licence
 and identify changes. Use this credit with the derived grid:
 
 > Source: ISTAT, administrative boundaries for statistical purposes, 1 January
-> 2026, CC BY 4.0. Micometeo transformed the boundaries to EPSG:3035 and derived
+> 2026, CC BY 4.0. SporaMeteo transformed the boundaries to EPSG:3035 and derived
 > 500 m grid squares and their Italian land intersections.
 
 No product grid geometry comes from GADM. Historical experiment files remain

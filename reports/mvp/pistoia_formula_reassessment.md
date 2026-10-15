@@ -1,6 +1,6 @@
 # Pistoia formula reassessment
 
-Checked on 12 and 13 October 2026 for [issue #91](https://github.com/andreagrandi/micometeo/issues/91).
+Checked on 12 and 13 October 2026 for [issue #91](https://github.com/andreagrandi/sporameteo/issues/91).
 Issue #91 now includes the application correction requested by the owner.
 Method v4 uses a new weather history identity. Saved v1 to v3 records remain
 unchanged. This report does not validate a mushroom probability.
@@ -204,7 +204,7 @@ instructions. Its new coefficients remain provisional.
 
 Opened the public [Meteo Funghi map](https://meteofunghi.fungocenter.it/embed)
 in standalone headed Chrome. Its update label showed 12 October 2026, matching
-the date of the Micometeo example. Read the public map's embedded GeoJSON,
+the date of the SporaMeteo example. Read the public map's embedded GeoJSON,
 not the simulated alert on its landing page.
 
 The comparison location is 43.9839 N, 10.8674 E. The nearest published points
@@ -227,11 +227,11 @@ uses seven-day mean temperature and weighted rainfall over 28 days from
 OpenWeatherMap. It excludes habitat, altitude and exposure. It does not
 publish enough coefficients to reproduce its calculation from this page.
 Its low scores therefore do not validate our formula or justify converting
-its index to a Micometeo percentage.
+its index to a SporaMeteo percentage.
 
 The public client also makes low scores nearly invisible. Its circle opacity
 is zero at index 0 and 0.02 at index 3. This is a presentation choice, not
-evidence of absent forest or absent data. Micometeo should keep those states
+evidence of absent forest or absent data. SporaMeteo should keep those states
 distinguishable when revisiting the map.
 
 This check provides no competing high forecast for the Pistoia example.
@@ -298,7 +298,7 @@ would have been known on that morning.
 
 ## Implemented candidate and explicit assumptions
 
-`src/micometeo/moisture_method.py` implements the v4 rules.
+`src/sporameteo/moisture_method.py` implements the v4 rules.
 `tools/forecast_checks/moisture_candidate.py` exposes them to the offline replay.
 The application registers `porcini-experimental-v4` as its current method. It requires every
 one of the 30 dates preceding the target, rejects duplicate or misordered
@@ -397,7 +397,7 @@ weather routing; it does not establish biological accuracy.
 
 - `uv run pytest --ignore=tests/e2e -q --tb=short --maxfail=8`: 399 passed initially. Four failed checks passed after updating legacy fixtures, the date-dependent map check and request-count expectations. These 403 checks cover the backend and offline tools.
 - `uv run pytest tests/app/test_weather_on_demand.py -q --tb=short --maxfail=3`: 30 passed, including split-request retries and recovery.
-- `manage.py makemigrations --check --dry-run`: no missing migrations. Both new migrations were applied only to `micometeo_tuscany_56`.
+- `manage.py makemigrations --check --dry-run`: no missing migrations. Both new migrations were applied only to `sporameteo_tuscany_56`.
 - `uv run python tools/forecast_checks/audit_rules.py`: reproduced all v3 sensitivity cases above.
 - `uv run python -m tools.forecast_checks.compare_pistoia`: reproduced the captured-weather candidate comparison.
 - `uv run python -m tools.forecast_checks.check_bielefeld`: reproduced the source-coverage counts above.

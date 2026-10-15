@@ -1,7 +1,7 @@
 # Tuscany input readiness
 
 This report covers issue #97. It records one run of `prepare_tuscany_inputs`
-on the local Tuscany database `micometeo_tuscany_56` on 13 October 2026. No
+on the local Tuscany database `sporameteo_tuscany_56` on 13 October 2026. No
 national processing, new provider or deployment was part of this run.
 
 ## Source versions
@@ -43,7 +43,7 @@ request, added no rows and kept one `TuscanyInputSet` row.
 
 ## Size
 
-Database tables in `micometeo_tuscany_56`, including indexes:
+Database tables in `sporameteo_tuscany_56`, including indexes:
 
 | Table | Size |
 |---|---|
@@ -69,8 +69,8 @@ Source files on disk:
 ## Command
 
 ```sh
-MICOMETEO_DB_NAME=micometeo_tuscany_56 \
-MICOMETEO_FOREST_BUILD_VERSION=tuscany-forest-italy-forest-copernicus-2018-v1-56 \
-MICOMETEO_TERRAIN_BUILD_VERSION=tuscany-terrain-italy-terrain-glo30-2021-v2-56 \
+SPORAMETEO_DB_NAME=sporameteo_tuscany_56 \
+SPORAMETEO_FOREST_BUILD_VERSION=tuscany-forest-italy-forest-copernicus-2018-v1-56 \
+SPORAMETEO_TERRAIN_BUILD_VERSION=tuscany-terrain-italy-terrain-glo30-2021-v2-56 \
 uv run python apps/application/manage.py prepare_tuscany_inputs
 ```

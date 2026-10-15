@@ -20,7 +20,7 @@ from rasterio.transform import from_origin
 
 from estimate_updates.host_trees import saved_host_trees, tree_inputs_for_area
 from estimate_updates.models import HostTreeCache, TuscanyInputSet
-from micometeo.host_trees import SPECIES, read_manifest
+from sporameteo.host_trees import SPECIES, read_manifest
 from national_forest import layer
 from national_forest.models import ForestBuild, ForestCell, ForestChunk
 from national_grid.models import GridBuild, GridBuildCell, GridCell, GridChunk, GridRegion
@@ -152,9 +152,9 @@ def tuscany(tmp_path: Path, settings, requests) -> dict:
             slope_deg=5.0, aspect_deg=10.0, altitude_valid_fraction=1.0, slope_valid_fraction=1.0,
             aspect_valid_fraction=1.0,
         )
-    settings.MICOMETEO_FOREST_BUILD_VERSION = forest.version
-    settings.MICOMETEO_TERRAIN_BUILD_VERSION = terrain.version
-    settings.MICOMETEO_JRC_DIRECTORY = str(tmp_path / "jrc")
+    settings.SPORAMETEO_FOREST_BUILD_VERSION = forest.version
+    settings.SPORAMETEO_TERRAIN_BUILD_VERSION = terrain.version
+    settings.SPORAMETEO_JRC_DIRECTORY = str(tmp_path / "jrc")
     return {
         "grid": grid, "region": region, "chunk": chunk, "forest": forest, "terrain": terrain,
         "memberships": memberships, "forest_cells": forest_cells, "cache_dir": cache_dir,
@@ -411,7 +411,7 @@ def test_new_jrc_version_adds_rows_and_keeps_saved_estimate_inputs(tuscany, requ
     from urllib.request import urlopen
 
     urlopen.state["value"] = 0.6
-    settings.MICOMETEO_JRC_DIRECTORY = str(tmp_path / "jrc_new")
+    settings.SPORAMETEO_JRC_DIRECTORY = str(tmp_path / "jrc_new")
     _run(tuscany=tuscany)
     _, new_version = read_manifest(directory=tmp_path / "jrc_new")
     assert new_version != old_version

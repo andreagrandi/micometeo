@@ -9,7 +9,7 @@ var COPY = {
     noteLabel: "Stima sperimentale:",
     noteText: "questa percentuale non è stata validata. Non indica la tua probabilità personale di trovare porcini.",
     heroTitle: "Scegli un bosco da esplorare per cercare porcini",
-    heroText: "Micometeo stima la probabilità che crescano porcini in un quadrato di bosco di 500 m, in tutta Italia, Sicilia e Sardegna comprese. Puoi leggere la stima per oggi e per ognuno dei sette giorni successivi. Il servizio è gratuito, non richiede un account e non mostra pubblicità.",
+    heroText: "SporaMeteo stima la probabilità che crescano porcini in un quadrato di bosco di 500 m, in tutta Italia, Sicilia e Sardegna comprese. Puoi leggere la stima per oggi e per ognuno dei sette giorni successivi. Il servizio è gratuito, non richiede un account e non mostra pubblicità.",
     mapLabel: "Mappa di esempio con i quadrati di bosco intorno ad Abetone, in Toscana",
     mapCaption: "I quadrati sono colorati secondo la stima di oggi. Il contorno blu indica il quadrato scelto.",
     samplePlace: "Abetone, Toscana",
@@ -77,7 +77,7 @@ var COPY = {
     noteLabel: "Experimental estimate:",
     noteText: "this percentage is unvalidated. It does not mean your personal chance of finding porcini.",
     heroTitle: "Choose a forest to explore for porcini",
-    heroText: "Micometeo estimates the chance that porcini are growing in a 500 m forest square anywhere in Italy, including Sicily and Sardinia. You can read the estimate for today and for each of the next seven days. It is free, needs no account and shows no advertising.",
+    heroText: "SporaMeteo estimates the chance that porcini are growing in a 500 m forest square anywhere in Italy, including Sicily and Sardinia. You can read the estimate for today and for each of the next seven days. It is free, needs no account and shows no advertising.",
     mapLabel: "Example map of forest squares around Abetone, Tuscany",
     mapCaption: "Squares are coloured by today's estimate. The blue outline marks the selected square.",
     samplePlace: "Abetone, Tuscany",
@@ -221,7 +221,7 @@ function updateLinks() {
 function setLang(lang, updateUrl) {
   currentLang = lang;
   document.documentElement.lang = lang;
-  document.title = lang === "it" ? "Micometeo: scegli un bosco per i porcini" : "Micometeo: choose a forest for porcini";
+  document.title = lang === "it" ? "SporaMeteo: scegli un bosco per i porcini" : "SporaMeteo: choose a forest for porcini";
   fillText();
   renderChips();
   renderLegend();
@@ -252,7 +252,7 @@ function addHatchPattern(map) {
 }
 
 function buildPreviewMap() {
-  var sample = window.MICOMETEO_SAMPLE;
+  var sample = window.SPORAMETEO_SAMPLE;
   var mapNode = document.getElementById("preview-map");
   if (!window.L || !sample || !sample.squares || !sample.squares.length) {
     return;

@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
-from micometeo.weather.features import ROME, day_start, hours_in_local_day
+from sporameteo.weather.features import ROME, day_start, hours_in_local_day
 
 from .contracts import (
     VARIABLE_UNITS,

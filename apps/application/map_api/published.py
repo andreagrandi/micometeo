@@ -33,7 +33,7 @@ from estimate_updates.models import (
     ForecastRunCell,
     PublishedForecastRun,
 )
-from micometeo.finds.grid import CELL_SIZE_M
+from sporameteo.finds.grid import CELL_SIZE_M
 from national_forest.models import ForestCell
 from national_grid.models import GridRegion
 from weather_requests.eligibility import TUSCANY_ISTAT_CODE, weather_cell

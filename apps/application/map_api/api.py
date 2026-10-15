@@ -158,7 +158,7 @@ def _error_response(
 
 def _configured_build() -> ForestBuild | None:
     """Return the configured completed forest build."""
-    version = str(getattr(settings, "MICOMETEO_FOREST_BUILD_VERSION", ""))
+    version = str(getattr(settings, "SPORAMETEO_FOREST_BUILD_VERSION", ""))
     if not version:
         return None
     return (
@@ -173,7 +173,7 @@ def _configured_build() -> ForestBuild | None:
 
 def _configured_terrain(*, grid_build_id: UUID) -> TerrainBuild | None:
     """Return the configured completed terrain build for one grid."""
-    version = str(getattr(settings, "MICOMETEO_TERRAIN_BUILD_VERSION", ""))
+    version = str(getattr(settings, "SPORAMETEO_TERRAIN_BUILD_VERSION", ""))
     if not version:
         return None
     return TerrainBuild.objects.filter(

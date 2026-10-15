@@ -6,14 +6,14 @@ from pathlib import Path
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from micometeo.host_trees import prepare_sources
+from sporameteo.host_trees import prepare_sources
 
 
 class Command(BaseCommand):
     help = "Download and verify JRC files once, without populating national grid values."
 
     def add_arguments(self, parser) -> None:
-        parser.add_argument("--directory", default=settings.MICOMETEO_JRC_DIRECTORY)
+        parser.add_argument("--directory", default=settings.SPORAMETEO_JRC_DIRECTORY)
 
     def handle(self, *args, **options) -> None:
         started = time.monotonic()

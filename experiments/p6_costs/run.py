@@ -17,9 +17,9 @@ from pyproj import Transformer
 from shapely.geometry import box, shape
 from shapely.ops import transform, unary_union
 
-from micometeo.context import RunContext
-from micometeo.finds.roads import GADM_URL, load_gadm
-from micometeo.habitat.grid import now_utc
+from sporameteo.context import RunContext
+from sporameteo.finds.roads import GADM_URL, load_gadm
+from sporameteo.habitat.grid import now_utc
 
 ROOT = Path(__file__).resolve().parents[2]
 SIZE_COLUMNS = ["item", "value", "unit", "kind", "source"]

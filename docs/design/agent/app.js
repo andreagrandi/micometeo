@@ -1,15 +1,15 @@
-// Micometeo map app prototype. Everything is simulated locally except the map tiles.
+// SporaMeteo map app prototype. Everything is simulated locally except the map tiles.
 // Query string: lang, state, and for screenshots: date, view, select, sheet, panel, bg, overlay, opacity.
 (function () {
   "use strict";
 
-  var SAMPLE = window.MICOMETEO_SAMPLE;
+  var SAMPLE = window.SPORAMETEO_SAMPLE;
   var STRINGS = window.STRINGS;
   var params = new URLSearchParams(window.location.search);
 
   var ABETONE_ID = SAMPLE.selected_square_id;
   var REP_POINT = { lat: 44.1318, lon: 10.6625 };
-  var FAVORITES_KEY = "micometeo.favorites";
+  var FAVORITES_KEY = "sporameteo.favorites";
   var DETAIL_KM = 60;
   var LESS_FOREST_KM = 15;
   var LOADING_MS = 600;
@@ -1241,7 +1241,7 @@
       zoomIn.title = zoomIn.ariaLabel = t("zoom_in");
       zoomOut.title = zoomOut.ariaLabel = t("zoom_out");
     }
-    document.title = "Micometeo";
+    document.title = "SporaMeteo";
   }
 
   function renderAll() {

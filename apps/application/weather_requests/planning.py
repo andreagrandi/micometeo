@@ -12,8 +12,8 @@ from typing import Any, Iterable, Mapping, Sequence
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
-from micometeo.weather.openmeteo import ARCHIVE_URL, FORECAST_URL, HOURLY_VARIABLES, quota_weight
-from micometeo.weather.policy import HISTORY_DAYS
+from sporameteo.weather.openmeteo import ARCHIVE_URL, FORECAST_URL, HOURLY_VARIABLES, quota_weight
+from sporameteo.weather.policy import HISTORY_DAYS
 
 from .eligibility import WeatherCell
 

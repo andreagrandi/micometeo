@@ -1,10 +1,14 @@
-# Micometeo
+# SporaMeteo
 
-This repository holds the Epic 1 validation experiments for Micometeo. The
-scope is in [the PRD](Micometeo_PRD_Epic_1_Validation_EN.md) and the status of
+This repository holds the Epic 1 validation experiments for SporaMeteo. The
+scope is in [the PRD](SporaMeteo_PRD_Epic_1_Validation_EN.md) and the status of
 each assumption is in [docs/decisions.md](docs/decisions.md). To plan the
 work after Epic 1, start with
 [docs/planning_after_epic1.md](docs/planning_after_epic1.md).
+
+The project was called Micometeo until October 2026. It was renamed because a
+similar app called Mycometeo runs at mycometeo.it. The product domain is
+sporameteo.com.
 
 ## Limits
 
@@ -27,12 +31,12 @@ The Django application and its local PostGIS database use the commands in
 [the local development guide](docs/local_development.md). The database listens
 on `127.0.0.1:5542`, and the development server listens on
 `127.0.0.1:8010`. PostgreSQL data stays in the named Docker volume
-`micometeo_pgdata`, so stopping and starting the service keeps local rows.
+`sporameteo_pgdata`, so stopping and starting the service keeps local rows.
 
 ## Run an experiment
 
 ```
-uv run micometeo run example
+uv run sporameteo run example
 ```
 
 The example downloads one week of daily rain and temperature for Pistoia from
@@ -53,7 +57,7 @@ it fails or runs out of time.
    `time_limit_minutes`. The default and the maximum are 30. Put your own
    values in a `[settings]` table.
 3. Add `run.py` with `def run(context: RunContext) -> None`.
-4. Run `uv run micometeo run <name>`.
+4. Run `uv run sporameteo run <name>`.
 
 The context gives you:
 

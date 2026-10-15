@@ -25,7 +25,7 @@ from estimate_updates.models import (
     ForecastRunCell,
     PublishedForecastRun,
 )
-from micometeo.finds.grid import format_cell_id
+from sporameteo.finds.grid import format_cell_id
 from map_api.api import (
     MAX_VIEW_HEIGHT_M,
     MAX_VIEW_WIDTH_M,
@@ -551,8 +551,8 @@ def test_info_and_forest_layer_routes_expose_contract_and_revalidate(
     monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
 
     with override_settings(
-        MICOMETEO_FOREST_BUILD_VERSION=build.version,
-        MICOMETEO_TERRAIN_BUILD_VERSION=terrain.version,
+        SPORAMETEO_FOREST_BUILD_VERSION=build.version,
+        SPORAMETEO_TERRAIN_BUILD_VERSION=terrain.version,
     ):
         client = Client()
         info_response = client.get("/api/v1/info")
@@ -628,7 +628,7 @@ def test_info_target_dates_follow_an_explicit_clock_advance(
     build = map_fixture["build"]
     first_day = date(2026, 10, 12)
     next_day = first_day + timedelta(days=1)
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
+    with override_settings(SPORAMETEO_FOREST_BUILD_VERSION=build.version):
         monkeypatch.setattr("map_api.api._today", lambda: first_day)
         first_response = Client().get("/api/v1/info")
         monkeypatch.setattr("map_api.api._today", lambda: next_day)
@@ -664,8 +664,8 @@ def test_info_omits_unavailable_configured_terrain_attribution(
         terrain.save(update_fields=["grid_build", "updated_at"])
 
     with override_settings(
-        MICOMETEO_FOREST_BUILD_VERSION=build.version,
-        MICOMETEO_TERRAIN_BUILD_VERSION=terrain.version,
+        SPORAMETEO_FOREST_BUILD_VERSION=build.version,
+        SPORAMETEO_TERRAIN_BUILD_VERSION=terrain.version,
     ):
         response = Client().get("/api/v1/info")
 
@@ -710,9 +710,9 @@ def test_forest_layer_etag_changes_when_configured_completed_build_changes(
         setattr(second_build, field, value)
     second_build.save(update_fields=[*second_data, "updated_at"])
 
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
+    with override_settings(SPORAMETEO_FOREST_BUILD_VERSION=build.version):
         first_response = Client().get("/api/v1/forest-layer")
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=second_build.version):
+    with override_settings(SPORAMETEO_FOREST_BUILD_VERSION=second_build.version):
         second_response = Client().get("/api/v1/forest-layer")
 
     assert first_response.status_code == 200
@@ -731,7 +731,7 @@ def test_forest_layer_returns_stable_error_for_a_hash_mismatch(
     build.layer_sha256 = "0" * 64
     build.save(update_fields=["layer_sha256", "updated_at"])
 
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
+    with override_settings(SPORAMETEO_FOREST_BUILD_VERSION=build.version):
         response = Client().get("/api/v1/forest-layer")
 
     assert response.status_code == 503
@@ -749,7 +749,7 @@ def test_squares_route_reads_the_published_run_and_keeps_all_square_states(
     monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
     url = f"/api/v1/squares?bbox={map_fixture['bbox']}&target_date={MAP_DATE.isoformat()}"
 
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
+    with override_settings(SPORAMETEO_FOREST_BUILD_VERSION=build.version):
         client = Client()
         response = client.get(url)
         with CaptureQueriesContext(connection) as cached_queries:
@@ -811,7 +811,7 @@ def test_squares_and_overview_return_a_clear_unavailable_error_without_a_publish
     monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
     query = {"bbox": map_fixture["bbox"], "target_date": MAP_DATE.isoformat()}
 
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=map_fixture["build"].version):
+    with override_settings(SPORAMETEO_FOREST_BUILD_VERSION=map_fixture["build"].version):
         client = Client()
         squares = client.get("/api/v1/squares", query)
         overview = client.get("/api/v1/estimate-overview", query)
@@ -832,7 +832,7 @@ def test_squares_route_rejects_dates_the_published_run_does_not_hold(
     publish_run(fixture=map_fixture, updates={"44.00,11.00": map_fixture["new_update"]})
     monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE + timedelta(days=2))
 
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=map_fixture["build"].version):
+    with override_settings(SPORAMETEO_FOREST_BUILD_VERSION=map_fixture["build"].version):
         client = Client()
         responses = {
             offset: client.get(
@@ -862,7 +862,7 @@ def test_squares_route_rejects_a_view_outside_the_tuscany_extent(
     publish_run(fixture=map_fixture, updates={"44.00,11.00": map_fixture["new_update"]})
     monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
 
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=map_fixture["build"].version):
+    with override_settings(SPORAMETEO_FOREST_BUILD_VERSION=map_fixture["build"].version):
         with CaptureQueriesContext(connection) as queries:
             response = Client().get(
                 f"/api/v1/squares?bbox=0,0,0.01,0.01&target_date={MAP_DATE.isoformat()}"
@@ -888,7 +888,7 @@ def test_overview_averages_run_scores_and_marks_a_mixed_group_unavailable(
     client = Client()
     query = {"bbox": "9,43,12,45", "target_date": MAP_DATE.isoformat()}
 
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=build.version):
+    with override_settings(SPORAMETEO_FOREST_BUILD_VERSION=build.version):
         only_first = client.get("/api/v1/estimate-overview", query)
         assert only_first.status_code == 200
         assert only_first.json()["run_id"] == str(run.id)
@@ -935,7 +935,7 @@ def test_info_describes_the_published_run_and_the_tuscany_extent(
     run = publish_run(fixture=map_fixture, updates={"44.00,11.00": map_fixture["new_update"]})
     monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE + timedelta(days=3))
 
-    with override_settings(MICOMETEO_FOREST_BUILD_VERSION=map_fixture["build"].version):
+    with override_settings(SPORAMETEO_FOREST_BUILD_VERSION=map_fixture["build"].version):
         body = Client().get("/api/v1/info").json()
 
     assert body["today"] == (MAP_DATE + timedelta(days=3)).isoformat()
@@ -975,8 +975,8 @@ def test_forest_layer_route_reads_relative_and_absolute_stored_paths(
     ForestBuild.objects.filter(id=build.id).update(layer_path=stored.name if relative else str(stored))
 
     with override_settings(
-        MICOMETEO_FOREST_BUILD_VERSION=build.version,
-        MICOMETEO_TERRAIN_BUILD_VERSION=terrain.version,
+        SPORAMETEO_FOREST_BUILD_VERSION=build.version,
+        SPORAMETEO_TERRAIN_BUILD_VERSION=terrain.version,
     ):
         response = Client().get("/api/v1/forest-layer")
 

@@ -1,4 +1,4 @@
-"""ASGI entry point for the local Micometeo application."""
+"""ASGI entry point for the local SporaMeteo application."""
 
 import os
 

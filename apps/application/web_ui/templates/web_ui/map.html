@@ -3,7 +3,7 @@
 {% block head %}
   <link rel="stylesheet" href="{% static 'maplibre-gl.css' %}">
 {% endblock %}
-{% block title %}Micometeo{% endblock %}
+{% block title %}SporaMeteo{% endblock %}
 {% block content %}
 <div class="app{% if details_open %} details-open{% endif %}" id="app" data-map-app data-language="{{ language }}" data-fixture="{{ fixture|default:'' }}" data-selected-square="{{ selected_square }}" data-target-date="{{ target_date|default:dates.0.iso }}" data-assessment-date="{{ assessment_date.isoformat }}" data-update-id="{{ update_id }}" data-result-id="{{ result_id|default:'' }}" data-map-center="{{ map_center }}" data-map-zoom="{{ map_zoom }}" data-selection-source="" data-point-latitude="" data-point-longitude="" data-representative-latitude="" data-representative-longitude="" data-panel="" data-details-open="{% if details_open %}true{% else %}false{% endif %}">
   {% include "web_ui/components/header.html" %}

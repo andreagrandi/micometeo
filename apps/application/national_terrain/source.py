@@ -22,7 +22,7 @@ from typing import Any
 import rasterio
 from rasterio.transform import Affine
 
-from micometeo.habitat import terrain
+from sporameteo.habitat import terrain
 
 
 class TerrainSourceError(RuntimeError):

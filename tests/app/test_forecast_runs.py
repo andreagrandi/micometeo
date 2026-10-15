@@ -45,9 +45,9 @@ from estimate_updates.services import (
     publish_estimate_update,
 )
 from estimate_updates.tasks import tuscany_forecast_task
-from micometeo.finds.grid import format_cell_id
-from micometeo.forecast_method import CURRENT_METHOD, HostTrees, calculate_forecast
-from micometeo.weather.policy import PIPELINE_VERSION
+from sporameteo.finds.grid import format_cell_id
+from sporameteo.forecast_method import CURRENT_METHOD, HostTrees, calculate_forecast
+from sporameteo.weather.policy import PIPELINE_VERSION
 from national_forest.models import ForestBuild, ForestCell, ForestChunk
 from national_grid.models import GridBuild, GridBuildCell, GridCell, GridChunk, GridRegion
 from national_terrain.models import TerrainBuild, TerrainCell, TerrainChunk
@@ -217,8 +217,8 @@ def tuscany(settings) -> SimpleNamespace:
         eligible_square_count=4,
         host_tree_row_count=4,
     )
-    settings.MICOMETEO_FOREST_BUILD_VERSION = forest.version
-    settings.MICOMETEO_TERRAIN_BUILD_VERSION = terrain.version
+    settings.SPORAMETEO_FOREST_BUILD_VERSION = forest.version
+    settings.SPORAMETEO_TERRAIN_BUILD_VERSION = terrain.version
     return SimpleNamespace(
         grid=grid, forest=forest, terrain=terrain, input_set=input_set, forest_cells=forest_cells,
     )

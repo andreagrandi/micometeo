@@ -1,6 +1,6 @@
 # Browser favorites
 
-Favorites use `localStorage` under the key `micometeo.favorites`. The current
+Favorites use `localStorage` under the key `sporameteo.favorites`. The current
 format is version 1:
 
 ```json

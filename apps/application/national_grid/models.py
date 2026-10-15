@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import Q
 
-from micometeo.finds.grid import CELL_SIZE_M, parse_cell_id
+from sporameteo.finds.grid import CELL_SIZE_M, parse_cell_id
 
 
 def validate_cell_corner(value: int) -> None:

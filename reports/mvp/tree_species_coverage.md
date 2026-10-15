@@ -6,7 +6,7 @@ This assessment does not import a national database.
 ## Decision
 
 The project owner selected JRC for the first version on 12 October 2026.
-Micometeo needs a broad indication of suitable host woodland for the four
+SporaMeteo needs a broad indication of suitable host woodland for the four
 porcini species considered together. JRC names more relevant Italian species
 than the Bonannella release, including downy oak, sessile oak and maritime
 pine. This coverage is the main reason for the choice. Its downloads work

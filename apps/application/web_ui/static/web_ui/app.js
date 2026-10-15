@@ -20,7 +20,7 @@
     return `https://www.google.com/maps/search/?${query.toString()}`;
   }
 
-  window.MicometeoNavigation = { buildGoogleMapsUrl };
+  window.SporaMeteoNavigation = { buildGoogleMapsUrl };
 
   function beginSelectionIntent() {
     selectionGeneration += 1;
@@ -71,7 +71,7 @@
     return first === last ? first : `${first} - ${last}`;
   }
 
-  window.MicometeoFormatting = {
+  window.SporaMeteoFormatting = {
     formatDate: date,
     formatNumber: number,
     formatMeasurement: measurement,
@@ -79,7 +79,7 @@
 
   function setLanguage(language) {
     if (!/^(it|en)$/.test(language)) return;
-    document.cookie = `micometeo_language=${language};path=/;max-age=31536000;samesite=lax`;
+    document.cookie = `sporameteo_language=${language};path=/;max-age=31536000;samesite=lax`;
     const next = new URL(window.location.href);
     next.searchParams.delete("lang");
     window.location.assign(next);
@@ -146,7 +146,7 @@
   }
 
   const params = new URLSearchParams(window.location.search);
-  const geolocationStateKey = "micometeo.currentGeolocation";
+  const geolocationStateKey = "sporameteo.currentGeolocation";
   const locationQueryKeys = [
     "square",
     "center",
@@ -543,7 +543,7 @@
           name: item.name || "",
         });
       } else {
-        window.__micometeoPendingDestination = {
+        window.__sporameteoPendingDestination = {
           latitude: Number(item.latitude),
           longitude: Number(item.longitude),
           source: "search",
@@ -598,7 +598,7 @@
           if (liveMapController?.selectDestination) {
             liveMapController.selectDestination(point);
           } else {
-            window.__micometeoPendingDestination = point;
+            window.__sporameteoPendingDestination = point;
           }
           announce(labels.location);
         },
@@ -714,7 +714,7 @@
       panel: state.panel,
     });
     updateNavigationAction();
-    window.dispatchEvent(new CustomEvent("micometeo:selectionchange", {
+    window.dispatchEvent(new CustomEvent("sporameteo:selectionchange", {
       detail: {
         point: state.point,
         representative: verifiedRepresentative,
@@ -1093,7 +1093,7 @@
     none.value = "";
     none.textContent = labels.favorite_color_none;
     color.append(none);
-    (window.MicometeoFavorites?.colors || []).forEach((value) => {
+    (window.SporaMeteoFavorites?.colors || []).forEach((value) => {
       const option = document.createElement("option");
       option.value = value;
       option.textContent = labels[`favorite_color_${value}`] || value;
@@ -1108,7 +1108,7 @@
     cancel.type = "button";
     cancel.className = "btn btn-secondary";
     cancel.textContent = labels.favorite_cancel;
-    cancel.addEventListener("click", () => renderFavoriteList(window.MicometeoFavorites.read()));
+    cancel.addEventListener("click", () => renderFavoriteList(window.SporaMeteoFavorites.read()));
     const submit = document.createElement("button");
     submit.type = "submit";
     submit.className = "btn btn-primary";
@@ -1139,14 +1139,14 @@
   }
 
   function saveFavorite({ selection, existing, name, color }) {
-    const reading = window.MicometeoFavorites?.read?.();
+    const reading = window.SporaMeteoFavorites?.read?.();
     const readMessage = favoriteReadFailure(reading);
     if (readMessage) {
       favoriteFeedback(readMessage);
       toast(readMessage);
       return;
     }
-    const candidate = window.MicometeoFavorites.create({
+    const candidate = window.SporaMeteoFavorites.create({
       ...(existing || selection),
       id: existing?.id,
       name,
@@ -1157,7 +1157,7 @@
       favoriteFeedback(labels.favorite_invalid);
       return;
     }
-    const duplicate = reading.items.find((item) => item.id !== candidate.id && window.MicometeoFavorites.sameDestination(item, candidate));
+    const duplicate = reading.items.find((item) => item.id !== candidate.id && window.SporaMeteoFavorites.sameDestination(item, candidate));
     if (duplicate) {
       openFavoriteEditor(duplicate);
       toast(labels.favorite_duplicate);
@@ -1166,7 +1166,7 @@
     const items = existing
       ? reading.items.map((item) => item.id === existing.id ? candidate : item)
       : [...reading.items, candidate];
-    const result = window.MicometeoFavorites.write(items, reading.invalid);
+    const result = window.SporaMeteoFavorites.write(items, reading.invalid);
     const writeMessage = favoriteWriteFailure(result);
     if (writeMessage) {
       favoriteFeedback(writeMessage);
@@ -1183,7 +1183,7 @@
   }
 
   function removeFavorite(id) {
-    const reading = window.MicometeoFavorites?.read?.();
+    const reading = window.SporaMeteoFavorites?.read?.();
     const readMessage = favoriteReadFailure(reading);
     if (readMessage) {
       favoriteFeedback(readMessage);
@@ -1191,7 +1191,7 @@
       return;
     }
     const items = reading.items.filter((item) => item.id !== id);
-    const result = window.MicometeoFavorites.write(items, reading.invalid);
+    const result = window.SporaMeteoFavorites.write(items, reading.invalid);
     const writeMessage = favoriteWriteFailure(result);
     if (writeMessage) {
       favoriteFeedback(writeMessage);
@@ -1209,7 +1209,7 @@
   function openFavoritesDialog(trigger) {
     favoriteTrigger = trigger;
     const dialog = ensureFavoriteDialog();
-    renderFavoriteList(window.MicometeoFavorites.read());
+    renderFavoriteList(window.SporaMeteoFavorites.read());
     if (!dialog.open) dialog.showModal();
     dialog.querySelector("[data-favorite-close]")?.focus();
   }
@@ -1219,10 +1219,10 @@
     favoriteTrigger = event.currentTarget;
     openFavoriteEditor();
   }));
-  updateFavoriteCount(window.MicometeoFavorites?.read?.().items || []);
+  updateFavoriteCount(window.SporaMeteoFavorites?.read?.().items || []);
   window.addEventListener("storage", (event) => {
-    if (event.key !== window.MicometeoFavorites?.key || !favoriteDialog?.open) return;
-    renderFavoriteList(window.MicometeoFavorites.read());
+    if (event.key !== window.SporaMeteoFavorites?.key || !favoriteDialog?.open) return;
+    renderFavoriteList(window.SporaMeteoFavorites.read());
   });
   document.querySelectorAll("[data-try-again]").forEach((button) => button.addEventListener("click", () => window.location.reload()));
 
@@ -1350,14 +1350,14 @@
     }
 
     const squareLayers = [
-      "micometeo-square-estimates",
-      "micometeo-square-missing",
-      "micometeo-square-noforest",
-      "micometeo-noforest-line",
-      "micometeo-grid-lines",
-      "micometeo-missing-line",
-      "micometeo-selected",
-      "micometeo-weather-area",
+      "sporameteo-square-estimates",
+      "sporameteo-square-missing",
+      "sporameteo-square-noforest",
+      "sporameteo-noforest-line",
+      "sporameteo-grid-lines",
+      "sporameteo-missing-line",
+      "sporameteo-selected",
+      "sporameteo-weather-area",
     ];
 
     function listen(event, listener, layer) {
@@ -1439,8 +1439,8 @@
       const wasVisible = stateData.forestVisible;
       stateData.forestVisible = visible;
       if (!map) return;
-      if (map.getLayer("micometeo-forest")) {
-        map.setLayoutProperty("micometeo-forest", "visibility", visible && state.overlay ? "visible" : "none");
+      if (map.getLayer("sporameteo-forest")) {
+        map.setLayoutProperty("sporameteo-forest", "visibility", visible && state.overlay ? "visible" : "none");
       }
       if (clearSource && wasVisible) emptySource("forest");
     }
@@ -1652,7 +1652,7 @@
       const background = contrast ? "#e0e0de" : "#f5f0e6";
       const layers = map.getStyle()?.layers || [];
       layers.forEach((layer) => {
-        if (layer.id.startsWith("micometeo-")) return;
+        if (layer.id.startsWith("sporameteo-")) return;
         if (layer.type === "background") {
           map.setPaintProperty(layer.id, "background-color", background);
         }
@@ -1673,7 +1673,7 @@
 
     function addMissingPattern() {
       const map = stateData.map;
-      if (!map || map.hasImage("micometeo-missing")) return;
+      if (!map || map.hasImage("sporameteo-missing")) return;
       const canvas = document.createElement("canvas");
       canvas.width = 12;
       canvas.height = 12;
@@ -1689,7 +1689,7 @@
       context.moveTo(2, 14);
       context.lineTo(14, 2);
       context.stroke();
-      map.addImage("micometeo-missing", context.getImageData(0, 0, 12, 12), { pixelRatio: 1 });
+      map.addImage("sporameteo-missing", context.getImageData(0, 0, 12, 12), { pixelRatio: 1 });
     }
 
     function addSourcesAndLayers() {
@@ -1702,9 +1702,9 @@
       if (!map.getSource("squares")) map.addSource("squares", { type: "geojson", data: EMPTY, promoteId: "cell_id" });
       if (!map.getSource("selected-square")) map.addSource("selected-square", { type: "geojson", data: EMPTY });
       if (!map.getSource("weather-area")) map.addSource("weather-area", { type: "geojson", data: EMPTY });
-      if (!map.getLayer("micometeo-forest")) {
+      if (!map.getLayer("sporameteo-forest")) {
         map.addLayer({
-          id: "micometeo-forest",
+          id: "sporameteo-forest",
           type: "fill",
           source: "forest",
           paint: {
@@ -1713,9 +1713,9 @@
           },
         });
       }
-      if (!map.getLayer("micometeo-square-estimates")) {
+      if (!map.getLayer("sporameteo-square-estimates")) {
         map.addLayer({
-          id: "micometeo-square-estimates",
+          id: "sporameteo-square-estimates",
           type: "fill",
           source: "squares",
           filter: ["==", ["get", "state"], "available"],
@@ -1726,36 +1726,36 @@
           },
         });
       }
-      if (!map.getLayer("micometeo-square-missing")) {
+      if (!map.getLayer("sporameteo-square-missing")) {
         map.addLayer({
-          id: "micometeo-square-missing",
+          id: "sporameteo-square-missing",
           type: "fill",
           source: "squares",
           filter: ["in", ["get", "state"], ["literal", ["unavailable", "noresultyet", "expired"]]],
-          paint: { "fill-color": "#d8d8d4", "fill-pattern": "micometeo-missing", "fill-opacity": 0.72 },
+          paint: { "fill-color": "#d8d8d4", "fill-pattern": "sporameteo-missing", "fill-opacity": 0.72 },
         });
       }
-      if (!map.getLayer("micometeo-square-noforest")) {
+      if (!map.getLayer("sporameteo-square-noforest")) {
         map.addLayer({
-          id: "micometeo-square-noforest",
+          id: "sporameteo-square-noforest",
           type: "fill",
           source: "squares",
           filter: ["==", ["get", "state"], "noforest"],
           paint: { "fill-color": "rgba(0,0,0,0)", "fill-opacity": 0 },
         });
       }
-      if (!map.getLayer("micometeo-noforest-line")) {
+      if (!map.getLayer("sporameteo-noforest-line")) {
         map.addLayer({
-          id: "micometeo-noforest-line",
+          id: "sporameteo-noforest-line",
           type: "line",
           source: "squares",
           filter: ["==", ["get", "state"], "noforest"],
           paint: { "line-color": "#777872", "line-width": 1.25, "line-dasharray": [1, 2], "line-opacity": 0.9 },
         });
       }
-      if (!map.getLayer("micometeo-grid-lines")) {
+      if (!map.getLayer("sporameteo-grid-lines")) {
         map.addLayer({
-          id: "micometeo-grid-lines",
+          id: "sporameteo-grid-lines",
           type: "line",
           source: "squares",
           minzoom: 12,
@@ -1763,26 +1763,26 @@
           paint: { "line-color": "rgba(17,34,27,0.25)", "line-width": 0.5, "line-opacity": 0.7 },
         });
       }
-      if (!map.getLayer("micometeo-missing-line")) {
+      if (!map.getLayer("sporameteo-missing-line")) {
         map.addLayer({
-          id: "micometeo-missing-line",
+          id: "sporameteo-missing-line",
           type: "line",
           source: "squares",
           filter: ["in", ["get", "state"], ["literal", ["unavailable", "noresultyet", "expired"]]],
           paint: { "line-color": "#777872", "line-width": 1, "line-dasharray": [2, 2], "line-opacity": 0.9 },
         });
       }
-      if (!map.getLayer("micometeo-weather-area")) {
+      if (!map.getLayer("sporameteo-weather-area")) {
         map.addLayer({
-          id: "micometeo-weather-area",
+          id: "sporameteo-weather-area",
           type: "line",
           source: "weather-area",
           paint: { "line-color": "#2e5645", "line-width": 2, "line-dasharray": [2, 2], "line-opacity": 0.85 },
         });
       }
-      if (!map.getLayer("micometeo-selected")) {
+      if (!map.getLayer("sporameteo-selected")) {
         map.addLayer({
-          id: "micometeo-selected",
+          id: "sporameteo-selected",
           type: "line",
           source: "selected-square",
           paint: { "line-color": "#2e5645", "line-width": 3, "line-gap-width": 2 },
@@ -1801,7 +1801,7 @@
     function restoreCustomLayers() {
       const map = stateData.map;
       if (!map || !map.isStyleLoaded?.()) return;
-      if (map.getSource("squares") && map.getLayer("micometeo-square-estimates")) return;
+      if (map.getSource("squares") && map.getLayer("sporameteo-square-estimates")) return;
       if (stateData.styleRestoreGeneration === stateData.styleGeneration) return;
       stateData.styleRestoreGeneration = stateData.styleGeneration;
       addSourcesAndLayers();
@@ -1811,8 +1811,8 @@
       const map = stateData.map;
       if (!map) return;
       setSquareLayersVisible(stateData.squaresRendered, false);
-      if (map.getLayer("micometeo-forest")) {
-        map.setLayoutProperty("micometeo-forest", "visibility", enabled && stateData.forestVisible ? "visible" : "none");
+      if (map.getLayer("sporameteo-forest")) {
+        map.setLayoutProperty("sporameteo-forest", "visibility", enabled && stateData.forestVisible ? "visible" : "none");
       }
     }
 
@@ -1822,11 +1822,11 @@
       // Estimates of another date stay on screen, dimmed, until the new date arrives.
       const dimming = root.dataset.mapStale === "true" ? 0.4 : 1;
       const opacity = Math.max(0, Math.min(1, Number(value) / 100)) * dimming;
-      if (map.getLayer("micometeo-square-estimates")) map.setPaintProperty("micometeo-square-estimates", "fill-opacity", opacity);
-      if (map.getLayer("micometeo-square-missing")) map.setPaintProperty("micometeo-square-missing", "fill-opacity", opacity);
-      if (map.getLayer("micometeo-square-noforest")) map.setPaintProperty("micometeo-square-noforest", "fill-opacity", 0);
-      if (map.getLayer("micometeo-noforest-line")) map.setPaintProperty("micometeo-noforest-line", "line-opacity", opacity);
-      if (map.getLayer("micometeo-missing-line")) map.setPaintProperty("micometeo-missing-line", "line-opacity", opacity);
+      if (map.getLayer("sporameteo-square-estimates")) map.setPaintProperty("sporameteo-square-estimates", "fill-opacity", opacity);
+      if (map.getLayer("sporameteo-square-missing")) map.setPaintProperty("sporameteo-square-missing", "fill-opacity", opacity);
+      if (map.getLayer("sporameteo-square-noforest")) map.setPaintProperty("sporameteo-square-noforest", "fill-opacity", 0);
+      if (map.getLayer("sporameteo-noforest-line")) map.setPaintProperty("sporameteo-noforest-line", "line-opacity", opacity);
+      if (map.getLayer("sporameteo-missing-line")) map.setPaintProperty("sporameteo-missing-line", "line-opacity", opacity);
     }
 
     function featureCenter(feature) {
@@ -2978,7 +2978,7 @@
     async function fetchStyle(name, signal) {
       const { response, body } = await fetchJson(styles[name], { signal, headers: { Accept: "application/json" } });
       if (!response.ok || !body || body.version !== 8 || !Array.isArray(body.layers) || !body.sources) throw new Error("style");
-      return { ...body, metadata: { ...(body.metadata || {}), micometeoStyle: name } };
+      return { ...body, metadata: { ...(body.metadata || {}), sporameteoStyle: name } };
     }
 
     async function fetchForest(generation) {
@@ -3232,7 +3232,7 @@
       listen("click", (event) => {
         // Squares of another date are dimmed and not selectable.
         if (root.dataset.mapStale === "true") return;
-        const features = map.queryRenderedFeatures(event.point, { layers: ["micometeo-square-estimates", "micometeo-square-missing", "micometeo-square-noforest", "micometeo-noforest-line", "micometeo-missing-line"] });
+        const features = map.queryRenderedFeatures(event.point, { layers: ["sporameteo-square-estimates", "sporameteo-square-missing", "sporameteo-square-noforest", "sporameteo-noforest-line", "sporameteo-missing-line"] });
         if (features[0] && event.lngLat) {
           selectFeature(features[0], {
             point: { latitude: event.lngLat.lat, longitude: event.lngLat.lng },
@@ -3240,8 +3240,8 @@
           });
         }
       });
-      listen("mouseenter", () => { map.getCanvas().style.cursor = "pointer"; }, "micometeo-square-estimates");
-      listen("mouseleave", () => { map.getCanvas().style.cursor = ""; }, "micometeo-square-estimates");
+      listen("mouseenter", () => { map.getCanvas().style.cursor = "pointer"; }, "sporameteo-square-estimates");
+      listen("mouseleave", () => { map.getCanvas().style.cursor = ""; }, "sporameteo-square-estimates");
     }
 
     async function refreshInfo() {
@@ -3495,7 +3495,7 @@
     }
 
     async function openFavorite(favorite) {
-      const valid = window.MicometeoFavorites?.validateItem?.(favorite);
+      const valid = window.SporaMeteoFavorites?.validateItem?.(favorite);
       if (!valid) {
         message(labels.favorite_invalid, "error");
         return false;
@@ -3570,7 +3570,7 @@
         if (!map || !stateData.squaresRendered) return false;
         const point = map.project(map.getCenter());
         const features = map.queryRenderedFeatures(point, {
-          layers: ["micometeo-square-estimates", "micometeo-square-missing", "micometeo-square-noforest", "micometeo-noforest-line", "micometeo-missing-line"],
+          layers: ["sporameteo-square-estimates", "sporameteo-square-missing", "sporameteo-square-noforest", "sporameteo-noforest-line", "sporameteo-missing-line"],
         });
         if (!features[0]) return false;
         const centre = featureCenter(features[0]);
@@ -3694,16 +3694,16 @@
     };
     Object.defineProperty(controller, "map", { get: () => stateData.map });
     Object.defineProperty(controller, "lastRequest", { get: () => stateData.lastRequest });
-    window.MicometeoMap = controller;
+    window.SporaMeteoMap = controller;
     initialise();
     return controller;
   }
 
   const placeSearch = createPlaceSearch();
   liveMapController = createLiveMapController();
-  if (window.__micometeoPendingDestination && liveMapController?.selectDestination) {
-    liveMapController.selectDestination(window.__micometeoPendingDestination);
-    delete window.__micometeoPendingDestination;
+  if (window.__sporameteoPendingDestination && liveMapController?.selectDestination) {
+    liveMapController.selectDestination(window.__sporameteoPendingDestination);
+    delete window.__sporameteoPendingDestination;
   }
-  window.MicometeoPlaceSearch = placeSearch;
+  window.SporaMeteoPlaceSearch = placeSearch;
 })();

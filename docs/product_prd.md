@@ -1,4 +1,4 @@
-# Micometeo product requirements
+# SporaMeteo product requirements
 
 Written on 11 October 2026.
 
@@ -6,7 +6,7 @@ These product requirements follow the completed ten-question interview. This doc
 
 ## Product purpose
 
-Micometeo helps people choose areas to explore for porcini. It combines terrain, habitat and weather information in a map that shows the estimated probability that porcini are growing in an area on a selected day.
+SporaMeteo helps people choose areas to explore for porcini. It combines terrain, habitat and weather information in a map that shows the estimated probability that porcini are growing in an area on a selected day.
 
 The first release is a free website without advertising or subscriptions. It works on phones and desktop computers, covers Tuscany at launch under D22, and supports Italian and English. All Italy remains the coverage goal. It shows today and the next seven days.
 
@@ -166,9 +166,9 @@ Use [Book Corners](https://github.com/andreagrandi/book-corners) as the implemen
 | Map rendering | Start from Book Corners' Leaflet approach. Use the P5 work as evidence about serving cells and phone limits. Document a concrete rendering need if another map library is required. |
 | Background work | Reuse the Django background-task and scheduled-job patterns for habitat builds and the nightly cleanup of old weather and estimates. |
 | Languages | Reuse Django's translation patterns from Book Corners. |
-| Development and checks | Reuse Docker Compose, application process and GitHub Actions check patterns. Keep Micometeo configuration separate. Do not copy automatic deployment jobs or require VPS credentials. |
+| Development and checks | Reuse Docker Compose, application process and GitHub Actions check patterns. Keep SporaMeteo configuration separate. Do not copy automatic deployment jobs or require VPS credentials. |
 
-Reuse useful Micometeo data processing code and the established grid and date conventions. P5's demonstration API and page are experiments, not a requirement to retain their production architecture. Book Corners' account dependencies are unnecessary while F77 is deferred.
+Reuse useful SporaMeteo data processing code and the established grid and date conventions. P5's demonstration API and page are experiments, not a requirement to retain their production architecture. Book Corners' account dependencies are unnecessary while F77 is deferred.
 
 Prepare weather ahead in a scheduled run, store the results and serve the stored results to every visitor. Map browsing must not trigger one Open-Meteo request per visitor or per 500 m square. Nearby squares can share the weather that actually covers them while retaining their separate habitat inputs.
 
@@ -349,14 +349,14 @@ The analysis followed the Markdown links from the planning handoff recursively. 
 | [Planning after Epic 1](planning_after_epic1.md) | Entry point to the completed investigation. |
 | [Epic 1 validation report](../reports/EPIC1_VALIDATION_REPORT.md) | Combined findings and the distinction between tested capabilities and proposed next work. |
 | [Decisions](decisions.md) | Existing grid, time, species, website and map choices. The product interview supersedes the earlier scope and validation gate. |
-| [Epic 1 PRD](../Micometeo_PRD_Epic_1_Validation_EN.md) | Investigation scope and constraints. It remains the authority for that completed epic. |
+| [Epic 1 PRD](../SporaMeteo_PRD_Epic_1_Validation_EN.md) | Investigation scope and constraints. It remains the authority for that completed epic. |
 | [Data formats](data_formats.md) | Grid identifiers, dates and reusable data conventions. |
 | [Test rules](test_rules.md) | How the investigation separated years and areas and judged rankings. Those tests did not establish calibrated growth probabilities. |
 | [P6 costs and licences](../reports/p6_cost_licence_portability.md) | Assessed free services, allowances, costs, licences and distribution conditions. |
 | [P5 phone map](../reports/p5_phone_map.md) | Efficient result serving and the unresolved iPhone freeze in the demonstration. |
 | [API README](../apps/api/README.md) | Demonstration API behavior and its synthetic data. |
 | [P4 benchmark](../reports/p4_benchmark.md) | Prediction experiments, published rules and limits of the observed results. |
-| [Context dossier](../Micometeo_Context_Dossier_EN.md) | Background, not authority for MVP feature selection. |
+| [Context dossier](../SporaMeteo_Context_Dossier_EN.md) | Background, not authority for MVP feature selection. |
 | [P1 observations](../reports/p1_observations.md) | Available records, location and date quality, and the shortage of reliable local outcomes. |
 | [P1c season signs](../reports/p1c_flush_signs.md) | Indirect season evidence that cannot replace growth observations. |
 | [P2 habitat](../reports/p2_habitat.md) | Terrain and forest data, old regional tree records and uncertain soil information. |

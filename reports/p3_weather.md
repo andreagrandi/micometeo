@@ -34,7 +34,7 @@ API default gave 1 mm.
   `20261010T181005Z-696b43`.
 - Each find becomes a place with `assessment_date` and `target_date` equal to
   the day of the find, and `days_ahead` equal to 0.
-- `build_weather_features` in `src/micometeo/weather/features.py` returns one
+- `build_weather_features` in `src/sporameteo/weather/features.py` returns one
   row per place, view and window. The experiment is
   `experiments/p3_weather/`.
 - Each row has `assessment_date`, `target_date`, `days_ahead`, `view`,
@@ -46,7 +46,7 @@ API default gave 1 mm.
 ## How to rebuild
 
 ```
-uv run micometeo run p3_weather
+uv run sporameteo run p3_weather
 ```
 
 Run records:
@@ -433,7 +433,7 @@ row:
 ### How to rebuild P3b
 
 ```
-uv run micometeo run p3b_forecasts
+uv run sporameteo run p3b_forecasts
 ```
 
 Run records:

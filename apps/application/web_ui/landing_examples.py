@@ -21,7 +21,7 @@ from django.utils.translation import gettext
 from area_api.router import area_detail
 from map_api import published
 from map_api.published import GRID_TO_WGS84, MapReadError
-from micometeo.finds.grid import CELL_SIZE_M, parse_cell_id
+from sporameteo.finds.grid import CELL_SIZE_M, parse_cell_id
 from weather_on_demand import services as weather_services
 
 from .formatting import format_date, format_decimal, format_short_date, format_weekday
