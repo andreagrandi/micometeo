@@ -89,16 +89,91 @@ The Dokku docs describe limits per process type and do not say whether the
 `app.json` cron tasks get them. After the first night, check the real use with
 `sudo docker stats --no-stream` and update this table.
 
-## JRC tree files
+## Data files
 
-The app reads 37 JRC host tree files at runtime. They stay on the host so a
-deploy does not remove them. The container runs as root, so the folder needs
-no change of owner. Issue #88 copies the files into it.
+The app reads 37 JRC host tree files and the Tuscany forest layer file at
+runtime. `.dockerignore` leaves `data/` out of the image, so both live in
+storage folders on the host and a deploy does not remove them. The container
+runs as root, so the folders need no change of owner.
 
 ```sh
 sudo mkdir -p /var/lib/dokku/data/storage/sporameteo/jrc_host_trees
 sudo dokku storage:mount sporameteo \
   /var/lib/dokku/data/storage/sporameteo/jrc_host_trees:/app/data/jrc_host_trees
+sudo dokku storage:mount sporameteo \
+  /var/lib/dokku/data/storage/sporameteo/mvp_forest:/app/data/processed/mvp_forest
+```
+
+Docker creates the `mvp_forest` folder on the host at the next start.
+
+## Restore the Tuscany data
+
+`docs/hosting_data.md` describes the dump and lists the files to copy. The
+`deploy` user can run `dokku` without a password but not other `sudo`
+commands. The steps below therefore write to the storage folders from inside a
+`dokku run` container. `dokku run` does not pass standard input to the
+container, so the files go through a staging folder that is mounted for one
+command.
+
+Stop the app and empty the database. The first deploy has already created
+empty tables, and the restore needs an empty schema:
+
+```sh
+sudo dokku ps:stop sporameteo
+echo "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" \
+  | sudo dokku postgres:connect sporameteo-db
+```
+
+Stream the dump from the laptop, so no copy of it is written on the VPS:
+
+```sh
+ssh deploy@vps.sporameteo.com "sudo dokku postgres:import sporameteo-db" \
+  < data/processed/hosting/sporameteo_tuscany_vps.dump
+```
+
+Copy the 37 JRC files and the forest layer file from the laptop to a staging
+folder. The `_rpp.zip` archives stay on the laptop:
+
+```sh
+ssh deploy@vps.sporameteo.com "mkdir -p ~/sporameteo_staging/jrc \
+  ~/sporameteo_staging/forest/tuscany-forest-italy-forest-copernicus-2018-v1-56"
+scp data/raw/jrc_host_trees/*.tif data/raw/jrc_host_trees/*.json \
+  deploy@vps.sporameteo.com:sporameteo_staging/jrc/
+scp data/processed/mvp_forest/tuscany-forest-italy-forest-copernicus-2018-v1-56/forest_layer_2000m.geojson.gz \
+  deploy@vps.sporameteo.com:sporameteo_staging/forest/tuscany-forest-italy-forest-copernicus-2018-v1-56/
+```
+
+On the VPS, copy the files into the storage folders, remove the staging folder,
+apply any migration newer than the dump and start the app:
+
+```sh
+sudo dokku storage:mount sporameteo /home/deploy/sporameteo_staging:/staging
+sudo dokku run --no-tty sporameteo sh -c \
+  "cp -r /staging/jrc/. /app/data/jrc_host_trees/ && cp -r /staging/forest/. /app/data/processed/mvp_forest/"
+sudo dokku storage:unmount sporameteo /home/deploy/sporameteo_staging:/staging
+rm -rf ~/sporameteo_staging
+sudo dokku run --no-tty sporameteo python apps/application/manage.py migrate --noinput
+sudo dokku run --no-tty sporameteo python apps/application/manage.py createcachetable
+sudo dokku ps:start sporameteo
+```
+
+Check that every source is ready. The source files behind the forest and
+terrain builds stay on the laptop, so the check skips them:
+
+```sh
+sudo dokku run --no-tty sporameteo python apps/application/manage.py \
+  prepare_tuscany_inputs --dry-run --json --skip-source-files
+```
+
+All four sources must report `ready`, and the `host_trees` version must be
+`d8998582df944b32f134ef85beb51380e255e4702d6714ebb01b5bd3029ddd0a`.
+
+The October 2026 dump was built before the rename and holds an empty
+`micometeo_map_cache` table. The app uses `sporameteo_map_cache`, which
+`createcachetable` creates. Drop the old table:
+
+```sh
+echo "DROP TABLE micometeo_map_cache;" | sudo dokku postgres:connect sporameteo-db
 ```
 
 ## Environment
@@ -222,3 +297,4 @@ The first and last must print `200`. The second must print `301` and
 | Let's Encrypt | 15 October 2026 | Certificate valid until 13 January 2027. The VPS answers `/health/` with 200 and a valid certificate for both names. |
 | Cloudflare Full Strict | 15 October 2026 | Set by the owner. `/health/` answers 200 through Cloudflare, and plain `http` redirects to `https`. |
 | CI deploy key | 15 October 2026 | Dokku key `sporameteo-ci`, private key in the `DOKKU_SSH_PRIVATE_KEY` secret. `git ls-remote` with it returns the deployed commit. |
+| Tuscany data | 15 October 2026 | Dump restored with the deployed commit `d25c2de`. Row counts match `docs/hosting_data.md`, except that `django_migrations` has 64 rows because `migrate` added `weather_on_demand.0006`. The dry run and a real run of `prepare_tuscany_inputs --skip-source-files` both report `ready` for all four sources. The real run took 2.3 seconds and left 71,031 host tree rows and 1 input set. `host_tree_source_version()` matches the laptop. `/api/v1/forest-layer` answers 200. The database takes 184 MB. The JRC files take 358,725,015 bytes and the forest layer file 208,655 bytes. Used disk went from 52% to 54% of 38 GB. No dump, staging folder or `_rpp.zip` file is left on the VPS. `DROP TABLE` removed the empty `micometeo_map_cache` table that the dump brought from before the rename, so the database has 55 tables. |
