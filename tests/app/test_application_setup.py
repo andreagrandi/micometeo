@@ -5,13 +5,15 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+import sentry_sdk
 from django.conf import settings
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
+from django.core.exceptions import DisallowedHost
 from django.db import DatabaseError, connection
 from django.test import Client
 from django.utils import timezone
-from config.settings import database_config
+from config.settings import database_config, sentry_before_send
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -65,6 +67,19 @@ def test_dokku_health_page_returns_200_with_a_working_database() -> None:
 
     assert response.status_code == 200
     assert response.content == b"ok"
+
+
+@pytest.mark.django_db
+def test_health_page_answers_head_requests_from_the_uptime_monitor() -> None:
+    response = Client().head(path="/health/")
+
+    assert response.status_code == 200
+
+
+def test_health_page_refuses_post_requests() -> None:
+    response = Client().post(path="/health/")
+
+    assert response.status_code == 405
 
 
 @pytest.mark.django_db
@@ -199,3 +214,22 @@ def test_database_defaults_are_used_when_nothing_is_set() -> None:
     assert config["HOST"] == "127.0.0.1"
     assert config["PORT"] == "5542"
     assert config["OPTIONS"] == {"connect_timeout": 5}
+
+
+def test_sentry_stays_off_without_a_dsn() -> None:
+    assert settings.SENTRY_DSN == ""
+    assert sentry_sdk.get_client().is_active() is False
+
+
+def test_sentry_drops_disallowed_host_errors() -> None:
+    event = {"level": "error"}
+    hint = {"exc_info": (DisallowedHost, DisallowedHost("bad host"), None)}
+
+    assert sentry_before_send(event=event, hint=hint) is None
+
+
+def test_sentry_keeps_other_errors() -> None:
+    event = {"level": "error"}
+    hint = {"exc_info": (ValueError, ValueError("broken"), None)}
+
+    assert sentry_before_send(event=event, hint=hint) == event

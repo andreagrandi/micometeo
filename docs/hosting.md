@@ -283,6 +283,48 @@ curl -s -o /dev/null -w "%{http_code}\n" https://www.bookcorners.org/health/
 The first and last must print `200`. The second must print `301` and
 `https://www.sporameteo.com/`.
 
+## Monitoring
+
+Sentry collects errors from pages and from the worker. The app starts Sentry
+only when `SENTRY_DSN` is set. A failed background job reaches Sentry because
+Django logs it at error level. Errors with a `DisallowedHost` exception are
+dropped, because they come from bots that call the server by its IP address.
+Performance tracing stays off.
+
+The project `sporameteo` sits in the book corners Sentry organization. That
+organization uses the sponsored plan for open source projects. On 15 October
+2026 the plan page asked for a project under a permissive licence such as MIT
+or Apache. SporaMeteo uses the MIT licence and the repository is public. The
+organization's subscription page shows the Sponsored Business plan with 5
+million errors per month and a pay-as-you-go limit of $0, so errors over the
+quota are dropped and not billed.
+
+```sh
+sudo dokku config:set sporameteo SENTRY_DSN="<DSN from the Sentry project>"
+```
+
+To send a test error:
+
+```sh
+sudo dokku run sporameteo python apps/application/manage.py shell -c \
+  "import sentry_sdk; sentry_sdk.capture_exception(RuntimeError('SporaMeteo Sentry test')); sentry_sdk.flush()"
+```
+
+UptimeRobot calls `https://www.sporameteo.com/health/` every 5 minutes and
+sends an email when the page does not answer `200`. It sends HEAD requests,
+so the health page answers HEAD as well as GET. On 15 October 2026 the
+UptimeRobot terms, updated 24 June 2026, said: "UptimeRobot is available for
+any use, including commercial and business use." The pricing page listed 50
+monitors and a 5 minute interval on the free plan. Book corners used 1 of the
+50 monitors, so a second site fits.
+
+To check the alert, stop the web process for one check and start it again:
+
+```sh
+sudo dokku ps:scale sporameteo web=0
+sudo dokku ps:scale sporameteo web=1
+```
+
 ## Setup log
 
 | Step | Date | Result |

@@ -708,75 +708,6 @@ wheels = [
 ]
 
 [[package]]
-name = "sporameteo"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "cdsapi" },
-    { name = "dj-database-url" },
-    { name = "django" },
-    { name = "django-anymail", extra = ["resend"] },
-    { name = "django-ninja" },
-    { name = "django-tasks-db" },
-    { name = "gunicorn" },
-    { name = "matplotlib" },
-    { name = "numpy" },
-    { name = "osmium" },
-    { name = "psycopg", extra = ["binary"] },
-    { name = "pyarrow" },
-    { name = "pyproj" },
-    { name = "pyshp" },
-    { name = "rasterio" },
-    { name = "scikit-learn" },
-    { name = "shapely" },
-    { name = "whitenoise" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-django" },
-    { name = "pytest-playwright" },
-    { name = "pytest-repeat" },
-    { name = "pytest-socket" },
-    { name = "pytest-xdist" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "cdsapi", specifier = ">=0.7.7" },
-    { name = "dj-database-url", specifier = ">=3.1.2" },
-    { name = "django", specifier = ">=6.0" },
-    { name = "django-anymail", extras = ["resend"], specifier = ">=15.2" },
-    { name = "django-ninja", specifier = ">=1.4.3" },
-    { name = "django-tasks-db", specifier = ">=0.13,<0.14" },
-    { name = "gunicorn", specifier = ">=26.2.0" },
-    { name = "matplotlib", specifier = ">=3.11.2" },
-    { name = "numpy", specifier = ">=2.5.3" },
-    { name = "osmium", specifier = ">=4.3.1" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.2.10" },
-    { name = "pyarrow", specifier = ">=26.0.0" },
-    { name = "pyproj", specifier = ">=3.8.0" },
-    { name = "pyshp", specifier = ">=3.1.6" },
-    { name = "rasterio", specifier = ">=1.5.2" },
-    { name = "scikit-learn", specifier = ">=1.9.1" },
-    { name = "shapely", specifier = ">=2.2.0" },
-    { name = "whitenoise", specifier = ">=6.12.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pre-commit", specifier = ">=4.0" },
-    { name = "pytest", specifier = ">=8.0" },
-    { name = "pytest-django", specifier = ">=4.11" },
-    { name = "pytest-playwright", specifier = ">=0.7.1" },
-    { name = "pytest-repeat", specifier = ">=0.9.4" },
-    { name = "pytest-socket", specifier = ">=0.7.0" },
-    { name = "pytest-xdist", specifier = ">=3.8.0" },
-]
-
-[[package]]
 name = "multiurl"
 version = "0.3.9"
 source = { registry = "https://pypi.org/simple" }
@@ -1546,6 +1477,24 @@ wheels = [
 ]
 
 [[package]]
+name = "sentry-sdk"
+version = "2.72.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/26/c1/d2bbb2b03bdc2ef14b35e02b647b8489156c50b6e0b8bacc5fa303902e23/sentry_sdk-2.72.0.tar.gz", hash = "sha256:0d2ffbc28ee2e63cbaf3d015e93b448cffcc3ef3be03a44704ad36ade72faa95", size = 1069699, upload-time = "2026-10-12T13:08:11.195Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d0/0b/0dd9686842d9dc49c3ee84cced31c54bceb0fb52a826be7d3d4fe30d882a/sentry_sdk-2.72.0-py3-none-any.whl", hash = "sha256:3e13ace4ffd0b3cc78288236edfc4e4bd90eb12a396cc5845fa10a58ff289f50", size = 544754, upload-time = "2026-10-12T13:08:01.619Z" },
+]
+
+[package.optional-dependencies]
+django = [
+    { name = "django" },
+]
+
+[[package]]
 name = "shapely"
 version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1599,6 +1548,77 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload-time = "2024-12-04T17:35:28.174Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
+]
+
+[[package]]
+name = "sporameteo"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "cdsapi" },
+    { name = "dj-database-url" },
+    { name = "django" },
+    { name = "django-anymail", extra = ["resend"] },
+    { name = "django-ninja" },
+    { name = "django-tasks-db" },
+    { name = "gunicorn" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "osmium" },
+    { name = "psycopg", extra = ["binary"] },
+    { name = "pyarrow" },
+    { name = "pyproj" },
+    { name = "pyshp" },
+    { name = "rasterio" },
+    { name = "scikit-learn" },
+    { name = "sentry-sdk", extra = ["django"] },
+    { name = "shapely" },
+    { name = "whitenoise" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-django" },
+    { name = "pytest-playwright" },
+    { name = "pytest-repeat" },
+    { name = "pytest-socket" },
+    { name = "pytest-xdist" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cdsapi", specifier = ">=0.7.7" },
+    { name = "dj-database-url", specifier = ">=3.1.2" },
+    { name = "django", specifier = ">=6.0" },
+    { name = "django-anymail", extras = ["resend"], specifier = ">=15.2" },
+    { name = "django-ninja", specifier = ">=1.4.3" },
+    { name = "django-tasks-db", specifier = ">=0.13,<0.14" },
+    { name = "gunicorn", specifier = ">=26.2.0" },
+    { name = "matplotlib", specifier = ">=3.11.2" },
+    { name = "numpy", specifier = ">=2.5.3" },
+    { name = "osmium", specifier = ">=4.3.1" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2.10" },
+    { name = "pyarrow", specifier = ">=26.0.0" },
+    { name = "pyproj", specifier = ">=3.8.0" },
+    { name = "pyshp", specifier = ">=3.1.6" },
+    { name = "rasterio", specifier = ">=1.5.2" },
+    { name = "scikit-learn", specifier = ">=1.9.1" },
+    { name = "sentry-sdk", extras = ["django"], specifier = ">=2.70" },
+    { name = "shapely", specifier = ">=2.2.0" },
+    { name = "whitenoise", specifier = ">=6.12.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pre-commit", specifier = ">=4.0" },
+    { name = "pytest", specifier = ">=8.0" },
+    { name = "pytest-django", specifier = ">=4.11" },
+    { name = "pytest-playwright", specifier = ">=0.7.1" },
+    { name = "pytest-repeat", specifier = ">=0.9.4" },
+    { name = "pytest-socket", specifier = ">=0.7.0" },
+    { name = "pytest-xdist", specifier = ">=3.8.0" },
 ]
 
 [[package]]
