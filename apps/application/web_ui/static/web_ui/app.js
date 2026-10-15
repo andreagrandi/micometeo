@@ -1219,6 +1219,17 @@
     favoriteTrigger = event.currentTarget;
     openFavoriteEditor();
   }));
+  document.querySelectorAll("[data-share-link]").forEach((button) => button.addEventListener("click", copyPageLink));
+
+  async function copyPageLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast(labels.link_copied);
+    } catch {
+      // The clipboard API needs a secure page and can be blocked by the browser.
+      toast(labels.link_copy_failed);
+    }
+  }
   updateFavoriteCount(window.SporaMeteoFavorites?.read?.().items || []);
   window.addEventListener("storage", (event) => {
     if (event.key !== window.SporaMeteoFavorites?.key || !favoriteDialog?.open) return;
@@ -1936,6 +1947,21 @@
         favoriteTrigger = event.currentTarget;
         openFavoriteEditor();
       });
+      const share = document.createElement("button");
+      share.type = "button";
+      share.className = "btn btn-secondary favorite-icon";
+      share.dataset.shareLink = "";
+      share.setAttribute("aria-label", labels.copy_link);
+      share.title = labels.copy_link;
+      const shareIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      shareIcon.setAttribute("class", "icon");
+      shareIcon.setAttribute("viewBox", "0 0 24 24");
+      shareIcon.setAttribute("aria-hidden", "true");
+      const shareShape = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      shareShape.setAttribute("d", "M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4");
+      shareIcon.append(shareShape);
+      share.append(shareIcon);
+      share.addEventListener("click", copyPageLink);
       const navigation = document.createElement("button");
       navigation.type = "button";
       navigation.className = "btn btn-primary";
@@ -1947,7 +1973,7 @@
         if (!url) return;
         window.open(url, "_blank", "noopener,noreferrer");
       });
-      actions.append(save, navigation);
+      actions.append(save, share, navigation);
       const status = document.createElement("p");
       status.className = "navigation-status";
       status.dataset.navigationStatus = "";
