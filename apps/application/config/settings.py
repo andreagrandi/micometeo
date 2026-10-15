@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import dj_database_url
+from django.core.exceptions import DisallowedHost
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -234,3 +235,27 @@ if RESEND_API_KEY:
     EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# Error reports to Sentry. Without a DSN, nothing is sent.
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+
+
+def sentry_before_send(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
+    """Drop DisallowedHost errors, which come from bots that call the server by its IP address.
+    They would use up the error quota without pointing at a bug."""
+    exc_info = hint.get("exc_info")
+    if exc_info and exc_info[0] is DisallowedHost:
+        return None
+    return event
+
+
+if SENTRY_DSN:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        release=os.getenv("GIT_REV", ""),
+        environment="development" if DEBUG else "production",
+        send_default_pii=False,
+        before_send=sentry_before_send,
+    )

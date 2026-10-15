@@ -2,7 +2,7 @@
 
 from django.db import DatabaseError, connection
 from django.http import HttpRequest, HttpResponse
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_safe
 
 
 def database_is_available() -> bool:
@@ -16,7 +16,8 @@ def database_is_available() -> bool:
     return True
 
 
-@require_GET
+# UptimeRobot checks the page with HEAD requests, so HEAD must answer like GET.
+@require_safe
 def health(request: HttpRequest) -> HttpResponse:
     """Answer 200 when the database answers a query and 503 when it does not.
     The age of the weather and estimates is left to the nightly email."""
