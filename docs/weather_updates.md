@@ -62,11 +62,61 @@ One cron entry starts the whole night. `refresh_tuscany_weather` runs at 00:30 U
 3. The forecast task calculates the estimates and publishes the run.
 4. Publishing queues the map cache warm-up.
 
-00:30 UTC is 01:30 in Rome in winter time and 02:30 in summer time, so it is always after midnight in Rome. It is also clear of the book corners jobs at 02:00 and 03:00 UTC. `cleanup_weather` keeps its own entry at 01:30 UTC. Both entries are in the `cron` list of `app.json`, and the VPS clock is UTC.
+00:30 UTC is 01:30 in Rome in winter time and 02:30 in summer time, so it is always after midnight in Rome. It is also clear of the book corners jobs at 02:00 and 03:00 UTC. `cleanup_weather` keeps its own entry at 01:30 UTC. Both entries are in the `cron` list of `app.json`, and the VPS clock is UTC. The checks after the chain are described in the next section.
 
 A failed weather run queues no forecast. A failed forecast keeps the published run and queues no warm-up. Its task row is marked failed, and `run_tuscany_forecast` for the same date runs it again by hand. Running `refresh_tuscany_weather` again for the same date resumes the same run and queues no second forecast. If the forecast could not be queued before, for example because the queue was down, the next run of the command queues it and the run keeps the reason `forecast_queue_failure` until then.
 
 The background worker must be running, for example `run_background_worker`, because the command only plans and queues the run.
+
+## Nightly check and failure email
+
+`/health/` does not look at how old the data is, so a separate command checks the night. `check_nightly_update` looks for a published forecast run for today's Rome date. It runs three times from the `cron` list of `app.json`:
+
+| UTC time | Command | What it does |
+|---|---|---|
+| 02:30 | `check_nightly_update --retry` | First retry, no email |
+| 03:15 | `check_nightly_update --retry` | Second retry, no email |
+| 04:00 | `check_nightly_update` | Email the owner if the run is still not published |
+
+04:00 UTC is 05:00 in Rome in winter time and 06:00 in summer time. The retries avoid the book corners jobs at 02:00 and 03:00 UTC. A normal night sends 8 provider requests at least 90 seconds apart, so the weather run takes about 12 minutes before the forecast starts.
+
+A retry does nothing when the run is published or a step is still working. Otherwise it repeats the step that stopped:
+
+- No weather run for the date: it starts `refresh_tuscany_weather` for the date. This happens when cron or the worker was down at 00:30.
+- Weather run pending or running: it calls the same start again, which queues the task again only if the task was lost.
+- Weather run failed: it reopens the failed batches of the run and resumes the run. Batches that already finished keep their snapshots and cost no new calls.
+- Forecast never queued, or forecast task failed: it queues a new forecast task and stores its ID in `forecast_task_id`.
+
+The provider already retries refusals with status 429, 500, 502, 503 and 504 on its own, with the delay it asks for. The retry passes cover what stops for good: other refusals, storage failures, a forecast that raised, and a worker or cron that was down.
+
+The 04:00 check sends one email when the run is not published. The subject names the date and the reason, which is one of:
+
+- `no_weather_run`: no weather run started, which usually means the worker or cron is down.
+- `weather_failed`: the weather run failed. The email holds the full refusal message of the provider.
+- `forecast_failed`: the forecast failed or could not be queued. The email holds the forecast error.
+- `not_finished`: a step was still pending or running at 04:00.
+
+Run the check by hand for another date with `--assessment-date`:
+
+```sh
+uv run python apps/application/manage.py check_nightly_update --retry --assessment-date 2026-10-15
+uv run python apps/application/manage.py check_nightly_update --assessment-date 2026-10-15
+```
+
+### Email settings
+
+The email goes through Resend with `django-anymail`, as in book corners. Set the key and the recipient on the VPS:
+
+```sh
+sudo dokku config:set micometeo \
+  RESEND_API_KEY="<resend-api-key>" \
+  NIGHTLY_ALERT_EMAIL="<owner-email-address>" \
+  DEFAULT_FROM_EMAIL="Micometeo <noreply@micometeo.com>"
+```
+
+Without `RESEND_API_KEY` or `NIGHTLY_ALERT_EMAIL`, the command writes the message to the log at error level and exits normally.
+
+On 15 October 2026 the Resend pricing page listed 3 custom domains, 100 emails a day and 3,000 emails a month on the free plan. One check sends at most one email a day. The sender domain is `micometeo.com`, verified in the same Resend account as book corners. Until the domain is verified, set `DEFAULT_FROM_EMAIL` to an address on the book corners domain.
 
 ## Live worker check
 
