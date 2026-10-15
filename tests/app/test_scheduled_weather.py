@@ -521,6 +521,93 @@ def test_worker_claims_a_scheduled_run_under_one_logical_key_per_run(forest) -> 
     assert keys == (f"scheduled-weather-run:09:{DAY.isoformat()}",)
 
 
+def test_worker_locks_a_forecast_task_by_region_and_date() -> None:
+    task_result = DBTaskResult(
+        task_path="estimate_updates.tasks.tuscany_forecast_task",
+        args_kwargs={"args": [], "kwargs": {"region_code": "09", "assessment_date": DAY.isoformat()}},
+    )
+    missing = DBTaskResult(
+        task_path="estimate_updates.tasks.tuscany_forecast_task",
+        args_kwargs={"args": [], "kwargs": {}},
+    )
+
+    assert MicometeoWorker._logical_lock_keys_for_task(None, task_result) == (
+        f"tuscany-forecast:09:{DAY.isoformat()}",
+    )
+    assert MicometeoWorker._logical_lock_keys_for_task(None, missing) == ()
+
+
+# Forecast hand-off
+
+
+@pytest.fixture
+def forecast_calls() -> Iterator[list[dict[str, object]]]:
+    """Record forecast callback calls and restore the original callback afterwards."""
+    calls: list[dict[str, object]] = []
+    original = weather_services._FORECAST_CALLBACK
+
+    def callback(*, region_code: str, assessment_date: date) -> uuid.UUID:
+        calls.append({"region_code": region_code, "assessment_date": assessment_date})
+        return uuid.uuid4()
+
+    weather_services.configure_forecast_callback(callback)
+    yield calls
+    weather_services.configure_forecast_callback(original)
+
+
+def test_a_completed_run_queues_the_forecast_once(forest, forecast_calls) -> None:
+    clock = _clock()
+    run = _drive(run=_start(forest=forest, clock=clock), clock=clock, transport=_Transport(clock=clock))
+
+    assert run.status == ScheduledWeatherRun.Status.COMPLETED
+    assert forecast_calls == [{"region_code": "09", "assessment_date": DAY}]
+    assert run.forecast_task_id is not None
+    first_task_id = run.forecast_task_id
+
+    weather_services._finish_scheduled_run(run=run, now=clock.now)
+    weather_services.run_scheduled_weather_step(run_id=run.id, clock=clock)
+    again = _start(forest=forest, clock=clock)
+
+    assert again.id == run.id
+    assert again.forecast_task_id == first_task_id
+    assert len(forecast_calls) == 1
+
+
+def test_a_failed_run_queues_no_forecast(forest, forecast_calls) -> None:
+    clock = _clock()
+    refusing = _Transport(clock=clock, override=lambda query: (400, {}, b"not allowed"))
+
+    run = _drive(run=_start(forest=forest, clock=clock), clock=clock, transport=refusing)
+
+    assert run.status == ScheduledWeatherRun.Status.FAILED
+    assert run.forecast_task_id is None
+    assert forecast_calls == []
+
+
+def test_a_forecast_that_could_not_be_queued_is_queued_on_the_next_start(forest, forecast_calls) -> None:
+    good_callback = weather_services._FORECAST_CALLBACK
+
+    def broken(*, region_code: str, assessment_date: date) -> uuid.UUID:
+        raise RuntimeError("queue is down")
+
+    weather_services.configure_forecast_callback(broken)
+    clock = _clock()
+    run = _drive(run=_start(forest=forest, clock=clock), clock=clock, transport=_Transport(clock=clock))
+
+    assert run.status == ScheduledWeatherRun.Status.COMPLETED
+    assert run.forecast_task_id is None
+    assert run.reason_code == "forecast_queue_failure"
+    assert "queue is down" in run.full_reason
+
+    weather_services.configure_forecast_callback(good_callback)
+    retried = _start(forest=forest, clock=clock)
+
+    assert retried.id == run.id
+    assert retried.forecast_task_id is not None
+    assert retried.reason_code == "ready"
+    assert len(forecast_calls) == 1
+
+
 # Pacing, single request and restarts
 
 
@@ -582,7 +669,7 @@ def test_duplicate_start_makes_no_second_run_batch_request_or_task(forest) -> No
     assert transport.count == 4
 
 
-def test_restart_resumes_without_downloading_completed_parts_again(forest) -> None:
+def test_restart_resumes_without_downloading_completed_parts_again(forest, forecast_calls) -> None:
     clock = _clock()
     transport = _Transport(clock=clock)
     run = _start(forest=forest, clock=clock)
@@ -604,6 +691,8 @@ def test_restart_resumes_without_downloading_completed_parts_again(forest) -> No
     ranges = [(call["start"], call["end"]) for call in transport.calls]
     assert len(ranges) == len(set(ranges)) == 4
     assert WeatherFetchBatch.objects.filter(scheduled_run=run).count() == 4
+    _start(forest=forest, clock=clock)
+    assert forecast_calls == [{"region_code": "09", "assessment_date": DAY}]
 
 
 def test_batches_over_100_cells_skip_the_visitor_limit_for_scheduled_runs() -> None:

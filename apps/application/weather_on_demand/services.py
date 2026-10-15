@@ -85,6 +85,7 @@ SCHEDULED_RUNNING_RECHECK = timedelta(seconds=60)
 SCHEDULED_SOURCE = "tuscany_schedule"
 _ESTIMATE_CALLBACK: Callable[..., Any] | None = None
 _CLEANUP_CALLBACK: Callable[..., Any] | None = None
+_FORECAST_CALLBACK: Callable[..., Any] | None = None
 
 
 class WeatherOnDemandError(RuntimeError):
@@ -193,6 +194,12 @@ def configure_cleanup_callback(callback: Callable[..., Any] | None) -> None:
 
 
 set_cleanup_callback = configure_cleanup_callback
+
+
+def configure_forecast_callback(callback: Callable[..., Any] | None) -> None:
+    """Set the optional callback that queues the forecast task for a completed run."""
+    global _FORECAST_CALLBACK
+    _FORECAST_CALLBACK = callback
 
 
 def _notify_snapshot_ready(
@@ -1789,6 +1796,8 @@ def start_scheduled_weather_run(
             },
         )
         if run.status == ScheduledWeatherRun.Status.COMPLETED:
+            if run.forecast_task_id is None:
+                return _queue_forecast(run_id=run.id)
             return run
         if run.status == ScheduledWeatherRun.Status.FAILED:
             run.status = ScheduledWeatherRun.Status.PENDING
@@ -1854,15 +1863,53 @@ def _finish_scheduled_run(*, run: ScheduledWeatherRun, now: datetime) -> Schedul
                 f"{len(keys - ready)} of {len(keys)} weather cells have no snapshot. "
                 + (blocked.full_reason if blocked is not None else "")
             ).strip()
-    ScheduledWeatherRun.objects.filter(id=run.id).update(
-        status=status,
-        completed_at=now,
-        task_id=None,
-        reason_code=reason_code,
-        full_reason=full_reason,
-        updated_at=now,
-    )
-    run.refresh_from_db()
+    with transaction.atomic():
+        locked = ScheduledWeatherRun.objects.select_for_update().get(id=run.id)
+        locked.status = status
+        locked.completed_at = now
+        locked.task_id = None
+        locked.reason_code = reason_code
+        locked.full_reason = full_reason
+        locked.save(
+            update_fields=[
+                "status",
+                "completed_at",
+                "task_id",
+                "reason_code",
+                "full_reason",
+                "updated_at",
+            ]
+        )
+        if status == ScheduledWeatherRun.Status.COMPLETED:
+            return _queue_forecast(run_id=locked.id)
+    return locked
+
+
+def _queue_forecast(*, run_id: uuid.UUID) -> ScheduledWeatherRun:
+    """Queue the forecast task once for a completed run and store its task ID."""
+    callback = _FORECAST_CALLBACK
+    with transaction.atomic():
+        run = ScheduledWeatherRun.objects.select_for_update().get(id=run_id)
+        if (
+            callback is None
+            or run.status != ScheduledWeatherRun.Status.COMPLETED
+            or run.forecast_task_id is not None
+        ):
+            return run
+        try:
+            with transaction.atomic():
+                run.forecast_task_id = callback(
+                    region_code=run.region_code,
+                    assessment_date=run.assessment_date,
+                )
+        except Exception as exc:
+            run.reason_code = "forecast_queue_failure"
+            run.full_reason = str(exc)
+        else:
+            if run.reason_code == "forecast_queue_failure":
+                run.reason_code = "ready"
+                run.full_reason = ""
+        run.save(update_fields=["forecast_task_id", "reason_code", "full_reason", "updated_at"])
     return run
 
 
@@ -2614,6 +2661,7 @@ __all__ = [
     "cleanup_weather",
     "configure_cleanup_callback",
     "configure_estimate_callback",
+    "configure_forecast_callback",
     "enqueue_cleanup",
     "fetch_weather_on_demand",
     "italian_assessment_date",

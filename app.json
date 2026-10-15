@@ -4,6 +4,16 @@
       "predeploy": "python apps/application/manage.py migrate --noinput && python apps/application/manage.py createcachetable"
     }
   },
+  "cron": [
+    {
+      "command": "python apps/application/manage.py refresh_tuscany_weather",
+      "schedule": "30 0 * * *"
+    },
+    {
+      "command": "python apps/application/manage.py cleanup_weather",
+      "schedule": "30 1 * * *"
+    }
+  ],
   "healthchecks": {
     "web": [
       {

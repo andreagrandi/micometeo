@@ -14,6 +14,7 @@ from django.contrib.gis.geos import MultiPolygon, Polygon
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db.models import ProtectedError
+from django_tasks_db.models import DBTaskResult
 
 import weather_on_demand.services as weather_services
 import weather_requests.provider as weather_provider
@@ -43,6 +44,7 @@ from estimate_updates.services import (
     cleanup_estimate_updates,
     publish_estimate_update,
 )
+from estimate_updates.tasks import tuscany_forecast_task
 from micometeo.finds.grid import format_cell_id
 from micometeo.forecast_method import CURRENT_METHOD, HostTrees, calculate_forecast
 from micometeo.weather.policy import PIPELINE_VERSION
@@ -693,6 +695,61 @@ def test_a_failing_queue_does_not_undo_the_publication(
 
     assert run.status == ForecastRun.Status.PUBLISHED
     assert published_forecast_run(region_code="09").run.id == run.id
+
+
+def test_forecast_task_publishes_the_run_and_queues_one_warm_up_only_once(
+    tuscany: SimpleNamespace, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[dict[str, str]] = []
+    monkeypatch.setattr(
+        "estimate_updates.tasks.warm_published_map_cache_task",
+        SimpleNamespace(enqueue=lambda **kwargs: calls.append(kwargs)),
+    )
+    _weather(day=DAY)
+
+    first = tuscany_forecast_task.call(region_code="09", assessment_date=DAY.isoformat())
+    second = tuscany_forecast_task.call(region_code="09", assessment_date=DAY.isoformat())
+
+    assert first == second == ForecastRun.Status.PUBLISHED
+    assert published_forecast_run(region_code="09").run.assessment_date == DAY
+    assert calls == [{"region_code": "09"}]
+
+
+def test_a_failing_forecast_task_keeps_the_published_run_and_queues_no_warm_up(
+    tuscany: SimpleNamespace, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first = _publish_day(day=DAY)
+    pointer = PublishedForecastRun.objects.get(region_code="09")
+    before = (pointer.current_run_id, pointer.previous_run_id, pointer.published_at)
+    _weather(day=DAY + timedelta(days=1))
+    calls: list[dict[str, str]] = []
+    monkeypatch.setattr(
+        "estimate_updates.tasks.warm_published_map_cache_task",
+        SimpleNamespace(enqueue=lambda **kwargs: calls.append(kwargs)),
+    )
+
+    def broken(**kwargs: object) -> None:
+        raise ValueError("The calculation failed on purpose.")
+
+    monkeypatch.setattr("estimate_updates.forecast_runs.calculate_estimate_update", broken)
+
+    with pytest.raises(ForecastRunError, match="failed on purpose"):
+        tuscany_forecast_task.call(
+            region_code="09", assessment_date=(DAY + timedelta(days=1)).isoformat(),
+        )
+
+    pointer.refresh_from_db()
+    assert (pointer.current_run_id, pointer.previous_run_id, pointer.published_at) == before
+    assert pointer.current_run_id == first.id
+    assert calls == []
+
+
+def test_the_forecast_callback_queues_the_task_with_an_iso_date(tuscany: SimpleNamespace) -> None:
+    task_id = weather_services._FORECAST_CALLBACK(region_code="09", assessment_date=DAY)
+
+    queued = DBTaskResult.objects.get(id=task_id)
+    assert queued.task_path == "estimate_updates.tasks.tuscany_forecast_task"
+    assert queued.args_kwargs["kwargs"] == {"region_code": "09", "assessment_date": DAY.isoformat()}
 
 
 def test_publish_refuses_a_run_older_than_the_published_run(tuscany: SimpleNamespace) -> None:
