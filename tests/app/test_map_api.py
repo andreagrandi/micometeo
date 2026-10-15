@@ -957,3 +957,27 @@ def test_info_describes_the_published_run_and_the_tuscany_extent(
         isclose(coverage[name], value, abs_tol=1e-7)
         for name, value in zip(("west", "south", "east", "north"), expected, strict=True)
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("relative", [True, False])
+def test_forest_layer_route_reads_relative_and_absolute_stored_paths(
+    map_fixture: dict[str, object],
+    monkeypatch: pytest.MonkeyPatch,
+    relative: bool,
+) -> None:
+    build = map_fixture["build"]
+    terrain = map_fixture["terrain"]
+    assert isinstance(build, ForestBuild)
+    assert isinstance(terrain, TerrainBuild)
+    stored = Path(build.layer_path)
+    monkeypatch.setattr(layer, "REPOSITORY_ROOT", stored.parent)
+    ForestBuild.objects.filter(id=build.id).update(layer_path=stored.name if relative else str(stored))
+
+    with override_settings(
+        MICOMETEO_FOREST_BUILD_VERSION=build.version,
+        MICOMETEO_TERRAIN_BUILD_VERSION=terrain.version,
+    ):
+        response = Client().get("/api/v1/forest-layer")
+
+    assert response.status_code == 200

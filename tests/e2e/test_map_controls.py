@@ -7,6 +7,8 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 from playwright.sync_api import Page, Route, expect
 
+from tests.e2e.map_helpers import click_square
+
 
 TARGET_DATES = tuple(f"2026-10-{day:02d}" for day in range(12, 20))
 TRANSPARENT_TILE = base64.b64decode(
@@ -582,27 +584,14 @@ def test_map_renders_eight_calendar_dates_and_preserves_an_older_target(
 
 def test_mouse_drag_moves_map_with_selected_area_open(page: Page, base_url: str) -> None:
     _open_map(page, base_url)
-    page.wait_for_function("""() => MicometeoMap.map.queryRenderedFeatures(
-        MicometeoMap.map.project([10.64, 44.13]),
-        {layers: ['micometeo-square-estimates']}
-    ).some(feature => feature.properties.cell_id === 'cell-zero')""")
-    page.evaluate("""() => {
-        const map = MicometeoMap.map;
-        const point = map.project([10.64, 44.13]);
-        map.fire('click', {point, lngLat: map.unproject(point)});
-    }""")
+    click_square(page, lng_lat=(10.64, 44.13), cell_id="cell-zero")
     expect(page.locator("aside[data-live-details]")).to_be_visible()
-    close = page.locator(".live-details-close")
+    close =page.locator(".live-details-close")
     expect(close).to_be_visible()
     assert close.evaluate("element => element.getBoundingClientRect().right <= innerWidth")
     close.click()
     expect(page.locator("aside[data-live-details]")).to_have_count(0)
-    page.wait_for_function("() => !MicometeoMap.map.isMoving()")
-    page.evaluate("""() => {
-        const map = MicometeoMap.map;
-        const point = map.project([10.64, 44.13]);
-        map.fire('click', {point, lngLat: map.unproject(point)});
-    }""")
+    click_square(page, lng_lat=(10.64, 44.13), cell_id="cell-zero")
     expect(page.locator("aside[data-live-details]")).to_be_visible()
     before = page.evaluate("MicometeoMap.map.getCenter().toArray()")
     layout_before = page.locator("#map").bounding_box()
@@ -650,24 +639,7 @@ def test_selected_square_loads_exact_date_percentages_without_stored_estimate_li
     requests = _open_map(page, base_url, language=language, viewport=viewport)
     page.locator(".date-btn[data-date='2026-10-15']").click()
     _wait_for_square_request(page, requests, "2026-10-15")
-    page.wait_for_function(
-        """
-        () => window.MicometeoMap.map.queryRenderedFeatures(
-          window.MicometeoMap.map.project([10.64, 44.13]),
-          {layers: ['micometeo-square-estimates']}
-        ).some((feature) => feature.properties?.cell_id === 'cell-zero')
-        """,
-        timeout=10_000,
-    )
-    page.evaluate(
-        """
-        () => {
-          const map = window.MicometeoMap.map;
-          const point = map.project([10.64, 44.13]);
-          map.fire('click', {point, lngLat: map.unproject(point)});
-        }
-        """
-    )
+    click_square(page, lng_lat=(10.64, 44.13), cell_id="cell-zero", date="2026-10-15")
     page.wait_for_function(
         "() => document.querySelectorAll('.date-btn[data-estimate-state]').length === 8",
         timeout=10_000,
@@ -766,24 +738,7 @@ def test_selected_square_area_failure_can_retry_without_cached_unavailable_resul
         fail_first_area_request=True,
         fail_area_target_date=TARGET_DATES[1],
     )
-    page.wait_for_function(
-        """
-        () => window.MicometeoMap.map.queryRenderedFeatures(
-          window.MicometeoMap.map.project([10.64, 44.13]),
-          {layers: ['micometeo-square-estimates']}
-        ).some((feature) => feature.properties?.cell_id === 'cell-zero')
-        """,
-        timeout=10_000,
-    )
-    page.evaluate(
-        """
-        () => {
-          const map = window.MicometeoMap.map;
-          const point = map.project([10.64, 44.13]);
-          map.fire('click', {point, lngLat: map.unproject(point)});
-        }
-        """
-    )
+    click_square(page, lng_lat=(10.64, 44.13), cell_id="cell-zero")
     expect(page.locator(f".date-btn[data-date='{TARGET_DATES[1]}'] .d-pct")).to_have_text("")
     expect(page.locator("[data-live-state='error']")).to_contain_text("Try again")
     page.locator("[data-live-state='error'] button").click()
@@ -820,24 +775,7 @@ def test_initial_and_switched_style_failures_keep_the_working_map(
     assert page.evaluate("() => window.MicometeoMap.getDiagnostics().mapInstances") == 1
 
     requests = _open_map(page, base_url)
-    page.wait_for_function(
-        """
-        () => window.MicometeoMap.map.queryRenderedFeatures(
-          window.MicometeoMap.map.project([10.64, 44.13]),
-          {layers: ['micometeo-square-estimates']}
-        ).some((feature) => feature.properties?.cell_id === 'cell-zero')
-        """,
-        timeout=10_000,
-    )
-    page.evaluate(
-        """
-        () => {
-          const map = window.MicometeoMap.map;
-          const point = map.project([10.64, 44.13]);
-          map.fire('click', {point, lngLat: map.unproject(point)});
-        }
-        """
-    )
+    click_square(page, lng_lat=(10.64, 44.13), cell_id="cell-zero")
     expect(page.locator("[data-map-app]")).to_have_attribute("data-selected-square", "cell-zero")
     switch_failures = {"count": 1}
 
@@ -1004,24 +942,7 @@ def test_map_uses_canonical_weather_cell_and_center_selects_missing_states(
     page.on("console", lambda message: console_errors.append(message.text) if message.type == "error" else None)
     page.on("pageerror", lambda error: console_errors.append(str(error)))
     requests = _open_map(page, base_url)
-    page.wait_for_function(
-        """
-        () => window.MicometeoMap.map.queryRenderedFeatures(
-          window.MicometeoMap.map.project([10.64, 44.13]),
-          {layers: ['micometeo-square-estimates']}
-        ).some((feature) => feature.properties?.cell_id === 'cell-zero')
-        """,
-        timeout=10_000,
-    )
-    page.evaluate(
-        """
-        () => {
-          const map = window.MicometeoMap.map;
-          const point = map.project([10.64, 44.13]);
-          map.fire('click', {point, lngLat: map.unproject(point)});
-        }
-        """
-    )
+    click_square(page, lng_lat=(10.64, 44.13), cell_id="cell-zero")
     page.wait_for_function(
         "() => window.MicometeoMap.map.querySourceFeatures('weather-area').length > 0",
         timeout=10_000,
@@ -1184,24 +1105,7 @@ def test_background_overlay_opacity_and_credits_preserve_map_state(
     page.locator(".date-btn[data-date='2026-10-17']").click()
     _wait_for_square_request(page, requests, "2026-10-17")
     date_before = root.get_attribute("data-target-date")
-    page.wait_for_function(
-        """
-        () => window.MicometeoMap.map.queryRenderedFeatures(
-          window.MicometeoMap.map.project([10.64, 44.13]),
-          {layers: ['micometeo-square-estimates']}
-        ).some((feature) => feature.properties?.cell_id === 'cell-zero')
-        """,
-        timeout=10_000,
-    )
-    page.evaluate(
-        """
-        () => {
-          const map = window.MicometeoMap.map;
-          const point = map.project([10.64, 44.13]);
-          map.fire('click', {point, lngLat: map.unproject(point)});
-        }
-        """
-    )
+    click_square(page, lng_lat=(10.64, 44.13), cell_id="cell-zero", date="2026-10-17")
     expect(root).to_have_attribute("data-selected-square", "cell-zero")
     canvas_count_before = page.locator("#map canvas.maplibregl-canvas").count()
 
@@ -1328,24 +1232,7 @@ def test_date_loading_keeps_the_old_overlay_dimmed_and_hides_old_details_values(
 ) -> None:
     _open_map(page, base_url)
     root = page.locator("[data-map-app]")
-    page.wait_for_function(
-        """
-        () => window.MicometeoMap.map.queryRenderedFeatures(
-          window.MicometeoMap.map.project([10.64, 44.13]),
-          {layers: ['micometeo-square-estimates']}
-        ).some((feature) => feature.properties?.cell_id === 'cell-zero')
-        """,
-        timeout=10_000,
-    )
-    page.evaluate(
-        """
-        () => {
-          const map = window.MicometeoMap.map;
-          const point = map.project([10.64, 44.13]);
-          map.fire('click', {point, lngLat: map.unproject(point)});
-        }
-        """
-    )
+    click_square(page, lng_lat=(10.64, 44.13), cell_id="cell-zero")
     expect(root).to_have_attribute("data-selected-square", "cell-zero")
     expect(page.locator("aside[data-live-details]")).to_be_visible()
 

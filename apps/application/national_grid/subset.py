@@ -734,7 +734,7 @@ def _finish_forest_build(
         forest_cell_count=forest_count,
         weather_cell_count=weather_count,
         source_gap_count=gap_count,
-        layer_path=str(layer_path),
+        layer_path=layer.stored_layer_path(path=layer_path),
         layer_sha256=layer_sha256,
         layer_raw_bytes=layer_raw_bytes,
         layer_gzip_bytes=layer_gzip_bytes,
@@ -1015,7 +1015,7 @@ def validate_existing_tuscany_subset(
             )
     if not forest.layer_path:
         raise TuscanySubsetError("The Tuscany forest build has no layer artifact.")
-    layer_info = layer.validate_layer(path=Path(forest.layer_path))
+    layer_info = layer.validate_layer(path=layer.resolve_layer_path(value=forest.layer_path))
     if layer_info["sha256"] != forest.layer_sha256:
         raise TuscanySubsetError("The Tuscany forest layer checksum does not match the build.")
     return {

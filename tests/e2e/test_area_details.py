@@ -15,6 +15,7 @@ from tests.e2e.test_map_controls import (
     _squares_response,
     _wait_for_map_settled,
 )
+from tests.e2e.map_helpers import click_square
 
 
 def _full_area_response(
@@ -299,32 +300,12 @@ def _install_unavailable_map_route(
 
 
 def _click_square(page: Page, square_id: str = "cell-zero") -> None:
-    page.wait_for_function(
-        """squareId => document.querySelector('[data-map-app]').dataset.mapStale !== 'true'
-        && window.MicometeoMap.map.queryRenderedFeatures(
-          window.MicometeoMap.map.project([
-            squareId === 'cell-missing' ? 10.65 : squareId === 'cell-hundred' ? 10.645 : 10.64,
-            44.13,
-          ]),
-          {layers: ['micometeo-square-estimates', 'micometeo-square-missing']}
-        ).some((feature) => feature.properties?.cell_id === squareId)""",
-        arg=square_id,
-        timeout=10_000,
-    )
-    page.evaluate(
-        """squareId => {
-          const map = window.MicometeoMap.map;
-          const longitude = squareId === 'cell-missing' ? 10.65
-            : squareId === 'cell-hundred' ? 10.645
-            : 10.64;
-          const point = map.project([longitude, 44.13]);
-          map.fire('click', {
-            point,
-            lngLat: map.unproject(point),
-            originalEvent: {type: 'click', target: map.getCanvas()},
-          });
-        }""",
-        square_id,
+    longitude = {"cell-missing": 10.65, "cell-hundred": 10.645}.get(square_id, 10.64)
+    click_square(
+        page,
+        lng_lat=(longitude, 44.13),
+        cell_id=square_id,
+        layer=("micometeo-square-estimates", "micometeo-square-missing"),
     )
 
 

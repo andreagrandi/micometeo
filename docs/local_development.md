@@ -351,8 +351,11 @@ product page. The e2e server is a subprocess and does not use pytest-django's
 test database, so running it with the full suite does not create a second test
 database.
 
-Pull requests and pushes to `master` run the browser checks in chromium only,
-with four parallel workers. CI has no WebKit run.
+Pull requests and pushes to `master` run the browser checks in chromium only.
+CI splits them into three groups that run at the same time on separate
+machines, each with four parallel workers. CI has no WebKit run.
+`MICOMETEO_E2E_SHARD=2/3` runs the second of three groups locally. A checksum
+of each test id picks its group.
 
 Run the checks in parallel locally with `uv run pytest tests/e2e -n 4`. This
 uses the browsers from the pytest settings in `pyproject.toml`, which are
@@ -731,9 +734,16 @@ Options:
   state `fallback`, estimates use forest only and nothing is downloaded.
 - `--terrain-cache-dir` sets the folder with the terrain tiles, default
   `data/raw/mvp_terrain`.
+- `--skip-source-files` skips the checksum checks of the forest source files
+  and terrain tiles. The app does not read them while it runs, so a server
+  that only runs the app does not hold them. The report adds
+  `Source files were not checked.` to the forest and terrain entries.
 
 The command exits with an error when a source is not ready. The dry run always
 exits normally, so read its `ready` field in the JSON output.
+
+[Hosting data](hosting_data.md) lists every table and file the VPS needs and
+the commands that build the Tuscany-only dump.
 
 ## Shutdown
 
