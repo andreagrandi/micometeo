@@ -36,6 +36,7 @@ class ScheduledWeatherRun(models.Model):
     completed_at = models.DateTimeField(null=True, blank=True)
     next_start_at = models.DateTimeField(null=True, blank=True)
     task_id = models.UUIDField(null=True, blank=True)
+    forecast_task_id = models.UUIDField(null=True, blank=True)
     reason_code = models.CharField(max_length=80, blank=True, default="")
     full_reason = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)

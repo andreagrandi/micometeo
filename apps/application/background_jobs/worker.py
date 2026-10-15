@@ -22,6 +22,7 @@ REPRESENTATIVE_TASK_PATH = "background_jobs.tasks.representative_job_task"
 WEATHER_FETCH_TASK_PATH = "weather_on_demand.tasks.weather_fetch_task"
 WEATHER_CLEANUP_TASK_PATH = "weather_on_demand.tasks.weather_cleanup_task"
 SCHEDULED_WEATHER_TASK_PATH = "weather_on_demand.tasks.scheduled_weather_run_task"
+TUSCANY_FORECAST_TASK_PATH = "estimate_updates.tasks.tuscany_forecast_task"
 
 
 class MicometeoWorker(DatabaseWorker):
@@ -76,6 +77,12 @@ class MicometeoWorker(DatabaseWorker):
             from weather_on_demand.services import scheduled_run_task_lock_keys
 
             return scheduled_run_task_lock_keys(run_id=parsed_run_id)
+        if task_result.task_path == TUSCANY_FORECAST_TASK_PATH:
+            region_code = kwargs.get("region_code")
+            assessment_date = kwargs.get("assessment_date")
+            if region_code is None or assessment_date is None:
+                return ()
+            return (f"tuscany-forecast:{region_code}:{assessment_date}",)
         return ()
 
     def _logical_key_for_task(self, task_result: DBTaskResult) -> str | None:

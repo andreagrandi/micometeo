@@ -23,24 +23,6 @@ uv run python apps/application/manage.py cleanup_weather
 ```
 
 
-For a local LaunchAgent, run the command once each night after the worker is available:
-
-```xml
-<key>ProgramArguments</key>
-<array>
-  <string>/Users/andrea/Projects/micometeo/.venv/bin/python</string>
-  <string>/Users/andrea/Projects/micometeo/apps/application/manage.py</string>
-  <string>cleanup_weather</string>
-</array>
-<key>StartCalendarInterval</key>
-<dict>
-  <key>Hour</key>
-  <integer>3</integer>
-  <key>Minute</key>
-  <integer>10</integer>
-</dict>
-```
-
 The status command reports fetches by assessment date, weighted provider calls
 and a separate attempt count. It also reports refused requests with their full
 messages, pending cells and the last cleanup:
@@ -71,12 +53,18 @@ The queued task takes one batch, runs it, and then queues itself again. It start
 
 A run ends as `completed` when every Tuscany cell has a snapshot for the date. It ends as `failed` with a reason when a batch is refused for good. A failed run never deletes or replaces stored rows or snapshots. After `reopen_weather_fetch` has reopened the failed batches, running the command again resumes the run. The run record keeps the planned counted calls, the planned HTTP requests, the number of provider attempts and the start and end times. The database size can be read with `pg_database_size` before and after a run.
 
-The nightly schedule is an external cron entry that calls the command. For example, to start at 02:30 Europe/Rome:
+## Nightly chain
 
-```cron
-CRON_TZ=Europe/Rome
-30 2 * * * cd /path/to/micometeo && uv run python apps/application/manage.py refresh_tuscany_weather
-```
+One cron entry starts the whole night. `refresh_tuscany_weather` runs at 00:30 UTC. The steps follow each other without more cron entries:
+
+1. The weather run prepares the window for every Tuscany cell.
+2. When the run reaches `completed`, the worker queues one forecast task for the same date. The run stores the task ID in `forecast_task_id`.
+3. The forecast task calculates the estimates and publishes the run.
+4. Publishing queues the map cache warm-up.
+
+00:30 UTC is 01:30 in Rome in winter time and 02:30 in summer time, so it is always after midnight in Rome. It is also clear of the book corners jobs at 02:00 and 03:00 UTC. `cleanup_weather` keeps its own entry at 01:30 UTC. Both entries are in the `cron` list of `app.json`, and the VPS clock is UTC.
+
+A failed weather run queues no forecast. A failed forecast keeps the published run and queues no warm-up. Its task row is marked failed, and `run_tuscany_forecast` for the same date runs it again by hand. Running `refresh_tuscany_weather` again for the same date resumes the same run and queues no second forecast. If the forecast could not be queued before, for example because the queue was down, the next run of the command queues it and the run keeps the reason `forecast_queue_failure` until then.
 
 The background worker must be running, for example `run_background_worker`, because the command only plans and queues the run.
 

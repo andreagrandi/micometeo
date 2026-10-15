@@ -12,9 +12,12 @@ class EstimateUpdatesConfig(AppConfig):
         from weather_on_demand.services import (
             configure_cleanup_callback,
             configure_estimate_callback,
+            configure_forecast_callback,
         )
 
         from .services import cleanup_estimate_updates, enqueue_estimate_update
+        from .tasks import queue_tuscany_forecast
 
         configure_estimate_callback(enqueue_estimate_update)
         configure_cleanup_callback(cleanup_estimate_updates)
+        configure_forecast_callback(queue_tuscany_forecast)
