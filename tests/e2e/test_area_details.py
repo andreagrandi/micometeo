@@ -1034,6 +1034,28 @@ def test_area_detail_sheet_stays_inside_supported_viewports(
     assert favorite.inner_text() == ""
 
 
+def test_area_detail_copy_link_button_puts_the_page_address_in_the_clipboard(
+    page: Page, base_url: str
+) -> None:
+    # WebKit in Playwright cannot grant clipboard access, so record the write instead.
+    page.add_init_script(
+        script="""
+          Object.defineProperty(navigator, 'clipboard', {
+            value: {writeText: async (text) => { window.__copiedText = text; }},
+          });
+        """
+    )
+    _open_map(page, base_url)
+    _install_detail_route(page)
+    _click_square(page)
+    page.wait_for_function("() => Boolean(document.querySelector('[data-detail-experimental]'))")
+    share = page.locator("aside[data-live-details] [data-share-link]")
+    expect(share).to_have_accessible_name("Copy link")
+    share.click()
+    expect(page.locator("[data-toast]")).to_have_text("Link copied")
+    assert page.evaluate("() => window.__copiedText") == page.url
+
+
 def test_area_detail_destination_events_keep_map_points_and_api_representatives(
     page: Page, base_url: str
 ) -> None:
