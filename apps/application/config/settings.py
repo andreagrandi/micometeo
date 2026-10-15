@@ -2,8 +2,11 @@
 
 import importlib.util
 import os
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,6 +28,13 @@ def _env_bool(*, name: str, default: bool) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _env_int(*, name: str, default: int) -> int:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return int(value)
+
+
 def _env_list(*, name: str, default: list[str]) -> list[str]:
     value = os.getenv(name)
     if value is None:
@@ -42,6 +52,14 @@ CSRF_TRUSTED_ORIGINS = _env_list(
     name="MICOMETEO_CSRF_TRUSTED_ORIGINS",
     default=["http://127.0.0.1:8010", "http://localhost:8010"],
 )
+
+# Behind the Dokku proxy, TLS ends at the proxy and it sends X-Forwarded-Proto.
+# The flags stay off by default so local development and tests use plain HTTP.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = _env_bool(name="MICOMETEO_SECURE_SSL_REDIRECT", default=False)
+SESSION_COOKIE_SECURE = _env_bool(name="MICOMETEO_SESSION_COOKIE_SECURE", default=False)
+CSRF_COOKIE_SECURE = _env_bool(name="MICOMETEO_CSRF_COOKIE_SECURE", default=False)
+SECURE_HSTS_SECONDS = _env_int(name="MICOMETEO_SECURE_HSTS_SECONDS", default=0)
 
 INSTALLED_APPS = [
     "django.contrib.auth",
@@ -112,6 +130,7 @@ CACHES = {
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.gzip.GZipMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "web_ui.middleware.WebUILocaleMiddleware",
@@ -142,18 +161,33 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-DATABASES = {
-    "default": {
+def database_config(*, environ: Mapping[str, str]) -> dict[str, Any]:
+    """Build the default database settings from DATABASE_URL or MICOMETEO_DB_* values.
+
+    DATABASE_URL wins when it is set, which is how Dokku passes the database.
+    """
+    database_url = environ.get("DATABASE_URL")
+    if database_url:
+        config = dj_database_url.parse(
+            database_url,
+            engine="django.contrib.gis.db.backends.postgis",
+            conn_max_age=0,
+        )
+        config["OPTIONS"] = {**config.get("OPTIONS", {}), "connect_timeout": 5}
+        return config
+    return {
         "ENGINE": "django.contrib.gis.db.backends.postgis",
-        "NAME": os.getenv("MICOMETEO_DB_NAME", "micometeo"),
-        "USER": os.getenv("MICOMETEO_DB_USER", "micometeo"),
-        "PASSWORD": os.getenv("MICOMETEO_DB_PASSWORD", "replace-with-a-local-password"),
-        "HOST": os.getenv("MICOMETEO_DB_HOST", "127.0.0.1"),
-        "PORT": os.getenv("MICOMETEO_DB_PORT", "5542"),
+        "NAME": environ.get("MICOMETEO_DB_NAME", "micometeo"),
+        "USER": environ.get("MICOMETEO_DB_USER", "micometeo"),
+        "PASSWORD": environ.get("MICOMETEO_DB_PASSWORD", "replace-with-a-local-password"),
+        "HOST": environ.get("MICOMETEO_DB_HOST", "127.0.0.1"),
+        "PORT": environ.get("MICOMETEO_DB_PORT", "5542"),
         "CONN_MAX_AGE": 0,
         "OPTIONS": {"connect_timeout": 5},
     }
-}
+
+
+DATABASES = {"default": database_config(environ=os.environ)}
 
 TASKS = {
     "default": {
@@ -169,6 +203,11 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR.parent.parent / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
 STATICFILES_DIRS = [
     BASE_DIR.parent.parent / "tools/map_checks/node_modules/maplibre-gl/dist",
 ]

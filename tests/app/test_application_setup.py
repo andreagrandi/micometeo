@@ -11,6 +11,7 @@ from django.contrib.gis.geos import Point
 from django.db import DatabaseError, connection
 from django.test import Client
 from django.utils import timezone
+from config.settings import database_config
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -103,3 +104,55 @@ def test_parquet_round_trip_works_after_geodjango_native_loading(tmp_path: Path)
     stored = pq.read_table(source=parquet_path)
 
     assert stored.to_pydict() == {"cell_id": ["500m_E4321500_N2345000"], "score": [0.75]}
+
+
+def test_database_url_wins_over_separate_database_values() -> None:
+    config = database_config(
+        environ={
+            "DATABASE_URL": "postgis://dokku:secret@db.internal:5432/production",
+            "MICOMETEO_DB_NAME": "ignored",
+            "MICOMETEO_DB_HOST": "ignored-host",
+        }
+    )
+
+    assert config["ENGINE"] == "django.contrib.gis.db.backends.postgis"
+    assert config["NAME"] == "production"
+    assert config["USER"] == "dokku"
+    assert config["PASSWORD"] == "secret"
+    assert config["HOST"] == "db.internal"
+    assert config["PORT"] == 5432
+    assert config["CONN_MAX_AGE"] == 0
+    assert config["OPTIONS"]["connect_timeout"] == 5
+
+
+def test_separate_database_values_are_used_without_database_url() -> None:
+    config = database_config(
+        environ={
+            "MICOMETEO_DB_NAME": "custom",
+            "MICOMETEO_DB_USER": "custom_user",
+            "MICOMETEO_DB_PASSWORD": "custom_password",
+            "MICOMETEO_DB_HOST": "custom-host",
+            "MICOMETEO_DB_PORT": "6543",
+        }
+    )
+
+    assert config == {
+        "ENGINE": "django.contrib.gis.db.backends.postgis",
+        "NAME": "custom",
+        "USER": "custom_user",
+        "PASSWORD": "custom_password",
+        "HOST": "custom-host",
+        "PORT": "6543",
+        "CONN_MAX_AGE": 0,
+        "OPTIONS": {"connect_timeout": 5},
+    }
+
+
+def test_database_defaults_are_used_when_nothing_is_set() -> None:
+    config = database_config(environ={})
+
+    assert config["NAME"] == "micometeo"
+    assert config["USER"] == "micometeo"
+    assert config["HOST"] == "127.0.0.1"
+    assert config["PORT"] == "5542"
+    assert config["OPTIONS"] == {"connect_timeout": 5}

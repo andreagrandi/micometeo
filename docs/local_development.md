@@ -85,7 +85,8 @@ uv run python apps/application/manage.py runserver 127.0.0.1:8010
 
 `runserver` serves the CSS, JavaScript and logo only when
 `MICOMETEO_DEBUG=true`. With debug off, the pages load without styles and the
-map stays blank. The application has no other static file server yet.
+map stays blank. The production image serves static files with WhiteNoise, see
+the section on the production image below.
 
 In another terminal, check the API:
 
@@ -106,6 +107,33 @@ The endpoint returns HTTP 503 and this body when PostgreSQL is unavailable:
 ```
 
 It never includes database settings or connection error details.
+
+## Production image
+
+The `Dockerfile` builds the image that Dokku runs. It builds the CSS, copies the
+MapLibre files, compiles the translations and collects the static files. The
+`Procfile` holds the web and worker commands.
+
+Build the image and run the web process against the local database. A container
+reaches the laptop through `host.docker.internal`. The image reads the database
+from `DATABASE_URL`, which wins over the `MICOMETEO_DB_*` values:
+
+```sh
+docker build -t micometeo:local .
+docker run --rm -p 8020:8000 \
+  -e DATABASE_URL="postgis://${MICOMETEO_DB_USER}:${MICOMETEO_DB_PASSWORD}@host.docker.internal:${MICOMETEO_DB_PORT}/${MICOMETEO_DB_NAME}" \
+  -e MICOMETEO_ALLOWED_HOSTS=localhost,127.0.0.1 \
+  micometeo:local
+```
+
+The image starts gunicorn with 2 workers on port 8000, or on `PORT` when it is
+set.
+
+Then open `http://localhost:8020/`. The HTTPS settings stay off unless you set
+`MICOMETEO_SECURE_SSL_REDIRECT`, `MICOMETEO_SESSION_COOKIE_SECURE`,
+`MICOMETEO_CSRF_COOKIE_SECURE` or `MICOMETEO_SECURE_HSTS_SECONDS`. On Linux, the
+image uses the system GDAL library, and Parquet reads and writes work after
+Django loads it.
 
 ## Database checks
 

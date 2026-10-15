@@ -231,3 +231,6 @@ cache/
 
 # Track the Python version here, despite the global ignore
 !.python-version
+
+# Production static files built by collectstatic
+/staticfiles/
