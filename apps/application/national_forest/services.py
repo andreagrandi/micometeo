@@ -613,7 +613,11 @@ def _finalise_build(
         return
 
     output_path = Path(output_dir) / build.version / "forest_layer_2000m.geojson.gz"
-    if output_path.is_file() and build.layer_path == str(output_path):
+    if (
+        output_path.is_file()
+        and build.layer_path
+        and layer.resolve_layer_path(value=build.layer_path).resolve() == output_path.resolve()
+    ):
         try:
             existing = layer.validate_layer(path=output_path)
         except ValueError:
@@ -642,7 +646,7 @@ def _finalise_build(
         locked.cell_count = cell_count
         locked.forest_cell_count = forest_count
         locked.weather_cell_count = weather_count
-        locked.layer_path = str(output_path)
+        locked.layer_path = layer.stored_layer_path(path=output_path)
         locked.layer_sha256 = layer_sha256
         locked.layer_raw_bytes = layer_raw_bytes
         locked.layer_gzip_bytes = layer_gzip_bytes

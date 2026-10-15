@@ -25,6 +25,7 @@ from .models import HostTreeCache, TuscanyInputSet
 
 
 REPOSITORY_ROOT = Path(settings.BASE_DIR).parent.parent
+SKIPPED_SOURCE_FILES = "Source files were not checked."
 BATCH_SIZE = 5_000
 SAMPLE_LIMIT = 5
 READY = "ready"
@@ -131,7 +132,7 @@ def _missing_rows(*, grid: GridBuild, model: type, build: Any) -> list[str]:
     )
 
 
-def _check_forest(*, forest: ForestBuild | None, version: str, grid: SourceStatus) -> SourceStatus:
+def _check_forest(*, forest: ForestBuild | None, version: str, grid: SourceStatus, check_source_files: bool = True) -> SourceStatus:
     action = "Run prepare_tuscany_map_database, or build_national_forest for the national build."
     if forest is None:
         return SourceStatus(
@@ -155,7 +156,7 @@ def _check_forest(*, forest: ForestBuild | None, version: str, grid: SourceStatu
         return fail(state=INCOMPLETE, detail=f"{len(missing)} squares have no forest row: " + _sample(missing)[0])
     if not forest.layer_path:
         return fail(state=MISSING, detail="The forest build has no layer file.")
-    layer_path = Path(forest.layer_path)
+    layer_path = layer.resolve_layer_path(value=forest.layer_path)
     if not layer_path.is_file():
         return fail(state=MISSING, detail=f"Layer file {layer_path} is missing.")
     try:
@@ -164,6 +165,9 @@ def _check_forest(*, forest: ForestBuild | None, version: str, grid: SourceStatu
         return fail(state=CORRUPT, detail=f"Layer file {layer_path} is damaged: {exc}")
     if found != forest.layer_sha256:
         return fail(state=CORRUPT, detail=f"Layer file {layer_path} changed since the build.")
+    if not check_source_files:
+        result.detail.append(SKIPPED_SOURCE_FILES)
+        return result
     for chunk in ForestChunk.objects.filter(build=forest).exclude(source_path="").order_by("west_e", "south_n"):
         area = f"chunk at E{chunk.west_e} N{chunk.south_n}"
         # Forest builds store cache paths relative to the repository root.
@@ -175,7 +179,7 @@ def _check_forest(*, forest: ForestBuild | None, version: str, grid: SourceStatu
     return result
 
 
-def _check_terrain(*, terrain: TerrainBuild | None, version: str, grid: SourceStatus, forest: ForestBuild | None, cache_dir: Path) -> SourceStatus:
+def _check_terrain(*, terrain: TerrainBuild | None, version: str, grid: SourceStatus, forest: ForestBuild | None, cache_dir: Path, check_source_files: bool = True) -> SourceStatus:
     action = "Run prepare_tuscany_map_database, or build_national_terrain for the national build."
     if terrain is None:
         return SourceStatus(
@@ -197,6 +201,9 @@ def _check_terrain(*, terrain: TerrainBuild | None, version: str, grid: SourceSt
     result.counts["missing_squares"] = len(missing)
     if missing:
         return fail(state=INCOMPLETE, detail=f"{len(missing)} squares have no terrain row: " + _sample(missing)[0])
+    if not check_source_files:
+        result.detail.append(SKIPPED_SOURCE_FILES)
+        return result
     tiles = TerrainSourceTile.objects.filter(
         build=terrain, status=TerrainSourceTile.Status.AVAILABLE,
     ).order_by("tile_name")
@@ -271,16 +278,16 @@ def _check_host_trees(*, forest: ForestBuild | None, ready: bool, directory: Pat
     return result, manifest, needed
 
 
-def build_inventory(*, terrain_cache_dir: Path, allow_forest_only: bool = False) -> tuple[TuscanyReport, dict | None, dict[str, tuple[float, float]]]:
+def build_inventory(*, terrain_cache_dir: Path, allow_forest_only: bool = False, check_source_files: bool = True) -> tuple[TuscanyReport, dict | None, dict[str, tuple[float, float]]]:
     """Check each source without writing or contacting a provider.
     Also return the manifest and the squares that still need host-tree values."""
     forest = ForestBuild.objects.filter(version=settings.MICOMETEO_FOREST_BUILD_VERSION).select_related("grid_build").first()
     terrain = TerrainBuild.objects.filter(version=settings.MICOMETEO_TERRAIN_BUILD_VERSION).first()
     grid = _check_grid(forest=forest)
-    forest_status = _check_forest(forest=forest, version=settings.MICOMETEO_FOREST_BUILD_VERSION, grid=grid)
+    forest_status = _check_forest(forest=forest, version=settings.MICOMETEO_FOREST_BUILD_VERSION, grid=grid, check_source_files=check_source_files)
     terrain_status = _check_terrain(
         terrain=terrain, version=settings.MICOMETEO_TERRAIN_BUILD_VERSION, grid=grid,
-        forest=forest, cache_dir=terrain_cache_dir,
+        forest=forest, cache_dir=terrain_cache_dir, check_source_files=check_source_files,
     )
     trees, manifest, needed = _check_host_trees(
         forest=forest, ready=grid.state == READY and forest_status.state == READY,
@@ -304,23 +311,23 @@ def _store_host_trees(*, manifest: dict, version: str, needed: dict[str, tuple[f
         )
 
 
-def prepare_tuscany_inputs(*, terrain_cache_dir: Path, dry_run: bool = False, allow_forest_only: bool = False) -> TuscanyReport:
+def prepare_tuscany_inputs(*, terrain_cache_dir: Path, dry_run: bool = False, allow_forest_only: bool = False, check_source_files: bool = True) -> TuscanyReport:
     """Report readiness and, unless dry, store host-tree values for every eligible square.
     Only a missing JRC manifest triggers a download. Older source versions stay untouched."""
     started = time.monotonic()
-    report, manifest, needed = build_inventory(terrain_cache_dir=terrain_cache_dir, allow_forest_only=allow_forest_only)
+    report, manifest, needed = build_inventory(terrain_cache_dir=terrain_cache_dir, allow_forest_only=allow_forest_only, check_source_files=check_source_files)
     report.dry_run = dry_run
     trees = report.sources[3]
     if not dry_run and all(item.state == READY for item in report.sources[:3]):
         directory = Path(settings.MICOMETEO_JRC_DIRECTORY)
         if trees.state == MISSING and manifest is None and not trees.version:
             prepare_sources(directory=directory)
-            report, manifest, needed = build_inventory(terrain_cache_dir=terrain_cache_dir, allow_forest_only=allow_forest_only)
+            report, manifest, needed = build_inventory(terrain_cache_dir=terrain_cache_dir, allow_forest_only=allow_forest_only, check_source_files=check_source_files)
             report.dry_run = False
             trees = report.sources[3]
         if trees.state in {INCOMPLETE, READY} and manifest is not None:
             _store_host_trees(manifest=manifest, version=trees.version, needed=needed)
-            report, _, _ = build_inventory(terrain_cache_dir=terrain_cache_dir, allow_forest_only=allow_forest_only)
+            report, _, _ = build_inventory(terrain_cache_dir=terrain_cache_dir, allow_forest_only=allow_forest_only, check_source_files=check_source_files)
             report.dry_run = False
             trees = report.sources[3]
             if report.ready:

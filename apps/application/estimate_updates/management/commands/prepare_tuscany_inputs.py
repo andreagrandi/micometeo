@@ -22,6 +22,10 @@ class Command(BaseCommand):
             "--allow-forest-only", action="store_true",
             help="Accept missing JRC files and let estimates use forest only.",
         )
+        parser.add_argument(
+            "--skip-source-files", action="store_true",
+            help="Do not check the forest source files and terrain tiles. Use this on a server that only runs the app.",
+        )
         parser.add_argument("--terrain-cache-dir", type=Path, default=DEFAULT_TERRAIN_CACHE)
 
     def handle(self, *args, **options) -> None:
@@ -29,6 +33,7 @@ class Command(BaseCommand):
             report = prepare_tuscany_inputs(
                 terrain_cache_dir=options["terrain_cache_dir"], dry_run=options["dry_run"],
                 allow_forest_only=options["allow_forest_only"],
+                check_source_files=not options["skip_source_files"],
             )
         except (OSError, ValueError) as exc:
             raise CommandError(str(exc)) from exc

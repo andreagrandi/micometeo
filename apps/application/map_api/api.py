@@ -21,7 +21,7 @@ from pyproj import Geod
 from config.api_schemas import ApiErrorSchema
 from map_api import published
 from map_api.published import GRID_TO_WGS84, WGS84_TO_GRID, MapReadError
-from national_forest.layer import validate_layer
+from national_forest.layer import resolve_layer_path, validate_layer
 from national_forest.models import ForestBuild
 from national_grid.models import GridBuildCell
 from national_terrain.models import TerrainBuild
@@ -490,7 +490,7 @@ def _read_layer(*, build: ForestBuild) -> tuple[bytes, str] | JsonResponse:
     """Read and verify the immutable forest layer artifact."""
     if not build.layer_path or not build.layer_sha256:
         return _layer_error()
-    path = Path(build.layer_path)
+    path = resolve_layer_path(value=build.layer_path)
     try:
         compressed = path.read_bytes()
         digest = hashlib.sha256(compressed).hexdigest()

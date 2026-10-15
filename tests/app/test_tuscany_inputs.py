@@ -21,6 +21,7 @@ from rasterio.transform import from_origin
 from estimate_updates.host_trees import saved_host_trees, tree_inputs_for_area
 from estimate_updates.models import HostTreeCache, TuscanyInputSet
 from micometeo.host_trees import SPECIES, read_manifest
+from national_forest import layer
 from national_forest.models import ForestBuild, ForestCell, ForestChunk
 from national_grid.models import GridBuild, GridBuildCell, GridCell, GridChunk, GridRegion
 from national_terrain.models import (
@@ -425,3 +426,37 @@ def test_new_jrc_version_adds_rows_and_keeps_saved_estimate_inputs(tuscany, requ
     old = saved_host_trees(tree_inputs=saved, forest_cell_id=cells[0].id)
     assert old.source_id == f"jrc:{old_version}"
     assert old.values == pytest.approx((0.2,) * 5)
+
+
+def test_skip_source_files_accepts_missing_forest_chunk_and_terrain_tile(tuscany) -> None:
+    tuscany["source_path"].unlink()
+    tuscany["tile_path"].unlink()
+    report = _report("--dry-run", "--skip-source-files", tuscany=tuscany)
+    for name in ("forest", "terrain"):
+        source = _source(report=report, name=name)
+        assert source["state"] == "ready"
+        assert source["detail"] == ["Source files were not checked."]
+    assert _source(report=_report("--dry-run", tuscany=tuscany), name="forest")["state"] == "missing"
+    assert _source(report=_report("--dry-run", tuscany=tuscany), name="terrain")["state"] == "missing"
+
+
+def test_skip_source_files_works_in_a_real_run(tuscany, requests) -> None:
+    tuscany["source_path"].unlink()
+    tuscany["tile_path"].unlink()
+    report = _report("--skip-source-files", tuscany=tuscany)
+    assert _source(report=report, name="forest")["state"] == "ready"
+    assert _source(report=report, name="terrain")["state"] == "ready"
+
+
+def test_skip_source_files_still_checks_the_forest_layer_file(tuscany) -> None:
+    tuscany["layer_path"].write_bytes(gzip.compress(b'{"type": "FeatureCollection", "features": [], "x": 1}'))
+    forest = _source(report=_report("--dry-run", "--skip-source-files", tuscany=tuscany), name="forest")
+    assert forest["state"] == "corrupt"
+
+
+def test_forest_layer_stored_relative_to_the_repository_is_found(tuscany, monkeypatch) -> None:
+    layer_path = tuscany["layer_path"]
+    monkeypatch.setattr(layer, "REPOSITORY_ROOT", layer_path.parent)
+    ForestBuild.objects.update(layer_path=layer_path.name)
+    forest = _source(report=_report("--dry-run", tuscany=tuscany), name="forest")
+    assert forest["state"] == "ready"

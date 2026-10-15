@@ -731,9 +731,16 @@ Options:
   state `fallback`, estimates use forest only and nothing is downloaded.
 - `--terrain-cache-dir` sets the folder with the terrain tiles, default
   `data/raw/mvp_terrain`.
+- `--skip-source-files` skips the checksum checks of the forest source files
+  and terrain tiles. The app does not read them while it runs, so a server
+  that only runs the app does not hold them. The report adds
+  `Source files were not checked.` to the forest and terrain entries.
 
 The command exits with an error when a source is not ready. The dry run always
 exits normally, so read its `ready` field in the JSON output.
+
+[Hosting data](hosting_data.md) lists every table and file the VPS needs and
+the commands that build the Tuscany-only dump.
 
 ## Shutdown
 

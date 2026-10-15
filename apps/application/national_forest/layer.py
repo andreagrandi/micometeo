@@ -13,6 +13,7 @@ from collections.abc import Iterable, Iterator, Sequence
 from pathlib import Path
 from typing import Any
 
+from django.conf import settings
 from django.db.models import ExpressionWrapper, F, FloatField, Value
 from django.db.models.functions import Floor
 from pyproj import Transformer
@@ -22,6 +23,22 @@ CELL_SIZE_M = 500
 LAYER_CRS = "EPSG:3035"
 OUTPUT_CRS = "EPSG:4326"
 _TO_WGS84 = Transformer.from_crs(LAYER_CRS, OUTPUT_CRS, always_xy=True)
+REPOSITORY_ROOT = Path(settings.BASE_DIR).parent.parent
+
+
+def stored_layer_path(*, path: Path) -> str:
+    """Return the repository-relative path of a layer file, or the absolute path outside it."""
+    resolved = Path(path).resolve()
+    try:
+        return resolved.relative_to(REPOSITORY_ROOT.resolve()).as_posix()
+    except ValueError:
+        return str(resolved)
+
+
+def resolve_layer_path(*, value: str) -> Path:
+    """Turn a stored layer path into a real path, using the repository root for relative values."""
+    path = Path(value)
+    return path if path.is_absolute() else REPOSITORY_ROOT / path
 
 
 @dataclass(frozen=True)

@@ -1056,3 +1056,12 @@ def test_models_retain_source_metadata_and_reject_unsupported_values() -> None:
         invalid_weather.full_clean()
     with pytest.raises(ProtectedError):
         grid_build.delete()
+
+
+def test_stored_layer_path_is_relative_inside_the_repository_and_absolute_outside(tmp_path: Path) -> None:
+    inside = layer.REPOSITORY_ROOT / "data/processed/mvp_forest/v1/forest_layer_2000m.geojson.gz"
+    assert layer.stored_layer_path(path=inside) == "data/processed/mvp_forest/v1/forest_layer_2000m.geojson.gz"
+    assert layer.resolve_layer_path(value="data/processed/x.gz") == layer.REPOSITORY_ROOT / "data/processed/x.gz"
+    outside = tmp_path / "forest_layer_2000m.geojson.gz"
+    assert layer.stored_layer_path(path=outside) == str(outside.resolve())
+    assert layer.resolve_layer_path(value=str(outside)) == outside
