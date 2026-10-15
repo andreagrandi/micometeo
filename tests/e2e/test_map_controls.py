@@ -668,7 +668,18 @@ def test_selected_square_loads_exact_date_percentages_without_stored_estimate_li
         expect(assessment).to_be_visible()
 
 
-@pytest.mark.parametrize("viewport", [(390, 844), (1440, 900)])
+def test_phone_date_strip_stays_open_when_folded_on_a_wider_screen(
+    page: Page, base_url: str,
+) -> None:
+    _open_map(page, base_url, viewport=(1440, 900))
+    page.locator("[data-fold='dates']").click()
+    expect(page.locator("#dates-body")).to_be_hidden()
+    page.set_viewport_size({"width": 390, "height": 844})
+    expect(page.locator(".date-head")).to_be_hidden()
+    expect(page.locator("#dates-body")).to_be_visible()
+
+
+@pytest.mark.parametrize("viewport", [(1440, 900)])
 def test_date_selector_collapses_and_preserves_state_on_reload(
     page: Page, base_url: str, viewport: tuple[int, int],
 ) -> None:

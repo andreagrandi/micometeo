@@ -1021,13 +1021,19 @@ def test_area_detail_sheet_stays_inside_supported_viewports(
     assert box
     assert box["x"] >= 0
     assert box["x"] + box["width"] <= viewport[0] + 1
-    expect(page.locator("aside[data-live-details] #details-heading")).to_be_visible()
+    heading = page.locator("aside[data-live-details] #details-heading")
     expect(page.locator("aside[data-live-details] .live-details-close")).to_be_visible()
     height_control = page.locator("aside[data-live-details] [data-sheet-height]")
     if viewport[0] < 900:
+        # The short phone panel is one row of buttons without the place name.
+        expect(heading).to_be_hidden()
         expect(height_control).to_be_visible()
+        height_control.click()
+        expect(heading).to_be_visible()
     else:
+        expect(heading).to_be_visible()
         expect(height_control).to_be_hidden()
+        expect(page.locator("aside[data-live-details] [data-sheet-smaller]")).to_be_hidden()
     favorite = page.locator("aside[data-live-details] [data-save]")
     expect(favorite).to_have_accessible_name("Save favorite")
     expect(favorite.locator("svg")).to_be_visible()
@@ -1112,14 +1118,37 @@ def test_area_detail_keyboard_rain_switch_restores_focus_and_phone_height_change
     page.wait_for_function("() => Boolean(document.querySelector('[data-detail-experimental]'))")
     detail = page.locator("aside[data-live-details]")
     rain_button = detail.locator("[data-rain-days='14']")
+    height_button = detail.locator("[data-sheet-height]")
+
+    # The short panel keeps the map in view: estimate and actions, no rain or sources.
+    expect(detail).to_have_attribute("data-size", "short")
+    expect(detail.locator(".live-summary strong")).to_be_visible()
+    expect(detail.locator("[data-save]")).to_be_visible()
+    expect(detail.locator("[data-share-link]")).to_be_visible()
+    expect(detail.locator("[data-navigation]")).to_be_visible()
+    expect(rain_button).to_be_hidden()
+    box = detail.bounding_box()
+    assert box
+    assert box["height"] <= 80
+    smaller_button = detail.locator("[data-sheet-smaller]")
+    expect(smaller_button).to_be_hidden()
+
+    height_button.click()
+    expect(detail).to_have_attribute("data-size", "half")
     rain_button.focus()
     page.keyboard.press("Enter")
     expect(rain_button).to_be_focused()
     expect(detail.locator(".detail-rain-value")).to_contain_text("24.5 mm")
 
-    height_button = detail.locator("[data-sheet-height]")
-    expect(detail).to_have_attribute("data-size", "short")
-    height_button.click()
-    expect(detail).to_have_attribute("data-size", "half")
     height_button.click()
     expect(detail).to_have_attribute("data-size", "tall")
+    expect(height_button).to_be_hidden()
+
+    # After scrolling a tall panel, the smaller button is still in view.
+    detail.evaluate("(element) => { element.scrollTop = element.scrollHeight; }")
+    expect(smaller_button).to_be_in_viewport()
+    smaller_button.click()
+    expect(detail).to_have_attribute("data-size", "half")
+    smaller_button.click()
+    expect(detail).to_have_attribute("data-size", "short")
+    expect(height_button).to_be_focused()

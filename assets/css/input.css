@@ -2300,6 +2300,150 @@ body:has(.app) ul {
   .live-details .rain-periods .btn {
     flex: 1 1 0;
   }
+  /* On a phone the map area can be under 400px tall, so the short panel is
+     one row: estimate, star, share, Google Maps, taller and close. The
+     wrappers step aside so their buttons line up in that row. */
+  .details.live-details[data-size="short"] {
+    align-items: center;
+    flex-flow: row nowrap;
+    gap: 6px;
+    max-height: none;
+    padding: var(--space-2) var(--space-3);
+  }
+  .details.live-details[data-size="short"] > .d-top,
+  .details.live-details[data-size="short"] > .d-actions,
+  .details.live-details[data-size="short"] > .sizerow {
+    display: contents;
+  }
+  .details.live-details[data-size="short"] > :not(.d-top, .live-summary, .d-actions, .sizerow),
+  .details.live-details[data-size="short"] .live-details-title,
+  .details.live-details[data-size="short"] .live-summary p,
+  .details.live-details[data-size="short"] .btn-text {
+    display: none;
+  }
+  .details.live-details[data-size="short"] .live-summary {
+    flex: 1 1 auto;
+    margin: 0;
+    order: -1;
+    padding: 0 var(--space-2);
+  }
+  .details.live-details[data-size="short"] .live-summary strong {
+    font-size: 22px;
+    margin-bottom: 0;
+  }
+  .details.live-details[data-size="short"] .btn {
+    flex: 0 0 auto;
+    height: 44px;
+    min-width: 0;
+    padding: 0;
+    width: 44px;
+  }
+  .details.live-details[data-size="short"] [data-sheet-height] {
+    order: 1;
+  }
+  .details.live-details[data-size="short"] .live-details-close {
+    order: 2;
+  }
+  .live-details [data-navigation] {
+    gap: var(--space-2);
+  }
+  .live-details .d-top {
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .live-details .d-top > :first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .live-details .d-top .btn {
+    flex: 0 0 auto;
+    height: 44px;
+    min-width: 0;
+    padding: 0;
+    width: 44px;
+  }
+  .live-details .d-top .btn-text,
+  .details.live-details[data-size="short"] [data-sheet-smaller],
+  .details.live-details[data-size="tall"] [data-sheet-height] {
+    display: none;
+  }
+  /* The date strip has no fold button on a phone, so it stays open even
+     when it was folded on a wider screen. */
+  #dates-body[hidden] {
+    display: block;
+  }
+  /* The search box takes the place of the brand name in the top bar. */
+  .topbar {
+    background: var(--pine-900);
+    border-bottom: 0;
+    flex-wrap: nowrap;
+    gap: var(--space-2);
+    min-height: 56px;
+  }
+  .brand {
+    flex: 0 0 auto;
+    min-height: 0;
+  }
+  .brand-text {
+    display: none;
+  }
+  .search {
+    flex: 1 1 auto;
+    min-width: 0;
+    order: 1;
+    padding: 0;
+  }
+  .search-field {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .search-field input {
+    border-color: var(--pine-600);
+    font-size: 16px;
+  }
+  .btn-location {
+    background: var(--pine-800);
+    border-color: var(--pine-600);
+    color: var(--parchment);
+  }
+  .search-results {
+    top: calc(100% + 8px);
+  }
+  /* The selected day button already says which day the map shows. */
+  .date-head {
+    display: none;
+  }
+  .dates {
+    padding: 6px var(--space-3);
+  }
+  .date-btn {
+    column-gap: 4px;
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: center;
+    min-height: 0;
+    min-width: 68px;
+    padding: 4px 6px;
+    width: auto;
+  }
+  .date-btn .d-dm {
+    font-size: 11px;
+  }
+  .date-btn .d-pct {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 900px) {
+  .live-details [data-sheet-height],
+  .live-details [data-sheet-smaller] {
+    display: none;
+  }
+}
+@media (max-width: 359px) {
+  .details.live-details[data-size="short"] .btn {
+    height: 40px;
+    width: 40px;
+  }
 }
 .attribution a {
   text-decoration: underline;

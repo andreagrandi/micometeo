@@ -464,6 +464,11 @@ def test_real_data_journey_from_search_to_favorite_and_language_switch(
     _expect_date_strip(page, language=language, dates=dates, selected=last_date)
     _choose_date(visitor, first_date)
 
+    # The short phone panel hides the rain periods, so make it taller first.
+    if visitor.touch:
+        visitor.press(page.locator(f"{DETAILS} [data-sheet-height]"))
+        expect(page.locator(DETAILS)).to_have_attribute("data-size", "half")
+
     # Recent rain periods: the totals grow with the period and use the language's decimals.
     periods = {}
     for days in (7, 14, 21):
@@ -492,6 +497,11 @@ def test_real_data_journey_from_search_to_favorite_and_language_switch(
     page.wait_for_function("() => window.SporaMeteoMap.getDiagnostics().opacity === 85")
     assert "background=contrast" in page.url
     assert "opacity=85" in page.url
+
+    # On a phone the open Layers panel covers the taller details panel.
+    if visitor.touch:
+        page.keyboard.press("Escape")
+        expect(page.locator("#layers-panel")).to_be_hidden()
 
     # Save the area as a favorite and rename it.
     page.evaluate("key => window.localStorage.removeItem(key)", "sporameteo.favorites")
