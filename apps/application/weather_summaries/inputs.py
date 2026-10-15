@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from micometeo.forecast_method import ForecastInputs, NumericInput
+from sporameteo.forecast_method import ForecastInputs, NumericInput
 
 
 @dataclass(frozen=True)

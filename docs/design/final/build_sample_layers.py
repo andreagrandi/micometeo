@@ -163,7 +163,7 @@ def main() -> None:
         "squares": squares,
     }
     text = json.dumps(sample, separators=(",", ":"))
-    (ASSETS / "sample_squares.js").write_text(f"window.MICOMETEO_SAMPLE = {text};\n")
+    (ASSETS / "sample_squares.js").write_text(f"window.SPORAMETEO_SAMPLE = {text};\n")
 
     png_bytes = (ASSETS / "italy_forest.png").stat().st_size
     print(f"italy_forest.png: {width} x {height} px, {png_bytes} bytes, bounds {bounds}")

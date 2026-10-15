@@ -11,7 +11,7 @@ from shapely import transform
 from shapely.geometry import mapping
 from shapely.wkb import loads
 
-from micometeo.finds.grid import CELL_SIZE_M, cell_id as point_cell_id, parse_cell_id
+from sporameteo.finds.grid import CELL_SIZE_M, cell_id as point_cell_id, parse_cell_id
 
 from .models import GridBuild, GridBuildCell
 

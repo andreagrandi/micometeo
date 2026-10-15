@@ -1,7 +1,7 @@
 from django.core.management import call_command
 from django.db import migrations
 
-MAP_CACHE_TABLE = "micometeo_map_cache"
+MAP_CACHE_TABLE = "sporameteo_map_cache"
 
 
 def create_map_cache_table(apps, schema_editor) -> None:

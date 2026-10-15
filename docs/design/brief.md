@@ -1,8 +1,8 @@
-# Micometeo shared design brief
+# SporaMeteo shared design brief
 
 ## Purpose and audience
 
-Micometeo is a free website for people in Italy who want to choose a forest
+SporaMeteo is a free website for people in Italy who want to choose a forest
 area to explore for porcini. It shows a whole-number estimate for the chance
 that porcini are growing in a selected area on a selected day.
 

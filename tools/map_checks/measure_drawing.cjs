@@ -5,7 +5,7 @@ const path = require("path");
 const VIEW_NAMES = ["northern_apennines", "alps", "calabria"];
 const DEFAULT_DATA_DIR = path.resolve("data/processed/map_checks");
 const DEFAULT_OUTPUT = path.resolve(
-  "data/processed/map_checks/micometeo-map-drawing-measurements.json",
+  "data/processed/map_checks/sporameteo-map-drawing-measurements.json",
 );
 const DEFAULT_PROFILE_DIR = path.resolve("data/processed/map_checks/browser-profile");
 
@@ -59,17 +59,17 @@ function contentType(filePath) {
 }
 
 function createServer({ dataDir }) {
-  const pagePath = path.join(__dirname, "micometeo-map-drawing.html");
+  const pagePath = path.join(__dirname, "sporameteo-map-drawing.html");
   const maplibreDir = path.dirname(require.resolve("maplibre-gl/dist/maplibre-gl.mjs"));
   const assets = new Map([
-    ["/micometeo-map-drawing.html", pagePath],
+    ["/sporameteo-map-drawing.html", pagePath],
     ["/maplibre-gl.css", path.join(maplibreDir, "maplibre-gl.css")],
   ]);
   for (const asset of ["maplibre-gl.mjs", "maplibre-gl-shared.mjs", "maplibre-gl-worker.mjs"]) {
     assets.set(`/${asset}`, path.join(maplibreDir, asset));
   }
   for (const name of VIEW_NAMES) {
-    assets.set(`/micometeo-map-${name}.geojson`, path.join(dataDir, `micometeo-map-${name}.geojson`));
+    assets.set(`/sporameteo-map-${name}.geojson`, path.join(dataDir, `sporameteo-map-${name}.geojson`));
   }
   const server = http.createServer((request, response) => {
     const filePath = assets.get(request.url);
@@ -109,7 +109,7 @@ async function main() {
   const args = parseArguments(process.argv.slice(2));
   const { chromium } = require("playwright");
   for (const name of VIEW_NAMES) {
-    const filePath = path.join(args.dataDir, `micometeo-map-${name}.geojson`);
+    const filePath = path.join(args.dataDir, `sporameteo-map-${name}.geojson`);
     if (!fs.existsSync(filePath)) throw new Error(`Missing map response: ${filePath}`);
   }
   fs.mkdirSync(path.dirname(args.output), {recursive: true});
@@ -128,7 +128,7 @@ async function main() {
     const page = context.pages()[0] || await context.newPage();
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
-    await page.goto(`http://127.0.0.1:${port}/micometeo-map-drawing.html`);
+    await page.goto(`http://127.0.0.1:${port}/sporameteo-map-drawing.html`);
     await page.waitForFunction(() => typeof window.runMeasurement === "function" && window.maplibregl);
     const results = [];
     for (const name of VIEW_NAMES) {

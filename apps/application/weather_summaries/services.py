@@ -11,7 +11,7 @@ from uuid import UUID
 
 from django.db import transaction
 
-from micometeo.weather.policy import HISTORY_DAYS, WEATHER_HISTORY_VERSION, history_endpoint
+from sporameteo.weather.policy import HISTORY_DAYS, WEATHER_HISTORY_VERSION, history_endpoint
 
 from .aggregation import DailyWeather, aggregate_response
 from .contracts import NormalizedProviderResponse

@@ -45,7 +45,7 @@ def test_italian_landing_restores_sample_and_translates_percentage_copy() -> Non
 
     assert response.status_code == 200
     assert "1.388 m s.l.m." not in body
-    assert "Scala di Probabilità Micometeo" in body
+    assert "Scala di Probabilità SporaMeteo" in body
     assert body.count("data-probability-card") == 4
     assert "Sfuggente / Secco" in body
     assert "Condizioni Basali" in body
@@ -65,7 +65,7 @@ def test_english_landing_keeps_translated_sample_and_probability_scale() -> None
 
     assert response.status_code == 200
     assert "1,388 m above sea level" not in body
-    assert "Micometeo probability scale" in body
+    assert "SporaMeteo probability scale" in body
     assert body.count("data-probability-card") == 4
     assert "At least 10% forest" in body
     assert "%%" not in body
@@ -97,7 +97,7 @@ def test_english_landing_names_tuscany_and_other_regions_coming_soon() -> None:
         assert text not in body
 
 
-@override_settings(MICOMETEO_UI_FIXTURE_PAGES=True)
+@override_settings(SPORAMETEO_UI_FIXTURE_PAGES=True)
 @pytest.mark.parametrize("state", FIXTURE_STATES)
 def test_fixture_route_exposes_one_visible_named_state(state: str) -> None:
     response = Client().get(
@@ -110,7 +110,7 @@ def test_fixture_route_exposes_one_visible_named_state(state: str) -> None:
     assert body.count('data-state-message') == 1
 
 
-@override_settings(MICOMETEO_UI_FIXTURE_PAGES=False)
+@override_settings(SPORAMETEO_UI_FIXTURE_PAGES=False)
 def test_fixture_route_is_off_by_default_and_production_map_has_no_fixture_data() -> None:
     client = Client()
 
@@ -125,7 +125,7 @@ def test_fixture_route_is_off_by_default_and_production_map_has_no_fixture_data(
     assert ">42%<" not in production_body
 
 
-@override_settings(MICOMETEO_UI_FIXTURE_PAGES=True)
+@override_settings(SPORAMETEO_UI_FIXTURE_PAGES=True)
 def test_map_root_exposes_persistent_state_contract() -> None:
     query = (
         "?square=abetone&date=2026-10-11&assessment=2026-10-10"
@@ -148,7 +148,7 @@ def test_map_root_exposes_persistent_state_contract() -> None:
     assert 'data-details-open="true"' in body
 
 
-@override_settings(MICOMETEO_UI_FIXTURE_PAGES=True)
+@override_settings(SPORAMETEO_UI_FIXTURE_PAGES=True)
 def test_ready_fixture_uses_approved_assessment_window_and_selected_date() -> None:
     response = Client().get(
         path=reverse(viewname="map-fixture", kwargs={"fixture": "ready"})
@@ -166,7 +166,7 @@ def test_ready_fixture_uses_approved_assessment_window_and_selected_date() -> No
     assert "15 October 2026" in body
 
 
-@override_settings(MICOMETEO_UI_FIXTURE_PAGES=True)
+@override_settings(SPORAMETEO_UI_FIXTURE_PAGES=True)
 def test_ready_fixture_opens_default_illustrative_details() -> None:
     response = Client().get(
         path=reverse(viewname="map-fixture", kwargs={"fixture": "ready"})
@@ -180,7 +180,7 @@ def test_ready_fixture_opens_default_illustrative_details() -> None:
 
 
 @pytest.mark.parametrize("state", ["older_update", "request_error"])
-@override_settings(MICOMETEO_UI_FIXTURE_PAGES=True)
+@override_settings(SPORAMETEO_UI_FIXTURE_PAGES=True)
 def test_retained_fixture_preserves_last_forecast_date_without_assessment(
     state: str,
 ) -> None:
@@ -203,7 +203,7 @@ def test_retained_fixture_preserves_last_forecast_date_without_assessment(
 
 
 @pytest.mark.parametrize("assessment", ["9999-12-31", "0001-01-01"])
-@override_settings(MICOMETEO_UI_FIXTURE_PAGES=True)
+@override_settings(SPORAMETEO_UI_FIXTURE_PAGES=True)
 def test_retained_fixture_rejects_unsupported_extreme_assessment_date(
     assessment: str,
 ) -> None:
@@ -224,10 +224,10 @@ def test_language_cookie_overrides_browser_language_without_cookie_on_fallback()
     fallback_client = Client(HTTP_ACCEPT_LANGUAGE="it-IT,it;q=0.9")
     fallback = fallback_client.get(path=reverse(viewname="map"))
     assert 'lang="it"' in fallback.content.decode()
-    assert "micometeo_language" not in fallback.cookies
+    assert "sporameteo_language" not in fallback.cookies
 
     selected_client = Client(HTTP_ACCEPT_LANGUAGE="en-US,en;q=0.9")
-    selected_client.cookies["micometeo_language"] = "it"
+    selected_client.cookies["sporameteo_language"] = "it"
     selected = selected_client.get(path=reverse(viewname="map"))
     assert 'lang="it"' in selected.content.decode()
 

@@ -18,7 +18,7 @@ class HealthResponse(Schema):
     database: Literal["available", "unavailable"]
 
 
-api = NinjaAPI(title="Micometeo API", version="1")
+api = NinjaAPI(title="SporaMeteo API", version="1")
 
 
 @api.get("/health", response={200: HealthResponse, 503: HealthResponse})

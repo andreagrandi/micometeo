@@ -1,14 +1,16 @@
+name: sporameteo
+
 services:
   database:
     image: imresamu/postgis:17-3.5-bookworm@sha256:35fe7dceda62bfe7d2965b0ba78d915ff9f901b5e0466d633ecc58421b5b5210
     environment:
-      POSTGRES_DB: ${MICOMETEO_DB_NAME:-micometeo}
-      POSTGRES_USER: ${MICOMETEO_DB_USER:-micometeo}
-      POSTGRES_PASSWORD: ${MICOMETEO_DB_PASSWORD:-replace-with-a-local-password}
+      POSTGRES_DB: ${SPORAMETEO_DB_NAME:-sporameteo}
+      POSTGRES_USER: ${SPORAMETEO_DB_USER:-sporameteo}
+      POSTGRES_PASSWORD: ${SPORAMETEO_DB_PASSWORD:-replace-with-a-local-password}
     ports:
-      - "127.0.0.1:${MICOMETEO_DB_PORT:-5542}:5432"
+      - "127.0.0.1:${SPORAMETEO_DB_PORT:-5542}:5432"
     volumes:
-      - micometeo_pgdata_native:/var/lib/postgresql/data
+      - sporameteo_pgdata_native:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 5s
@@ -17,4 +19,4 @@ services:
       start_period: 5s
 
 volumes:
-  micometeo_pgdata_native:
+  sporameteo_pgdata_native:

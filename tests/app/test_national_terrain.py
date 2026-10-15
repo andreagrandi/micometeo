@@ -16,7 +16,7 @@ import rasterio
 from pyproj import Transformer
 from rasterio.transform import from_origin
 
-from micometeo.habitat import terrain
+from sporameteo.habitat import terrain
 from national_terrain import source
 
 

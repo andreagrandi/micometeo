@@ -9,10 +9,10 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from rasterio.warp import Resampling
 
-from micometeo.context import RunContext
-from micometeo.finds.grid import CELL_SIZE_M
-from micometeo.habitat import detail, forest, inventory, rock, soil, terrain
-from micometeo.habitat.grid import (
+from sporameteo.context import RunContext
+from sporameteo.finds.grid import CELL_SIZE_M
+from sporameteo.habitat import detail, forest, inventory, rock, soil, terrain
+from sporameteo.habitat.grid import (
     SampleGrid,
     build_grid,
     note_path,

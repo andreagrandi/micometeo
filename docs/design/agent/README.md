@@ -28,7 +28,7 @@ The pages can also be opened directly:
 - `landing.html?lang=it` is the landing page.
 
 The pages load Leaflet, the Atkinson Hyperlegible Next font and OpenStreetMap
-tiles from the internet. They read no production data and call no Micometeo
+tiles from the internet. They read no production data and call no SporaMeteo
 server.
 
 ## Files

@@ -39,7 +39,7 @@ def _load_django(*, database_name: str) -> None:
     if str(application) not in sys.path:
         sys.path.insert(0, str(application))
     os.environ["DJANGO_SETTINGS_MODULE"] = "config.settings"
-    os.environ["MICOMETEO_DB_NAME"] = database_name
+    os.environ["SPORAMETEO_DB_NAME"] = database_name
 
     import django
 
@@ -162,7 +162,7 @@ def main() -> None:
                     }
                 )
             assert body is not None
-            output = args.output_dir / f"micometeo-map-{name}.geojson"
+            output = args.output_dir / f"sporameteo-map-{name}.geojson"
             output.write_bytes(data=raw)
             results.append(
                 {
@@ -199,7 +199,7 @@ def main() -> None:
         "views": results,
         "broad_view_weather_calls": 0,
     }
-    report_path = args.output_dir / "micometeo-map-measurements.json"
+    report_path = args.output_dir / "sporameteo-map-measurements.json"
     report_path.write_text(data=json.dumps(obj=report, indent=2) + "\n")
     print(json.dumps(obj=report, indent=2))
     print(f"Saved measurement report to {report_path}")

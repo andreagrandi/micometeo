@@ -6,7 +6,7 @@ import math
 
 import pytest
 
-from micometeo.forecast_method import (
+from sporameteo.forecast_method import (
     EVENT_KEY,
     METHOD_V1,
     METHOD_V2,
@@ -18,7 +18,7 @@ from micometeo.forecast_method import (
     NumericInput,
     calculate_forecast as calculate_versioned_forecast,
 )
-from micometeo.moisture_method import WeatherDay
+from sporameteo.moisture_method import WeatherDay
 
 
 ASSESSMENT = date(2026, 6, 15)

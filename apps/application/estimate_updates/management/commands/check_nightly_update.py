@@ -48,7 +48,7 @@ class Command(BaseCommand):
             self.stdout.write(f"Not published ({result.reason}). Email is not configured, the message is in the log.")
             return
         send_mail(
-            subject=f"Micometeo nightly update missing for {assessment_date}: {result.reason}",
+            subject=f"SporaMeteo nightly update missing for {assessment_date}: {result.reason}",
             message=body,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[settings.NIGHTLY_ALERT_EMAIL],

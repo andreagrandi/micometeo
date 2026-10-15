@@ -1,5 +1,5 @@
 {
-  "name": "micometeo-web-ui",
+  "name": "sporameteo-web-ui",
   "private": true,
   "scripts": {
     "build:css": "npm run build:map-css && npm run build:landing-css",

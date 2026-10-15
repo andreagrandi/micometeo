@@ -26,7 +26,7 @@ class Command(BaseCommand):
         parser.add_argument("--region-code", default=TUSCANY_ISTAT_CODE, help="Only 09, Tuscany, is allowed.")
         parser.add_argument(
             "--forest-build-version",
-            default=str(getattr(settings, "MICOMETEO_FOREST_BUILD_VERSION", "")),
+            default=str(getattr(settings, "SPORAMETEO_FOREST_BUILD_VERSION", "")),
             help="Forest build that lists the weather cells, default from the app setting.",
         )
         parser.add_argument("--json", action="store_true", help="Print the plan as JSON.")
@@ -35,7 +35,7 @@ class Command(BaseCommand):
         assessment_date = options["assessment_date"] or italian_assessment_date()
         version = options["forest_build_version"]
         if not version:
-            raise CommandError("Set MICOMETEO_FOREST_BUILD_VERSION or pass --forest-build-version.")
+            raise CommandError("Set SPORAMETEO_FOREST_BUILD_VERSION or pass --forest-build-version.")
         try:
             if options["dry_run"]:
                 cells = tuscany_weather_cells(

@@ -320,7 +320,7 @@ def _reconcile_terminal_attempt(
 
 
 def recover_interrupted_jobs() -> int:
-    """Reconcile or fail Micometeo attempts left by a stopped worker."""
+    """Reconcile or fail SporaMeteo attempts left by a stopped worker."""
 
     recovered = 0
     attempts = (

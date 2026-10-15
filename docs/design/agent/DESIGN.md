@@ -156,7 +156,7 @@ in the zoomed out view and in its legend.
 `assets/sample_squares.js` sets one global value:
 
 ```js
-window.MICOMETEO_SAMPLE = {
+window.SPORAMETEO_SAMPLE = {
   dates: ["2026-10-12", ..., "2026-10-19"],
   selected_square_id: "abetone-sample",
   national_forest: {

@@ -24,7 +24,7 @@ describe files to create during implementation, not files already present.
 | [#35 Bilingual website](35.md) | [#55 Layout and language](55.md), [#56 Map](56.md), [#57 Search and location](57.md), [#58 Area details](58.md), [#59 Favorites](59.md), [#60 Navigation](60.md) |
 | [#36 Local acceptance](36.md) | [#61 National data and on-demand checks](61.md), [#62 Browser and phone checks](62.md), [#63 Owner acceptance](63.md) |
 
-[Features Roadmap #37](https://github.com/andreagrandi/micometeo/issues/37)
+[Features Roadmap #37](https://github.com/andreagrandi/sporameteo/issues/37)
 retains its 66 grouped deferred features and has no sub-tickets. This revision
 does not change its description, issue scope, labels, project fields, parents
 or native dependencies.
@@ -36,7 +36,7 @@ or native dependencies.
   required data is unavailable, not zero. No owner mushroom fieldwork is required.
 - Support Italian and English, free access, no ads and no registration.
 - Use Book Corners' established implementation patterns and the useful
-  Micometeo experiment code. Preserve the historical research results.
+  SporaMeteo experiment code. Preserve the historical research results.
 - Compare an actual Stitch mockup with an independent agent mockup before
   production UI work. The owner chooses the design in #54.
 - Run and accept the complete MVP locally. The owner makes the final decision

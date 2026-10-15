@@ -42,7 +42,7 @@ def _error(*, status: int, code: str, message: str, retry_after: int | None = No
 def places_search(request: HttpRequest) -> HttpResponse:
     """Return selectable Italian Photon results through the same origin."""
     query = (request.GET.get("q") or request.GET.get("query") or "").strip()
-    minimum = int(getattr(settings, "MICOMETEO_PLACE_SEARCH_MIN_LENGTH", 2))
+    minimum = int(getattr(settings, "SPORAMETEO_PLACE_SEARCH_MIN_LENGTH", 2))
     if len(query) < minimum:
         if request.GET.get("cached_only") == "1":
             return JsonResponse({"results": [], "cached": True, "complete": False, "minimum_length": minimum})
@@ -84,7 +84,7 @@ def _number(value: str | None, *, lower: float, upper: float) -> float | None:
 
 
 def _configured_forest_build() -> ForestBuild | None:
-    version = str(getattr(settings, "MICOMETEO_FOREST_BUILD_VERSION", ""))
+    version = str(getattr(settings, "SPORAMETEO_FOREST_BUILD_VERSION", ""))
     if not version:
         return None
     return ForestBuild.objects.select_related("grid_build").filter(

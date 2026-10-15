@@ -139,7 +139,7 @@ orange bars.
 ## How to run again
 
 ```bash
-uv run micometeo run p1c_flush_signs
+uv run sporameteo run p1c_flush_signs
 ```
 
 The script reads the saved Trends exports and the P1 find tables, and writes:

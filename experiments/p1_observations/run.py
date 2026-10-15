@@ -14,10 +14,10 @@ import matplotlib.pyplot as plt
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from micometeo.context import RunContext
-from micometeo.finds import gbif, inaturalist, roads
-from micometeo.finds.cleaning import apply_filters, mark_duplicates, mark_timing_finds
-from micometeo.finds.counts import (
+from sporameteo.context import RunContext
+from sporameteo.finds import gbif, inaturalist, roads
+from sporameteo.finds.cleaning import apply_filters, mark_duplicates, mark_timing_finds
+from sporameteo.finds.counts import (
     COUNT_COLUMNS,
     DROPPED_COLUMNS,
     count_table,
@@ -25,7 +25,7 @@ from micometeo.finds.counts import (
     in_stage,
     write_csv,
 )
-from micometeo.finds.records import FIND_COLUMNS
+from sporameteo.finds.records import FIND_COLUMNS
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 REPORTS_DIR = ROOT / "reports"

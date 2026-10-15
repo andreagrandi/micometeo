@@ -219,7 +219,7 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Micometeo project
+# SporaMeteo project
 data/raw/
 data/processed/
 tools/map_checks/node_modules/

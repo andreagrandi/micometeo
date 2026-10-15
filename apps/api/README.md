@@ -1,4 +1,4 @@
-# Micometeo demo API
+# SporaMeteo demo API
 
 This is a small local API for the phone map page. It serves made-up scores for
 500 m grid squares in the Pistoia province and the Apennines. The scores do not
@@ -11,24 +11,24 @@ The API uses only the Python standard library. It needs Python 3.14.
 
 ```bash
 cd apps/api
-python3.14 -m micometeo_api
+python3.14 -m sporameteo_api
 ```
 
-The server listens on `127.0.0.1:8080`. Set `MICOMETEO_API_HOST` and
-`MICOMETEO_API_PORT` to change this.
+The server listens on `127.0.0.1:8080`. Set `SPORAMETEO_API_HOST` and
+`SPORAMETEO_API_PORT` to change this.
 
 ## Run in Docker
 
 ```bash
-docker build -t micometeo-api:p5 apps/api
-docker run --rm -p 8080:8080 micometeo-api:p5
+docker build -t sporameteo-api:p5 apps/api
+docker run --rm -p 8080:8080 sporameteo-api:p5
 ```
 
 The container listens on `0.0.0.0:8080` and runs as a user without root rights.
 
 ## Grid file
 
-`micometeo_api/demo_grid.json.gz` holds the squares as gzipped JSON. Recreate it with:
+`sporameteo_api/demo_grid.json.gz` holds the squares as gzipped JSON. Recreate it with:
 
 ```bash
 uv run python apps/api/tools/make_demo_grid.py

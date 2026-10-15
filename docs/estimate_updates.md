@@ -9,7 +9,7 @@ The tuple is the weather cell, assessment date, exact `WeatherSnapshot`, exact
 completed `ForestBuild`, exact completed `TerrainBuild`, and frozen method
 version. The forest and terrain builds must point to the same completed grid.
 The weather snapshot cell and date must match the update. The terrain build is
-read from the explicit `MICOMETEO_TERRAIN_BUILD_VERSION` setting. The service
+read from the explicit `SPORAMETEO_TERRAIN_BUILD_VERSION` setting. The service
 does not select an arbitrary latest terrain build.
 
 `EstimateResult` has no surrogate row ID. Its composite primary key is the
@@ -119,7 +119,7 @@ HTTP requests and reports measured storage without extrapolating to a target.
 The local run on 12 October 2026 used an Apple M2 Pro with 32 GiB of memory,
 PostgreSQL 17 and PostGIS 3.5 in Docker, Python 3.14.8 and the frozen
 `porcini-experimental-v1` calculation. The disposable database was
-`micometeo_estimate_benchmark_20261012`. It contained these real habitat builds:
+`sporameteo_estimate_benchmark_20261012`. It contained these real habitat builds:
 
 - Grid `italy-500m-istat-2026-01-01-v1`.
 - Terrain `italy-terrain-glo30-2021-v2`.
@@ -171,7 +171,7 @@ lookup index.
 The reproducible national command is:
 
 ```sh
-MICOMETEO_DB_NAME=micometeo_estimate_benchmark_20261012 \
+SPORAMETEO_DB_NAME=sporameteo_estimate_benchmark_20261012 \
   /usr/bin/time -l uv run python apps/application/manage.py benchmark_estimate_updates \
   --forest-build-version italy-forest-copernicus-2018-v1 \
   --terrain-build-version italy-terrain-glo30-2021-v2 \

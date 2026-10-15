@@ -1,21 +1,21 @@
 ---
 name: gh-issue
 description: >-
-  Create, classify, split, and organize GitHub issues for andreagrandi/micometeo.
+  Create, classify, split, and organize GitHub issues for andreagrandi/sporameteo.
   Use when filing issues, drafting experiment tickets, creating epics or native
-  sub-issues, linking dependencies, or updating the Micometeo project.
+  sub-issues, linking dependencies, or updating the SporaMeteo project.
 ---
 
-# Manage Micometeo issues
+# Manage SporaMeteo issues
 
-Repository: `andreagrandi/micometeo` · Project: `https://github.com/users/andreagrandi/projects/9`
+Repository: `andreagrandi/sporameteo` · Project: `https://github.com/users/andreagrandi/projects/9`
 
 See [REFERENCE.md](REFERENCE.md) for classifications, templates, IDs, and API patterns.
 
 ## Scope authority
 
-- Epic 1 tickets come only from `Micometeo_PRD_Epic_1_Validation_EN.md`.
-  `Micometeo_Context_Dossier_EN.md` is background: sources, prices and design
+- Epic 1 tickets come only from `SporaMeteo_PRD_Epic_1_Validation_EN.md`.
+  `SporaMeteo_Context_Dossier_EN.md` is background: sources, prices and design
   rationale. Never turn a dossier idea into a ticket unless the PRD asks for it.
 - Do not create issues for Epics 2 and later until
   `reports/EPIC1_VALIDATION_REPORT.md` records a GO or PIVOT decision.

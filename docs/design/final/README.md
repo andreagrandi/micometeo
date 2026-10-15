@@ -13,7 +13,7 @@ were.
 This folder holds the map app and the landing page. The landing page is
 `landing.html` and `landing.js`. It is a copy of the Stitch landing page with
 its Tailwind setup, colours and fonts. Only text that claimed things
-Micometeo does not have was changed, and `landing.js` adds English.
+SporaMeteo does not have was changed, and `landing.js` adds English.
 
 ## How to look at it
 
@@ -39,7 +39,7 @@ The map app can also be opened directly:
   height. `bg=contrast`, `overlay=off` and `opacity=30` set the map controls.
 
 The page loads Leaflet, the three fonts from Google Fonts and OpenStreetMap
-tiles from the internet. It reads no production data and calls no Micometeo
+tiles from the internet. It reads no production data and calls no SporaMeteo
 server.
 
 ## Files

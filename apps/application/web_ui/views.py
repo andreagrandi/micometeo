@@ -152,7 +152,7 @@ def landing(request: HttpRequest) -> HttpResponse:
 
 def map_page(request: HttpRequest, fixture: str | None = None) -> HttpResponse:
     """Render the persistent map shell and optional test fixture."""
-    if fixture is not None and not getattr(settings, "MICOMETEO_UI_FIXTURE_PAGES", False):
+    if fixture is not None and not getattr(settings, "SPORAMETEO_UI_FIXTURE_PAGES", False):
         raise Http404("UI fixture pages are disabled")
     if fixture is not None and fixture not in FIXTURE_STATES:
         raise Http404("Unknown UI fixture")

@@ -25,8 +25,8 @@ SCHEDULED_WEATHER_TASK_PATH = "weather_on_demand.tasks.scheduled_weather_run_tas
 TUSCANY_FORECAST_TASK_PATH = "estimate_updates.tasks.tuscany_forecast_task"
 
 
-class MicometeoWorker(DatabaseWorker):
-    """Claim Micometeo tasks while holding each logical job lock."""
+class SporaMeteoWorker(DatabaseWorker):
+    """Claim SporaMeteo tasks while holding each logical job lock."""
 
     def _logical_lock_keys_for_task(self, task_result: DBTaskResult) -> tuple[str, ...]:
         kwargs = task_result.args_kwargs.get("kwargs", {})
@@ -137,7 +137,7 @@ class MicometeoWorker(DatabaseWorker):
             time.sleep(random.random())
 
         pause_after_claim = float(
-            os.environ.get("MICOMETEO_TEST_PAUSE_AFTER_TASK_CLAIM", "0")
+            os.environ.get("SPORAMETEO_TEST_PAUSE_AFTER_TASK_CLAIM", "0")
         )
         while self.running:
             close_old_connections()

@@ -23,7 +23,7 @@ from pyproj import Transformer
 from rasterio.windows import Window
 
 from background_jobs.services import logical_job_lock
-from micometeo.habitat.forest import summarise_national_block
+from sporameteo.habitat.forest import summarise_national_block
 from national_grid.models import GridBuild, GridBuildCell, GridChunk
 
 from . import layer, source

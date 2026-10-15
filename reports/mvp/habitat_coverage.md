@@ -191,7 +191,7 @@ and avoid implying European Union endorsement. The build retains this credit:
 
 > © European Union, Copernicus Land Monitoring Service 2018, European Environment Agency
 
-Micometeo groups the classified 10 m pixels into 500 m fractions and produces
+SporaMeteo groups the classified 10 m pixels into 500 m fractions and produces
 a separate 2 km forest-share layer for broad map views. The latter contains
 forest coverage only. Neither transformation adds a mushroom estimate or
 makes a claim about tree species. The 500 m display squares and the 2 km layer

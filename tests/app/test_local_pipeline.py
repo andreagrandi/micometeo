@@ -27,7 +27,7 @@ from estimate_updates.forecast_runs import (
 from estimate_updates.models import EstimateResult, ForecastRun, PublishedForecastRun
 from map_api import api as map_api
 from map_api.published import GRID_TO_WGS84, warm_published_map_cache
-from micometeo.finds.grid import format_cell_id
+from sporameteo.finds.grid import format_cell_id
 from national_grid.models import GridRegion
 from tests.app.test_forecast_runs import (  # noqa: F401
     _recording_calculator,

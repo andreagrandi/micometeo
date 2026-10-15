@@ -1,1 +1,1 @@
-"""Versioned map reads for the Micometeo application."""
+"""Versioned map reads for the SporaMeteo application."""

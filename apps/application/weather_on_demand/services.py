@@ -27,8 +27,8 @@ from django.db.models import Count, Q, Sum
 from django_tasks_db.models import DBTaskResult
 from django.utils import timezone
 
-from micometeo.weather.openmeteo import FORECAST_URL
-from micometeo.weather.policy import (
+from sporameteo.weather.openmeteo import FORECAST_URL
+from sporameteo.weather.policy import (
     FORECAST_DAYS,
     HISTORY_DAYS,
     PIPELINE_VERSION,
@@ -614,7 +614,7 @@ def _plan_batches(
     cells_by_key = {cell.key: cell for cell in cells}
     available: list[tuple[WeatherCell, WeatherFetch, Any]] = []
     pending_batches: dict[uuid.UUID, WeatherFetchBatch] = {}
-    endpoint = os.environ.get("MICOMETEO_WEATHER_ENDPOINT", FORECAST_URL)
+    endpoint = os.environ.get("SPORAMETEO_WEATHER_ENDPOINT", FORECAST_URL)
     fetch_visitor = visitor_hash or ""
     source = "weather_on_demand" if visitor_hash is not None else SCHEDULED_SOURCE
     with transaction.atomic():
@@ -1653,7 +1653,7 @@ def plan_scheduled_weather(
             pipeline_version=PIPELINE_VERSION,
         ).values_list("cell_key", flat=True)
     )
-    endpoint = os.environ.get("MICOMETEO_WEATHER_ENDPOINT", FORECAST_URL)
+    endpoint = os.environ.get("SPORAMETEO_WEATHER_ENDPOINT", FORECAST_URL)
     groups: dict[tuple[Any, ...], list[Any]] = defaultdict(list)
     for cell in sorted({cell.key: cell for cell in cells}.values(), key=lambda item: item.key):
         if cell.key in ready_keys:

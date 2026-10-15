@@ -9,7 +9,7 @@ import pytest
 from rasterio.io import MemoryFile
 from rasterio.transform import from_origin
 
-from micometeo.host_trees import SPECIES, prepare_sources, read_manifest, sample_squares
+from sporameteo.host_trees import SPECIES, prepare_sources, read_manifest, sample_squares
 
 
 @pytest.fixture

@@ -21,7 +21,7 @@ from tests.e2e.test_map_controls import (
 VIEWPORTS = {"desktop": (1440, 900), "phone": (390, 844)}
 RECORD_SET_DATA = """
 () => {
-  const source = window.MicometeoMap.map.getSource('squares');
+  const source = window.SporaMeteoMap.map.getSource('squares');
   const original = source.setData.bind(source);
   window.__setDataSizes = [];
   source.setData = (data) => {
@@ -109,18 +109,18 @@ def _open(
         wait_until="domcontentloaded",
     )
     page.wait_for_function(
-        "() => window.MicometeoMap?.getDiagnostics().squareSetCount >= 1", timeout=15_000
+        "() => window.SporaMeteoMap?.getDiagnostics().squareSetCount >= 1", timeout=15_000
     )
     page.wait_for_function(
         """
-        () => window.MicometeoMap.map.getLayoutProperty('micometeo-square-estimates', 'visibility') === 'visible'
+        () => window.SporaMeteoMap.map.getLayoutProperty('sporameteo-square-estimates', 'visibility') === 'visible'
         """,
         timeout=15_000,
     )
     first_date = current["info"]["target_dates"][0]
     page.locator(f".date-btn[data-date='{first_date}']").click(force=True)
     page.wait_for_function(
-        "(date) => window.MicometeoMap.getDiagnostics().displayedDate === date",
+        "(date) => window.SporaMeteoMap.getDiagnostics().displayedDate === date",
         arg=first_date,
         timeout=15_000,
     )
@@ -132,12 +132,12 @@ def _squares_state(page: Page) -> dict[str, object]:
     return page.evaluate(
         """
         () => {
-          const map = window.MicometeoMap.map;
+          const map = window.SporaMeteoMap.map;
           return {
-            visibility: map.getLayoutProperty('micometeo-square-estimates', 'visibility'),
-            rendered: map.queryRenderedFeatures({layers: ['micometeo-square-estimates']}).length,
+            visibility: map.getLayoutProperty('sporameteo-square-estimates', 'visibility'),
+            rendered: map.queryRenderedFeatures({layers: ['sporameteo-square-estimates']}).length,
             setDataSizes: window.__setDataSizes,
-            diagnostics: window.MicometeoMap.getDiagnostics(),
+            diagnostics: window.SporaMeteoMap.getDiagnostics(),
           };
         }
         """
@@ -180,7 +180,7 @@ def test_new_date_keeps_the_overlay_on_screen_and_swaps_once(
 
     _release(page, index=0, body=_squares_for("2026-10-16"))
     page.wait_for_function(
-        "() => window.MicometeoMap.getDiagnostics().displayedDate === '2026-10-16'", timeout=10_000
+        "() => window.SporaMeteoMap.getDiagnostics().displayedDate === '2026-10-16'", timeout=10_000
     )
     arrived = _squares_state(page)
     assert arrived["setDataSizes"] == [5]
@@ -195,7 +195,7 @@ def test_moved_view_keeps_the_overlay_on_screen_and_swaps_once(
     _open(page, base_url, viewport=viewport)
     page.evaluate(RECORD_SET_DATA)
     page.evaluate(HOLD_SQUARES)
-    page.evaluate("() => window.MicometeoMap.map.jumpTo({center: [10.652, 44.131], zoom: 12.2})")
+    page.evaluate("() => window.SporaMeteoMap.map.jumpTo({center: [10.652, 44.131], zoom: 12.2})")
     _wait_for_held(page, count=1)
 
     waiting = _squares_state(page)
@@ -219,7 +219,7 @@ def test_superseded_slow_response_arriving_last_is_ignored(page: Page, base_url:
 
     _release(page, index=1, body=_squares_for("2026-10-17"))
     page.wait_for_function(
-        "() => window.MicometeoMap.getDiagnostics().displayedDate === '2026-10-17'", timeout=10_000
+        "() => window.SporaMeteoMap.getDiagnostics().displayedDate === '2026-10-17'", timeout=10_000
     )
     _release(page, index=0, body=_squares_for("2026-10-16"))
     page.wait_for_timeout(400)
@@ -262,7 +262,7 @@ def test_new_run_from_the_info_refresh_swaps_the_data_once(
     current["run_id"] = "run-2"
     page.clock.run_for(900_000)
     page.wait_for_function(
-        "() => window.MicometeoMap.getDiagnostics().displayedRunId === 'run-2'", timeout=10_000
+        "() => window.SporaMeteoMap.getDiagnostics().displayedRunId === 'run-2'", timeout=10_000
     )
     page.wait_for_timeout(500)
     state = _squares_state(page)
@@ -411,11 +411,11 @@ def test_square_outside_the_prepared_area_is_named_in_the_details(
 
     page.route("**/api/v1/squares**", squares_route)
     page.route("**/api/v1/areas/**", area_route)
-    page.evaluate("() => window.MicometeoMap.map.jumpTo({center: [10.651, 44.131], zoom: 12.1})")
+    page.evaluate("() => window.SporaMeteoMap.map.jumpTo({center: [10.651, 44.131], zoom: 12.1})")
     click_square(
         page,
         lng_lat=(10.64, 44.13),
         cell_id="cell-outside",
-        layer="micometeo-square-missing",
+        layer="sporameteo-square-missing",
     )
     expect(page.locator("aside[data-live-details]")).to_contain_text("outside Tuscany")

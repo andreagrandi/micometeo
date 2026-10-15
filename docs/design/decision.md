@@ -23,9 +23,9 @@ it into rules for #55, #56 and #58.
 | Issue | #52 | #53 |
 | Folder | `docs/design/stitch/` | `docs/design/agent/` |
 | How to view | `docs/design/stitch/README.md` | `docs/design/agent/README.md` |
-| Map app | `micometeo_design_alternative_a/code.html` | `app.html` |
-| Landing page | `micometeo_home_guida_esplorativa/code.html` | `landing.html` |
-| Design rules | `micometeo_fieldwork/DESIGN.md` | `DESIGN.md` |
+| Map app | `sporameteo_design_alternative_a/code.html` | `app.html` |
+| Landing page | `sporameteo_home_guida_esplorativa/code.html` | `landing.html` |
+| Design rules | `sporameteo_fieldwork/DESIGN.md` | `DESIGN.md` |
 
 The Stitch `DESIGN.md` names DM Sans, but the Stitch pages the owner looked at
 use Plus Jakarta Sans and JetBrains Mono. The pages are the reference, so this
@@ -101,7 +101,7 @@ reason they gave.
 - D9 states: the agent's messages and actions in Stitch colours.
 - D10 language switch: see D2.
 - D11 landing page: the Stitch landing page as it is, with its colours,
-  fonts, sections and footer. Only text that claims something Micometeo does
+  fonts, sections and footer. Only text that claims something SporaMeteo does
   not have changes. The account icon is not shown now. Its top right place in
   the header is kept free if accounts come later.
 - Second review on 12 October 2026: the owner rejected the first combined
@@ -300,7 +300,7 @@ state shows a thin `pine-600` progress bar along the top of the map.
 - No account icon. The header keeps its top right place free for accounts in
   #37.
 - Text and facts from the agent landing page and the brief. The key figures
-  are facts Micometeo has, such as 500 m squares, eight dates and all Italy.
+  are facts SporaMeteo has, such as 500 m squares, eight dates and all Italy.
   Remove "live", "20 regioni", updates every 6 hours, weather stations,
   "200.000 ettari" and every other claim the PRD does not support.
 - Both notices from the brief appear as in the agent landing page.

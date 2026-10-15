@@ -2,11 +2,11 @@
 
 The application stores weather by 0.1 degree weather cell and Italian assessment date. The assessment date uses `Europe/Rome`, so the date changes at Rome midnight on both daylight saving clock-change days. Weather is prepared ahead by a scheduled run, described below. The map, overview and details read the published Tuscany run and never start a provider request, as described in `docs/api.md`.
 
-The window of a snapshot is 38 dates: the 30 completed Italian days before the assessment date, the assessment date and the following seven dates. Completed days come from the historical source, `MICOMETEO_WEATHER_HISTORY_ENDPOINT`, which defaults to the Open-Meteo archive. Today and the next seven days come from the forecast source. The planner asks for completed days in pieces of at most 13 days, so a full first load is pieces of 13, 13 and 4 days plus one forecast of 8 days. A normal night asks for yesterday plus one forecast of 8 days.
+The window of a snapshot is 38 dates: the 30 completed Italian days before the assessment date, the assessment date and the following seven dates. Completed days come from the historical source, `SPORAMETEO_WEATHER_HISTORY_ENDPOINT`, which defaults to the Open-Meteo archive. Today and the next seven days come from the forecast source. The planner asks for completed days in pieces of at most 13 days, so a full first load is pieces of 13, 13 and 4 days plus one forecast of 8 days. A normal night asks for yesterday plus one forecast of 8 days.
 
 Completed days are stored once and read from the database before any request is planned. A stored day counts as history only when it came from the historical source, has the status complete or checked known missing, and carries the current `history_version` in its metadata. If several rows exist for one date, the oldest one is used. A forecast row for a date that has passed is never history, so the next night fetches that day from the historical source. The reused rows are attached to the new fetch as completed parts with the reason `stored_history` and no request, and the snapshot is built from them. A day that was reused needs no provider request after a restart.
 
-`WEATHER_HISTORY_VERSION` in `src/micometeo/weather/policy.py` is the explicit correction switch. Raising it stops the reuse of older rows. The next run fetches the history again and stores new rows. The older rows and the snapshots built from them stay in the database. Cleanup never deletes rows from the historical source.
+`WEATHER_HISTORY_VERSION` in `src/sporameteo/weather/policy.py` is the explicit correction switch. Raising it stops the reuse of older rows. The next run fetches the history again and stores new rows. The older rows and the snapshots built from them stay in the database. Cleanup never deletes rows from the historical source.
 
 The new snapshot is written only after every expected date is present or has a checked known gap. A known gap remains a ready snapshot with a null value and its reason. A refused or interrupted request remains pending and never becomes a known gap, and it stores no rows.
 
@@ -33,7 +33,7 @@ uv run python apps/application/manage.py weather_on_demand_status
 
 ## Scheduled Tuscany refresh
 
-`refresh_tuscany_weather` prepares the 38-day window for every weather cell that holds a Tuscany forest square. It accepts only region code `09`. A weather cell shared by several forest squares is counted once. The forest build comes from `MICOMETEO_FOREST_BUILD_VERSION` unless `--forest-build-version` is given. The assessment date is today in Europe/Rome unless `--assessment-date` is given.
+`refresh_tuscany_weather` prepares the 38-day window for every weather cell that holds a Tuscany forest square. It accepts only region code `09`. A weather cell shared by several forest squares is counted once. The forest build comes from `SPORAMETEO_FOREST_BUILD_VERSION` unless `--forest-build-version` is given. The assessment date is today in Europe/Rome unless `--assessment-date` is given.
 
 Print the plan first. The dry run reads the database only. It writes nothing and makes no provider call. It prints the mode, the number of cells, the cells that are already ready for the date, the counted calls and the HTTP requests for each date range:
 
@@ -108,15 +108,15 @@ uv run python apps/application/manage.py check_nightly_update --assessment-date 
 The email goes through Resend with `django-anymail`, as in book corners. Set the key and the recipient on the VPS:
 
 ```sh
-sudo dokku config:set micometeo \
+sudo dokku config:set sporameteo \
   RESEND_API_KEY="<resend-api-key>" \
   NIGHTLY_ALERT_EMAIL="<owner-email-address>" \
-  DEFAULT_FROM_EMAIL="Micometeo <noreply@micometeo.com>"
+  DEFAULT_FROM_EMAIL="SporaMeteo <noreply@sporameteo.com>"
 ```
 
 Without `RESEND_API_KEY` or `NIGHTLY_ALERT_EMAIL`, the command writes the message to the log at error level and exits normally.
 
-On 15 October 2026 the Resend pricing page listed 3 custom domains, 100 emails a day and 3,000 emails a month on the free plan. One check sends at most one email a day. The sender domain is `micometeo.com`, verified in the same Resend account as book corners. Until the domain is verified, set `DEFAULT_FROM_EMAIL` to an address on the book corners domain.
+On 15 October 2026 the Resend pricing page listed 3 custom domains, 100 emails a day and 3,000 emails a month on the free plan. One check sends at most one email a day. The sender domain is `sporameteo.com`, to be verified in the same Resend account as book corners. Until the domain is verified, set `DEFAULT_FROM_EMAIL` to an address on the book corners domain.
 
 ## Live worker check
 
@@ -133,6 +133,6 @@ was `b4d638f5-fef5-4561-891b-3fcd40a343ac` and the snapshot was
 `c98dd3ba-6290-4711-a791-b84113ffed79`.
 
 The ignored local evidence is
-`data/processed/map_checks/micometeo-live-pipeline-verified.json`.
+`data/processed/map_checks/sporameteo-live-pipeline-verified.json`.
 This bounded check used real provider data for one weather cell. The separate
 national estimate benchmark used synthetic weather and made no HTTP requests.

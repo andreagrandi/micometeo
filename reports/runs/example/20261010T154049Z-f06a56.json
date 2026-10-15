@@ -1,7 +1,7 @@
 {
   "experiment": "example",
   "run_id": "20261010T154049Z-f06a56",
-  "command": "micometeo run example",
+  "command": "sporameteo run example",
   "status": "completed",
   "error": null,
   "started_at": "2026-10-10T15:40:49Z",
@@ -27,14 +27,14 @@
   },
   "versions": {
     "python": "3.13.1",
-    "micometeo": "0.1.0",
+    "sporameteo": "0.1.0",
     "packages": {
       "cfgv": "3.5.0",
       "distlib": "0.4.3",
       "filelock": "4.1.0",
       "identify": "2.6.20",
       "iniconfig": "2.3.1",
-      "micometeo": "0.1.0",
+      "sporameteo": "0.1.0",
       "nodeenv": "1.11.0",
       "packaging": "26.3",
       "platformdirs": "4.12.4",

@@ -1,4 +1,4 @@
-# Micometeo demo map
+# SporaMeteo demo map
 
 This page shows a map of 500 m grid squares coloured by a score from 0 to 100.
 All scores are made up. They do not describe real mushrooms.
@@ -21,7 +21,7 @@ It gets all score data from the API in `apps/api/`.
 
 1. Connect the phone to the same Wi-Fi as the laptop.
 2. Start the API so it listens on all network addresses, not only on
-   localhost. Run `MICOMETEO_API_HOST=0.0.0.0 python3 -m micometeo_api` in
+   localhost. Run `SPORAMETEO_API_HOST=0.0.0.0 python3 -m sporameteo_api` in
    `apps/api`, or use the Docker command in `apps/api/README.md`. Serve the
    page with `--bind 0.0.0.0` added to the command above.
 3. Find the laptop address, for example 192.168.1.20.
@@ -43,7 +43,7 @@ shows the address it tried.
 
 The page sets two values for timing checks:
 
-- `window.micometeoUsableMs`: milliseconds from page start until the first
+- `window.sporameteoUsableMs`: milliseconds from page start until the first
   squares are drawn and the map is idle.
-- `window.micometeoLastRequest`: `url`, `bytes`, `squares` and `ms` of the last
+- `window.sporameteoLastRequest`: `url`, `bytes`, `squares` and `ms` of the last
   squares request.

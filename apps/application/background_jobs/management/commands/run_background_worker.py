@@ -6,14 +6,14 @@ from django.utils.autoreload import DJANGO_AUTORELOAD_ENV, run_with_reloader
 from django_tasks_db.management.commands.db_worker import Command as DatabaseWorkerCommand
 
 from background_jobs.services import recover_interrupted_jobs
-from background_jobs.worker import MicometeoWorker
+from background_jobs.worker import SporaMeteoWorker
 
 
 logger = logging.getLogger("django_tasks_db")
 
 
 class Command(DatabaseWorkerCommand):
-    help = "Recover Micometeo background jobs, then run the database worker."
+    help = "Recover SporaMeteo background jobs, then run the database worker."
 
     def handle(
         self,
@@ -43,7 +43,7 @@ class Command(DatabaseWorkerCommand):
         excluded_queue_names = exclude_queues.split(",") if exclude_queues else []
         if excluded_queue_names and "*" not in queue_names:
             raise CommandError("--exclude-queues can only be used with --queue-name=*")
-        worker = MicometeoWorker(
+        worker = SporaMeteoWorker(
             queue_names=queue_names,
             interval=interval,
             batch=batch,

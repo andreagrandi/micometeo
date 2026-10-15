@@ -1,7 +1,7 @@
 {
   "experiment": "p3_weather",
   "run_id": "20261010T200448Z-323d30",
-  "command": "micometeo run p3_weather",
+  "command": "sporameteo run p3_weather",
   "status": "completed",
   "error": null,
   "started_at": "2026-10-10T20:04:48Z",
@@ -37,7 +37,7 @@
   },
   "versions": {
     "python": "3.13.1",
-    "micometeo": "0.1.0",
+    "sporameteo": "0.1.0",
     "packages": {
       "affine": "3.0.1",
       "attrs": "26.1.0",
@@ -55,7 +55,7 @@
       "iniconfig": "2.3.1",
       "kiwisolver": "1.5.1",
       "matplotlib": "3.11.2",
-      "micometeo": "0.1.0",
+      "sporameteo": "0.1.0",
       "nodeenv": "1.11.0",
       "numpy": "2.5.3",
       "osmium": "4.3.1",

@@ -1,8 +1,8 @@
-# Micometeo issue reference
+# SporaMeteo issue reference
 
 ## Stable GitHub metadata
 
-Repository: `andreagrandi/micometeo`
+Repository: `andreagrandi/sporameteo`
 
 Project: number `9`, ID `PVT_kwHOAAm1584BmebS`
 
@@ -179,7 +179,7 @@ the PoC ID, such as `P1: ...`.
 ## Efficient single-issue execution
 
 ```sh
-URL=$(gh issue create --repo andreagrandi/micometeo \
+URL=$(gh issue create --repo andreagrandi/sporameteo \
   --title "<title>" --body-file <body.md> \
   --label "<type>" --label "size: <S|M|L|XL>")
 
@@ -201,7 +201,7 @@ After creation, resolve every issue node ID and REST database ID in one query:
 
 ```graphql
 query {
-  repository(owner: "andreagrandi", name: "micometeo") {
+  repository(owner: "andreagrandi", name: "sporameteo") {
     i1: issue(number: 1) { id databaseId url }
     i2: issue(number: 2) { id databaseId url }
   }
@@ -255,7 +255,7 @@ Attach a native child:
 
 ```sh
 gh api --method POST -H "X-GitHub-Api-Version: 2026-03-10" \
-  repos/andreagrandi/micometeo/issues/<parent>/sub_issues \
+  repos/andreagrandi/sporameteo/issues/<parent>/sub_issues \
   -F sub_issue_id=<child-database-id>
 ```
 
@@ -263,7 +263,7 @@ Add a direct blocked-by relationship:
 
 ```sh
 gh api --method POST -H "X-GitHub-Api-Version: 2026-03-10" \
-  repos/andreagrandi/micometeo/issues/<issue>/dependencies/blocked_by \
+  repos/andreagrandi/sporameteo/issues/<issue>/dependencies/blocked_by \
   -F issue_id=<blocker-database-id>
 ```
 

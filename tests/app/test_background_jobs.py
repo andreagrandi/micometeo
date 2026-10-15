@@ -39,11 +39,11 @@ def _worker_environment() -> dict[str, str]:
     environment = os.environ.copy()
     environment.update(
         {
-            "MICOMETEO_DB_NAME": str(database["NAME"]),
-            "MICOMETEO_DB_USER": str(database["USER"]),
-            "MICOMETEO_DB_PASSWORD": str(database["PASSWORD"]),
-            "MICOMETEO_DB_HOST": str(database["HOST"]),
-            "MICOMETEO_DB_PORT": str(database["PORT"]),
+            "SPORAMETEO_DB_NAME": str(database["NAME"]),
+            "SPORAMETEO_DB_USER": str(database["USER"]),
+            "SPORAMETEO_DB_PASSWORD": str(database["PASSWORD"]),
+            "SPORAMETEO_DB_HOST": str(database["HOST"]),
+            "SPORAMETEO_DB_PORT": str(database["PORT"]),
             "PYTHONPATH": os.pathsep.join(
                 [
                     str(PROJECT_ROOT / "apps" / "application"),
@@ -305,7 +305,7 @@ def test_recovery_does_not_fail_task_claimed_by_live_worker_before_task_entry(
     )
     assert attempt.task_id is not None
     environment = _worker_environment()
-    environment["MICOMETEO_TEST_PAUSE_AFTER_TASK_CLAIM"] = "2"
+    environment["SPORAMETEO_TEST_PAUSE_AFTER_TASK_CLAIM"] = "2"
     child = subprocess.Popen(
         _worker_command(worker_id="test-claim-gap-worker"),
         cwd=PROJECT_ROOT,
@@ -344,7 +344,7 @@ def test_recovery_fails_hard_kill_after_queue_claim_before_task_entry(
     )
     assert attempt.task_id is not None
     environment = _worker_environment()
-    environment["MICOMETEO_TEST_PAUSE_AFTER_TASK_CLAIM"] = "5"
+    environment["SPORAMETEO_TEST_PAUSE_AFTER_TASK_CLAIM"] = "5"
     child = subprocess.Popen(
         _worker_command(worker_id="test-claim-kill-worker"),
         cwd=PROJECT_ROOT,

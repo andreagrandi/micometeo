@@ -16,7 +16,7 @@ from estimate_updates.models import EstimateResult, ForecastRun, PublishedForeca
 from map_api import api as map_api
 from map_api import published
 from map_api.published import GRID_TO_WGS84
-from micometeo.finds.grid import format_cell_id
+from sporameteo.finds.grid import format_cell_id
 from national_forest.models import ForestCell
 from national_grid.models import GridBuildCell, GridCell, GridRegion
 from tests.app.test_area_api import _publish_run_for, area_fixture  # noqa: F401
@@ -25,7 +25,7 @@ from tests.app.test_map_api import MAP_DATE, add_update, map_fixture, publish_ru
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
-CACHE_TABLE = "micometeo_map_cache"
+CACHE_TABLE = "sporameteo_map_cache"
 READ_TABLES = (EstimateResult._meta.db_table, ForestCell._meta.db_table)
 BLOCKED_FUNCTIONS = (
     "weather_on_demand.services.request_weather",
@@ -60,7 +60,7 @@ def served(
 ) -> SimpleNamespace:
     """Publish one run for the map fixture and serve it on the fixture date."""
     monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
-    settings.MICOMETEO_FOREST_BUILD_VERSION = map_fixture["build"].version
+    settings.SPORAMETEO_FOREST_BUILD_VERSION = map_fixture["build"].version
     run = publish_run(fixture=map_fixture, updates={"44.00,11.00": map_fixture["new_update"]})
     return SimpleNamespace(fixture=map_fixture, run=run, client=Client())
 
@@ -103,7 +103,7 @@ def served_detail(
     update = area_fixture["update"]
     run = _publish_run_for(update=update)
     monkeypatch.setattr("map_api.api._today", lambda: update.assessment_date)
-    settings.MICOMETEO_FOREST_BUILD_VERSION = update.forest_build.version
+    settings.SPORAMETEO_FOREST_BUILD_VERSION = update.forest_build.version
     return SimpleNamespace(
         update=update,
         run=run,
@@ -182,7 +182,7 @@ def test_a_missing_publication_or_a_view_outside_tuscany_gives_a_clear_unavailab
     no_remote_work: None,
 ) -> None:
     monkeypatch.setattr("map_api.api._today", lambda: MAP_DATE)
-    settings.MICOMETEO_FOREST_BUILD_VERSION = map_fixture["build"].version
+    settings.SPORAMETEO_FOREST_BUILD_VERSION = map_fixture["build"].version
     client = Client()
     query = _squares_query(bbox=map_fixture["bbox"])
 

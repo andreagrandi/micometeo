@@ -28,7 +28,7 @@ Both products now advertise weather-based mushroom maps. Mondo Funghi also docum
 - Geoticket+ advertises current growth predictions for porcini and other mushrooms. Its stated inputs include weather, vegetation, altitude, precipitation and local climate. The app also advertises an altimeter, compass, GPS tracking, a diary of secret places, regulation-change alerts, local alerts, harvest sharing, a community and Mushroom League challenges. These are publisher claims, without accuracy evidence on the checked pages. [Android publisher description](https://play.google.com/store/apps/details?id=com.geoticket)
 - The current iOS release notes describe area photos and growth levels in the bulletin, a new incubation state and a map legend. The store confirms iPhone and iPad availability, free download, monthly and annual Geoticket+ purchases, Apple Wallet support and possible location use while the app is closed. The US listing shows USD 17.99 monthly and USD 24.99 annually. Those are store-region prices, not a verified Italian offer. [iOS publisher listing](https://apps.apple.com/us/app/geoticket/id1475238989?platform=ipad)
 - The Android privacy declaration says the app may collect location and personal information and share location, personal information and other data with third parties. The iOS declaration lists contact information used for tracking. These declarations describe different platforms and are not independent audits. [Google Play](https://play.google.com/store/apps/details?id=com.geoticket), [App Store](https://apps.apple.com/us/app/geoticket/id1475238989?platform=ipad)
-- Its public website also offers outdoor experience bookings and tools for authorities and retailers to sell permits. These belong in the full competitor inventory even if the eventual Micometeo scope excludes them. [Geoticket website](https://geoticket.it/)
+- Its public website also offers outdoor experience bookings and tools for authorities and retailers to sell permits. These belong in the full competitor inventory even if the eventual SporaMeteo scope excludes them. [Geoticket website](https://geoticket.it/)
 
 ### Inferences
 
@@ -94,7 +94,7 @@ These products cover several distinct needs: possible species identification, a 
 
 ### Takeaway
 
-AllTrails provides a separate comparison for planning a visit and navigating it. Its tools should remain optional feature candidates until the user decides whether Micometeo should support the outing after choosing an area. [AllTrails introduction](https://support.alltrails.com/hc/en-us/articles/37200401098516-Getting-started-on-AllTrails)
+AllTrails provides a separate comparison for planning a visit and navigating it. Its tools should remain optional feature candidates until the user decides whether SporaMeteo should support the outing after choosing an area. [AllTrails introduction](https://support.alltrails.com/hc/en-us/articles/37200401098516-Getting-started-on-AllTrails)
 
 ### Cited findings
 
@@ -112,5 +112,5 @@ AllTrails provides a separate comparison for planning a visit and navigating it.
 
 ### Gaps
 
-- This is an outdoor-navigation reference, not evidence that Micometeo needs navigation or that AllTrails predicts porcini growth.
+- This is an outdoor-navigation reference, not evidence that SporaMeteo needs navigation or that AllTrails predicts porcini growth.
 - Exact coverage of advanced layers, Italian subscription prices and moderation procedures beyond editorial trail approval were not established. The official route-export help URL failed to load, so GPX export relies on the device partner's instructions. No navigation or offline download was tested.

@@ -17,7 +17,7 @@ from django.conf import settings
 from django.db import IntegrityError, connection, transaction
 from django.utils import timezone
 
-from micometeo.forecast_method import (
+from sporameteo.forecast_method import (
     CURRENT_METHOD,
     METHODS_BY_VERSION,
     TEMPERATURE_PERIOD_DAYS,
@@ -34,8 +34,8 @@ from micometeo.forecast_method import (
     calculate_forecast,
 )
 from national_forest.models import ForestBuild, ForestCell
-from micometeo.moisture_method import WeatherDay
-from micometeo.weather.policy import PIPELINE_VERSION
+from sporameteo.moisture_method import WeatherDay
+from sporameteo.weather.policy import PIPELINE_VERSION
 from national_terrain.models import TerrainBuild, TerrainCell
 from weather_requests.eligibility import TUSCANY_ISTAT_CODE, canonical_cell_key
 from weather_summaries.models import WeatherSnapshot, WeatherSnapshotDay, WeatherSummary
@@ -61,8 +61,8 @@ from .host_trees import calculation_version, saved_host_trees, tree_inputs_for_a
 METHOD_VERSION = CURRENT_METHOD.version
 DEFAULT_BATCH_SIZE = 1_000
 STALE_ESTIMATE_TASK_AGE = timedelta(minutes=30)
-TERRAIN_BUILD_SETTING = "MICOMETEO_TERRAIN_BUILD_VERSION"
-FOREST_BUILD_SETTING = "MICOMETEO_FOREST_BUILD_VERSION"
+TERRAIN_BUILD_SETTING = "SPORAMETEO_TERRAIN_BUILD_VERSION"
+FOREST_BUILD_SETTING = "SPORAMETEO_FOREST_BUILD_VERSION"
 
 
 class EstimateUpdateError(RuntimeError):

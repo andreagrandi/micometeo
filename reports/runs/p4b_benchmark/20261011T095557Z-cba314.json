@@ -1,7 +1,7 @@
 {
   "experiment": "p4b_benchmark",
   "run_id": "20261011T095557Z-cba314",
-  "command": "micometeo run p4b_benchmark",
+  "command": "sporameteo run p4b_benchmark",
   "status": "completed",
   "error": null,
   "started_at": "2026-10-11T09:55:57Z",
@@ -74,7 +74,7 @@
   },
   "versions": {
     "python": "3.13.1",
-    "micometeo": "0.1.0",
+    "sporameteo": "0.1.0",
     "packages": {
       "affine": "3.0.1",
       "attrs": "26.1.0",
@@ -96,7 +96,7 @@
       "joblib": "1.6.0",
       "kiwisolver": "1.5.1",
       "matplotlib": "3.11.2",
-      "micometeo": "0.1.0",
+      "sporameteo": "0.1.0",
       "multiurl": "0.3.9",
       "narwhals": "2.27.1",
       "nodeenv": "1.11.0",

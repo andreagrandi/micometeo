@@ -52,7 +52,7 @@ SHORT_WEEKDAYS = {
 ACCEPT_LANGUAGE = {"it": "it-IT,it;q=0.9", "en": "en-GB,en;q=0.9"}
 LOCALES = {"it": "it-IT", "en": "en-GB"}
 GOOGLE_MAPS_PAGE = "<title>Google Maps stand-in</title>"
-SQUARES_LAYER = "micometeo-square-estimates"
+SQUARES_LAYER = "sporameteo-square-estimates"
 SETTLE_SECONDS = 15
 
 
@@ -197,7 +197,7 @@ def _labels(page: Page) -> dict[str, str]:
 def _open_real_map(page: Page, base_url: str, *, path: str) -> None:
     page.goto(url=f"{base_url}{path}", wait_until="domcontentloaded")
     page.wait_for_function(
-        "() => window.MicometeoMap?.getDiagnostics?.().squareSetCount >= 1",
+        "() => window.SporaMeteoMap?.getDiagnostics?.().squareSetCount >= 1",
         timeout=30_000,
     )
     _wait_for_idle_map(page)
@@ -208,7 +208,7 @@ def _wait_for_idle_map(page: Page) -> None:
     page.wait_for_function(
         """
         () => {
-          const exposed = window.MicometeoMap;
+          const exposed = window.SporaMeteoMap;
           const last = exposed?.lastRequest;
           return Boolean(
             last
@@ -226,7 +226,7 @@ def _rendered_squares(page: Page) -> dict[str, int]:
     handle = page.wait_for_function(
         """
         (layer) => {
-          const map = window.MicometeoMap.map;
+          const map = window.SporaMeteoMap.map;
           // A style switch removes the layer for a moment before the app adds it again.
           const found = map.getLayer(layer) ? map.queryRenderedFeatures({layers: [layer]}) : [];
           if (!found.length) return false;
@@ -257,7 +257,7 @@ def _square_pixel(page: Page, *, latitude: float, longitude: float) -> tuple[flo
     point = page.evaluate(
         """
         ([lon, lat]) => {
-          const point = window.MicometeoMap.map.project([lon, lat]);
+          const point = window.SporaMeteoMap.map.project([lon, lat]);
           return [point.x, point.y];
         }
         """,
@@ -317,7 +317,7 @@ def _switch_language(visitor: Visitor, *, language: str) -> None:
     with visitor.page.expect_navigation(wait_until="domcontentloaded"):
         visitor.press(visitor.page.locator(f"button[data-language='{language}']"))
     visitor.page.wait_for_function(
-        "() => window.MicometeoMap?.getDiagnostics?.().squareSetCount >= 1",
+        "() => window.SporaMeteoMap?.getDiagnostics?.().squareSetCount >= 1",
         timeout=30_000,
     )
     _wait_for_idle_map(visitor.page)
@@ -383,7 +383,7 @@ def test_real_data_journey_from_search_to_favorite_and_language_switch(
     page.wait_for_function(
         """
         (layer) => {
-          const found = window.MicometeoMap.map.queryRenderedFeatures({layers: [layer]});
+          const found = window.SporaMeteoMap.map.queryRenderedFeatures({layers: [layer]});
           return found.length > 0 && found.every((feature) => !feature.properties?.overview);
         }
         """,
@@ -420,7 +420,7 @@ def test_real_data_journey_from_search_to_favorite_and_language_switch(
     # The navigation link uses the pressed coordinates.
     expected_link = page.evaluate(
         """
-        (state) => window.MicometeoNavigation.buildGoogleMapsUrl({
+        (state) => window.SporaMeteoNavigation.buildGoogleMapsUrl({
           latitude: Number(state.pointLatitude), longitude: Number(state.pointLongitude),
         })
         """,
@@ -486,15 +486,15 @@ def test_real_data_journey_from_search_to_favorite_and_language_switch(
     _open_layers_panel(visitor)
     visitor.press(page.locator("input[name='background'][value='contrast']"))
     expect(page.locator("input[name='background'][value='contrast']")).to_be_checked()
-    page.wait_for_function("() => window.MicometeoMap.getDiagnostics().background === 'contrast'")
+    page.wait_for_function("() => window.SporaMeteoMap.getDiagnostics().background === 'contrast'")
     page.locator("[data-opacity]").fill("85")
     expect(page.locator("[data-opacity-value]")).to_have_text("85%")
-    page.wait_for_function("() => window.MicometeoMap.getDiagnostics().opacity === 85")
+    page.wait_for_function("() => window.SporaMeteoMap.getDiagnostics().opacity === 85")
     assert "background=contrast" in page.url
     assert "opacity=85" in page.url
 
     # Save the area as a favorite and rename it.
-    page.evaluate("key => window.localStorage.removeItem(key)", "micometeo.favorites")
+    page.evaluate("key => window.localStorage.removeItem(key)", "sporameteo.favorites")
     _save_selected(page, name="Prato dell'Orso")
     stored = _read_storage(page)
     assert [item["name"] for item in stored["items"]] == ["Prato dell'Orso"]
@@ -509,7 +509,7 @@ def test_real_data_journey_from_search_to_favorite_and_language_switch(
     # Reload, reopen the favorite and check it shows the current result.
     page.reload(wait_until="domcontentloaded")
     page.wait_for_function(
-        "() => window.MicometeoMap?.getDiagnostics?.().squareSetCount >= 1", timeout=30_000
+        "() => window.SporaMeteoMap?.getDiagnostics?.().squareSetCount >= 1", timeout=30_000
     )
     _open_favorites(page)
     card = page.locator("[data-favorite-id]").filter(has_text="Faggeta di Abetone")
@@ -540,6 +540,6 @@ def test_real_data_view_outside_tuscany_explains_the_gap(
     page = visitor.page
     page.goto(url=f"{base_url}/map/?center=45.46,9.19&zoom=12", wait_until="domcontentloaded")
     expect(page.locator("#mapmsgs")).to_contain_text(_labels(page)["map_outside_coverage"])
-    assert page.evaluate("() => window.MicometeoMap.getDiagnostics().squareSetCount") == 0
+    assert page.evaluate("() => window.SporaMeteoMap.getDiagnostics().squareSetCount") == 0
     expect(page.locator(DETAILS)).to_have_count(0)
     assert visitor.errors == []

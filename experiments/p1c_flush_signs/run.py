@@ -15,8 +15,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pyarrow.parquet as pq
 
-from micometeo.context import RunContext
-from micometeo.finds.counts import in_stage
+from sporameteo.context import RunContext
+from sporameteo.finds.counts import in_stage
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 SIGNS = ["porcini_searches", "funghi_porcini_searches"]

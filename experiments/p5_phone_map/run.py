@@ -20,7 +20,7 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
-from micometeo.context import RunContext
+from sporameteo.context import RunContext
 
 ROOT = Path(__file__).resolve().parents[2]
 TILE_SIZE = 512
@@ -168,9 +168,9 @@ def run(context: RunContext) -> None:
     settings = context.config
     api_dir = ROOT / settings["api_dir"]
     port = free_port()
-    environment = {**os.environ, "MICOMETEO_API_HOST": "127.0.0.1", "MICOMETEO_API_PORT": str(port)}
+    environment = {**os.environ, "SPORAMETEO_API_HOST": "127.0.0.1", "SPORAMETEO_API_PORT": str(port)}
     process = subprocess.Popen(
-        [sys.executable, "-m", "micometeo_api"],
+        [sys.executable, "-m", "sporameteo_api"],
         cwd=api_dir,
         env=environment,
         stdout=subprocess.DEVNULL,
@@ -184,7 +184,7 @@ def run(context: RunContext) -> None:
         process.terminate()
         process.wait(timeout=10)
 
-    context.add_input(api_dir / "micometeo_api" / "demo_grid.json.gz")
+    context.add_input(api_dir / "sporameteo_api" / "demo_grid.json.gz")
     reports_dir = ROOT / settings["reports_dir"]
     outputs = {
         "p5_api_requests.csv": (rows, REQUEST_COLUMNS),

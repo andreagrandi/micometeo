@@ -21,8 +21,8 @@ from django.db import IntegrityError, connection, transaction
 from django.db.models import Count
 from django.utils import timezone
 
-from micometeo.forecast_method import CURRENT_METHOD, ForecastResult
-from micometeo.weather.policy import PIPELINE_VERSION
+from sporameteo.forecast_method import CURRENT_METHOD, ForecastResult
+from sporameteo.weather.policy import PIPELINE_VERSION
 from national_forest.models import ForestBuild, ForestCell
 from national_terrain.models import TerrainBuild
 from weather_requests.eligibility import (

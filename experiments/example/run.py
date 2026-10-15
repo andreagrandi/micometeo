@@ -8,10 +8,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from micometeo.context import RunContext
+from sporameteo.context import RunContext
 
 API_URL = "https://archive-api.open-meteo.com/v1/archive"
-USER_AGENT = "micometeo-experiments/0.1 (research prototype)"
+USER_AGENT = "sporameteo-experiments/0.1 (research prototype)"
 TIMEOUT_SECONDS = 30
 
 

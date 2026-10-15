@@ -20,10 +20,10 @@ import shapely
 from pyproj import Transformer
 from rasterio.warp import transform_bounds
 
-from micometeo.context import RunContext
-from micometeo.finds.roads import area_shapes
-from micometeo.habitat.forest import LICENCE, SERVICE_URL, mask_unusable
-from micometeo.habitat.grid import read_download_note, write_download_note
+from sporameteo.context import RunContext
+from sporameteo.finds.roads import area_shapes
+from sporameteo.habitat.forest import LICENCE, SERVICE_URL, mask_unusable
+from sporameteo.habitat.grid import read_download_note, write_download_note
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 SQUARE_SIZE_M = 500

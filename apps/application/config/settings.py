@@ -1,4 +1,4 @@
-"""Django settings for the local Micometeo application."""
+"""Django settings for the local SporaMeteo application."""
 
 import importlib.util
 import os
@@ -43,25 +43,25 @@ def _env_list(*, name: str, default: list[str]) -> list[str]:
 
 
 SECRET_KEY = os.getenv(
-    "MICOMETEO_DJANGO_SECRET_KEY",
+    "SPORAMETEO_DJANGO_SECRET_KEY",
     "django-insecure-local-development-placeholder",
 )
-DEBUG = _env_bool(name="MICOMETEO_DEBUG", default=False)
-ALLOWED_HOSTS = _env_list(name="MICOMETEO_ALLOWED_HOSTS", default=["127.0.0.1", "localhost"])
+DEBUG = _env_bool(name="SPORAMETEO_DEBUG", default=False)
+ALLOWED_HOSTS = _env_list(name="SPORAMETEO_ALLOWED_HOSTS", default=["127.0.0.1", "localhost"])
 CSRF_TRUSTED_ORIGINS = _env_list(
-    name="MICOMETEO_CSRF_TRUSTED_ORIGINS",
+    name="SPORAMETEO_CSRF_TRUSTED_ORIGINS",
     default=["http://127.0.0.1:8010", "http://localhost:8010"],
 )
 
 # Behind the Dokku proxy, TLS ends at the proxy and it sends X-Forwarded-Proto.
 # The flags stay off by default so local development and tests use plain HTTP.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SECURE_SSL_REDIRECT = _env_bool(name="MICOMETEO_SECURE_SSL_REDIRECT", default=False)
+SECURE_SSL_REDIRECT = _env_bool(name="SPORAMETEO_SECURE_SSL_REDIRECT", default=False)
 # Dokku checks /health/ over plain HTTP inside the container, so it must not redirect.
 SECURE_REDIRECT_EXEMPT = [r"^health/$"]
-SESSION_COOKIE_SECURE = _env_bool(name="MICOMETEO_SESSION_COOKIE_SECURE", default=False)
-CSRF_COOKIE_SECURE = _env_bool(name="MICOMETEO_CSRF_COOKIE_SECURE", default=False)
-SECURE_HSTS_SECONDS = _env_int(name="MICOMETEO_SECURE_HSTS_SECONDS", default=0)
+SESSION_COOKIE_SECURE = _env_bool(name="SPORAMETEO_SESSION_COOKIE_SECURE", default=False)
+CSRF_COOKIE_SECURE = _env_bool(name="SPORAMETEO_CSRF_COOKIE_SECURE", default=False)
+SECURE_HSTS_SECONDS = _env_int(name="SPORAMETEO_SECURE_HSTS_SECONDS", default=0)
 
 INSTALLED_APPS = [
     "django.contrib.auth",
@@ -85,46 +85,46 @@ INSTALLED_APPS = [
     "web_ui",
 ]
 
-MICOMETEO_TERRAIN_BUILD_VERSION = os.getenv(
-    "MICOMETEO_TERRAIN_BUILD_VERSION", "italy-terrain-glo30-2021-v2"
+SPORAMETEO_TERRAIN_BUILD_VERSION = os.getenv(
+    "SPORAMETEO_TERRAIN_BUILD_VERSION", "italy-terrain-glo30-2021-v2"
 )
-MICOMETEO_FOREST_BUILD_VERSION = os.getenv(
-    "MICOMETEO_FOREST_BUILD_VERSION", "italy-forest-copernicus-2018-v1"
+SPORAMETEO_FOREST_BUILD_VERSION = os.getenv(
+    "SPORAMETEO_FOREST_BUILD_VERSION", "italy-forest-copernicus-2018-v1"
 )
-MICOMETEO_PLACE_SEARCH_URL = os.getenv(
-    "MICOMETEO_PLACE_SEARCH_URL", "https://photon.komoot.io/api"
+SPORAMETEO_PLACE_SEARCH_URL = os.getenv(
+    "SPORAMETEO_PLACE_SEARCH_URL", "https://photon.komoot.io/api"
 )
-MICOMETEO_PLACE_SEARCH_TIMEOUT = float(os.getenv("MICOMETEO_PLACE_SEARCH_TIMEOUT", "4"))
-MICOMETEO_PLACE_SEARCH_CACHE_SECONDS = int(
-    os.getenv("MICOMETEO_PLACE_SEARCH_CACHE_SECONDS", "2592000")
+SPORAMETEO_PLACE_SEARCH_TIMEOUT = float(os.getenv("SPORAMETEO_PLACE_SEARCH_TIMEOUT", "4"))
+SPORAMETEO_PLACE_SEARCH_CACHE_SECONDS = int(
+    os.getenv("SPORAMETEO_PLACE_SEARCH_CACHE_SECONDS", "2592000")
 )
-MICOMETEO_PLACE_SEARCH_EMPTY_CACHE_SECONDS = int(
-    os.getenv("MICOMETEO_PLACE_SEARCH_EMPTY_CACHE_SECONDS", "900")
+SPORAMETEO_PLACE_SEARCH_EMPTY_CACHE_SECONDS = int(
+    os.getenv("SPORAMETEO_PLACE_SEARCH_EMPTY_CACHE_SECONDS", "900")
 )
-MICOMETEO_PLACE_SEARCH_REQUEST_INTERVAL = float(
-    os.getenv("MICOMETEO_PLACE_SEARCH_REQUEST_INTERVAL", "1")
+SPORAMETEO_PLACE_SEARCH_REQUEST_INTERVAL = float(
+    os.getenv("SPORAMETEO_PLACE_SEARCH_REQUEST_INTERVAL", "1")
 )
-MICOMETEO_PLACE_SEARCH_LIMIT = int(os.getenv("MICOMETEO_PLACE_SEARCH_LIMIT", "8"))
-MICOMETEO_PLACE_SEARCH_MIN_LENGTH = int(os.getenv("MICOMETEO_PLACE_SEARCH_MIN_LENGTH", "2"))
-MICOMETEO_PLACE_SEARCH_USER_AGENT = os.getenv(
-    "MICOMETEO_PLACE_SEARCH_USER_AGENT", "Micometeo/1.0 place search"
+SPORAMETEO_PLACE_SEARCH_LIMIT = int(os.getenv("SPORAMETEO_PLACE_SEARCH_LIMIT", "8"))
+SPORAMETEO_PLACE_SEARCH_MIN_LENGTH = int(os.getenv("SPORAMETEO_PLACE_SEARCH_MIN_LENGTH", "2"))
+SPORAMETEO_PLACE_SEARCH_USER_AGENT = os.getenv(
+    "SPORAMETEO_PLACE_SEARCH_USER_AGENT", "SporaMeteo/1.0 place search"
 )
-MICOMETEO_JRC_DIRECTORY = os.getenv(
-    "MICOMETEO_JRC_DIRECTORY", str(BASE_DIR.parent.parent / "data/raw/jrc_host_trees")
+SPORAMETEO_JRC_DIRECTORY = os.getenv(
+    "SPORAMETEO_JRC_DIRECTORY", str(BASE_DIR.parent.parent / "data/raw/jrc_host_trees")
 )
 
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "micometeo-api",
+        "LOCATION": "sporameteo-api",
     },
     # Completed map data shared by all processes. Entries do not expire, the table is bounded.
     "map": {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",
-        "LOCATION": "micometeo_map_cache",
+        "LOCATION": "sporameteo_map_cache",
         "TIMEOUT": None,
         "OPTIONS": {
-            "MAX_ENTRIES": int(os.getenv("MICOMETEO_MAP_CACHE_MAX_ENTRIES", "50000")),
+            "MAX_ENTRIES": int(os.getenv("SPORAMETEO_MAP_CACHE_MAX_ENTRIES", "50000")),
             "CULL_FREQUENCY": 4,
         },
     },
@@ -164,7 +164,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 def database_config(*, environ: Mapping[str, str]) -> dict[str, Any]:
-    """Build the default database settings from DATABASE_URL or MICOMETEO_DB_* values.
+    """Build the default database settings from DATABASE_URL or SPORAMETEO_DB_* values.
 
     DATABASE_URL wins when it is set, which is how Dokku passes the database.
     """
@@ -179,11 +179,11 @@ def database_config(*, environ: Mapping[str, str]) -> dict[str, Any]:
         return config
     return {
         "ENGINE": "django.contrib.gis.db.backends.postgis",
-        "NAME": environ.get("MICOMETEO_DB_NAME", "micometeo"),
-        "USER": environ.get("MICOMETEO_DB_USER", "micometeo"),
-        "PASSWORD": environ.get("MICOMETEO_DB_PASSWORD", "replace-with-a-local-password"),
-        "HOST": environ.get("MICOMETEO_DB_HOST", "127.0.0.1"),
-        "PORT": environ.get("MICOMETEO_DB_PORT", "5542"),
+        "NAME": environ.get("SPORAMETEO_DB_NAME", "sporameteo"),
+        "USER": environ.get("SPORAMETEO_DB_USER", "sporameteo"),
+        "PASSWORD": environ.get("SPORAMETEO_DB_PASSWORD", "replace-with-a-local-password"),
+        "HOST": environ.get("SPORAMETEO_DB_HOST", "127.0.0.1"),
+        "PORT": environ.get("SPORAMETEO_DB_PORT", "5542"),
         "CONN_MAX_AGE": 0,
         "OPTIONS": {"connect_timeout": 5},
     }
@@ -198,7 +198,7 @@ TASKS = {
 }
 
 LANGUAGE_CODE = "en"
-LANGUAGE_COOKIE_NAME = "micometeo_language"
+LANGUAGE_COOKIE_NAME = "sporameteo_language"
 LANGUAGES = [("en", "English"), ("it", "Italiano")]
 TIME_ZONE = "Europe/Rome"
 USE_I18N = True
@@ -214,18 +214,18 @@ STATICFILES_DIRS = [
     BASE_DIR.parent.parent / "tools/map_checks/node_modules/maplibre-gl/dist",
 ]
 LOCALE_PATHS = [BASE_DIR / "web_ui" / "locale", BASE_DIR / "web_ui" / "landing_locale"]
-MICOMETEO_UI_FIXTURE_PAGES = _env_bool(name="MICOMETEO_UI_FIXTURE_PAGES", default=False)
+SPORAMETEO_UI_FIXTURE_PAGES = _env_bool(name="SPORAMETEO_UI_FIXTURE_PAGES", default=False)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 GDAL_LIBRARY_PATH = (
-    os.getenv("MICOMETEO_GDAL_LIBRARY_PATH")
+    os.getenv("SPORAMETEO_GDAL_LIBRARY_PATH")
     or _rasterio_gdal_library_path()
     or os.getenv("GDAL_LIBRARY_PATH")
 )
 GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH")
 
 # Email for the nightly check (Resend). Without a key, emails go to the console.
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Micometeo <noreply@micometeo.com>")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "SporaMeteo <noreply@sporameteo.com>")
 NIGHTLY_ALERT_EMAIL = os.getenv("NIGHTLY_ALERT_EMAIL", "")
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 if RESEND_API_KEY:

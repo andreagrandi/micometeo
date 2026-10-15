@@ -7,7 +7,7 @@ in `docs/decisions.md` with the date and the reason, and the report of issue #9
 lists it.
 
 The split and the comparison points are built by
-`uv run micometeo run p4_test_rules`, from `experiments/p4_test_rules/`. The
+`uv run sporameteo run p4_test_rules`, from `experiments/p4_test_rules/`. The
 output goes to `data/processed/p4_test_rules/<run_id>/` and stays out of Git.
 The same seed and the same P1 run give the same files.
 

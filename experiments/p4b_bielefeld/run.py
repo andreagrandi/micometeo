@@ -11,10 +11,10 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.csv as pacsv
 
-from micometeo.benchmark import features, models, scoring
-from micometeo.config import load_config
-from micometeo.context import RunContext
-from micometeo.habitat.grid import read_download_note, write_download_note
+from sporameteo.benchmark import features, models, scoring
+from sporameteo.config import load_config
+from sporameteo.context import RunContext
+from sporameteo.habitat.grid import read_download_note, write_download_note
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 ZIP_NAME = "Boletus_fruiting_triggers-V1.2.zip"

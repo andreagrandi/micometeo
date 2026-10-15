@@ -167,13 +167,13 @@ def _worker_environment(*, endpoint: str) -> dict[str, str]:
     environment = os.environ.copy()
     environment.update(
         {
-            "MICOMETEO_DB_NAME": str(database["NAME"]),
-            "MICOMETEO_DB_USER": str(database["USER"]),
-            "MICOMETEO_DB_PASSWORD": str(database["PASSWORD"]),
-            "MICOMETEO_DB_HOST": str(database["HOST"]),
-            "MICOMETEO_DB_PORT": str(database["PORT"]),
-            "MICOMETEO_WEATHER_ENDPOINT": endpoint,
-            "MICOMETEO_WEATHER_HISTORY_ENDPOINT": endpoint,
+            "SPORAMETEO_DB_NAME": str(database["NAME"]),
+            "SPORAMETEO_DB_USER": str(database["USER"]),
+            "SPORAMETEO_DB_PASSWORD": str(database["PASSWORD"]),
+            "SPORAMETEO_DB_HOST": str(database["HOST"]),
+            "SPORAMETEO_DB_PORT": str(database["PORT"]),
+            "SPORAMETEO_WEATHER_ENDPOINT": endpoint,
+            "SPORAMETEO_WEATHER_HISTORY_ENDPOINT": endpoint,
             "PYTHONPATH": os.pathsep.join(
                 [
                     str(PROJECT_ROOT / "apps" / "application"),
@@ -488,10 +488,10 @@ def test_subprocess_worker_uses_real_http_and_duplicate_weather_tasks_are_serial
     server_thread = Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
     endpoint = f"http://127.0.0.1:{server.server_port}/v1/forecast"
-    previous_endpoint = os.environ.get("MICOMETEO_WEATHER_ENDPOINT")
-    previous_history_endpoint = os.environ.get("MICOMETEO_WEATHER_HISTORY_ENDPOINT")
-    os.environ["MICOMETEO_WEATHER_ENDPOINT"] = endpoint
-    os.environ["MICOMETEO_WEATHER_HISTORY_ENDPOINT"] = endpoint
+    previous_endpoint = os.environ.get("SPORAMETEO_WEATHER_ENDPOINT")
+    previous_history_endpoint = os.environ.get("SPORAMETEO_WEATHER_HISTORY_ENDPOINT")
+    os.environ["SPORAMETEO_WEATHER_ENDPOINT"] = endpoint
+    os.environ["SPORAMETEO_WEATHER_HISTORY_ENDPOINT"] = endpoint
     try:
         result = weather_services.request_weather(
             cells=(_cell(),),
@@ -543,13 +543,13 @@ def test_subprocess_worker_uses_real_http_and_duplicate_weather_tasks_are_serial
         assert batch.status == WeatherFetchBatch.Status.COMPLETED
     finally:
         if previous_history_endpoint is None:
-            os.environ.pop("MICOMETEO_WEATHER_HISTORY_ENDPOINT", None)
+            os.environ.pop("SPORAMETEO_WEATHER_HISTORY_ENDPOINT", None)
         else:
-            os.environ["MICOMETEO_WEATHER_HISTORY_ENDPOINT"] = previous_history_endpoint
+            os.environ["SPORAMETEO_WEATHER_HISTORY_ENDPOINT"] = previous_history_endpoint
         if previous_endpoint is None:
-            os.environ.pop("MICOMETEO_WEATHER_ENDPOINT", None)
+            os.environ.pop("SPORAMETEO_WEATHER_ENDPOINT", None)
         else:
-            os.environ["MICOMETEO_WEATHER_ENDPOINT"] = previous_endpoint
+            os.environ["SPORAMETEO_WEATHER_ENDPOINT"] = previous_endpoint
         server.shutdown()
         server.server_close()
         server_thread.join(timeout=5)

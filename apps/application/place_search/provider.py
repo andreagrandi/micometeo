@@ -83,7 +83,7 @@ def _setting(name: str, default: object) -> object:
 
 
 def _endpoint() -> str:
-    return str(_setting("MICOMETEO_PLACE_SEARCH_URL", "https://photon.komoot.io/api")).rstrip("?")
+    return str(_setting("SPORAMETEO_PLACE_SEARCH_URL", "https://photon.komoot.io/api")).rstrip("?")
 
 
 def _language(value: str | None) -> str:
@@ -96,7 +96,7 @@ def _provider_language(language: str) -> str:
 
 
 def _throttle() -> None:
-    interval = float(_setting("MICOMETEO_PLACE_SEARCH_REQUEST_INTERVAL", 1.0))
+    interval = float(_setting("SPORAMETEO_PLACE_SEARCH_REQUEST_INTERVAL", 1.0))
     now = timezone.now()
     with transaction.atomic():
         row, _ = PlaceSearchThrottle.objects.select_for_update().get_or_create(id=1)
@@ -136,7 +136,7 @@ def _retry_after(value: str | None) -> int:
 def _request(*, query: str, language: str) -> dict[str, object]:
     parameters = {
         "q": query,
-        "limit": int(_setting("MICOMETEO_PLACE_SEARCH_LIMIT", 8)),
+        "limit": int(_setting("SPORAMETEO_PLACE_SEARCH_LIMIT", 8)),
         "countrycode": "IT",
         "lang": _provider_language(language),
         "layer": ["city", "locality", "district"],
@@ -147,13 +147,13 @@ def _request(*, query: str, language: str) -> dict[str, object]:
         headers={
             "Accept": "application/json",
             "User-Agent": str(
-                _setting("MICOMETEO_PLACE_SEARCH_USER_AGENT", "Micometeo/1.0 place search")
+                _setting("SPORAMETEO_PLACE_SEARCH_USER_AGENT", "SporaMeteo/1.0 place search")
             ),
         },
         method="GET",
     )
     try:
-        with urlopen(url=request, timeout=float(_setting("MICOMETEO_PLACE_SEARCH_TIMEOUT", 4.0))) as response:
+        with urlopen(url=request, timeout=float(_setting("SPORAMETEO_PLACE_SEARCH_TIMEOUT", 4.0))) as response:
             status = getattr(response, "status", None) or response.getcode()
             if status == 429:
                 raise PlaceSearchThrottled(retry_after=_retry_after(response.headers.get("Retry-After")))
@@ -239,7 +239,7 @@ def _parse_results(data: dict[str, object]) -> list[dict[str, object]]:
         parsed = _feature_result(feature)
         if parsed is not None:
             results.append(parsed.as_dict())
-    return results[: int(_setting("MICOMETEO_PLACE_SEARCH_LIMIT", 8))]
+    return results[: int(_setting("SPORAMETEO_PLACE_SEARCH_LIMIT", 8))]
 
 
 def _result_matches_query(*, result: object, query: str) -> bool:
@@ -265,7 +265,7 @@ def cached_place_results(
 ) -> tuple[list[dict[str, object]], bool]:
     """Return an exact cache hit or a read-only prefix preview."""
     normalized = normalize_query(query)
-    minimum = int(_setting("MICOMETEO_PLACE_SEARCH_MIN_LENGTH", 2))
+    minimum = int(_setting("SPORAMETEO_PLACE_SEARCH_MIN_LENGTH", 2))
     if len(normalized) < minimum:
         return [], False
     selected_language = _language(language)
@@ -289,7 +289,7 @@ def cached_place_results(
     ).order_by("-fetched_at", "-id")[:50]
     results: list[dict[str, object]] = []
     seen: set[tuple[str, str, str, str]] = set()
-    limit = int(_setting("MICOMETEO_PLACE_SEARCH_LIMIT", 8))
+    limit = int(_setting("SPORAMETEO_PLACE_SEARCH_LIMIT", 8))
     for cache_row in related:
         for result in cache_row.results:
             if not _result_matches_query(result=result, query=normalized):
@@ -309,7 +309,7 @@ def cached_place_results(
 def search_places(*, query: str, language: str | None = None) -> tuple[list[dict[str, object]], bool]:
     """Return cached or fresh Italian Photon results for one query."""
     normalized = normalize_query(query)
-    if len(normalized) < int(_setting("MICOMETEO_PLACE_SEARCH_MIN_LENGTH", 2)):
+    if len(normalized) < int(_setting("SPORAMETEO_PLACE_SEARCH_MIN_LENGTH", 2)):
         return [], True
     selected_language = _language(language)
     endpoint = _endpoint()
@@ -329,7 +329,7 @@ def search_places(*, query: str, language: str | None = None) -> tuple[list[dict
         _set_throttle_cooldown(seconds=error.retry_after or 1)
         raise
     results = _parse_results(data)
-    ttl_setting = "MICOMETEO_PLACE_SEARCH_CACHE_SECONDS" if results else "MICOMETEO_PLACE_SEARCH_EMPTY_CACHE_SECONDS"
+    ttl_setting = "SPORAMETEO_PLACE_SEARCH_CACHE_SECONDS" if results else "SPORAMETEO_PLACE_SEARCH_EMPTY_CACHE_SECONDS"
     default_ttl = 2_592_000 if results else 900
     ttl = max(1, int(_setting(ttl_setting, default_ttl)))
     PlaceSearchCache.objects.update_or_create(
@@ -354,4 +354,4 @@ def search_places(*, query: str, language: str | None = None) -> tuple[list[dict
 
 def request_interval() -> float:
     """Expose the configured local request interval for API headers."""
-    return max(0.0, float(_setting("MICOMETEO_PLACE_SEARCH_REQUEST_INTERVAL", 1.0)))
+    return max(0.0, float(_setting("SPORAMETEO_PLACE_SEARCH_REQUEST_INTERVAL", 1.0)))

@@ -1,7 +1,7 @@
 # Tuscany weather run
 
 This report covers issue #98. It records the first real run of
-`refresh_tuscany_weather` on the local database `micometeo` on 13 October 2026.
+`refresh_tuscany_weather` on the local database `sporameteo` on 13 October 2026.
 The forest build `italy-forest-copernicus-2018-v1` covers Italy, and the
 command kept only the 71,031 forest squares of ISTAT region 09. They share 333
 weather cells. No national request, new provider or deployment was part of

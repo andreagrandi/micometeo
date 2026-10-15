@@ -11,7 +11,7 @@ are recorded in the [published issue index](mvp_github_issues.md).
 
 ## GitHub call graph
 
-Read repository labels, reference-project fields and existing Micometeo issues once. Preserve existing project assignments before editing field colors. Draft every issue below before publication. Create 34 issues in dependency order through `gh api`, retaining their returned node and database IDs. Add them to Project 9 in one GraphQL request and assign Priority, Area, Status and Size in one request. Attach 26 native children and 37 direct dependencies with the documented REST endpoints. Verify the final issue bodies, labels, project fields and native relationships together where the API supports it. No GitHub mutations run in parallel.
+Read repository labels, reference-project fields and existing SporaMeteo issues once. Preserve existing project assignments before editing field colors. Draft every issue below before publication. Create 34 issues in dependency order through `gh api`, retaining their returned node and database IDs. Add them to Project 9 in one GraphQL request and assign Priority, Area, Status and Size in one request. Attach 26 native children and 37 direct dependencies with the documented REST endpoints. Verify the final issue bodies, labels, project fields and native relationships together where the API supports it. No GitHub mutations run in parallel.
 
 ## Classifications
 
@@ -54,7 +54,7 @@ Read repository labels, reference-project fields and existing Micometeo issues o
 
 ## Label and project corrections
 
-Copy shared repository labels from Book Corners and Draft Omen. Preserve repository-specific labels and do not copy the names of unrelated projects. Copy Draft Omen's size-label colors and descriptions. Use the shared Priority colors, red for High, yellow for Medium and blue for Low. Use the shared Size colors, green for S, blue for M, orange for L and red for XL. Keep Status unchanged because it already matches. Retain Micometeo's Area names and use the same project color palette, with blue for Observations, green for Habitat, yellow for Weather, purple for Modeling, pink for Web, orange for Operations and grey for Research. Preserve existing issue assignments if updating options changes their identifiers.
+Copy shared repository labels from Book Corners and Draft Omen. Preserve repository-specific labels and do not copy the names of unrelated projects. Copy Draft Omen's size-label colors and descriptions. Use the shared Priority colors, red for High, yellow for Medium and blue for Low. Use the shared Size colors, green for S, blue for M, orange for L and red for XL. Keep Status unchanged because it already matches. Retain SporaMeteo's Area names and use the same project color palette, with blue for Observations, green for Habitat, yellow for Weather, purple for Modeling, pink for Web, orange for Operations and grey for Research. Preserve existing issue assignments if updating options changes their identifiers.
 
 ## Draft issue bodies
 
@@ -455,7 +455,7 @@ The new application needs repeatable checks, but copying Book Corners wholesale 
 
 #### Proposed change
 
-Adapt Book Corners' Python, PostGIS and frontend-build check patterns for Micometeo. Document the equivalent local commands. Include no deploy workflow, deployment environment, VPS access or domain setup.
+Adapt Book Corners' Python, PostGIS and frontend-build check patterns for SporaMeteo. Document the equivalent local commands. Include no deploy workflow, deployment environment, VPS access or domain setup.
 
 #### Acceptance Criteria
 
@@ -1141,7 +1141,7 @@ Visitors need to hand the selected destination to their navigation app.
 
 #### Proposed change
 
-Add the external-navigation action from the selected design. Use the actual selected coordinates and provide an appropriate browser fallback. Keep route calculation and GPS tracking outside Micometeo.
+Add the external-navigation action from the selected design. Use the actual selected coordinates and provide an appropriate browser fallback. Keep route calculation and GPS tracking outside SporaMeteo.
 
 #### Acceptance Criteria
 

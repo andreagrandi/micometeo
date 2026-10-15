@@ -38,7 +38,7 @@ def main() -> None:
         }
     else:
         for name in ("northern_apennines", "alps", "calabria"):
-            raw = (args.data_dir / f"micometeo-map-{name}.geojson").read_bytes()
+            raw = (args.data_dir / f"sporameteo-map-{name}.geojson").read_bytes()
             compressed = gzip.compress(data=raw, mtime=0)
             assets[f"/{name}.geojson"] = (compressed, "application/geo+json", True)
             manifest[name] = {"raw_bytes": len(raw), "gzip_bytes": len(compressed)}

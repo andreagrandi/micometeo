@@ -1,7 +1,7 @@
 {
   "experiment": "p6_costs",
   "run_id": "20261011T142322Z-4fe9ea",
-  "command": "micometeo run p6_costs",
+  "command": "sporameteo run p6_costs",
   "status": "completed",
   "error": null,
   "started_at": "2026-10-11T14:23:22Z",
@@ -69,7 +69,7 @@
   },
   "versions": {
     "python": "3.13.1",
-    "micometeo": "0.1.0",
+    "sporameteo": "0.1.0",
     "packages": {
       "affine": "3.0.1",
       "attrs": "26.1.0",
@@ -91,7 +91,7 @@
       "joblib": "1.6.0",
       "kiwisolver": "1.5.1",
       "matplotlib": "3.11.2",
-      "micometeo": "0.1.0",
+      "sporameteo": "0.1.0",
       "multiurl": "0.3.9",
       "narwhals": "2.27.1",
       "nodeenv": "1.11.0",

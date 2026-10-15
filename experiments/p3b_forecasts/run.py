@@ -13,9 +13,9 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from micometeo.context import RunContext
-from micometeo.weather import openmeteo
-from micometeo.weather.features import (
+from sporameteo.context import RunContext
+from sporameteo.weather import openmeteo
+from sporameteo.weather.features import (
     ERA5,
     FORECAST_FIRST_RUN,
     IFS,

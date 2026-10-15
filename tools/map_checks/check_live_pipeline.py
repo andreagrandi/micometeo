@@ -40,7 +40,7 @@ def _load_django(*, database_name: str) -> None:
     if str(application) not in sys.path:
         sys.path.insert(0, str(application))
     os.environ["DJANGO_SETTINGS_MODULE"] = "config.settings"
-    os.environ["MICOMETEO_DB_NAME"] = database_name
+    os.environ["SPORAMETEO_DB_NAME"] = database_name
 
     import django
 

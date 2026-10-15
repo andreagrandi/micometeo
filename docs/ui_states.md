@@ -12,7 +12,7 @@ issues replace the marked boundaries without changing the page shell.
 | Target date | `data-target-date` and the `date` URL parameter | #56 date results |
 | Map centre and zoom | `data-map-center`, `data-map-zoom`, and URL parameters | #56 Leaflet map |
 | Update and assessment date | `data-update-id`, `data-assessment-date`, and URL parameters | #58 stored update |
-| Language | An explicit `micometeo_language` cookie, then browser `Accept-Language` | Shared by every page |
+| Language | An explicit `sporameteo_language` cookie, then browser `Accept-Language` | Shared by every page |
 | Open panel and folded cards | `data-open-panel` actions, root `data-panel`, `data-fold` controls, and URL parameters | #56 map controls |
 | Details panel and sheet height | root `data-details-open`, aside `data-details`, `data-close-details`, `data-sheet-height`, and URL parameters | #58 real area contents |
 | Map layers | `data-overlay`, `data-opacity`, background radio inputs, and URL parameters | #56 map controls |
@@ -25,9 +25,9 @@ The square, date, update, assessment date, map centre, zoom, open panels,
 folded cards, sheet height and layer settings survive the switch and a later
 reload. An unsupported browser
 language falls back to English. Browser language detection does not set the
-language cookie. The visible language switch sets `micometeo_language`.
+language cookie. The visible language switch sets `sporameteo_language`.
 Forecast dates are ISO calendar days and are displayed in Europe/Rome.
-`web_ui.formatting` and `window.MicometeoFormatting` keep this rule in one
+`web_ui.formatting` and `window.SporaMeteoFormatting` keep this rule in one
 place. The browser names are `formatDate`, `formatNumber` and
 `formatMeasurement`. Italian displays `12,5 mm` and `11 ottobre 2026`; English displays
 `12.5 mm` and `11 October 2026`.
@@ -72,7 +72,7 @@ from that representative. The current map centre is never used as a
 destination. Closing the sheet keeps the selected map day, invalidates its
 detail request and returns focus to the map. Escape follows the same path.
 
-Fixture pages remain gated behind `MICOMETEO_UI_FIXTURE_PAGES=true`. The
+Fixture pages remain gated behind `SPORAMETEO_UI_FIXTURE_PAGES=true`. The
 normal `/map/` route renders only responses from the live API and does not use
 illustrative details.
 
@@ -97,7 +97,7 @@ local results; the PR checks report remote CI separately.
 ## Fixture states
 
 Fixture pages are disabled by default. Enable them locally with
-`MICOMETEO_UI_FIXTURE_PAGES=true` and open one of these routes:
+`SPORAMETEO_UI_FIXTURE_PAGES=true` and open one of these routes:
 
 ```text
 /map/fixture/loading/
@@ -138,7 +138,7 @@ uv run pytest tests/e2e
 ```
 
 The e2e fixture starts a local Django server with fixture pages enabled. Set
-`MICOMETEO_BASE_URL` when an existing server should be reused. The checks cover
+`SPORAMETEO_BASE_URL` when an existing server should be reused. The checks cover
 browser language fallback, explicit switching, URL state preservation, date and
 measurement formatting, keyboard focus, all nine shared states, and phone
 overflow in Chromium and WebKit.
@@ -151,7 +151,7 @@ focus with Escape.
 On 12 October 2026, the landing page and selected-area fixture were compared
 in headed Chrome with `docs/design/final/` at 1440 by 900 and 390 by 844.
 The map was also checked at 320 by 568. Temporary screenshots are under
-`/tmp/micometeo55-*.png`.
+`/tmp/sporameteo55-*.png`.
 
 The comparison restored the landing sections, regional cards, closing band
 and footer. It also corrected the map's date strip, button borders, details
@@ -195,7 +195,7 @@ controls.
 
 Final local verification on 12 October 2026 passed 371 application checks and
 100 browser checks, run separately. The browser run used
-`MICOMETEO_BASE_URL=http://127.0.0.1:8035 uv run pytest tests/e2e --tb=short`.
+`SPORAMETEO_BASE_URL=http://127.0.0.1:8035 uv run pytest tests/e2e --tb=short`.
 CSS builds, translation compilation, Django checks and repository file checks
 also passed. The final source review found no remaining material issues.
 These are local results. Remote CI has not run for this change.
@@ -204,7 +204,7 @@ These are local results. Remote CI has not run for this change.
 
 Issue #57 adds the selection state used by search, current location, map
 clicks and the centre selection button. The browser emits a
-`micometeo:selectionchange` event after the state changes.
+`sporameteo:selectionchange` event after the state changes.
 
 The event detail contains:
 

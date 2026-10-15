@@ -153,8 +153,8 @@ def test_database_url_wins_over_separate_database_values() -> None:
     config = database_config(
         environ={
             "DATABASE_URL": "postgis://dokku:secret@db.internal:5432/production",
-            "MICOMETEO_DB_NAME": "ignored",
-            "MICOMETEO_DB_HOST": "ignored-host",
+            "SPORAMETEO_DB_NAME": "ignored",
+            "SPORAMETEO_DB_HOST": "ignored-host",
         }
     )
 
@@ -171,11 +171,11 @@ def test_database_url_wins_over_separate_database_values() -> None:
 def test_separate_database_values_are_used_without_database_url() -> None:
     config = database_config(
         environ={
-            "MICOMETEO_DB_NAME": "custom",
-            "MICOMETEO_DB_USER": "custom_user",
-            "MICOMETEO_DB_PASSWORD": "custom_password",
-            "MICOMETEO_DB_HOST": "custom-host",
-            "MICOMETEO_DB_PORT": "6543",
+            "SPORAMETEO_DB_NAME": "custom",
+            "SPORAMETEO_DB_USER": "custom_user",
+            "SPORAMETEO_DB_PASSWORD": "custom_password",
+            "SPORAMETEO_DB_HOST": "custom-host",
+            "SPORAMETEO_DB_PORT": "6543",
         }
     )
 
@@ -194,8 +194,8 @@ def test_separate_database_values_are_used_without_database_url() -> None:
 def test_database_defaults_are_used_when_nothing_is_set() -> None:
     config = database_config(environ={})
 
-    assert config["NAME"] == "micometeo"
-    assert config["USER"] == "micometeo"
+    assert config["NAME"] == "sporameteo"
+    assert config["USER"] == "sporameteo"
     assert config["HOST"] == "127.0.0.1"
     assert config["PORT"] == "5542"
     assert config["OPTIONS"] == {"connect_timeout": 5}

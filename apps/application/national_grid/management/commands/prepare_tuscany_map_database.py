@@ -39,11 +39,11 @@ class Command(BaseCommand):
         parser.add_argument("--source-grid-build-version")
         parser.add_argument(
             "--source-forest-build-version",
-            default=getattr(settings, "MICOMETEO_FOREST_BUILD_VERSION", ""),
+            default=getattr(settings, "SPORAMETEO_FOREST_BUILD_VERSION", ""),
         )
         parser.add_argument(
             "--source-terrain-build-version",
-            default=getattr(settings, "MICOMETEO_TERRAIN_BUILD_VERSION", ""),
+            default=getattr(settings, "SPORAMETEO_TERRAIN_BUILD_VERSION", ""),
         )
         parser.add_argument("--grid-build-version")
         parser.add_argument("--forest-build-version")
@@ -134,11 +134,11 @@ def _configure_source_alias(
         base = copy.deepcopy(connections.databases[source_alias])
     else:
         base = copy.deepcopy(connections.databases[target_alias])
-    base["NAME"] = name or os.getenv("MICOMETEO_SOURCE_DB_NAME", "micometeo")
-    base["USER"] = user or os.getenv("MICOMETEO_SOURCE_DB_USER", base.get("USER"))
-    base["PASSWORD"] = password or os.getenv("MICOMETEO_SOURCE_DB_PASSWORD", base.get("PASSWORD"))
-    base["HOST"] = host or os.getenv("MICOMETEO_SOURCE_DB_HOST", base.get("HOST"))
-    base["PORT"] = port or os.getenv("MICOMETEO_SOURCE_DB_PORT", base.get("PORT"))
+    base["NAME"] = name or os.getenv("SPORAMETEO_SOURCE_DB_NAME", "sporameteo")
+    base["USER"] = user or os.getenv("SPORAMETEO_SOURCE_DB_USER", base.get("USER"))
+    base["PASSWORD"] = password or os.getenv("SPORAMETEO_SOURCE_DB_PASSWORD", base.get("PASSWORD"))
+    base["HOST"] = host or os.getenv("SPORAMETEO_SOURCE_DB_HOST", base.get("HOST"))
+    base["PORT"] = port or os.getenv("SPORAMETEO_SOURCE_DB_PORT", base.get("PORT"))
     connections.databases[source_alias] = base
     connections[source_alias].close()
 

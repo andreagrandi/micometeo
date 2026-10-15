@@ -23,16 +23,16 @@ MANAGE_PY = PROJECT_ROOT / "apps" / "application" / "manage.py"
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
-    """Keep one group of tests when MICOMETEO_E2E_SHARD is set, for example to 2/3.
+    """Keep one group of tests when SPORAMETEO_E2E_SHARD is set, for example to 2/3.
 
     CI runs each group on its own machine. A checksum of the test id picks the group, so every worker agrees.
     """
-    shard = os.environ.get("MICOMETEO_E2E_SHARD")
+    shard = os.environ.get("SPORAMETEO_E2E_SHARD")
     if not shard:
         return
     index, total = (int(part) for part in shard.split("/"))
     if not 1 <= index <= total:
-        raise pytest.UsageError(f"MICOMETEO_E2E_SHARD must be between 1/{total} and {total}/{total}, not {shard}.")
+        raise pytest.UsageError(f"SPORAMETEO_E2E_SHARD must be between 1/{total} and {total}/{total}, not {shard}.")
     kept, dropped = [], []
     for item in items:
         group = zlib.crc32(item.nodeid.encode()) % total + 1
@@ -59,7 +59,7 @@ def _free_port() -> int:
 @pytest.fixture(scope="session")
 def app_server() -> Iterator[str]:
     """Provide a local app URL, starting Django when one is not already running."""
-    configured_url = os.environ.get("MICOMETEO_BASE_URL")
+    configured_url = os.environ.get("SPORAMETEO_BASE_URL")
     if configured_url:
         base_url = configured_url.rstrip("/")
         for _ in range(75):
@@ -69,7 +69,7 @@ def app_server() -> Iterator[str]:
             time.sleep(0.2)
         raise RuntimeError(f"Configured Django server did not answer at {base_url}")
 
-    configured_e2e_url = os.environ.get("MICOMETEO_E2E_URL")
+    configured_e2e_url = os.environ.get("SPORAMETEO_E2E_URL")
     if configured_e2e_url:
         base_url = configured_e2e_url.rstrip("/")
     else:
@@ -79,8 +79,8 @@ def app_server() -> Iterator[str]:
     server_environment = os.environ.copy()
     server_environment.update(
         {
-            "MICOMETEO_DEBUG": "true",
-            "MICOMETEO_UI_FIXTURE_PAGES": "true",
+            "SPORAMETEO_DEBUG": "true",
+            "SPORAMETEO_UI_FIXTURE_PAGES": "true",
         }
     )
     # A pipe fills during the full browser suite and blocks Django's request log.
@@ -130,7 +130,7 @@ def base_url(app_server: str) -> str:
 
 @pytest.fixture
 def page(page: Page) -> Page:
-    """Slow down chromium when MICOMETEO_E2E_CPU_SLOWDOWN is set, for example to 4.
+    """Slow down chromium when SPORAMETEO_E2E_CPU_SLOWDOWN is set, for example to 4.
 
     This reproduces slow CI timing locally. Webkit ignores the setting.
     """
@@ -138,7 +138,7 @@ def page(page: Page) -> Page:
     # so a slow answer from Google stalled page loads. Empty local answers keep the checks off the internet.
     page.route("https://fonts.googleapis.com/**", lambda route: route.fulfill(status=200, content_type="text/css", body=""))
     page.route("https://fonts.gstatic.com/**", lambda route: route.fulfill(status=200, body=""))
-    rate = os.environ.get("MICOMETEO_E2E_CPU_SLOWDOWN")
+    rate = os.environ.get("SPORAMETEO_E2E_CPU_SLOWDOWN")
     if rate and page.context.browser.browser_type.name == "chromium":
         session = page.context.new_cdp_session(page)
         session.send("Emulation.setCPUThrottlingRate", {"rate": float(rate)})

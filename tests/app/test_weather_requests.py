@@ -46,7 +46,7 @@ from weather_requests.provider import (
 )
 from weather_requests.quota import check_quota, reserve_attempt
 from weather_requests.services import _budget_http_requests, _budget_weights
-from micometeo.weather.openmeteo import ARCHIVE_URL, FORECAST_URL
+from sporameteo.weather.openmeteo import ARCHIVE_URL, FORECAST_URL
 
 
 def test_current_weather_plan_routes_thirty_past_days_to_history_and_eight_to_forecast() -> None:
@@ -408,7 +408,7 @@ result = reserve_attempt(
 assert result.attempt is not None
 """
     environment = os.environ.copy()
-    environment["MICOMETEO_DB_NAME"] = str(connection.settings_dict["NAME"])
+    environment["SPORAMETEO_DB_NAME"] = str(connection.settings_dict["NAME"])
     completed = subprocess.run(
         [sys.executable, "apps/application/manage.py", "shell", "-c", script],
         cwd=os.getcwd(),

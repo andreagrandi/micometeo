@@ -1,4 +1,4 @@
-"""URL routes for the local Micometeo application."""
+"""URL routes for the local SporaMeteo application."""
 
 from django.urls import path
 

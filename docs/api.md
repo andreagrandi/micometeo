@@ -35,7 +35,7 @@ Finished responses and the data behind them are kept in the `map` cache, a
 database table shared by every process. Its entries do not expire. They are
 keyed by run ID, target date, view or 10 km tile, and forest build, so a new
 run uses new keys and never mixes with old entries.
-`MICOMETEO_MAP_CACHE_MAX_ENTRIES` bounds the table, 50,000 entries by default.
+`SPORAMETEO_MAP_CACHE_MAX_ENTRIES` bounds the table, 50,000 entries by default.
 An evicted entry is rebuilt from the database. After each publication a
 background task fills the cache for the new run, and
 `manage.py warm_published_map_cache` does the same by hand. Both accept only
@@ -284,7 +284,7 @@ coordinates 44.149982, 10.645727 and reference elevation 1,319 m.
 A repeated map request and the detail request made no further provider call.
 An Italy-wide request returned `view_too_large` and created no weather fetch.
 This checks the live data path and identity agreement, not prediction accuracy.
-The ignored local evidence is `data/processed/map_checks/micometeo-live-pipeline-verified.json`.
+The ignored local evidence is `data/processed/map_checks/sporameteo-live-pipeline-verified.json`.
 
 Repeat the live check from the repository root with the local application
 database. Use the current Italian date in `--assessment-date` for a fresh
@@ -295,10 +295,10 @@ mode accepts a retained historical date:
 ```sh
 live_assessment_date="$(uv run python -c 'from datetime import datetime; from zoneinfo import ZoneInfo; print(datetime.now(ZoneInfo("Europe/Rome")).date())')"
 uv run python tools/map_checks/check_live_pipeline.py queue \
-  --database-name micometeo \
+  --database-name sporameteo \
   --assessment-date "$live_assessment_date" \
   --bbox "10.653,44.137,10.661,44.143" \
-  --output data/processed/map_checks/micometeo-live-pipeline-queued.json
+  --output data/processed/map_checks/sporameteo-live-pipeline-queued.json
 uv run python apps/application/manage.py run_background_worker \
   --batch --no-startup-delay --no-reload --max-tasks 10
 ```
@@ -308,10 +308,10 @@ records without making another provider request:
 
 ```sh
 uv run python tools/map_checks/check_live_pipeline.py verify \
-  --database-name micometeo \
+  --database-name sporameteo \
   --assessment-date "$live_assessment_date" \
   --bbox "10.653,44.137,10.661,44.143" \
-  --output data/processed/map_checks/micometeo-live-pipeline-verified.json
+  --output data/processed/map_checks/sporameteo-live-pipeline-verified.json
 ```
 
 Queue mode reports the map response and request counters. It does not claim
@@ -324,10 +324,10 @@ queueing work, run verify with its fixed assessment date:
 
 ```sh
 uv run python tools/map_checks/check_live_pipeline.py verify \
-  --database-name micometeo \
+  --database-name sporameteo \
   --assessment-date 2026-10-12 \
   --bbox "10.653,44.137,10.661,44.143" \
-  --output data/processed/map_checks/micometeo-live-pipeline-verified-20261012.json
+  --output data/processed/map_checks/sporameteo-live-pipeline-verified-20261012.json
 ```
 
 ### National response and desktop drawing costs
@@ -369,7 +369,7 @@ from a deployed server.
 | Calabria | 309.7, 312.0 and 312.4 ms |
 
 These desktop results are separate from the physical-phone measurements
-recorded below for [#64](https://github.com/andreagrandi/micometeo/issues/64).
+recorded below for [#64](https://github.com/andreagrandi/sporameteo/issues/64).
 Any closer starting view needs the owner's agreement, as required by #49.
 
 ### Native PostGIS image repeat
@@ -401,16 +401,16 @@ historical table records 8,432,366 raw bytes for Calabria. Both current runs
 recorded 8,432,534 bytes.
 
 The native report is
-`data/processed/map_checks/issue73-native/micometeo-map-measurements.json`.
+`data/processed/map_checks/issue73-native/sporameteo-map-measurements.json`.
 Its SHA-256 is
 `0c2ff6fd8e113447c5912cc6090fd0fdc1d1b282f4ddcbf2d2bac447a7334109`.
 Repeat the native measurement with the disposable database and output path. Set
-`MICOMETEO_DB_PORT` to the port of that database when it is not the default:
+`SPORAMETEO_DB_PORT` to the port of that database when it is not the default:
 
 ```sh
-MICOMETEO_DB_PORT="${MICOMETEO_DB_PORT:-5542}" \
+SPORAMETEO_DB_PORT="${SPORAMETEO_DB_PORT:-5542}" \
   uv run python tools/map_checks/measure_responses.py \
-  --database-name micometeo_estimate_benchmark_20261012 \
+  --database-name sporameteo_estimate_benchmark_20261012 \
   --assessment-date 2026-10-13 \
   --output-dir data/processed/map_checks/issue73-native
 ```
@@ -425,7 +425,7 @@ rows are local inputs and are not included in a clean checkout:
 
 ```sh
 uv run python tools/map_checks/measure_responses.py \
-  --database-name micometeo_estimate_benchmark_20261012 \
+  --database-name sporameteo_estimate_benchmark_20261012 \
   --assessment-date 2026-10-13 \
   --output-dir data/processed/map_checks
 ```
@@ -439,7 +439,7 @@ npm --prefix tools/map_checks ci
 npm --prefix tools/map_checks exec -- playwright install chromium
 node tools/map_checks/measure_drawing.cjs \
   --data-dir data/processed/map_checks \
-  --output data/processed/map_checks/micometeo-map-drawing-measurements.json \
+  --output data/processed/map_checks/sporameteo-map-drawing-measurements.json \
   --profile-dir data/processed/map_checks/browser-profile
 ```
 
