@@ -49,7 +49,7 @@ def test_health_endpoint_reports_available_application_and_database() -> None:
 def test_health_endpoint_hides_database_error_details() -> None:
     fake_secret = "password=health-test-secret"
     with patch(
-        target="config.api.connection.cursor",
+        target="config.health.connection.cursor",
         side_effect=DatabaseError(fake_secret),
     ):
         response = Client().get(path="/api/v1/health")
@@ -57,6 +57,49 @@ def test_health_endpoint_hides_database_error_details() -> None:
     assert response.status_code == 503
     assert response.json() == {"application": "available", "database": "unavailable"}
     assert fake_secret not in response.content.decode("utf-8")
+
+
+@pytest.mark.django_db
+def test_dokku_health_page_returns_200_with_a_working_database() -> None:
+    response = Client().get(path="/health/")
+
+    assert response.status_code == 200
+    assert response.content == b"ok"
+
+
+@pytest.mark.django_db
+def test_dokku_health_page_returns_503_when_the_database_query_fails() -> None:
+    fake_secret = "password=health-test-secret"
+    with patch(
+        target="config.health.connection.cursor",
+        side_effect=DatabaseError(fake_secret),
+    ):
+        response = Client().get(path="/health/")
+
+    assert response.status_code == 503
+    assert fake_secret not in response.content.decode("utf-8")
+
+
+@pytest.mark.django_db
+def test_dokku_health_page_sets_no_cookie_and_calls_no_outside_service() -> None:
+    with patch(
+        target="socket.socket.connect",
+        side_effect=AssertionError("the health page opened a network connection"),
+    ):
+        response = Client(headers={"accept-language": "it"}).get(path="/health/")
+
+    assert response.status_code == 200
+    assert response.cookies == {}
+    assert "Set-Cookie" not in response.headers
+
+
+@pytest.mark.django_db
+def test_dokku_health_page_skips_the_https_redirect(settings) -> None:
+    settings.SECURE_SSL_REDIRECT = True
+
+    response = Client().get(path="/health/")
+
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db
