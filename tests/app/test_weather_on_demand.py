@@ -337,7 +337,13 @@ def test_ready_snapshot_calls_estimate_hook_after_commit() -> None:
     day = date(2026, 10, 11)
     cell = _cell()
     calls: list[dict[str, object]] = []
-    configure_estimate_callback(lambda **kwargs: calls.append(kwargs))
+    called = Event()
+
+    def callback(**kwargs: object) -> None:
+        calls.append(kwargs)
+        called.set()
+
+    configure_estimate_callback(callback)
 
     result = _request_weather(
         cells=(cell,),
@@ -348,6 +354,8 @@ def test_ready_snapshot_calls_estimate_hook_after_commit() -> None:
 
     fetch = WeatherFetch.objects.get(cell_key=cell.key, assessment_date=day)
     assert result.cells[0].state == "current"
+    # The fetch thread runs the hook just after its commit, which can be after the request returns.
+    assert called.wait(timeout=15)
     assert calls == [
         {
             "snapshot_id": str(fetch.snapshot_id),
@@ -377,6 +385,13 @@ def test_failed_estimate_hook_retries_from_ready_snapshot_without_provider_refet
         transport=fake,
         forest_build_version="forest-v1",
     )
+    # The fetch thread records the failed hook just after its commit, which can be after the request returns.
+    deadline = real_monotonic() + 15
+    while (
+        WeatherFetch.objects.get(cell_key=cell.key, assessment_date=day).estimate_callback_status != "pending"
+        and real_monotonic() < deadline
+    ):
+        sleep(0.05)
     fetch = WeatherFetch.objects.get(cell_key=cell.key, assessment_date=day)
     assert fetch.estimate_callback_status == "pending"
     assert fetch.estimate_callback_reason == "estimate queue unavailable"
