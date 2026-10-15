@@ -189,7 +189,7 @@ For a later comparison with BookCorners, inspect `free -h`, `docker stats --no-s
 
 ## 8. Product name and positioning
 
-**Product name: SporaMeteo.** It combines *spora*, the Italian word for spore, and *meteo*, weather. The domain `sporameteo.com` is registered. The earlier working name was Micometeo, from Italian *mico-* for mycology. In October 2026 the owner dropped it because a similar app called Mycometeo runs at mycometeo.it.
+**Product name: SporaMeteo.** It combines *spora*, the Italian word for spore, and *meteo*, weather. The domain `sporameteo.com` is registered.
 
 Other discussed candidates: **Sporabosco**, **Sporasentiero**, **MycoBussola**, **Fungometria**. Names with potential collisions needing avoidance/checks: **Micovia**, **Sporavia**, **FungiTrail**. **MycoMap/MicoMap is already used by several independent mushroom-related products** and should be avoided.
 

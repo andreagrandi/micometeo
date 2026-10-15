@@ -6,10 +6,6 @@ each assumption is in [docs/decisions.md](docs/decisions.md). To plan the
 work after Epic 1, start with
 [docs/planning_after_epic1.md](docs/planning_after_epic1.md).
 
-The project was called Micometeo until October 2026. It was renamed because a
-similar app called Mycometeo runs at mycometeo.it. The product domain is
-sporameteo.com.
-
 ## Limits
 
 - Each run may take at most 30 minutes. The runner stops it when the time is up
