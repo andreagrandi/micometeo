@@ -149,7 +149,7 @@ def retry_nightly_update(
         start_scheduled_weather_run(
             assessment_date=assessment_date,
             region_code=region_code,
-            forest_build_version=settings.MICOMETEO_FOREST_BUILD_VERSION,
+            forest_build_version=settings.SPORAMETEO_FOREST_BUILD_VERSION,
         )
 
     run = ScheduledWeatherRun.objects.filter(region_code=region_code, assessment_date=assessment_date).first()

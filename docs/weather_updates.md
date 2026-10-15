@@ -108,15 +108,15 @@ uv run python apps/application/manage.py check_nightly_update --assessment-date 
 The email goes through Resend with `django-anymail`, as in book corners. Set the key and the recipient on the VPS:
 
 ```sh
-sudo dokku config:set micometeo \
+sudo dokku config:set sporameteo \
   RESEND_API_KEY="<resend-api-key>" \
   NIGHTLY_ALERT_EMAIL="<owner-email-address>" \
-  DEFAULT_FROM_EMAIL="Micometeo <noreply@micometeo.com>"
+  DEFAULT_FROM_EMAIL="SporaMeteo <noreply@sporameteo.com>"
 ```
 
 Without `RESEND_API_KEY` or `NIGHTLY_ALERT_EMAIL`, the command writes the message to the log at error level and exits normally.
 
-On 15 October 2026 the Resend pricing page listed 3 custom domains, 100 emails a day and 3,000 emails a month on the free plan. One check sends at most one email a day. The sender domain is `micometeo.com`, verified in the same Resend account as book corners. Until the domain is verified, set `DEFAULT_FROM_EMAIL` to an address on the book corners domain.
+On 15 October 2026 the Resend pricing page listed 3 custom domains, 100 emails a day and 3,000 emails a month on the free plan. One check sends at most one email a day. The sender domain is `sporameteo.com`, to be verified in the same Resend account as book corners. Until the domain is verified, set `DEFAULT_FROM_EMAIL` to an address on the book corners domain.
 
 ## Live worker check
 

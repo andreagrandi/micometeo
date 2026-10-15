@@ -225,7 +225,7 @@ GDAL_LIBRARY_PATH = (
 GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH")
 
 # Email for the nightly check (Resend). Without a key, emails go to the console.
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Micometeo <noreply@micometeo.com>")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "SporaMeteo <noreply@sporameteo.com>")
 NIGHTLY_ALERT_EMAIL = os.getenv("NIGHTLY_ALERT_EMAIL", "")
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 if RESEND_API_KEY:
