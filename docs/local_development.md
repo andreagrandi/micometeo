@@ -351,8 +351,11 @@ product page. The e2e server is a subprocess and does not use pytest-django's
 test database, so running it with the full suite does not create a second test
 database.
 
-Pull requests and pushes to `master` run the browser checks in chromium only,
-with four parallel workers. CI has no WebKit run.
+Pull requests and pushes to `master` run the browser checks in chromium only.
+CI splits them into three groups that run at the same time on separate
+machines, each with four parallel workers. CI has no WebKit run.
+`MICOMETEO_E2E_SHARD=2/3` runs the second of three groups locally. A checksum
+of each test id picks its group.
 
 Run the checks in parallel locally with `uv run pytest tests/e2e -n 4`. This
 uses the browsers from the pytest settings in `pyproject.toml`, which are

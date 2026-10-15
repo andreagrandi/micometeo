@@ -6,6 +6,7 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 from playwright.sync_api import Page, Route, expect
 
+from tests.e2e.map_helpers import click_square
 from tests.e2e.test_map_controls import (
     TARGET_DATES,
     _api_requests,
@@ -286,15 +287,7 @@ def test_run_change_reloads_open_details_once_without_a_loading_state(
         _json(route, body)
 
     page.route("**/api/v1/areas/**", area_route)
-    page.evaluate(
-        """
-        () => {
-          const map = window.MicometeoMap.map;
-          const point = map.project([10.64, 44.13]);
-          map.fire('click', {point, lngLat: map.unproject(point)});
-        }
-        """
-    )
+    click_square(page, lng_lat=(10.64, 44.13), cell_id="cell-zero")
     details = page.locator("aside[data-live-details]")
     expect(details).to_contain_text("0%")
     area_requests.clear()
@@ -419,22 +412,10 @@ def test_square_outside_the_prepared_area_is_named_in_the_details(
     page.route("**/api/v1/squares**", squares_route)
     page.route("**/api/v1/areas/**", area_route)
     page.evaluate("() => window.MicometeoMap.map.jumpTo({center: [10.651, 44.131], zoom: 12.1})")
-    page.wait_for_function(
-        """
-        () => window.MicometeoMap.map.queryRenderedFeatures(
-          window.MicometeoMap.map.project([10.64, 44.13]),
-          {layers: ['micometeo-square-missing']}
-        ).some((feature) => feature.properties?.cell_id === 'cell-outside')
-        """,
-        timeout=10_000,
-    )
-    page.evaluate(
-        """
-        () => {
-          const map = window.MicometeoMap.map;
-          const point = map.project([10.64, 44.13]);
-          map.fire('click', {point, lngLat: map.unproject(point)});
-        }
-        """
+    click_square(
+        page,
+        lng_lat=(10.64, 44.13),
+        cell_id="cell-outside",
+        layer="micometeo-square-missing",
     )
     expect(page.locator("aside[data-live-details]")).to_contain_text("outside Tuscany")

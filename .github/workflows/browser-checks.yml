@@ -14,6 +14,11 @@ jobs:
   browser-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # Each group runs on its own machine at the same time.
+        shard: [1, 2, 3]
     services:
       database:
         image: imresamu/postgis:17-3.5-bookworm@sha256:35fe7dceda62bfe7d2965b0ba78d915ff9f901b5e0466d633ecc58421b5b5210
@@ -35,9 +40,10 @@ jobs:
       MICOMETEO_DB_PASSWORD: replace-with-a-ci-password
       MICOMETEO_DB_HOST: 127.0.0.1
       MICOMETEO_DB_PORT: "5432"
+      MICOMETEO_E2E_SHARD: "${{ matrix.shard }}/3"
     steps:
       - name: Install geographic libraries
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y gdal-bin libgdal-dev libgeos-dev libproj-dev gettext
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y gdal-bin gettext
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up Node for map checks
@@ -57,7 +63,16 @@ jobs:
         run: uv sync --locked
       - name: Compile translation catalogs
         run: uv run python apps/application/manage.py compilemessages --ignore .venv --locale it --locale en
+      - name: Read Playwright version
+        id: playwright
+        run: echo "version=$(uv run python -c 'import importlib.metadata as m; print(m.version("playwright"))')" >> "$GITHUB_OUTPUT"
+      - name: Restore browser download
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-${{ inputs.browser }}
       - name: Install browsers
+        # With a restored download this only installs the system packages the browser needs.
         run: uv run playwright install --with-deps ${{ inputs.browser }}
       - name: Apply migrations
         run: uv run python apps/application/manage.py migrate --noinput

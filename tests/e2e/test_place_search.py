@@ -8,6 +8,7 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 from playwright.sync_api import Browser, Page, Route, expect
 
+from tests.e2e.map_helpers import wait_for_map_settled
 from tests.e2e.test_map_controls import (
     TARGET_DATES,
     _squares_response,
@@ -546,7 +547,7 @@ def test_search_selection_keeps_exact_point_through_date_map_and_centre_changes(
     expect(root).to_have_attribute("data-point-latitude", "44.1305")
     expect(root).to_have_attribute("data-point-longitude", "10.6405")
 
-    page.wait_for_function("() => !window.MicometeoMap.map.isMoving()")
+    wait_for_map_settled(page)
     page.wait_for_function(
         """
         () => window.MicometeoMap.map.queryRenderedFeatures(
@@ -723,7 +724,7 @@ def test_stale_location_callbacks_cannot_replace_newer_search_or_map_selection(
     expect(root).to_have_attribute("data-selection-source", "search")
     expect(root).to_have_attribute("data-point-latitude", "44.1305")
 
-    page.wait_for_function("() => !window.MicometeoMap.map.isMoving()")
+    wait_for_map_settled(page)
     page.wait_for_function(
         """
         () => window.MicometeoMap.map.queryRenderedFeatures(
