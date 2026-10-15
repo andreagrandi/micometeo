@@ -57,6 +57,8 @@ CSRF_TRUSTED_ORIGINS = _env_list(
 # The flags stay off by default so local development and tests use plain HTTP.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = _env_bool(name="MICOMETEO_SECURE_SSL_REDIRECT", default=False)
+# Dokku checks /health/ over plain HTTP inside the container, so it must not redirect.
+SECURE_REDIRECT_EXEMPT = [r"^health/$"]
 SESSION_COOKIE_SECURE = _env_bool(name="MICOMETEO_SESSION_COOKIE_SECURE", default=False)
 CSRF_COOKIE_SECURE = _env_bool(name="MICOMETEO_CSRF_COOKIE_SECURE", default=False)
 SECURE_HSTS_SECONDS = _env_int(name="MICOMETEO_SECURE_HSTS_SECONDS", default=0)

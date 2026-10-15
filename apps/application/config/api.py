@@ -3,10 +3,10 @@
 from typing import Literal
 
 from django.http import HttpRequest
-from django.db import DatabaseError, connection
 from ninja import NinjaAPI, Schema, Status
 
 from area_api.router import router as area_router
+from config.health import database_is_available
 from map_api.api import router as map_router
 from place_search.api import router as place_search_router
 
@@ -24,11 +24,7 @@ api = NinjaAPI(title="Micometeo API", version="1")
 @api.get("/health", response={200: HealthResponse, 503: HealthResponse})
 def health(request: HttpRequest) -> HealthResponse | Status[HealthResponse]:
     """Return application availability and a database connection check."""
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(sql="SELECT 1")
-            cursor.fetchone()
-    except DatabaseError:
+    if not database_is_available():
         return Status(503, HealthResponse(application="available", database="unavailable"))
     return HealthResponse(application="available", database="available")
 
