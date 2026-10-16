@@ -53,6 +53,34 @@ The queued task takes one batch, runs it, and then queues itself again. It start
 
 A run ends as `completed` when every Tuscany cell has a snapshot for the date. It ends as `failed` with a reason when a batch is refused for good. A failed run never deletes or replaces stored rows or snapshots. After `reopen_weather_fetch` has reopened the failed batches, running the command again resumes the run. The run record keeps the planned counted calls, the planned HTTP requests, the number of provider attempts and the start and end times. The database size can be read with `pg_database_size` before and after a run.
 
+## Weather from the Open-Meteo files
+
+`store_file_weather` stores the same 38 days of daily rows as the Tuscany refresh, but it reads the public Open-Meteo files in the `openmeteo.s3.amazonaws.com` bucket instead of calling the API. It is not part of the nightly chain yet. Issue 129 connects it. The command takes the same arguments as `refresh_tuscany_weather`: `--dry-run`, `--assessment-date`, `--region-code`, `--forest-build-version` and `--json`.
+
+The dry run reads the database only. It makes no network call and writes nothing. It prints the number of weather cells, the cells that already have a snapshot for the date, the days to read, the number of chunk files and the estimated download in MB:
+
+```sh
+uv run python apps/application/manage.py store_file_weather --dry-run
+```
+
+A real read refuses to start when the estimate is over 1 GB. Otherwise it reads the files once for all cells that still need days:
+
+```sh
+uv run python apps/application/manage.py store_file_weather
+```
+
+The read works in these steps:
+
+- A cell that has a ready snapshot for the date is skipped.
+- A day before the assessment date is reused when a stored file row for it exists, was never a forecast and has the current history version. The oldest row wins.
+- A day from the assessment date on is reused only when its row came from the newest forecast run in the files. A row that was a forecast is never reused as a past day. The next night the same date is read again as a past day.
+- The Italian daily values come from the same aggregation as the API data. A day with any missing hour gets no row. The cell then gets no snapshot, and the read record lists the cell with the reason `missing_hours` and the dates.
+- A cell with all 38 days gets a snapshot. The read is done in one pass, so a first load stores 38 days per cell and a later night stores about 9 days per cell.
+
+Each row is named `open-meteo-files` with the model `ecmwf_ifs`. Its metadata holds only that cell: the grid point, the grid height, the height correction, the read ID, the run time and the modification time of the chunk files that hold the day. Days from the assessment date on carry the run time as the forecast issue time. The row has no `response` entry.
+
+Every read leaves a `FileWeatherRead` record with the assessment date, the run time of the files, the start and end times, the bytes and requests used, the cell counts, the missing cells and the modification time of every chunk file. When a file cannot be read, the read ends as `failed` with the error text on the record and no row is written.
+
 ## Nightly chain
 
 One cron entry starts the whole night. `refresh_tuscany_weather` runs at 00:30 UTC. The steps follow each other without more cron entries:
