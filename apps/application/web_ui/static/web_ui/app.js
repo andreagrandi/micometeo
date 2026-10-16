@@ -1926,6 +1926,22 @@
       parent.append(item);
     }
 
+    // The short phone panel hides the text and keeps the icon, so the aria-label keeps the name.
+    function setIconLabel(button, pathData, text) {
+      const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      icon.setAttribute("class", "icon");
+      icon.setAttribute("viewBox", "0 0 24 24");
+      icon.setAttribute("aria-hidden", "true");
+      const shape = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      shape.setAttribute("d", pathData);
+      icon.append(shape);
+      const label = document.createElement("span");
+      label.className = "btn-text";
+      label.textContent = text;
+      button.setAttribute("aria-label", text);
+      button.replaceChildren(icon, label);
+    }
+
     function appendFavoriteAction(details) {
       const actions = document.createElement("div");
       actions.className = "d-actions";
@@ -1966,7 +1982,7 @@
       navigation.type = "button";
       navigation.className = "btn btn-primary";
       navigation.dataset.navigation = "";
-      navigation.textContent = labels.open_navigation;
+      setIconLabel(navigation, "M7 17L17 7M8 7h9v9", labels.open_navigation);
       navigation.disabled = true;
       navigation.addEventListener("click", () => {
         const url = buildGoogleMapsUrl(navigationCoordinates());
@@ -2603,6 +2619,7 @@
       close.textContent = "×";
       close.setAttribute("aria-label", labels.close_details);
       close.addEventListener("click", () => clearSelection());
+      appendSheetHeightButtons(top);
       top.append(close);
       details.append(top);
       appendFavoriteAction(details);
@@ -2635,18 +2652,12 @@
       appendSources(details, detail);
       const sizeRow = document.createElement("div");
       sizeRow.className = "sizerow";
-      const sizeButton = document.createElement("button");
-      sizeButton.type = "button";
-      sizeButton.className = "btn btn-secondary";
-      sizeButton.dataset.sheetHeight = "true";
-      sizeButton.textContent = labels.sheet_size;
-      sizeButton.addEventListener("click", cycleSheetHeight);
       const closeButton = document.createElement("button");
       closeButton.type = "button";
       closeButton.className = "btn btn-quiet";
       closeButton.textContent = labels.back_to_map;
       closeButton.addEventListener("click", () => clearSelection());
-      sizeRow.append(sizeButton, closeButton);
+      sizeRow.append(closeButton);
       details.append(sizeRow);
       state.details = true;
       root.classList.add("details-open");
@@ -2667,15 +2678,36 @@
       if (focusedRainDays) details.querySelector(`[data-rain-days="${CSS.escape(focusedRainDays)}"]`)?.focus();
     }
 
-    function cycleSheetHeight() {
+    // The panel header stays in view while the panel scrolls, so the height buttons sit there.
+    function appendSheetHeightButtons(top) {
+      const taller = document.createElement("button");
+      taller.type = "button";
+      taller.className = "btn btn-secondary";
+      taller.dataset.sheetHeight = "true";
+      setIconLabel(taller, "M6 15l6-6 6 6", labels.sheet_taller);
+      taller.addEventListener("click", () => stepSheetHeight(1));
+      const smaller = document.createElement("button");
+      smaller.type = "button";
+      smaller.className = "btn btn-secondary";
+      smaller.dataset.sheetSmaller = "true";
+      setIconLabel(smaller, "M6 9l6 6 6-6", labels.sheet_smaller);
+      smaller.addEventListener("click", () => stepSheetHeight(-1));
+      top.append(taller, smaller);
+    }
+
+    function stepSheetHeight(step) {
       const details = document.querySelector("aside[data-live-details]");
       if (!details) return;
       const sizes = ["short", "half", "tall"];
-      state.sheetHeight = sizes[(sizes.indexOf(state.sheetHeight) + 1) % sizes.length];
+      const index = Math.min(Math.max(sizes.indexOf(state.sheetHeight) + step, 0), sizes.length - 1);
+      state.sheetHeight = sizes[index];
       details.dataset.sheetHeight = state.sheetHeight;
       details.dataset.size = state.sheetHeight;
       persistState();
       liveMapController?.resize();
+      // The pressed button hides at the smallest and tallest size, so focus moves to the other one.
+      if (index === 0) details.querySelector("[data-sheet-height]")?.focus();
+      if (index === sizes.length - 1) details.querySelector("[data-sheet-smaller]")?.focus();
     }
 
     function renderDetailError(feature, retryAction) {
@@ -2723,6 +2755,7 @@
       close.textContent = "×";
       close.setAttribute("aria-label", labels.close_details);
       close.addEventListener("click", () => clearSelection());
+      appendSheetHeightButtons(top);
       top.append(close);
       details.append(top);
       appendFavoriteAction(details);
@@ -2740,16 +2773,6 @@
       appendDetailText(summary, "detail-identity", `${labels.updated}: ${properties.calculated_at ? dateTime(properties.calculated_at) : labels.detail_missing_value}`);
       details.append(summary);
       addStatusCallout(details, text, kind, retryAction, actionLabel);
-      const sizeRow = document.createElement("div");
-      sizeRow.className = "sizerow";
-      const sizeButton = document.createElement("button");
-      sizeButton.type = "button";
-      sizeButton.className = "btn btn-secondary";
-      sizeButton.dataset.sheetHeight = "true";
-      sizeButton.textContent = labels.sheet_size;
-      sizeButton.addEventListener("click", cycleSheetHeight);
-      sizeRow.append(sizeButton);
-      details.append(sizeRow);
       details.hidden = false;
       state.details = true;
       root.classList.add("details-open");
@@ -2774,6 +2797,7 @@
       close.textContent = "×";
       close.setAttribute("aria-label", labels.close_details);
       close.addEventListener("click", () => clearSelection());
+      appendSheetHeightButtons(top);
       top.append(close);
       details.append(top);
       appendFavoriteAction(details);
