@@ -41,6 +41,12 @@ def test_anonymous_visitor_reaches_landing_and_map() -> None:
 
 @pytest.mark.django_db
 def test_pages_load_static_files_from_fingerprinted_names(settings, tmp_path) -> None:
+    # The application tests in CI do not install the MapLibre package, so stand-in files take its place.
+    maplibre_directory = tmp_path / "maplibre"
+    maplibre_directory.mkdir()
+    (maplibre_directory / "maplibre-gl.css").write_text(data=".maplibregl-map {}\n")
+    (maplibre_directory / "maplibre-gl.mjs").write_text(data="export default {};\n")
+    settings.STATICFILES_DIRS = [maplibre_directory]
     settings.STATIC_ROOT = tmp_path / "staticfiles"
     settings.STORAGES = {
         **settings.STORAGES,
