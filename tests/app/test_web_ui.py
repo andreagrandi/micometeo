@@ -4,6 +4,7 @@ import re
 from datetime import date
 
 import pytest
+from django.core.management import call_command
 from django.test import Client, override_settings
 from django.urls import reverse
 
@@ -36,6 +37,27 @@ def test_anonymous_visitor_reaches_landing_and_map() -> None:
     assert 'href="/map/"' in landing.content.decode()
     assert map_response.status_code == 200
     assert 'data-map-app' in map_response.content.decode()
+
+
+@pytest.mark.django_db
+def test_pages_load_static_files_from_fingerprinted_names(settings, tmp_path) -> None:
+    settings.STATIC_ROOT = tmp_path / "staticfiles"
+    settings.STORAGES = {
+        **settings.STORAGES,
+        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    }
+    call_command("collectstatic", interactive=False, verbosity=0)
+    client = Client()
+
+    landing = client.get(path=reverse(viewname="landing")).content.decode()
+    map_page = client.get(path=reverse(viewname="map")).content.decode()
+
+    assert re.search(pattern=r'href="/static/web_ui/landing\.[0-9a-f]{12}\.css"', string=landing)
+    for name in ("web_ui/app.css", "web_ui/favorites.js", "maplibre-gl.mjs", "web_ui/app.js"):
+        stem, extension = name.rsplit(".", maxsplit=1)
+        fingerprinted = rf'"/static/{re.escape(stem)}\.[0-9a-f]{{12}}\.{extension}"'
+        assert re.search(pattern=fingerprinted, string=map_page), name
+        assert f'"/static/{name}"' not in map_page
 
 
 @pytest.mark.django_db
