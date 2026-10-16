@@ -199,9 +199,9 @@ of this issue:
 - Read the ICON forecasts from the bucket too, in `data_run/dwd_icon_d2/`,
   `data_run/dwd_icon_eu/` and `data_run/dwd_icon/`. Then join them with the
   rules of `best_match` that the issue 124 report describes.
-- Accept the ECMWF forecast, if it proves as good as the API's mix. A
-  follow-up issue, #145, checks both forecasts of this storm against the
-  weather that falls.
+- Accept the ECMWF forecast. A check of both forecasts against the rain of
+  this storm, #145, was dropped, because one storm cannot show which
+  forecast is better.
 
 The owner chose the second way after reading these numbers. D23 records it.
 
