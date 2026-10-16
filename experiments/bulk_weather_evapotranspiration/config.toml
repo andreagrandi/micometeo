@@ -1,0 +1,13 @@
+description = "Compute evapotranspiration from the Open-Meteo file weather and compare it with the API for 20 Tuscany cells."
+seed = 42
+time_limit_minutes = 10
+
+[settings]
+# Hourly file weather and API values written by the bulk_weather run. No network calls are made.
+hourly_pairs_path = "data/processed/bulk_weather/20261016T095133Z-7934cd/hourly_pairs.csv"
+grid_match_path = "reports/bulk_weather_grid_match.csv"
+api_dir = "data/raw/bulk_weather/api/2026-10-16"
+# The API answers and the grid points match when both coordinates differ by less than this many degrees.
+coordinate_tolerance = 0.0001
+# A cell counts as different when its 30-day total moves by more than this many mm.
+total_tolerance_mm = 1.0
