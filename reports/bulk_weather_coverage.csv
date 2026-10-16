@@ -1,0 +1,9 @@
+variable,first_hour_utc,last_hour_utc,missing_cell_hours_in_window
+precipitation,2026-09-10 00:00,2026-10-31 00:00,0
+temperature_2m,2026-09-10 00:00,2026-10-31 00:00,0
+soil_moisture_0_to_7cm,2026-09-10 00:00,2026-10-31 00:00,0
+soil_temperature_0_to_7cm,2026-09-10 00:00,2026-10-31 00:00,0
+dew_point_2m,2026-09-10 00:00,2026-10-31 00:00,0
+shortwave_radiation,2026-09-10 00:00,2026-10-31 00:00,0
+wind_u_component_10m,2026-09-10 00:00,2026-10-31 00:00,0
+wind_v_component_10m,2026-09-10 00:00,2026-10-31 00:00,0

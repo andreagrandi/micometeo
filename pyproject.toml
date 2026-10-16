@@ -24,6 +24,7 @@ dependencies = [
     "dj-database-url>=3.1.2",
     "django-anymail[resend]>=15.2",
     "sentry-sdk[django]>=2.70",
+    "omfiles>=1.2.0",
 ]
 
 [project.scripts]
