@@ -207,9 +207,18 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR.parent.parent / "staticfiles"
+# Outside debug, collectstatic adds a content fingerprint to each file name, so a deploy
+# changes the URL of every changed file and browsers and Cloudflare cannot serve an old copy.
+# Debug keeps the plain names because runserver serves files that collectstatic never saw.
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+    "staticfiles": {
+        "BACKEND": (
+            "whitenoise.storage.CompressedStaticFilesStorage"
+            if DEBUG
+            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        )
+    },
 }
 STATICFILES_DIRS = [
     BASE_DIR.parent.parent / "tools/map_checks/node_modules/maplibre-gl/dist",
