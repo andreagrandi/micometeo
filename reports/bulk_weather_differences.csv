@@ -1,0 +1,15 @@
+api,variable,hours,api_decimals,median_abs_difference,p95_abs_difference,max_abs_difference,share_within_rounding,missing_in_files,missing_in_api
+archive,precipitation,14400,1,0.0,0.0,0.0,1.0,0,0
+archive,temperature_2m,14400,1,0.0245,0.05,0.05,1.0,0,0
+archive,soil_moisture_0_to_7cm,14400,3,0.0,0.0,0.0,1.0,0,0
+archive,soil_temperature_0_to_7cm,14400,1,0.0255,0.05,0.05,1.0,0,0
+archive,dew_point_2m,14400,1,0.0255,0.05,0.05,1.0,0,0
+archive,shortwave_radiation,14400,0,0.0,0.0,0.0,1.0,0,0
+archive,wind_speed_10m,14400,2,0.002,0.0047,0.005,1.0,0,0
+forecast,precipitation,3840,1,0.0,0.0,0.0,1.0,0,0
+forecast,temperature_2m,3840,1,0.0245,0.05,0.05,1.0,0,0
+forecast,soil_moisture_0_to_7cm,3840,3,0.0,0.0,0.0,1.0,0,0
+forecast,soil_temperature_0_to_7cm,3840,1,0.0255,0.05,0.05,1.0,0,0
+forecast,dew_point_2m,3840,1,0.0245,0.05,0.05,1.0,0,0
+forecast,shortwave_radiation,3840,0,0.0,0.0,0.0,1.0,0,0
+forecast,wind_speed_10m,3840,2,0.002,0.0047,0.005,1.0,0,0

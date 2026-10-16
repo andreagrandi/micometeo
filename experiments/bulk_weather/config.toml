@@ -1,0 +1,34 @@
+description = "Read the Italy weather from Open-Meteo files on AWS and compare 20 Tuscany cells with the API."
+seed = 42
+time_limit_minutes = 30
+
+[settings]
+# Weather cell centres exported from the local database: every Italy forest cell and the Tuscany subset.
+cells_path = "data/raw/bulk_weather/cells.json"
+# Grid points the archive API returned for Tuscany cells, exported from stored weather in the local database.
+stored_points_path = "data/raw/bulk_weather/stored_archive_points.json"
+# The day the app would prepare. Local dates in Europe/Rome, as in the app.
+assessment_date = "2026-10-16"
+past_days = 30
+days_ahead = 7
+variables = [
+    "precipitation",
+    "temperature_2m",
+    "soil_moisture_0_to_7cm",
+    "soil_temperature_0_to_7cm",
+    "dew_point_2m",
+    "shortwave_radiation",
+    "wind_u_component_10m",
+    "wind_v_component_10m",
+]
+# Files read at the same time.
+threads = 8
+# Extra bytes fetched after each requested range, so that neighbouring blocks arrive in one request.
+read_ahead_bytes = 32768
+# Two runs of grid points closer than this many points are read as one run.
+merge_gap_points = 12
+# Tuscany cells compared with the API. Half are drawn at random. The other half are the cells
+# where the height-aware choice moves furthest from the nearest grid point.
+comparison_cells = 20
+# Seconds to wait between two API requests.
+pause_seconds = 1.0
