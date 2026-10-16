@@ -103,7 +103,6 @@ def _daily_kwargs(
         "metadata": {
             **daily.metadata,
             **history_metadata,
-            "response": dict(response.metadata),
             "location": dict(response.location.metadata),
             "source": {
                 "provider": response.provider or response.source_id,

@@ -27,6 +27,7 @@ from django.db.models import Count, Q, Sum
 from django_tasks_db.models import DBTaskResult
 from django.utils import timezone
 
+from sporameteo.weather.bucket_files import BucketSource, WeatherFileSource
 from sporameteo.weather.openmeteo import FORECAST_URL
 from sporameteo.weather.policy import (
     FORECAST_DAYS,
@@ -52,7 +53,9 @@ from weather_requests.provider import (
     request_spec_from_request,
 )
 from weather_requests.models import WeatherRequest, WeatherRequestAttempt
-from weather_summaries.models import WeatherDaily, WeatherSnapshot, WeatherSnapshotDay
+from weather_summaries.file_weather import SOURCE_MODEL as FILE_WEATHER_MODEL
+from weather_summaries.file_weather import plan_file_weather, store_file_weather
+from weather_summaries.models import FileWeatherRead, WeatherDaily, WeatherSnapshot, WeatherSnapshotDay
 from weather_summaries.provider_adapter import normalized_provider_responses
 from weather_summaries.services import (
     WeatherDailyConflictError,
@@ -86,6 +89,11 @@ SCHEDULED_SOURCE = "tuscany_schedule"
 _ESTIMATE_CALLBACK: Callable[..., Any] | None = None
 _CLEANUP_CALLBACK: Callable[..., Any] | None = None
 _FORECAST_CALLBACK: Callable[..., Any] | None = None
+
+
+def _file_source() -> WeatherFileSource:
+    """Return the Open-Meteo file bucket that the nightly run reads, so tests can replace it."""
+    return BucketSource()
 
 
 class WeatherOnDemandError(RuntimeError):
@@ -1711,6 +1719,72 @@ def plan_scheduled_weather(
     )
 
 
+@dataclass(frozen=True)
+class NightlyWeatherPlan:
+    """What the nightly run would read from the files and what it still owes the API."""
+
+    assessment_date: date
+    cells_total: int
+    cells_ready: int
+    mode: str
+    file_megabytes: float
+    api_counted_calls_left: Decimal
+    api_http_requests_left: int
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return the plan in a JSON-safe shape."""
+        first_day, last_day = weather_window(assessment_date=self.assessment_date)
+        return {
+            "assessment_date": self.assessment_date.isoformat(),
+            "window_start": first_day.isoformat(),
+            "window_end": last_day.isoformat(),
+            "cells_total": self.cells_total,
+            "cells_ready": self.cells_ready,
+            "mode": self.mode,
+            "file_megabytes": self.file_megabytes,
+            "api_counted_calls_left": float(self.api_counted_calls_left),
+            "api_http_requests_left": self.api_http_requests_left,
+        }
+
+
+def plan_nightly_weather(
+    *,
+    cells: Sequence[WeatherCell],
+    assessment_date: date,
+    region_code: str = TUSCANY_ISTAT_CODE,
+) -> NightlyWeatherPlan:
+    """Return the file size to read and the API calls left, from the database only.
+
+    The API calls left are those of the open fallback batches of the run, so they are 0 without one.
+    """
+    cell_keys = sorted({cell.key for cell in cells})
+    ready = WeatherSnapshot.objects.filter(
+        cell_key__in=cell_keys,
+        assessment_date=assessment_date,
+        status=WeatherSnapshot.Status.READY,
+        pipeline_version=PIPELINE_VERSION,
+    ).count()
+    open_batches = WeatherFetchBatch.objects.filter(
+        scheduled_run__region_code=region_code,
+        scheduled_run__assessment_date=assessment_date,
+        status__in=[WeatherFetchBatch.Status.PENDING, WeatherFetchBatch.Status.RUNNING],
+    ).select_related("request")
+    counted_calls = Decimal("0")
+    http_requests = 0
+    for batch in open_batches:
+        counted_calls += request_spec_from_request(request=batch.request).reservation_weight
+        http_requests += 1
+    return NightlyWeatherPlan(
+        assessment_date=assessment_date,
+        cells_total=len(cell_keys),
+        cells_ready=ready,
+        mode=_scheduled_mode(cell_keys=cell_keys, assessment_date=assessment_date),
+        file_megabytes=plan_file_weather(cells=cells, assessment_date=assessment_date).as_dict()["estimated_megabytes"],
+        api_counted_calls_left=counted_calls,
+        api_http_requests_left=http_requests,
+    )
+
+
 def scheduled_run_task_lock_keys(*, run_id: uuid.UUID | str) -> tuple[str, ...]:
     """Return the advisory key claimed by one scheduled run queue task."""
     run = ScheduledWeatherRun.objects.filter(id=uuid.UUID(str(run_id))).first()
@@ -1765,64 +1839,136 @@ def start_scheduled_weather_run(
     region_code: str = TUSCANY_ISTAT_CODE,
     forest_build_version: str,
     clock: Callable[[], datetime] | None = None,
-    model: str = DEFAULT_MODEL,
-    options: Mapping[str, str] | None = None,
 ) -> ScheduledWeatherRun:
-    """Plan the Tuscany batches for one date and queue the run task once.
+    """Create or resume the run for one date and queue its task once.
 
-    Calling it again for the same date resumes the run and never repeats work.
+    The worker reads the files, and a run with fallback batches keeps planning them.
     """
     cells = tuscany_weather_cells(
         forest_build_version=forest_build_version,
         region_code=region_code,
     )
     now = _clock_now(clock)
-    plan = plan_scheduled_weather(
-        cells=cells,
-        assessment_date=assessment_date,
-        model=model,
-        options=options,
-        forest_build_version=forest_build_version,
-    )
     with transaction.atomic():
         run, created = ScheduledWeatherRun.objects.select_for_update().get_or_create(
             region_code=region_code,
             assessment_date=assessment_date,
             defaults={
                 "forest_build_version": forest_build_version,
-                "mode": plan.mode,
-                "planned_counted_calls": plan.counted_calls,
-                "planned_http_requests": plan.http_requests,
+                "mode": _scheduled_mode(cell_keys=[cell.key for cell in cells], assessment_date=assessment_date),
             },
         )
         if run.status == ScheduledWeatherRun.Status.COMPLETED:
             if run.forecast_task_id is None:
                 return _queue_forecast(run_id=run.id)
             return run
+        has_batches = run.batches.exists()
         if run.status == ScheduledWeatherRun.Status.FAILED:
             run.status = ScheduledWeatherRun.Status.PENDING
             run.completed_at = None
             run.reason_code = ""
             run.full_reason = ""
-            run.save(update_fields=["status", "completed_at", "reason_code", "full_reason", "updated_at"])
-        _plan_batches(
-            cells=cells,
-            assessment_date=assessment_date,
-            visitor_hash=None,
-            now=now,
-            model=model,
-            forest_build_version=forest_build_version,
-            options=options,
-            scheduled_run=run,
-        )
+            if not has_batches:
+                # A retry reads the files again, so the cells that lacked hours get another try.
+                run.file_read = None
+            run.save(
+                update_fields=["status", "completed_at", "reason_code", "full_reason", "file_read", "updated_at"]
+            )
+        if has_batches:
+            _plan_batches(
+                cells=cells,
+                assessment_date=assessment_date,
+                visitor_hash=None,
+                now=now,
+                model=FILE_WEATHER_MODEL,
+                forest_build_version=forest_build_version,
+                options=None,
+                scheduled_run=run,
+            )
     _enqueue_run(run_id=run.id)
     run.refresh_from_db()
     return run
 
 
+def _read_scheduled_files(
+    *,
+    run: ScheduledWeatherRun,
+    cells: Sequence[WeatherCell],
+    file_source: WeatherFileSource | None,
+    now: datetime,
+) -> ScheduledWeatherRun:
+    """Read the 38 days from the files and store the read on the run.
+
+    A failed read keeps its error on the run as the record of why the API is used.
+    """
+    try:
+        read = store_file_weather(
+            cells=cells,
+            assessment_date=run.assessment_date,
+            region_code=run.region_code,
+            source=file_source or _file_source(),
+        )
+    except ValueError as exc:
+        read = FileWeatherRead.objects.create(
+            assessment_date=run.assessment_date,
+            region_code=run.region_code,
+            started_at=now,
+            finished_at=now,
+            cells_total=len(cells),
+            status=FileWeatherRead.Status.FAILED,
+            error=str(exc),
+        )
+    updates: dict[str, Any] = {"file_read": read, "updated_at": now}
+    if read.status == FileWeatherRead.Status.FAILED:
+        updates |= {"reason_code": "file_read_failed", "full_reason": read.error}
+    ScheduledWeatherRun.objects.filter(id=run.id).update(**updates)
+    run.refresh_from_db()
+    return run
+
+
+def _plan_file_fallback(
+    *,
+    run: ScheduledWeatherRun,
+    cells: Sequence[WeatherCell],
+    now: datetime,
+) -> None:
+    """Plan the full API run for a run whose file read failed, unless it is planned already."""
+    if run.batches.exists():
+        return
+    fallback = plan_scheduled_weather(
+        cells=cells,
+        assessment_date=run.assessment_date,
+        model=FILE_WEATHER_MODEL,
+        forest_build_version=run.forest_build_version,
+    )
+    ScheduledWeatherRun.objects.filter(id=run.id).update(
+        planned_counted_calls=fallback.counted_calls,
+        planned_http_requests=fallback.http_requests,
+        updated_at=now,
+    )
+    _plan_batches(
+        cells=cells,
+        assessment_date=run.assessment_date,
+        visitor_hash=None,
+        now=now,
+        model=FILE_WEATHER_MODEL,
+        forest_build_version=run.forest_build_version,
+        options=None,
+        scheduled_run=run,
+    )
+
+
 def _scheduled_batch_lock_keys(*, batch: WeatherFetchBatch) -> list[tuple[str, date]]:
     keys = list(batch.parts.values_list("fetch__cell_key", "fetch__assessment_date"))
     return keys or list(batch.fetches.values_list("cell_key", "assessment_date"))
+
+
+def _missing_from_files(*, run: ScheduledWeatherRun, cell_keys: Sequence[str]) -> dict[str, Any]:
+    """Return the problems that a complete file read reported for these cells, by sorted cell key."""
+    read = run.file_read
+    if read is None or read.status != FileWeatherRead.Status.COMPLETE:
+        return {}
+    return {key: read.missing[key] for key in sorted(cell_keys) if key in read.missing}
 
 
 def _finish_scheduled_run(*, run: ScheduledWeatherRun, now: datetime) -> ScheduledWeatherRun:
@@ -1846,6 +1992,20 @@ def _finish_scheduled_run(*, run: ScheduledWeatherRun, now: datetime) -> Schedul
         )
         if ready >= keys:
             status, reason_code, full_reason = ScheduledWeatherRun.Status.COMPLETED, "ready", ""
+            if run.file_read is not None and run.file_read.status == FileWeatherRead.Status.FAILED:
+                # Keep the record of why this night used the API.
+                reason_code, full_reason = "file_read_failed", run.file_read.error
+        elif missing := _missing_from_files(run=run, cell_keys=sorted(keys - ready)):
+            first_key, problem = next(iter(missing.items()))
+            dates = ", ".join(problem.get("dates", []))
+            status = ScheduledWeatherRun.Status.FAILED
+            reason_code = str(problem.get("reason", "missing_hours"))
+            full_reason = (
+                f"{len(keys - ready)} of {len(keys)} weather cells have no snapshot. "
+                f"The first is {first_key}"
+                + (f", with no complete day for {dates}." if dates else ".")
+                + (f" {problem['error']}" if problem.get("error") else "")
+            )
         else:
             blocked = (
                 WeatherFetch.objects.filter(
@@ -1919,8 +2079,9 @@ def run_scheduled_weather_step(
     transport: Callable[..., Any] | None = None,
     clock: Callable[[], datetime] | None = None,
     provider: WeatherProvider | None = None,
+    file_source: WeatherFileSource | None = None,
 ) -> ScheduledWeatherRun:
-    """Start at most one provider request of a run, then queue the next step."""
+    """Read the files once, then start at most one fallback request and queue the next step."""
     parsed_run_id = uuid.UUID(str(run_id))
     now = _clock_now(clock)
     run = ScheduledWeatherRun.objects.get(id=parsed_run_id)
@@ -1932,6 +2093,18 @@ def run_scheduled_weather_step(
         updated_at=now,
     )
     run.refresh_from_db()
+    if run.file_read_id is None or run.file_read.status == FileWeatherRead.Status.FAILED:
+        try:
+            cells = tuscany_weather_cells(
+                forest_build_version=run.forest_build_version,
+                region_code=run.region_code,
+            )
+        except ValueError:
+            return _finish_scheduled_run(run=run, now=now)
+        if run.file_read_id is None:
+            run = _read_scheduled_files(run=run, cells=cells, file_source=file_source, now=now)
+        if run.file_read.status == FileWeatherRead.Status.FAILED:
+            _plan_file_fallback(run=run, cells=cells, now=now)
     if run.next_start_at is not None and run.next_start_at > now:
         _enqueue_run(run_id=run.id, run_after=run.next_start_at, own_task=True)
         run.refresh_from_db()
@@ -1986,9 +2159,16 @@ def run_scheduled_weather_step(
         (item for item in open_batches if item.retry_at is not None and item.retry_at > current),
         None,
     )
+    file_failed = run.file_read is not None and run.file_read.status == FileWeatherRead.Status.FAILED
+    if waiting is not None:
+        reason_code, full_reason = waiting.reason_code, waiting.full_reason
+    elif file_failed:
+        reason_code, full_reason = "file_read_failed", run.file_read.error
+    else:
+        reason_code, full_reason = "", ""
     ScheduledWeatherRun.objects.filter(id=run.id).update(
-        reason_code=waiting.reason_code if waiting is not None else "",
-        full_reason=waiting.full_reason if waiting is not None else "",
+        reason_code=reason_code,
+        full_reason=full_reason,
         updated_at=current,
     )
     _enqueue_run(
@@ -2670,6 +2850,7 @@ __all__ = [
     "process_weather_fetch_batch",
     "recover_weather_fetches",
     "request_weather",
+    "plan_nightly_weather",
     "plan_scheduled_weather",
     "reopen_weather_fetch",
     "run_cleanup_job",
