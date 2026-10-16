@@ -1,0 +1,25 @@
+description = "Compare the Tuscany estimates built from Open-Meteo file weather with the published estimates, for ecmwf_ifs files alone and with the ICON-2I files for the first 60 hours."
+seed = 42
+time_limit_minutes = 30
+
+[settings]
+# Dates with a published Tuscany run in the local database. Each one is compared with the published run.
+assessment_dates = ["2026-10-16"]
+region_code = "09"
+past_days = 30
+days_ahead = 7
+# Hours the files may need to hold the newest run after the run appears in the bucket. The API answered from the newest run older than this.
+file_delay_hours = 2
+# Hours replaced by the ICON-2I files, counted from Rome midnight of the assessment date.
+icon_hours = 60
+# A square counts as different when its estimate moves by this many percentage points or more.
+large_difference_points = 5
+# Saved ecmwf_ifs values of the newest files for the Tuscany grid points. The run named below is the one in that data.
+newest_files_dir = "data/raw/bulk_weather_estimates/newest_files_20261016"
+newest_run = "2026-10-16T00:00Z"
+# Files read at the same time.
+threads = 8
+# Extra bytes fetched after each requested range, so that neighbouring blocks arrive in one request.
+read_ahead_bytes = 32768
+# Two runs of grid points closer than this many points are read as one run.
+merge_gap_points = 12

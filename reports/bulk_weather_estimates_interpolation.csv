@@ -1,0 +1,19 @@
+variable,part,rule,values_compared,median_abs_gap,max_abs_gap
+precipitation,"first 90 hours, hourly steps",total spread evenly,23040,0.0,0.0
+precipitation,"after 90 hours, filled",total spread evenly,69120,0.0,0.05
+temperature_2m,"first 90 hours, hourly steps",cubic curve,23296,0.0,0.0
+temperature_2m,"after 90 hours, filled",cubic curve,69120,0.0093,0.025
+soil_moisture_0_to_7cm,"first 90 hours, hourly steps",cubic curve,23296,0.0,0.0
+soil_moisture_0_to_7cm,"after 90 hours, filled",cubic curve,69120,0.0002,0.0005
+soil_temperature_0_to_7cm,"first 90 hours, hourly steps",cubic curve,23296,0.0,0.0
+soil_temperature_0_to_7cm,"after 90 hours, filled",cubic curve,69120,0.0093,0.025
+dew_point_2m,"first 90 hours, hourly steps",cubic curve,23296,0.0,0.0
+dew_point_2m,"after 90 hours, filled",cubic curve,69120,0.0093,0.025
+shortwave_radiation,"first 90 hours, hourly steps",clearness index curve,23040,0.0,0.0
+shortwave_radiation,"after 90 hours, filled",clearness index curve,69120,0.0,4.2342
+wind_u_component_10m,"first 90 hours, hourly steps",cubic curve,23296,0.0,0.0
+wind_u_component_10m,"after 90 hours, filled",cubic curve,69120,0.0093,0.025
+wind_v_component_10m,"first 90 hours, hourly steps",cubic curve,23296,0.0,0.0
+wind_v_component_10m,"after 90 hours, filled",cubic curve,69120,0.0093,0.025
+wind_speed,"first 90 hours, hourly steps",cubic curve,23296,0.0,0.0
+wind_speed,"after 90 hours, filled",cubic curve,69120,0.0083,0.0354
