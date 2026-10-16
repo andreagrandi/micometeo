@@ -325,6 +325,118 @@ sudo dokku ps:scale sporameteo web=0
 sudo dokku ps:scale sporameteo web=1
 ```
 
+## Move to another host
+
+The book corners VPS is a temporary home. These steps move SporaMeteo to a new
+VPS. `OLD` and `NEW` stand for the addresses of the two hosts. Parts of steps
+3 to 5 were rehearsed on 16 October 2026, as recorded at the end of this
+section.
+
+1. Set up the new VPS with the sections above, from "Swap" to "Domain and
+   HTTPS", but leave the DNS records and Let's Encrypt for step 6. Copy the
+   values of `sudo dokku config:show sporameteo` from the old host. Add the CI
+   deploy key with `dokku ssh-keys:add sporameteo-ci`, using
+   `~/.ssh/sporameteo_deploy.pub` from the laptop. Deploy once from the laptop
+   with `git push dokku@NEW:sporameteo master`.
+2. Choose a time outside the night, so not between 00:30 and 04:00 UTC. Stop the
+   old app, so that no run writes to the old database after the export:
+
+   ```sh
+   ssh deploy@OLD "sudo dokku ps:stop sporameteo"
+   ```
+
+3. Empty the new database as in "Restore the Tuscany data", then stream the
+   database from the old host to the new one through the laptop:
+
+   ```sh
+   ssh deploy@OLD "sudo dokku postgres:export sporameteo-db" \
+     | ssh deploy@NEW "sudo dokku postgres:import sporameteo-db"
+   ```
+
+4. Copy the data files. They are owned by root and readable only by root,
+   so `rsync` as `deploy` fails with "Permission denied". Stream them out of a
+   container as one archive instead:
+
+   ```sh
+   ssh deploy@OLD "sudo dokku run --no-tty sporameteo \
+     tar -C /app/data -cf - jrc_host_trees processed/mvp_forest" \
+     > /tmp/sporameteo_files.tar
+   ssh deploy@NEW "mkdir -p ~/sporameteo_staging"
+   scp /tmp/sporameteo_files.tar deploy@NEW:sporameteo_staging/
+   ```
+
+   On the new host, unpack the archive into the storage folders through a
+   staging mount, as in "Restore the Tuscany data", then start the app:
+
+   ```sh
+   sudo dokku storage:mount sporameteo /home/deploy/sporameteo_staging:/staging
+   sudo dokku run --no-tty sporameteo tar -C /app/data -xf /staging/sporameteo_files.tar
+   sudo dokku storage:unmount sporameteo /home/deploy/sporameteo_staging:/staging
+   rm -rf ~/sporameteo_staging
+   sudo dokku run --no-tty sporameteo python apps/application/manage.py migrate --noinput
+   sudo dokku ps:start sporameteo
+   ```
+
+5. Check the copy. The row count of every table must match the old database.
+   Run this on both hosts and compare the output:
+
+   ```sh
+   echo "SELECT table_name, (xpath('/row/c/text()', query_to_xml(format(
+     'SELECT count(*) AS c FROM %I.%I', table_schema, table_name),
+     false, true, '')))[1]::text FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+     ORDER BY table_name;" | sudo dokku postgres:connect sporameteo-db
+   ```
+
+   The checksums of the 38 data files must match the old host. Compare the
+   output of this command on both hosts:
+
+   ```sh
+   sudo dokku run --no-tty sporameteo sh -c \
+     "cd /app/data && find jrc_host_trees processed/mvp_forest -type f -print0 \
+     | sort -z | xargs -0 sha256sum" | LC_ALL=C sort -k2
+   ```
+
+   The container and the host sort file names differently, so sort both lists
+   with `LC_ALL=C sort -k2` before comparing. Then run `prepare_tuscany_inputs`
+   as at the end of "Restore the Tuscany data".
+6. In Cloudflare, point `sporameteo.com`, `www.sporameteo.com` and
+   `vps.sporameteo.com` to the new address. Then enable Let's Encrypt on the
+   new host as in "Domain and HTTPS". The CI deploy target stays
+   `vps.sporameteo.com`, and the deploy job reads the host key again on every
+   run, so no secret changes.
+7. Run the checks in "Checks", and `check_nightly_update` the next morning.
+   Remove the old app and database only after one night has published on the
+   new host.
+
+### Rehearsal on 16 October 2026
+
+The rehearsal ran the export and import of step 3, the archive of step 4 and
+the checks of step 5 on the current VPS, into a scratch database
+service `sporameteo-db-rehearsal` and a scratch folder in the home of
+`deploy`. The app kept running. The export went to a file on the VPS instead
+of through the laptop, and the import read that file. The unpacking through a
+staging mount was not rehearsed. It is the same mount that restored the data
+on 15 October 2026.
+
+| Step | Time | Size |
+|---|---|---|
+| Export of `sporameteo-db`, 389 MB on disk | 18 seconds | 96.9 MB dump |
+| Creation of the scratch service, same `imresamu/postgis:17-3.6-bookworm` image | 10 seconds | |
+| Import into the scratch service | 32 seconds | |
+| Data files streamed out as one archive and unpacked | 20 seconds | 359 MB, 38 files |
+
+All 56 tables had the same row count in both databases, among them 15,651
+daily weather rows, 666 weather snapshots and 284,124 estimate results. The
+37 JRC files and the forest layer file had the same SHA-256 checksums as the
+originals. The first copy with `rsync` failed with "Permission denied", which
+is why step 4 uses an archive.
+
+Afterwards `postgres:destroy` removed the scratch service and the scratch
+folder was deleted. Disk use went from 23,000,178,688 to 23,002,730,496 bytes.
+The 2.5 MB left over is mostly the `busybox` image that `postgres:destroy`
+downloads for its cleanup.
+
 ## Setup log
 
 | Step | Date | Result |
@@ -341,3 +453,4 @@ sudo dokku ps:scale sporameteo web=1
 | CI deploy key | 15 October 2026 | Dokku key `sporameteo-ci`, private key in the `DOKKU_SSH_PRIVATE_KEY` secret. `git ls-remote` with it returns the deployed commit. |
 | Tuscany data | 15 October 2026 | Dump restored with the deployed commit `d25c2de`. Row counts match `docs/hosting_data.md`, except that `django_migrations` has 64 rows because `migrate` added `weather_on_demand.0006`. The dry run and a real run of `prepare_tuscany_inputs --skip-source-files` both report `ready` for all four sources. The real run took 2.3 seconds and left 71,031 host tree rows and 1 input set. `host_tree_source_version()` matches the laptop. `/api/v1/forest-layer` answers 200. The database takes 184 MB. The JRC files take 358,725,015 bytes and the forest layer file 208,655 bytes. Used disk went from 52% to 54% of 38 GB. No dump, staging folder or `_rpp.zip` file is left on the VPS. `DROP TABLE` removed the empty `micometeo_map_cache` table that the dump brought from before the rename, so the database has 55 tables. |
 | First weather load | 15 October 2026 | The dry run planned 2026-10-15 in `initial` mode: 333 cells, 1,332 counted calls and 16 HTTP requests. The real run `f6557df6-8743-43d1-aad9-e8b01812c6b6` started at 19:21:22 UTC and ended `completed` at 19:44:23 UTC. `weather_on_demand_status` reports 1,332 counted calls, 16 attempts and no refused request. The chain queued the forecast without a manual command. It ran from 19:46:51 to 19:52:32 UTC and published run `fdde1518-478f-49e6-8ccf-9e6f098b098b`. The map cache warm-up ran from 19:52:32 to 19:52:42 UTC and left 602 cache rows. The 333 snapshots also queued 333 per-cell estimate tasks, which delayed the forecast start by about 2 minutes. `/api/v1/squares` returns available estimates for all eight dates near Abetone, in the Casentino, on Monte Amiata and in Lunigiana. The only unavailable squares have no forest. Area details name the municipality, for example Coreglia Antelminelli, Pratovecchio Stia, Arcidosso and Tresana. The database went from 184 MB, 192,416,915 bytes, to 301 MB, 315,804,819 bytes. |
+| Move rehearsal | 16 October 2026 | Export, import and file copy rehearsed into `sporameteo-db-rehearsal` and a scratch folder, then removed. Row counts of all 56 tables and checksums of all 38 data files matched. See "Move to another host". |
