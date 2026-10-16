@@ -176,3 +176,33 @@ class WeatherSummary(ImmutableRecordMixin, models.Model):
                 name="weather_summary_days_ahead_range",
             ),
         ]
+
+
+class FileWeatherRead(models.Model):
+    """Record one read of the Open-Meteo files for one assessment date."""
+
+    class Status(models.TextChoices):
+        RUNNING = "running", "Running"
+        COMPLETE = "complete", "Complete"
+        FAILED = "failed", "Failed"
+
+    id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
+    assessment_date = models.DateField()
+    region_code = models.CharField(max_length=8)
+    run_time = models.DateTimeField(null=True, blank=True)
+    started_at = models.DateTimeField()
+    finished_at = models.DateTimeField(null=True, blank=True)
+    bytes_read = models.BigIntegerField(default=0)
+    http_requests = models.IntegerField(default=0)
+    cells_total = models.IntegerField(default=0)
+    cells_written = models.IntegerField(default=0)
+    cells_already_ready = models.IntegerField(default=0)
+    missing = models.JSONField(default=dict)
+    file_modified = models.JSONField(default=dict)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.RUNNING)
+    error = models.TextField(blank=True, default="")
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["assessment_date", "started_at"], name="file_weather_read_date_idx"),
+        ]

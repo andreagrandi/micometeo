@@ -6,6 +6,8 @@ It differs from FAO-56 in two ways. The night ratio of radiation comes from humi
 import math
 from datetime import UTC, datetime
 
+import numpy as np
+
 SOLAR_CONSTANT_W_M2 = 1367.7
 _BETA = 17.27
 _LAMBDA = 237.3
@@ -160,3 +162,46 @@ def hourly_reference_evapotranspiration(
         + gamma * (37 / (temp + 273)) * wind_2m * vapour_deficit
     ) / (slope + gamma * (1 + 0.34 * wind_2m))
     return max(et0, 0.0)
+
+
+def top_of_atmosphere_series(*, latitude: float, longitude: float, first_hour: int, count: int) -> np.ndarray:
+    """Return the sun power above the atmosphere for every hour of the window.
+
+    The first hour counts hours since 1970 in UTC.
+    """
+    return np.array(
+        [
+            top_of_atmosphere_radiation(
+                latitude=latitude, longitude=longitude, hour_end=datetime.fromtimestamp((first_hour + index) * 3600, tz=UTC)
+            )
+            for index in range(count)
+        ]
+    )
+
+
+def evapotranspiration_series(
+    *, arrays: dict[str, np.ndarray], row: int, elevation: float, toa: np.ndarray, hours: range
+) -> np.ndarray:
+    """Return hourly evapotranspiration for some hours of one cell, with NaN where an input is missing.
+
+    The arrays hold temperature, dew_point, shortwave_radiation and wind_speed with one row per cell.
+    """
+    result = np.full(arrays["temperature"].shape[1], np.nan)
+    for hour in hours:
+        inputs = (
+            arrays["temperature"][row, hour],
+            arrays["dew_point"][row, hour],
+            arrays["shortwave_radiation"][row, hour],
+            arrays["wind_speed"][row, hour],
+        )
+        if any(math.isnan(value) for value in inputs):
+            continue
+        result[hour] = hourly_reference_evapotranspiration(
+            temperature_c=inputs[0],
+            dew_point_c=inputs[1],
+            shortwave_radiation_w_m2=inputs[2],
+            wind_speed_10m_m_s=inputs[3],
+            elevation_m=elevation,
+            top_of_atmosphere_w_m2=float(toa[hour]),
+        )
+    return result
