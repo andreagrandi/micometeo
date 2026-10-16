@@ -482,7 +482,7 @@ def plan_current_weather_requests(
     history = tuple(assessment_date - timedelta(days=offset) for offset in range(HISTORY_DAYS, 0, -1)
                     if assessment_date - timedelta(days=offset) not in completed)
     past = _history_request_specs(
-        locations=locations, missing_dates=history, model=DEFAULT_MODEL,
+        locations=locations, missing_dates=history, model=model,
         variables=HOURLY_VARIABLES, endpoint=history_endpoint, options=options,
         forest_build_version=forest_build_version,
     )

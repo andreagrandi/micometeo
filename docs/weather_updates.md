@@ -35,27 +35,36 @@ uv run python apps/application/manage.py weather_on_demand_status
 
 `refresh_tuscany_weather` prepares the 38-day window for every weather cell that holds a Tuscany forest square. It accepts only region code `09`. A weather cell shared by several forest squares is counted once. The forest build comes from `SPORAMETEO_FOREST_BUILD_VERSION` unless `--forest-build-version` is given. The assessment date is today in Europe/Rome unless `--assessment-date` is given.
 
-Print the plan first. The dry run reads the database only. It writes nothing and makes no provider call. It prints the mode, the number of cells, the cells that are already ready for the date, the counted calls and the HTTP requests for each date range:
+Print the plan first. The dry run reads the database only. It writes nothing, makes no network call and prints the mode, the number of cells, the cells that are already ready for the date, the MB the run would read from the files, and the API calls left. The API calls left are the counted calls and HTTP requests of the open fallback batches of the run for that date, so they are 0 when no run or no fallback batch exists:
 
 ```sh
 uv run python apps/application/manage.py refresh_tuscany_weather --dry-run
 ```
 
-Start the run without `--dry-run`. The command stores a `ScheduledWeatherRun` for the region and date, plans the batches of at most 100 cells, queues one task and prints the run ID:
+Start the run without `--dry-run`. The command stores a `ScheduledWeatherRun` for the region and date, queues one task and prints the run ID and status. It plans no API batches:
 
 ```sh
 uv run python apps/application/manage.py refresh_tuscany_weather
 ```
 
-The run is in `initial` mode while no Tuscany cell has a ready snapshot for an earlier date, and in `refresh` mode afterwards. The initial load costs 1,332 counted calls for 333 cells: three history pieces of 13, 13 and 4 days and one forecast of 8 days, which is 4 calls per cell. A normal night costs 666 counted calls: yesterday and one forecast of 8 days, which is 2 calls per cell. Counted calls and HTTP requests are different numbers. With 333 cells the initial load sends 16 HTTP requests and a normal night sends 8, because each piece needs one request per 100 cells.
+The run is in `initial` mode while no Tuscany cell has a ready snapshot for an earlier date, and in `refresh` mode afterwards.
 
-The queued task takes one batch, runs it, and then queues itself again. It starts the next provider request at least 90 seconds after the previous start, so only one request of the run is in progress. The shared quota reservation still runs before every attempt, with limits of 540 per minute, 4,500 per hour, 9,000 per day and 270,000 per 31 days. When a reservation is refused or the provider asks for a delay, the whole run waits until the retry time. A restart does not repeat completed parts. Running the command again for the same date resumes the same run and creates no second run, batch or request. The worker recovery command also queues a task again for an unfinished run.
+The worker task reads the Open-Meteo files once for all 38 days of every cell, as described in the next section. The nightly run makes no API call in its normal path. The run keeps the read in `file_read`.
 
-A run ends as `completed` when every Tuscany cell has a snapshot for the date. It ends as `failed` with a reason when a batch is refused for good. A failed run never deletes or replaces stored rows or snapshots. After `reopen_weather_fetch` has reopened the failed batches, running the command again resumes the run. The run record keeps the planned counted calls, the planned HTTP requests, the number of provider attempts and the start and end times. The database size can be read with `pg_database_size` before and after a run.
+When the read fails, the worker falls back to the API for the whole night. A read fails when a file cannot be reached or when the estimate is over 1 GB. The run then plans the full API run with `models=ecmwf_ifs`, so the fallback uses the same model as the files. It stores `file_read_failed` as the reason and the error text as the full reason, and it keeps both after the fallback run completes, as the record of why the night used the API. The fallback costs 1,332 counted calls for 333 cells in `initial` mode: three history pieces of 13, 13 and 4 days and one forecast of 8 days, which is 4 calls per cell. A normal night costs 666 counted calls: yesterday and one forecast of 8 days, which is 2 calls per cell. Counted calls and HTTP requests are different numbers. With 333 cells the initial load sends 16 HTTP requests and a normal night sends 8, because each piece needs one request per 100 cells.
+
+On the fallback path the queued task takes one batch, runs it, and then queues itself again. It starts the next provider request at least 90 seconds after the previous start, so only one request of the run is in progress. The shared quota reservation still runs before every attempt, with limits of 540 per minute, 4,500 per hour, 9,000 per day and 270,000 per 31 days. When a reservation is refused or the provider asks for a delay, the whole run waits until the retry time. A restart does not repeat completed parts. Running the command again for the same date resumes the same run and creates no second run, batch or request. The worker recovery command also queues a task again for an unfinished run.
+
+A run ends as `completed` when every Tuscany cell has a snapshot for the date. It ends as `failed` with a reason otherwise:
+
+- When the files lack hours for a cell, the cell gets no snapshot and the run fails with the reason `missing_hours`. The full reason gives the number of cells without a snapshot and the first cell with its dates. The run does not use the API for that cell.
+- When a fallback batch is refused for good, the run fails with the reason of the provider.
+
+A failed run never deletes or replaces stored rows or snapshots, so the last published estimates stay. Running the command again for a failed run reads the files again when the run has no fallback batch, and only the cells without a snapshot are read. For a failed fallback run, `reopen_weather_fetch` reopens the failed batches first, and the command resumes the run. The run record keeps the planned counted calls and HTTP requests of the fallback, the number of provider attempts and the start and end times. The database size can be read with `pg_database_size` before and after a run.
 
 ## Weather from the Open-Meteo files
 
-`store_file_weather` stores the same 38 days of daily rows as the Tuscany refresh, but it reads the public Open-Meteo files in the `openmeteo.s3.amazonaws.com` bucket instead of calling the API. It is not part of the nightly chain yet. Issue 129 connects it. The command takes the same arguments as `refresh_tuscany_weather`: `--dry-run`, `--assessment-date`, `--region-code`, `--forest-build-version` and `--json`.
+`store_file_weather` stores the same 38 days of daily rows as the Tuscany refresh, but it reads the public Open-Meteo files in the `openmeteo.s3.amazonaws.com` bucket instead of calling the API. The nightly run uses it as its normal path. The command `store_file_weather` takes the same arguments as `refresh_tuscany_weather`: `--dry-run`, `--assessment-date`, `--region-code`, `--forest-build-version` and `--json`.
 
 The dry run reads the database only. It makes no network call and writes nothing. It prints the number of weather cells, the cells that already have a snapshot for the date, the days to read, the number of chunk files and the estimated download in MB:
 
@@ -77,7 +86,7 @@ The read works in these steps:
 - The Italian daily values come from the same aggregation as the API data. A day with any missing hour gets no row. The cell then gets no snapshot, and the read record lists the cell with the reason `missing_hours` and the dates.
 - A cell with all 38 days gets a snapshot. The read is done in one pass, so a first load stores 38 days per cell and a later night stores about 9 days per cell.
 
-Each row is named `open-meteo-files` with the model `ecmwf_ifs`. Its metadata holds only that cell: the grid point, the grid height, the height correction, the read ID, the run time and the modification time of the chunk files that hold the day. Days from the assessment date on carry the run time as the forecast issue time. The row has no `response` entry.
+Each row is named `open-meteo-files` with the model `ecmwf_ifs`. Its metadata holds only that cell: the grid point, the grid height, the height correction, the read ID, the run time and the modification time of the chunk files that hold the day. Days from the assessment date on carry the run time as the forecast issue time. The row has no `response` entry. Rows that the API fallback stores from now on have no `response` entry either, and older rows keep theirs.
 
 Every read leaves a `FileWeatherRead` record with the assessment date, the run time of the files, the start and end times, the bytes and requests used, the cell counts, the missing cells and the modification time of every chunk file. When a file cannot be read, the read ends as `failed` with the error text on the record and no row is written.
 
@@ -85,7 +94,7 @@ Every read leaves a `FileWeatherRead` record with the assessment date, the run t
 
 One cron entry starts the whole night. `refresh_tuscany_weather` runs at 00:30 UTC. The steps follow each other without more cron entries:
 
-1. The weather run prepares the window for every Tuscany cell.
+1. The command creates the weather run and queues its task. The worker reads the files for all 38 days of every Tuscany cell. When the read fails, it falls back to the API with `models=ecmwf_ifs` and records why.
 2. When the run reaches `completed`, the worker queues one forecast task for the same date. The run stores the task ID in `forecast_task_id`.
 3. The forecast task calculates the estimates and publishes the run.
 4. Publishing queues the map cache warm-up.
@@ -94,7 +103,7 @@ One cron entry starts the whole night. `refresh_tuscany_weather` runs at 00:30 U
 
 A failed weather run queues no forecast. A failed forecast keeps the published run and queues no warm-up. Its task row is marked failed, and `run_tuscany_forecast` for the same date runs it again by hand. Running `refresh_tuscany_weather` again for the same date resumes the same run and queues no second forecast. If the forecast could not be queued before, for example because the queue was down, the next run of the command queues it and the run keeps the reason `forecast_queue_failure` until then.
 
-The background worker must be running, for example `run_background_worker`, because the command only plans and queues the run.
+The background worker must be running, for example `run_background_worker`, because the command only creates and queues the run.
 
 ## Nightly check and failure email
 
@@ -106,13 +115,13 @@ The background worker must be running, for example `run_background_worker`, beca
 | 03:15 | `check_nightly_update --retry` | Second retry, no email |
 | 04:00 | `check_nightly_update` | Email the owner if the run is still not published |
 
-04:00 UTC is 05:00 in Rome in winter time and 06:00 in summer time. The retries avoid the book corners jobs at 02:00 and 03:00 UTC. A normal night sends 8 provider requests at least 90 seconds apart, so the weather run takes about 12 minutes before the forecast starts.
+04:00 UTC is 05:00 in Rome in winter time and 06:00 in summer time. The retries avoid the book corners jobs at 02:00 and 03:00 UTC. A normal night reads the files and sends no provider request, so the weather run ends within a few minutes. On the API fallback a normal night sends 8 provider requests at least 90 seconds apart, so the weather run takes about 12 minutes before the forecast starts.
 
 A retry does nothing when the run is published or a step is still working. Otherwise it repeats the step that stopped:
 
 - No weather run for the date: it starts `refresh_tuscany_weather` for the date. This happens when cron or the worker was down at 00:30.
 - Weather run pending or running: it calls the same start again, which queues the task again only if the task was lost.
-- Weather run failed: it reopens the failed batches of the run and resumes the run. Batches that already finished keep their snapshots and cost no new calls.
+- Weather run failed: it reopens the failed batches of the run, if any, and resumes the run. A run without fallback batches reads the files again. Batches that already finished keep their snapshots and cost no new calls.
 - Forecast never queued, or forecast task failed: it queues a new forecast task and stores its ID in `forecast_task_id`.
 
 The provider already retries refusals with status 429, 500, 502, 503 and 504 on its own, with the delay it asks for. The retry passes cover what stops for good: other refusals, storage failures, a forecast that raised, and a worker or cron that was down.
@@ -120,7 +129,7 @@ The provider already retries refusals with status 429, 500, 502, 503 and 504 on 
 The 04:00 check sends one email when the run is not published. The subject names the date and the reason, which is one of:
 
 - `no_weather_run`: no weather run started, which usually means the worker or cron is down.
-- `weather_failed`: the weather run failed. The email holds the full refusal message of the provider.
+- `weather_failed`: the weather run failed. The email holds the full reason of the run, such as the refusal message of the provider or the cell that lacks hours in the files.
 - `forecast_failed`: the forecast failed or could not be queued. The email holds the forecast error.
 - `not_finished`: a step was still pending or running at 04:00.
 

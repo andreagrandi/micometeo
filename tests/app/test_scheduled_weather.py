@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import io
+import json
+import re
 import uuid
 from collections.abc import Callable, Iterator
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
+from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 from zoneinfo import ZoneInfo
 
@@ -19,6 +22,7 @@ from django_tasks_db.models import DBTaskResult
 import weather_on_demand.services as weather_services
 import weather_summaries.services as summary_services
 from background_jobs.worker import SporaMeteoWorker
+from sporameteo.weather.bucket_files import DOMAIN_PATH, local_window_hours
 from sporameteo.weather.openmeteo import ARCHIVE_URL, FORECAST_URL
 from sporameteo.weather.policy import WEATHER_HISTORY_VERSION
 from national_forest.models import ForestBuild, ForestCell, ForestChunk
@@ -40,7 +44,8 @@ from weather_requests.eligibility import (
 from weather_requests.models import WeatherRequest, WeatherRequestAttempt
 from weather_requests.planning import plan_current_weather_requests
 from weather_requests.services import budget_for_forest_build
-from weather_summaries.models import WeatherDaily, WeatherSnapshot
+from weather_summaries.models import FileWeatherRead, WeatherDaily, WeatherSnapshot
+from tests.app.test_file_weather import RUN_TIME, LocalSource, build_source
 from tests.app.test_weather_on_demand import _FakeOpenMeteo
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -48,6 +53,7 @@ pytestmark = pytest.mark.django_db(transaction=True)
 DAY = date(2026, 10, 11)
 FIRST_CELL = "43.50,11.20"
 SECOND_CELL = "43.60,11.20"
+FILE_CELLS = {FIRST_CELL: (43.5, 11.2), SECOND_CELL: (43.6, 11.2)}
 
 
 def _local_day(*, query: dict[str, str], edge: str) -> date:
@@ -118,11 +124,31 @@ def _never_called(**kwargs: object) -> object:
     raise AssertionError("The provider must not be called.")
 
 
+class _BrokenFiles:
+    """Stand in for a file bucket that cannot be reached, so the run falls back to the API."""
+
+    def open_om(self, *, path: str) -> object:
+        raise OSError("the file bucket is unreachable")
+
+    def read_json(self, *, path: str) -> dict[str, object]:
+        raise OSError("the file bucket is unreachable")
+
+    def modified(self, *, path: str) -> datetime:
+        raise OSError("the file bucket is unreachable")
+
+    def bytes_read(self) -> int:
+        return 0
+
+    def request_count(self) -> int:
+        return 0
+
+
 @pytest.fixture(autouse=True)
 def isolate_environment(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    """Use the default sources and keep estimate callbacks out of these tests."""
+    """Use the default sources, keep estimate callbacks out and make the file bucket unreachable."""
     monkeypatch.delenv("SPORAMETEO_WEATHER_ENDPOINT", raising=False)
     monkeypatch.delenv("SPORAMETEO_WEATHER_HISTORY_ENDPOINT", raising=False)
+    monkeypatch.setattr(weather_services, "_file_source", _BrokenFiles)
     estimate_callback = weather_services._ESTIMATE_CALLBACK
     cleanup_callback = weather_services._CLEANUP_CALLBACK
     weather_services.configure_estimate_callback(None)
@@ -470,21 +496,39 @@ def test_dry_run_prints_the_plan_and_writes_nothing(forest) -> None:
     assert "Window: 2026-09-11 through 2026-10-18" in text
     assert "Mode: initial" in text
     assert "Weather cells: 2, already ready for the date: 0" in text
-    assert "Counted calls: 8" in text
-    assert "HTTP requests: 4" in text
+    assert re.search(r"Files to read: \d+(\.\d+)? MB", text)
+    assert "API calls left: 0 counted calls, 0 HTTP requests" in text
     assert _table_counts() == before
+
+
+def test_dry_run_shows_the_api_calls_a_fallback_run_has_left(forest) -> None:
+    clock = _clock()
+    run = _start(forest=forest, clock=clock)
+    weather_services.run_scheduled_weather_step(run_id=run.id, clock=clock, transport=_Transport(clock=clock))
+    out = io.StringIO()
+
+    call_command("refresh_tuscany_weather", "--dry-run", f"--assessment-date={DAY.isoformat()}", "--json", stdout=out)
+
+    plan = json.loads(out.getvalue())
+    assert plan["api_counted_calls_left"] == 6
+    assert plan["api_http_requests_left"] == 3
+    assert plan["file_megabytes"] > 0
 
 
 def test_dry_run_matches_the_real_plan_for_an_initial_load_and_a_refresh(forest) -> None:
     clock = _clock()
     cells = tuscany_weather_cells(forest_build_version=forest["version"])
-    initial = weather_services.plan_scheduled_weather(cells=cells, assessment_date=DAY)
+    initial = weather_services.plan_scheduled_weather(cells=cells, assessment_date=DAY, model="ecmwf_ifs")
     run = _start(forest=forest, clock=clock)
     assert run.mode == initial.mode == "initial"
+    assert not WeatherFetchBatch.objects.filter(scheduled_run=run).exists()
+    transport = _Transport(clock=clock)
+    weather_services.run_scheduled_weather_step(run_id=run.id, clock=clock, transport=transport)
+    run.refresh_from_db()
     assert run.planned_counted_calls == initial.counted_calls == Decimal("8")
     assert run.planned_http_requests == initial.http_requests == 4
     assert WeatherFetchBatch.objects.filter(scheduled_run=run).count() == initial.http_requests
-    _drive(run=run, clock=clock, transport=_Transport(clock=clock))
+    _drive(run=run, clock=clock, transport=transport)
 
     next_day = DAY + timedelta(days=1)
     refresh = weather_services.plan_scheduled_weather(cells=cells, assessment_date=next_day)
@@ -1061,3 +1105,185 @@ def test_cleanup_keeps_history_rows_and_referenced_snapshots(forest) -> None:
     assert snapshots_before == set(WeatherSnapshot.objects.values_list("id", flat=True))
     snapshot = WeatherSnapshot.objects.get(cell_key=FIRST_CELL, assessment_date=DAY)
     assert snapshot.days.count() == 38
+
+
+# Weather from the files
+
+
+def _file_bucket(*, root: Path, missing_day: date | None = None) -> LocalSource:
+    """Write files for the forest cells that cover the window of DAY and of the next date."""
+    first_hour = local_window_hours(first_day=missing_day, last_day=missing_day)[0] if missing_day else None
+    return build_source(
+        root=root,
+        first_day=DAY - timedelta(days=30),
+        last_day=DAY + timedelta(days=9),
+        cells=FILE_CELLS,
+        missing_temperature_hour=first_hour + 5 if first_hour is not None else None,
+        missing_temperature_cell=FIRST_CELL,
+    )
+
+
+def _use_files(*, monkeypatch: pytest.MonkeyPatch, source: LocalSource) -> None:
+    monkeypatch.setattr(weather_services, "_file_source", lambda: source)
+
+
+def test_files_that_cover_every_cell_complete_the_run_without_batches_or_provider_calls(
+    forest, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _use_files(monkeypatch=monkeypatch, source=_file_bucket(root=tmp_path))
+    clock = _clock()
+
+    run = _drive(run=_start(forest=forest, clock=clock), clock=clock, transport=_never_called)
+
+    assert run.status == ScheduledWeatherRun.Status.COMPLETED
+    assert run.reason_code == "ready"
+    assert run.file_read.status == FileWeatherRead.Status.COMPLETE
+    assert not WeatherFetchBatch.objects.exists()
+    assert not WeatherRequestAttempt.objects.exists()
+    assert (run.planned_counted_calls, run.planned_http_requests) == (0, 0)
+
+
+def test_first_load_stores_38_days_per_cell_from_the_files(
+    forest, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _use_files(monkeypatch=monkeypatch, source=_file_bucket(root=tmp_path))
+    clock = _clock()
+
+    run = _drive(run=_start(forest=forest, clock=clock), clock=clock, transport=_never_called)
+
+    assert run.mode == "initial"
+    for cell_key in (FIRST_CELL, SECOND_CELL):
+        assert WeatherDaily.objects.filter(cell_key=cell_key, source_provider="open-meteo-files").count() == 38
+        assert WeatherSnapshot.objects.get(cell_key=cell_key, assessment_date=DAY).days.count() == 38
+    assert not WeatherFetchBatch.objects.exists()
+
+
+def test_a_cell_with_missing_hours_has_no_snapshot_and_the_run_fails_without_the_api(
+    forest, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, forecast_calls
+) -> None:
+    bad_day = DAY + timedelta(days=3)
+    _use_files(monkeypatch=monkeypatch, source=_file_bucket(root=tmp_path, missing_day=bad_day))
+    clock = _clock()
+
+    run = _drive(run=_start(forest=forest, clock=clock), clock=clock, transport=_never_called)
+
+    assert run.status == ScheduledWeatherRun.Status.FAILED
+    assert run.reason_code == "missing_hours"
+    assert FIRST_CELL in run.full_reason and bad_day.isoformat() in run.full_reason
+    assert run.file_read.missing == {FIRST_CELL: {"reason": "missing_hours", "dates": [bad_day.isoformat()]}}
+    assert not WeatherSnapshot.objects.filter(cell_key=FIRST_CELL).exists()
+    assert WeatherSnapshot.objects.filter(cell_key=SECOND_CELL).exists()
+    assert not WeatherFetchBatch.objects.exists()
+    assert not WeatherRequestAttempt.objects.exists()
+    assert forecast_calls == []
+
+
+def test_a_retry_after_missing_hours_reads_the_files_again_for_the_missing_cell(
+    forest, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _use_files(
+        monkeypatch=monkeypatch,
+        source=_file_bucket(root=tmp_path / "gap", missing_day=DAY + timedelta(days=3)),
+    )
+    clock = _clock()
+    run = _drive(run=_start(forest=forest, clock=clock), clock=clock, transport=_never_called)
+    assert run.status == ScheduledWeatherRun.Status.FAILED
+    first_read_id = run.file_read_id
+    _use_files(monkeypatch=monkeypatch, source=_file_bucket(root=tmp_path / "whole"))
+
+    restarted = _start(forest=forest, clock=clock)
+    assert restarted.status == ScheduledWeatherRun.Status.PENDING
+    assert restarted.file_read_id is None
+    finished = _drive(run=restarted, clock=clock, transport=_never_called)
+
+    assert finished.status == ScheduledWeatherRun.Status.COMPLETED
+    assert finished.file_read_id != first_read_id
+    assert (finished.file_read.cells_written, finished.file_read.cells_already_ready) == (1, 1)
+    assert WeatherSnapshot.objects.filter(assessment_date=DAY).count() == 2
+
+
+def test_a_failed_file_read_plans_the_full_api_run_with_the_file_model_and_keeps_the_reason(forest) -> None:
+    clock = _clock()
+    models: list[str] = []
+
+    def record_model(query: dict[str, str]) -> None:
+        models.append(query["models"])
+
+    transport = _Transport(clock=clock, override=record_model)
+
+    run = _drive(run=_start(forest=forest, clock=clock), clock=clock, transport=transport)
+
+    assert run.status == ScheduledWeatherRun.Status.COMPLETED
+    assert run.file_read.status == FileWeatherRead.Status.FAILED
+    assert run.reason_code == "file_read_failed"
+    assert "the file bucket is unreachable" in run.full_reason
+    assert models == ["ecmwf_ifs"] * 4
+    assert run.planned_counted_calls == Decimal("8")
+    assert WeatherFetchBatch.objects.filter(scheduled_run=run).count() == 4
+
+
+def test_a_read_over_the_size_limit_falls_back_to_the_api(forest, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("weather_summaries.file_weather.MAX_READ_BYTES", 1)
+    clock = _clock()
+
+    run = _drive(run=_start(forest=forest, clock=clock), clock=clock, transport=_Transport(clock=clock))
+
+    assert run.status == ScheduledWeatherRun.Status.COMPLETED
+    assert run.reason_code == "file_read_failed"
+    assert "over the limit" in run.full_reason
+    assert run.file_read.status == FileWeatherRead.Status.FAILED
+
+
+def test_a_completed_file_run_queues_exactly_one_forecast(
+    forest, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, forecast_calls
+) -> None:
+    _use_files(monkeypatch=monkeypatch, source=_file_bucket(root=tmp_path))
+    clock = _clock()
+
+    run = _drive(run=_start(forest=forest, clock=clock), clock=clock, transport=_never_called)
+    weather_services.run_scheduled_weather_step(run_id=run.id, clock=clock, transport=_never_called)
+    _start(forest=forest, clock=clock)
+
+    assert run.status == ScheduledWeatherRun.Status.COMPLETED
+    assert forecast_calls == [{"region_code": "09", "assessment_date": DAY}]
+
+
+def test_a_new_history_version_makes_the_next_night_read_all_38_days_again(
+    forest, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _use_files(monkeypatch=monkeypatch, source=_file_bucket(root=tmp_path))
+    clock = _clock()
+    _drive(run=_start(forest=forest, clock=clock), clock=clock, transport=_never_called)
+    old_row_ids = set(WeatherDaily.objects.values_list("id", flat=True))
+    version = WEATHER_HISTORY_VERSION + 1
+    monkeypatch.setattr("weather_summaries.file_weather.WEATHER_HISTORY_VERSION", version)
+    newer_run = RUN_TIME + timedelta(days=1)
+    (tmp_path / DOMAIN_PATH / "static" / "meta.json").write_text(
+        json.dumps({"last_run_initialisation_time": int(newer_run.timestamp())})
+    )
+    next_day = DAY + timedelta(days=1)
+
+    clock = _clock(day=next_day)
+    run = _drive(run=_start(forest=forest, clock=clock, day=next_day), clock=clock, transport=_never_called)
+
+    assert run.status == ScheduledWeatherRun.Status.COMPLETED
+    assert run.mode == "refresh"
+    new_rows = WeatherDaily.objects.exclude(id__in=old_row_ids)
+    for cell_key in (FIRST_CELL, SECOND_CELL):
+        assert new_rows.filter(cell_key=cell_key).count() == 38
+        snapshot = WeatherSnapshot.objects.get(cell_key=cell_key, assessment_date=next_day)
+        assert set(snapshot.days.values_list("daily_id", flat=True)) == set(
+            new_rows.filter(cell_key=cell_key).values_list("id", flat=True)
+        )
+    assert {row.metadata["history_version"] for row in new_rows.filter(forecast_issue_time=None)} == {version}
+    assert old_row_ids <= set(WeatherDaily.objects.values_list("id", flat=True))
+
+
+def test_a_new_api_fallback_row_has_no_response_entry(forest) -> None:
+    clock = _clock()
+
+    _drive(run=_start(forest=forest, clock=clock), clock=clock, transport=_Transport(clock=clock))
+
+    metadata = WeatherDaily.objects.filter(cell_key=FIRST_CELL, date=DAY).first().metadata
+    assert "response" not in metadata
+    assert {"variables", "location", "source"} <= set(metadata)

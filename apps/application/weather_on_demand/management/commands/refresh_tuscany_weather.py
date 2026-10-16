@@ -9,11 +9,11 @@ from django.core.management.base import BaseCommand, CommandError
 
 from weather_requests.eligibility import TUSCANY_ISTAT_CODE, WeatherEligibilityError, tuscany_weather_cells
 
-from ...services import italian_assessment_date, plan_scheduled_weather, start_scheduled_weather_run
+from ...services import italian_assessment_date, plan_nightly_weather, start_scheduled_weather_run
 
 
 class Command(BaseCommand):
-    help = "Print the Tuscany weather plan, or start the paced run that stores 38 days of weather."
+    help = "Print the Tuscany weather plan, or start the run that stores 38 days of weather from the files."
 
     def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument("--dry-run", action="store_true", help="Print the plan without writing or fetching.")
@@ -42,10 +42,10 @@ class Command(BaseCommand):
                     forest_build_version=version,
                     region_code=options["region_code"],
                 )
-                plan = plan_scheduled_weather(
+                plan = plan_nightly_weather(
                     cells=cells,
                     assessment_date=assessment_date,
-                    forest_build_version=version,
+                    region_code=options["region_code"],
                 )
                 self._write_plan(plan=plan.as_dict(), as_json=options["json"])
                 return
@@ -71,11 +71,8 @@ class Command(BaseCommand):
         self.stdout.write(f"Window: {plan['window_start']} through {plan['window_end']}")
         self.stdout.write(f"Mode: {plan['mode']}")
         self.stdout.write(f"Weather cells: {plan['cells_total']}, already ready for the date: {plan['cells_ready']}")
-        self.stdout.write(f"Counted calls: {plan['counted_calls']:g}")
-        self.stdout.write(f"HTTP requests: {plan['http_requests']}")
-        for part in plan["parts"]:
-            self.stdout.write(
-                f"  {part['kind']} {part['start_date']} through {part['end_date']}: "
-                f"{part['cells']} cells, {part['http_requests']} requests, "
-                f"{part['counted_calls']:g} counted calls"
-            )
+        self.stdout.write(f"Files to read: {plan['file_megabytes']:g} MB")
+        self.stdout.write(
+            f"API calls left: {plan['api_counted_calls_left']:g} counted calls, "
+            f"{plan['api_http_requests_left']} HTTP requests"
+        )

@@ -112,22 +112,25 @@ def build_source(
     last_day: date = DAY,
     run_time: datetime = RUN_TIME,
     missing_temperature_hour: int | None = None,
+    cells: dict[str, tuple[float, float]] | None = None,
+    missing_temperature_cell: str = "cell-a",
 ) -> LocalSource:
-    """Write the static files and the chunk files for the two test cells."""
-    surrounding = {key: surrounding_points(latitude=lat, longitude=lon) for key, (lat, lon) in CELLS.items()}
+    """Write the static files and the chunk files for the test cells, the two default ones unless given."""
+    cells = cells or CELLS
+    surrounding = {key: surrounding_points(latitude=lat, longitude=lon) for key, (lat, lon) in cells.items()}
     points = {key: found[0] for key, found in surrounding.items()}
     ordered = sorted({point for group in points.values() for point in group})
     point_index = {point: index for index, point in enumerate(ordered)}
     heights = np.zeros((1, len(ordered)))
     for key, group in points.items():
         for point in group:
-            heights[0, point_index[point]] = GRID_HEIGHTS[key]
+            heights[0, point_index[point]] = GRID_HEIGHTS.get(key, 500.0)
     write_om(path=root / DOMAIN_PATH / "static" / "HSURF.om", data=heights)
     dem_index: dict[tuple[int, int], int] = {}
-    for key, (lat, lon) in CELLS.items():
+    for key, (lat, lon) in cells.items():
         whole_degree, row, column = bucket_files.dem_position(latitude=lat, longitude=lon)
         dem_index[(row, column)] = len(dem_index)
-        write_om(path=root / DEM_PATH / f"lat_{whole_degree}.om", data=np.full((len(CELLS), 1), PLACE_HEIGHTS[key]))
+        write_om(path=root / DEM_PATH / f"lat_{whole_degree}.om", data=np.full((len(CELLS), 1), PLACE_HEIGHTS.get(key, 100.0)))
     (root / DOMAIN_PATH / "static" / "meta.json").write_text(json.dumps({"last_run_initialisation_time": int(run_time.timestamp())}))
     first_hour, end_hour = local_window_hours(first_day=first_day, last_day=last_day)
     for chunk in range(first_hour // CHUNK_HOURS, end_hour // CHUNK_HOURS + 1):
@@ -135,7 +138,7 @@ def build_source(
             data = np.full((1, len(ordered), CHUNK_HOURS), VALUES[variable])
             local_hour = None if missing_temperature_hour is None else missing_temperature_hour - chunk * CHUNK_HOURS
             if variable == "temperature_2m" and local_hour is not None and 0 <= local_hour < CHUNK_HOURS:
-                data[0, point_index[surrounding["cell-a"][0][surrounding["cell-a"][2]]], local_hour] = np.nan
+                data[0, point_index[surrounding[missing_temperature_cell][0][surrounding[missing_temperature_cell][2]]], local_hour] = np.nan
             write_om(path=root / chunk_path(variable=variable, chunk=chunk), data=data)
     return LocalSource(root=root, point_index=point_index, dem_index=dem_index)
 
