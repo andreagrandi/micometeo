@@ -476,3 +476,210 @@ msgstr "SporaMeteo non richiede un account e non mostra pubblicità. I preferiti
 
 msgid "SporaMeteo, experimental porcini estimates."
 msgstr "SporaMeteo, stime sperimentali sui porcini."
+
+msgid "Privacy Policy"
+msgstr "Informativa sulla privacy"
+
+msgid "Last updated: 17th October 2026"
+msgstr "Ultimo aggiornamento: 17 ottobre 2026"
+
+msgid "This Privacy Policy explains how SporaMeteo collects, uses and protects personal data in accordance with Regulation (EU) 2016/679 (GDPR) and applicable Italian data protection laws."
+msgstr "Questa informativa sulla privacy spiega come SporaMeteo raccoglie, usa e protegge i dati personali ai sensi del Regolamento (UE) 2016/679 (GDPR) e della normativa italiana applicabile in materia di protezione dei dati."
+
+msgid "1. Data Controller"
+msgstr "1. Titolare del trattamento"
+
+msgid "The Data Controller is Andrea Grandi, operator of SporaMeteo, based in Italy."
+msgstr "Il titolare del trattamento è Andrea Grandi, gestore di SporaMeteo, con sede in Italia."
+
+msgid "For any privacy related request, you can contact:"
+msgstr "Per qualsiasi richiesta sulla privacy puoi scrivere a:"
+
+msgid "Email:"
+msgstr "Email:"
+
+msgid "2. What personal data we collect"
+msgstr "2. Quali dati personali raccogliamo"
+
+msgid "We collect only the personal data necessary to provide and operate the service."
+msgstr "Raccogliamo solo i dati personali necessari per fornire e gestire il servizio."
+
+msgid "No accounts"
+msgstr "Nessun account"
+
+msgid "SporaMeteo has no sign-up and no user accounts. We do not ask for a name, an email address or a password."
+msgstr "SporaMeteo non prevede registrazione né account utente. Non chiediamo nome, indirizzo email o password."
+
+msgid "Favorites"
+msgstr "Preferiti"
+
+msgid "When you save a favorite, the list is stored only in your browser. It is never sent to our servers, does not sync between devices and is lost when you clear your browser data."
+msgstr "Quando salvi un preferito, l'elenco resta solo nel tuo browser. Non viene mai inviato ai nostri server, non si sincronizza tra dispositivi e si perde se cancelli i dati del browser."
+
+msgid "Place search"
+msgstr "Ricerca dei luoghi"
+
+msgid "When you search for a place, the text you type is sent to our server and passed to Photon, a search service run by Komoot, to find matching place names. We may keep the search text in a short-lived cache to reduce the load on that service."
+msgstr "Quando cerchi un luogo, il testo che digiti viene inviato al nostro server e girato a Photon, un servizio di ricerca gestito da Komoot, per trovare i nomi dei luoghi corrispondenti. Possiamo conservare il testo cercato in una cache temporanea per ridurre il carico su quel servizio."
+
+msgid "Technical data"
+msgstr "Dati tecnici"
+
+msgid "To run and protect the site, our server and the network in front of it process limited technical data for every request, such as:"
+msgstr "Per far funzionare e proteggere il sito, il nostro server e la rete davanti ad esso trattano dati tecnici limitati per ogni richiesta, come:"
+
+msgid "IP address"
+msgstr "Indirizzo IP"
+
+msgid "Date and time of access"
+msgstr "Data e ora dell'accesso"
+
+msgid "Browser and device information"
+msgstr "Informazioni su browser e dispositivo"
+
+msgid "3. Purposes and legal basis of processing"
+msgstr "3. Finalità e basi giuridiche del trattamento"
+
+msgid "Personal data is processed for the following purposes:"
+msgstr "I dati personali sono trattati per le seguenti finalità:"
+
+msgid "Providing the service"
+msgstr "Fornire il servizio"
+
+msgid "To deliver the site, run the map and answer place searches."
+msgstr "Per erogare il sito, far funzionare la mappa e rispondere alle ricerche dei luoghi."
+
+msgid "Legal basis: performance of a contract or legitimate interest (Article 6(1)(b) and 6(1)(f) GDPR)."
+msgstr "Base giuridica: esecuzione di un contratto o interesse legittimo (articolo 6, paragrafo 1, lettere b) e f) del GDPR)."
+
+msgid "Security and abuse prevention"
+msgstr "Sicurezza e prevenzione degli abusi"
+
+msgid "To protect the site and prevent fraud, spam and misuse."
+msgstr "Per proteggere il sito e prevenire frodi, spam e usi impropri."
+
+msgid "Legal basis: legitimate interest (Article 6(1)(f) GDPR)."
+msgstr "Base giuridica: interesse legittimo (articolo 6, paragrafo 1, lettera f) del GDPR)."
+
+msgid "Responding to communications"
+msgstr "Risposta alle comunicazioni"
+
+msgid "To reply to messages and support requests."
+msgstr "Per rispondere a messaggi e richieste di assistenza."
+
+msgid "Legal basis: performance of a contract or legitimate interest."
+msgstr "Base giuridica: esecuzione di un contratto o interesse legittimo."
+
+msgid "We do not reuse personal data for purposes unrelated to providing SporaMeteo."
+msgstr "Non riutilizziamo i dati personali per finalità diverse da quelle di fornire SporaMeteo."
+
+msgid "4. Data selling and marketing"
+msgstr "4. Vendita dei dati e marketing"
+
+msgid "We do not sell personal data."
+msgstr "Non vendiamo dati personali."
+
+msgid "We do not share personal data for advertising purposes."
+msgstr "Non condividiamo dati personali per finalità pubblicitarie."
+
+msgid "We do not plan to sell personal data in the future."
+msgstr "Non prevediamo di vendere dati personali in futuro."
+
+msgid "5. Data hosting and transfers"
+msgstr "5. Hosting e trasferimenti"
+
+msgid "SporaMeteo runs on a virtual private server provided by Hetzner, with infrastructure located in the European Union."
+msgstr "SporaMeteo gira su un server privato virtuale fornito da Hetzner, con infrastruttura nell'Unione Europea."
+
+msgid "The site is delivered through the Cloudflare network."
+msgstr "Il sito è distribuito attraverso la rete Cloudflare."
+
+msgid "Personal data is stored and processed within the European Union. No transfers outside the European Economic Area take place unless a service your browser contacts directly is based elsewhere, such as Google Fonts. Those providers follow their own privacy policies and safeguards."
+msgstr "I dati personali sono conservati e trattati nell'Unione Europea. Non avvengono trasferimenti fuori dallo Spazio Economico Europeo, salvo verso servizi che il tuo browser contatta direttamente e che hanno sede altrove, come Google Fonts. Quei fornitori seguono le proprie informative e le proprie garanzie."
+
+msgid "6. Data retention"
+msgstr "6. Conservazione dei dati"
+
+msgid "We keep personal data only as long as needed to provide the service."
+msgstr "Conserviamo i dati personali solo per il tempo necessario a fornire il servizio."
+
+msgid "Favorites stay in your browser and are removed when you clear your browser data."
+msgstr "I preferiti restano nel tuo browser e spariscono quando cancelli i dati del browser."
+
+msgid "Place search results are cached for a limited period, at most 30 days."
+msgstr "I risultati della ricerca dei luoghi restano in cache per un periodo limitato, al massimo 30 giorni."
+
+msgid "Technical logs and access records are kept for a limited period for security and troubleshooting."
+msgstr "I log tecnici e le registrazioni degli accessi sono conservati per un periodo limitato, per sicurezza e diagnosi."
+
+msgid "7. Recipients of data"
+msgstr "7. Destinatari dei dati"
+
+msgid "Personal data may be processed by service providers necessary to run the site. These providers act as data processors under Article 28 GDPR. They include the hosting provider and the network provider in front of the site."
+msgstr "I dati personali possono essere trattati da fornitori di servizi necessari al funzionamento del sito. Questi fornitori agiscono come responsabili del trattamento ai sensi dell'articolo 28 del GDPR. Tra loro ci sono il fornitore di hosting e il fornitore della rete davanti al sito."
+
+msgid "Some services are contacted directly by your browser and see your IP address: the map tile service OpenFreeMap, the place search service Photon by Komoot, and Google Fonts. Your browser requests them when you open the map."
+msgstr "Alcuni servizi sono contattati direttamente dal tuo browser e vedono il tuo indirizzo IP: il servizio di mappe OpenFreeMap, il servizio di ricerca luoghi Photon di Komoot e Google Fonts. Il tuo browser li contatta quando apri la mappa."
+
+msgid "Personal data may also be disclosed where the law or a competent authority requires it."
+msgstr "I dati personali possono inoltre essere comunicati quando lo richiede la legge o un'autorità competente."
+
+msgid "8. Your rights under GDPR"
+msgstr "8. I tuoi diritti secondo il GDPR"
+
+msgid "As a data subject, you have the right to:"
+msgstr "Come interessato hai il diritto di:"
+
+msgid "Access your personal data"
+msgstr "Accedere ai tuoi dati personali"
+
+msgid "Request correction of inaccurate data"
+msgstr "Chiedere la correzione di dati inesatti"
+
+msgid "Request erasure of your data"
+msgstr "Chiedere la cancellazione dei tuoi dati"
+
+msgid "Request restriction of processing"
+msgstr "Chiedere la limitazione del trattamento"
+
+msgid "Object to processing based on legitimate interest"
+msgstr "Opporti al trattamento basato sull'interesse legittimo"
+
+msgid "Request data portability"
+msgstr "Chiedere la portabilità dei dati"
+
+msgid "You also have the right to lodge a complaint with the Italian Data Protection Authority (Garante per la Protezione dei Dati Personali)."
+msgstr "Hai anche il diritto di proporre reclamo al Garante per la Protezione dei Dati Personali."
+
+msgid "To exercise your rights, write to privacy@sporameteo.com."
+msgstr "Per esercitare i tuoi diritti scrivi a privacy@sporameteo.com."
+
+msgid "9. Security measures"
+msgstr "9. Misure di sicurezza"
+
+msgid "We apply technical and organisational measures to protect personal data against unauthorised access, alteration, disclosure or destruction. No system can guarantee absolute security."
+msgstr "Applichiamo misure tecniche e organizzative per proteggere i dati personali da accessi, modifiche, divulgazioni o distruzioni non autorizzati. Nessun sistema può garantire una sicurezza assoluta."
+
+msgid "10. Cookies"
+msgstr "10. Cookie"
+
+msgid "SporaMeteo uses one cookie, which is strictly necessary for the site to work. No tracking, analytics or advertising cookies are used."
+msgstr "SporaMeteo usa un solo cookie, necessario al funzionamento del sito. Non usiamo cookie di tracciamento, analisi o pubblicità."
+
+msgid "Cookies we set"
+msgstr "Cookie che impostiamo"
+
+msgid "Remembers the language you choose. Expires after one year."
+msgstr "Ricorda la lingua che scegli. Scade dopo un anno."
+
+msgid "Why no consent banner is shown"
+msgstr "Perché non mostriamo un banner per il consenso"
+
+msgid "Under the ePrivacy Directive (Article 5(3)) and Italian data protection guidelines, cookies that are strictly necessary for the service do not need user consent. Favorites are stored in your browser and are not cookies."
+msgstr "Secondo la direttiva ePrivacy (articolo 5, paragrafo 3) e le linee guida italiane sulla protezione dei dati, i cookie strettamente necessari al servizio non richiedono il consenso dell'utente. I preferiti sono conservati nel tuo browser e non sono cookie."
+
+msgid "11. Changes to this policy"
+msgstr "11. Modifiche a questa informativa"
+
+msgid "This Privacy Policy may change from time to time. Any change is published on this page with a new revision date."
+msgstr "Questa informativa sulla privacy può cambiare nel tempo. Ogni modifica è pubblicata su questa pagina con una nuova data di revisione."

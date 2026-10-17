@@ -12,7 +12,7 @@ class WebUILocaleMiddleware(LocaleMiddleware):
     @staticmethod
     def _is_web_ui_path(path: str) -> bool:
         """Return whether a request belongs to the public web UI."""
-        return path == "/" or path.startswith("/map/")
+        return path == "/" or path.startswith("/map/") or path.startswith("/privacy/")
 
     def process_request(self, request: HttpRequest) -> None:
         """Activate browser or cookie language for public UI requests."""

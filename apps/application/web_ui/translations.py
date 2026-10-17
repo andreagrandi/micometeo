@@ -235,6 +235,7 @@ TEXT = {
         "footer_method": "Method",
         "footer_language": "Language",
         "footer_note": "Free to explore, without an account.",
+        "privacy": "Privacy",
         "map_loading": "Loading the map data.",
         "map_info_error": "The map data could not be loaded. Try again.",
         "map_layer_error": "The forest view could not be loaded. Try again.",
