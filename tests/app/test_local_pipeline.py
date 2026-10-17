@@ -98,7 +98,7 @@ def _publish_night(*, pipeline: SimpleNamespace, day: date) -> _Transport:
     weather, transport = _run_weather(pipeline=pipeline, day=day)
     assert weather.status == ScheduledWeatherRun.Status.COMPLETED
     assert _run_forecast(day=day).status == ForecastRun.Status.PUBLISHED
-    assert warm_published_map_cache(region_code="09")["tiles"] > 0
+    assert warm_published_map_cache(region_code="09")["squares"] > 0
     return transport
 
 
@@ -211,7 +211,7 @@ def test_a_night_stores_weather_publishes_eight_dates_and_warms_the_map(night_d:
     assert published_forecast_run(region_code="09").run.id == run.id
     results = EstimateResult.objects.filter(update__forecast_run_cells__run=run)
     assert results.count() == 3
-    assert warm_published_map_cache(region_code="09")["tiles"] > 0
+    assert warm_published_map_cache(region_code="09")["squares"] > 0
 
 
 def test_map_overview_and_details_agree_on_square_date_value_update_and_credits(

@@ -144,6 +144,14 @@ returns a frozen `ForecastResult` with these fields:
 The calculation does no network or database work. The estimate update service
 reads the stored weather, terrain and forest records and passes them in.
 
+For v4 the service calls `calculate_v4_scores` instead, once per weather cell
+and target date. In v4 the moisture part of the score depends only on the
+weather of the cell, so it is worked out once. Each square then gets only its
+altitude step and the final score. The percentages and missing reasons are
+the same as from `calculate_forecast`, without the facts. It is about 9 times
+faster on real cells, as `reports/italy_night_cost.md` records. The detail
+view still uses `calculate_forecast` for the facts.
+
 ## Required input schema
 
 All input periods are inclusive. A `None` record or a record whose `value` is

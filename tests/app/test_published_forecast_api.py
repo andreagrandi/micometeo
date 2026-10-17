@@ -459,7 +459,7 @@ def test_cache_hits_run_no_query_on_estimate_results_or_forest_cells(served: Sim
         assert len(captured) <= 3
 
 
-def test_warming_builds_only_tuscany_tiles_so_the_first_page_read_needs_no_forest_or_result_query(
+def test_warming_accepts_only_tuscany_and_leaves_tiles_to_the_first_request(
     served: SimpleNamespace,
 ) -> None:
     fixture = served.fixture
@@ -508,24 +508,22 @@ def test_warming_builds_only_tuscany_tiles_so_the_first_page_read_needs_no_fores
     assert _cache_rows(pattern="%:static:%") == 0
 
     call_command("warm_published_map_cache")
-    warmed_static = _cache_rows(pattern="%:static:%")
-    warmed_results = _cache_rows(pattern="%:results:%")
-    # A view that stays inside the one warmed tile, around the third square.
+    # Warming prepares the summary and the overview points. Tiles wait for the first request.
+    assert (_cache_rows(pattern="%:static:%"), _cache_rows(pattern="%:results:%")) == (0, 0)
+    assert _cache_rows(pattern="%:overview-points:%") == 1
     longitude, latitude = GRID_TO_WGS84.transform(4_301_250, 2_300_400)
     inside = f"{longitude - 0.0012},{latitude - 0.0009},{longitude + 0.0012},{latitude + 0.0009}"
-    with CaptureQueriesContext(connection) as queries:
-        response = served.client.get("/api/v1/squares", _squares_query(bbox=inside))
+    response = served.client.get("/api/v1/squares", _squares_query(bbox=inside))
 
-    assert (warmed_static, warmed_results) == (1, 1)
     assert response.status_code == 200
-    assert _read_tables(queries) == 0
-    assert published.warm_published_map_cache() == {"tiles": 1}
+    assert (_cache_rows(pattern="%:static:%"), _cache_rows(pattern="%:results:%")) == (1, 1)
+    assert published.warm_published_map_cache()["squares"] > 0
 
 
 def test_warming_without_a_published_run_does_nothing(
     map_fixture: dict[str, object],  # noqa: F811
 ) -> None:
-    assert published.warm_published_map_cache() == {"tiles": 0}
+    assert published.warm_published_map_cache() == {"squares": 0}
     assert _cache_rows() == 0
 
 

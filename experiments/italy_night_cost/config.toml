@@ -1,0 +1,98 @@
+description = "Measure one night for all Italy on a disposable local database: weather read from the files, estimates, map cache warm-up, database growth, and the run again under the 384 MB limit of the VPS worker."
+seed = 42
+time_limit_minutes = 30
+
+[settings]
+# Run only the steps listed here. A step whose result file exists is skipped, unless it is also in rerun_steps.
+# Steps in order: database, weather, first_night, night, warmup_unlimited, night_384mb, warmup_384mb, tuscany.
+# The whole sequence takes longer than the 30 minute limit of one run, so start it in parts, for example steps = ["database", "weather"].
+steps = ["database", "weather", "first_night", "night", "warmup_unlimited", "night_384mb", "warmup_384mb", "tuscany"]
+rerun_steps = []
+
+# The database name must contain estimate_benchmark. The run refuses any other name.
+database = "sporameteo_estimate_benchmark_20261017"
+source_database = "sporameteo_native"
+database_container = "sporameteo-database-1"
+database_user = "sporameteo"
+# The password comes from SPORAMETEO_DB_PASSWORD, as in docker-compose.yml.
+docker_network = "sporameteo_default"
+# Drop the database first when it exists. Without this the run stops if the database exists.
+drop_existing_database = true
+
+image = "sporameteo-italy-night:local"
+rebuild_image = false
+cpus = 2
+limited_memory = "384m"
+
+assessment_date = "2026-10-17"
+# The assessment date of the night after, for the weather_night steps. The weather read of that night refreshes 2026-10-17 to 2026-10-25.
+night_assessment_date = "2026-10-18"
+# The image built from master, for the tuscany_old step. It holds the code that ran on the VPS.
+master_image = "sporameteo-italy-night:master"
+master_branch = "master"
+master_worktree = "/private/tmp/claude-501/-Users-andrea-Projects-sporameteo/b9188765-2597-435f-a608-793a71504c6d/scratchpad/master-tree"
+forest_build_version = "italy-forest-copernicus-2018-v1"
+terrain_build_version = "italy-terrain-glo30-2021-v2"
+grid_build_version = "italy-500m-istat-2026-01-01-v1"
+expected_weather_cells = 3726
+
+# "all" is all Italy, "09" is Tuscany. Use "09" with limit_cells for a quick check.
+weather_region = "all"
+estimate_region = "all"
+# Zero means no limit.
+limit_cells = 0
+limit_tiles = 0
+
+# Tables emptied between passes. The national tables, the host tree cache and the Tuscany input set stay.
+weather_tables = [
+    "weather_summaries_weatherdaily",
+    "weather_summaries_weathersummary",
+    "weather_summaries_weathersnapshot",
+    "weather_summaries_weathersnapshotday",
+    "weather_summaries_fileweatherread",
+    "weather_on_demand_weatherfetchpart",
+    "weather_on_demand_weatherfetch",
+    "weather_on_demand_weatherfetchbatch",
+    "weather_on_demand_scheduledweatherrun",
+    "weather_requests_weatherrequestmember",
+    "weather_requests_weatherrequest",
+    "weather_requests_weatherrequestattempt",
+]
+estimate_tables = [
+    "estimate_updates_estimateresult",
+    "estimate_updates_estimateupdate",
+    "estimate_updates_estimatetask",
+    "estimate_updates_forecastruncell",
+    "estimate_updates_forecastrun",
+    "estimate_updates_publishedforecastrun",
+    "django_tasks_database_dbtaskresult",
+]
+map_cache_table = "sporameteo_map_cache"
+host_tree_table = "estimate_updates_hosttreecache"
+
+# What the VPS measured and what it allows. These numbers come from the Tuscany night of 17 October 2026 on the VPS,
+# and from docs/hosting.md for the limits.
+[settings.vps]
+night_date = "2026-10-17"
+weather_read_start_utc = "00:30:12"
+weather_read_end_utc = "00:31:48"
+weather_bytes = 31217953
+weather_http_requests = 1036
+weather_cells = 333
+forecast_seconds = 326.8
+forecast_squares = 71031
+forecast_cells = 333
+forecast_peak_memory_mb = 245.2
+warmup_seconds = 5.2
+warmup_tiles = 300
+first_nightly_check_utc = "02:30"
+worker_memory_limit_mb = 384
+cpus = 2
+memory_gb = 3.7
+swap_gb = 2
+source = "Tuscany night of 17 October 2026 on the VPS, as given for issue 152. Limits from docs/hosting.md."
+worker_memory_with_swap_mb = 768
+web_memory_mb = 512
+web_memory_with_swap_mb = 1024
+cpu_limit = "none"
+limits_source = "dokku ps:inspect on the VPS: worker 384 MB, 768 MB with swap; web 512 MB, 1 GB with swap; no CPU limit."

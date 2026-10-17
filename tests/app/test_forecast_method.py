@@ -693,3 +693,80 @@ def test_v2_invalid_temperature_records_raise_value_error() -> None:
     wrong_unit = replace(make_period_temperatures(), unit="mm")
     with pytest.raises(ValueError, match="must use deg_c"):
         calculate_forecast(inputs=make_inputs(period_temperatures=wrong_unit))
+
+
+def _thirty_days(*, temperatures=None, skip: int | None = None, missing: tuple[int, str] | None = None, rain: float = 4.0):
+    days = []
+    for index, offset in enumerate(range(30, 0, -1)):
+        values = {"rain_mm": rain + index % 3, "temperature_c": 12.0, "et0_mm": 2.0}
+        if temperatures is not None and index >= 23:
+            values["temperature_c"] = temperatures[index - 23]
+        if missing is not None and missing[0] == index:
+            values[missing[1]] = None
+        days.append(WeatherDay(day=ASSESSMENT - timedelta(days=offset), **values))
+    return tuple(days[1:] if skip is not None else days)
+
+
+def _fast_and_slow(*, base: ForecastInputs, forest_shares: list, altitudes: list) -> tuple[list, list]:
+    from sporameteo.forecast_method import calculate_v4_scores
+
+    fast = calculate_v4_scores(inputs=base, forest_shares=forest_shares, altitudes=altitudes)
+    slow = []
+    for forest, altitude in zip(forest_shares, altitudes, strict=True):
+        result = calculate_versioned_forecast(inputs=replace(
+            base,
+            forest_share=None if forest is None else make_input(role="forest_share", value=forest),
+            square_altitude=None if altitude is None else make_input(role="square_altitude", value=altitude),
+        ))
+        slow.append((result.whole_percentage, result.unavailable_reason))
+    return fast, slow
+
+
+@pytest.mark.parametrize("reference_altitude", [500.0, None])
+@pytest.mark.parametrize(
+    "weather",
+    [
+        _thirty_days(),
+        _thirty_days(missing=(3, "rain_mm")),
+        _thirty_days(missing=(10, "temperature_c")),
+        _thirty_days(missing=(29, "et0_mm")),
+        _thirty_days(skip=1),
+        _thirty_days(temperatures=(0.0, 5.0, 8.0, 12.0, 18.0, 22.0, 25.0)),
+        _thirty_days(temperatures=(30.0, 29.0, 6.5, 3.0, 0.1, -4.0, 20.0)),
+    ],
+)
+def test_fast_v4_scores_equal_the_full_calculation_square_by_square(weather, reference_altitude) -> None:
+    forests = [None, 0.05, 0.1, 0.5, 1.0]
+    altitudes = [None, -20.0, 0.0, 200.0, 500.0, 1500.0]
+    pairs = [(forest, altitude) for forest in forests for altitude in altitudes]
+    base = replace(
+        make_inputs(reference_altitude=reference_altitude),
+        daily_weather=weather,
+        daily_weather_source_id="test:30-days",
+    )
+    fast, slow = _fast_and_slow(base=base, forest_shares=[p[0] for p in pairs], altitudes=[p[1] for p in pairs])
+    assert fast == slow
+
+
+@pytest.mark.parametrize(
+    ("weather", "forest", "altitude"),
+    [
+        (_thirty_days(), 1.5, 500.0),
+        (_thirty_days(), 0.5, math.nan),
+        (_thirty_days(), 0.5, True),
+        (_thirty_days(rain=-1.0), 0.5, 500.0),
+        (_thirty_days(missing=(3, "rain_mm"))[:2] + (WeatherDay(day=ASSESSMENT, rain_mm=1.0, temperature_c=1.0, et0_mm=1.0),) * 28, 0.5, 500.0),
+    ],
+)
+def test_fast_v4_scores_raise_where_the_full_calculation_raises(weather, forest, altitude) -> None:
+    from sporameteo.forecast_method import calculate_v4_scores
+
+    base = replace(make_inputs(), daily_weather=weather, daily_weather_source_id="test:30-days")
+    with pytest.raises(ValueError):
+        calculate_versioned_forecast(inputs=replace(
+            base,
+            forest_share=make_input(role="forest_share", value=forest),
+            square_altitude=make_input(role="square_altitude", value=altitude),
+        ))
+    with pytest.raises(ValueError):
+        calculate_v4_scores(inputs=base, forest_shares=[0.5, forest], altitudes=[500.0, altitude])

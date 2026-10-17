@@ -17,10 +17,10 @@ def estimate_update_task(*, job_id: str) -> str:
 
 @task
 def warm_published_map_cache_task(*, region_code: str) -> int:
-    """Fill the shared map cache for the published run without any remote access."""
+    """Prepare the overview of the published run in the shared map cache without any remote access."""
     from map_api.published import warm_published_map_cache
 
-    return warm_published_map_cache(region_code=region_code)["tiles"]
+    return warm_published_map_cache(region_code=region_code)["squares"]
 
 
 @task

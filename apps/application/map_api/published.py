@@ -47,7 +47,6 @@ CACHE_VERSION = "map-v1"
 TILE_SIZE_M = 10_000
 MIN_FOREST_SHARE = 0.1
 NO_VALUE = 255
-WARM_TILES_PER_STEP = 20
 
 Tile = tuple[int, int]
 Bbox = tuple[float, float, float, float]
@@ -733,29 +732,35 @@ def _build_overview_points(*, summary: RunSummary) -> bytes:
         "forest_cell__grid_build_cell__cell__corner_n",
         "values",
     )
-    update_index: list[int] = []
-    corner_e: list[int] = []
-    corner_n: list[int] = []
-    values = numpy.full((0, 8), NO_VALUE, dtype=numpy.uint8)
-    packed: list[list[int]] = []
+    # The arrays are filled as the rows stream in. They grow in blocks if the table gains rows after the count.
+    capacity = rows.count()
+    update_index = numpy.zeros(capacity, dtype=numpy.int16)
+    corner_e = numpy.zeros(capacity, dtype=numpy.int32)
+    corner_n = numpy.zeros(capacity, dtype=numpy.int32)
+    values = numpy.full((capacity, 8), NO_VALUE, dtype=numpy.uint8)
+    filled = 0
     for update_id, east, north, raw in rows.iterator(chunk_size=20_000):
+        if filled == capacity:
+            capacity += 20_000
+            update_index = numpy.resize(update_index, capacity)
+            corner_e = numpy.resize(corner_e, capacity)
+            corner_n = numpy.resize(corner_n, capacity)
+            values = numpy.concatenate([values, numpy.full((20_000, 8), NO_VALUE, dtype=numpy.uint8)])
         try:
-            decoded = [value if isinstance(value, int) else NO_VALUE for value in decode_result_bytes(values=raw)]
+            values[filled] = [value if isinstance(value, int) else NO_VALUE for value in decode_result_bytes(values=raw)]
         except ValueError:
-            decoded = [NO_VALUE] * 8
-        update_index.append(index_of[update_id])
-        corner_e.append(east)
-        corner_n.append(north)
-        packed.append(decoded)
-    if packed:
-        values = numpy.array(packed, dtype=numpy.uint8)
+            pass
+        update_index[filled] = index_of[update_id]
+        corner_e[filled] = east
+        corner_n[filled] = north
+        filled += 1
     buffer = io.BytesIO()
-    numpy.savez(
+    numpy.savez_compressed(
         buffer,
-        corner_e=numpy.array(corner_e, dtype=numpy.int32),
-        corner_n=numpy.array(corner_n, dtype=numpy.int32),
-        values=values,
-        update_index=numpy.array(update_index, dtype=numpy.int16),
+        corner_e=corner_e[:filled],
+        corner_n=corner_n[:filled],
+        values=values[:filled],
+        update_index=update_index[:filled],
         calculated_at=numpy.array([summary.updates[update_id][1] for update_id in order], dtype=str),
     )
     return buffer.getvalue()
@@ -821,22 +826,10 @@ def run_id_for_update(*, update_id: UUID) -> str | None:
     return None
 
 
-def _tuscany_tiles(*, run: PublishedRun) -> list[Tile]:
-    rows = (
-        ForestCell.objects.filter(
-            build_id=run.forest_build_id,
-            grid_build_cell__owner_region__istat_code=TUSCANY_ISTAT_CODE,
-        )
-        .order_by()
-        .values_list("grid_build_cell__cell__corner_e", "grid_build_cell__cell__corner_n")
-    )
-    return sorted({_tile_of(corner_e=corner_e, corner_n=corner_n) for corner_e, corner_n in rows})
-
-
 def warm_published_map_cache(*, region_code: str = TUSCANY_ISTAT_CODE) -> dict[str, int]:
-    """Build the square and result tiles of the published Tuscany run into the cache.
+    """Build the run summary and the overview points of the published Tuscany run into the cache.
 
-    Only Tuscany is accepted. Tiles that are already cached are not read again.
+    Only Tuscany is accepted. Square and result tiles are built by the first request that needs them.
     """
     if region_code != TUSCANY_ISTAT_CODE:
         raise MapCacheError(
@@ -845,12 +838,7 @@ def warm_published_map_cache(*, region_code: str = TUSCANY_ISTAT_CODE) -> dict[s
         )
     run = published_run()
     if run is None:
-        return {"tiles": 0}
+        return {"squares": 0}
     summary = run_summary(run=run)
-    tiles = _tuscany_tiles(run=run)
-    for start in range(0, len(tiles), WARM_TILES_PER_STEP):
-        step = tiles[start:start + WARM_TILES_PER_STEP]
-        static = static_tiles(run=run, tiles=step)
-        run_tiles(run=run, summary=summary, static=static, tiles=step)
-    overview_points(run=run, summary=summary)
-    return {"tiles": len(tiles)}
+    points = overview_points(run=run, summary=summary)
+    return {"squares": len(points.corner_e)}

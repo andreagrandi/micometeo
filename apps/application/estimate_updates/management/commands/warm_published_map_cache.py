@@ -19,4 +19,4 @@ class Command(BaseCommand):
             counts = warm_published_map_cache(region_code=options["region_code"])
         except MapCacheError as exc:
             raise CommandError(str(exc)) from exc
-        self.stdout.write(f"Warmed {counts['tiles']} tiles of the published run")
+        self.stdout.write(f"Prepared the overview of {counts["squares"]} squares of the published run")

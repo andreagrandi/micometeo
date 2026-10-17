@@ -658,6 +658,47 @@ def test_default_method_stores_v4_with_thirty_preceding_weather_days(
 
 
 @pytest.mark.django_db(transaction=True)
+def test_fast_cell_path_stores_the_same_rows_as_the_square_by_square_path(
+    complete_estimate_fixture: dict[str, object],
+) -> None:
+    snapshot = complete_estimate_fixture["snapshot"]
+    arguments = {
+        "snapshot_id": snapshot.id,
+        "cell_key": snapshot.cell_key,
+        "assessment_date": snapshot.assessment_date,
+        "forest_build_version": complete_estimate_fixture["forest"].version,
+        "terrain_build_version": complete_estimate_fixture["terrain"].version,
+    }
+    slow = calculate_estimate_update(**arguments, calculator=lambda inputs: calculate_forecast(inputs=inputs))
+    fast = calculate_estimate_update(**arguments)
+    assert [(row.forest_cell_id, bytes(row.values)) for row in fast.rows] == [
+        (row.forest_cell_id, bytes(row.values)) for row in slow.rows
+    ]
+    assert fast.input_fingerprint == slow.input_fingerprint
+    assert fast.tree_inputs == slow.tree_inputs
+
+
+@pytest.mark.django_db(transaction=True)
+def test_fast_cell_path_rejects_invalid_host_tree_values(
+    complete_estimate_fixture: dict[str, object], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from sporameteo.forecast_method import HostTrees
+
+    monkeypatch.setattr(
+        "estimate_updates.services.saved_host_trees",
+        lambda **kwargs: HostTrees(values=(2.0, 0.0, 0.0, 0.0, 0.0), source_id="test", source_year=2020, resolution_m=1000),
+    )
+    snapshot = complete_estimate_fixture["snapshot"]
+    with pytest.raises(EstimateValidationError):
+        calculate_estimate_update(
+            snapshot_id=snapshot.id, cell_key=snapshot.cell_key,
+            assessment_date=snapshot.assessment_date,
+            forest_build_version=complete_estimate_fixture["forest"].version,
+            terrain_build_version=complete_estimate_fixture["terrain"].version,
+        )
+
+
+@pytest.mark.django_db(transaction=True)
 def test_current_method_rejects_legacy_weather_without_changing_saved_rows(
     complete_estimate_fixture: dict[str, object],
 ) -> None:

@@ -1,12 +1,13 @@
 """Calculate the experimental porcini growth estimate for one 500 m square."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 import math
 from numbers import Real
 
-from sporameteo.moisture_method import WeatherDay, calculate_candidate
+from sporameteo.moisture_method import WeatherDay, _moisture, _score, calculate_candidate, temperature_response
 
 
 METHOD_VERSION_V1 = "porcini-experimental-v1"
@@ -693,24 +694,29 @@ def _facts_and_factors_v2(
     return tuple(facts), factors
 
 
+def _validate_host_trees(*, trees: HostTrees, assessment_date: date) -> None:
+    if not isinstance(trees, HostTrees) or not isinstance(trees.values, tuple) or len(trees.values) != len(HOST_GROUPS):
+        raise ValueError("host_trees must contain the five host groups")
+    if not isinstance(trees.source_id, str) or not trees.source_id or type(trees.source_year) is not int:
+        raise ValueError("host_trees must identify the source and year")
+    if not 1 <= trees.source_year <= assessment_date.year or type(trees.resolution_m) is not int or trees.resolution_m <= 0:
+        raise ValueError("host_trees has an invalid year or resolution")
+    for value in trees.values:
+        if value is not None and (
+            isinstance(value, bool) or not isinstance(value, Real)
+            or not math.isfinite(value) or not 0 <= value <= 1
+        ):
+            raise ValueError("host occurrence must be finite and between zero and one")
+
+
 def _host_facts(
     *, inputs: ForecastInputs, method: ForecastMethodV3Config
 ) -> tuple[tuple[ForecastFact, ...], float]:
     trees = inputs.host_trees
     facts: list[ForecastFact] = []
     if trees is not None:
-        if not isinstance(trees, HostTrees) or not isinstance(trees.values, tuple) or len(trees.values) != len(HOST_GROUPS):
-            raise ValueError("host_trees must contain the five host groups")
-        if not isinstance(trees.source_id, str) or not trees.source_id or type(trees.source_year) is not int:
-            raise ValueError("host_trees must identify the source and year")
-        if not 1 <= trees.source_year <= inputs.assessment_date.year or type(trees.resolution_m) is not int or trees.resolution_m <= 0:
-            raise ValueError("host_trees has an invalid year or resolution")
+        _validate_host_trees(trees=trees, assessment_date=inputs.assessment_date)
         for group, value in zip(HOST_GROUPS, trees.values, strict=True):
-            if value is not None and (
-                isinstance(value, bool) or not isinstance(value, Real)
-                or not math.isfinite(value) or not 0 <= value <= 1
-            ):
-                raise ValueError("host occurrence must be finite and between zero and one")
             facts.append(ForecastFact(
                 role_key=f"host_{group}", original_value=value, unit="relative_occurrence",
                 source_id=trees.source_id, source_ids=(trees.source_id,),
@@ -787,6 +793,83 @@ def _calculate_v4(*, inputs: ForecastInputs, method: ForecastMethodV4Config) -> 
                           missing_inputs=() if result.score is not None else (result.unavailable_reason,),
                           method_version=method.version, event_key=EVENT_KEY,
                           experimental_unvalidated=True, ordered_facts=tuple(facts))
+
+
+def _check_square_value(*, value: object, name: str) -> None:
+    if value is None:
+        return
+    if not isinstance(value, Real) or isinstance(value, bool):
+        raise ValueError(f"{name} value must be numeric")
+    if not math.isfinite(float(value)):
+        raise ValueError(f"{name} value must be finite")
+
+
+def calculate_v4_scores(
+    *,
+    inputs: ForecastInputs,
+    forest_shares: Sequence[float | None],
+    altitudes: Sequence[float | None],
+    host_trees: Sequence[HostTrees | None] | None = None,
+    method: ForecastMethodV4Config = METHOD_V4,
+) -> list[tuple[int | None, str | None]]:
+    """Return the v4 percentage and unavailable reason of each square of one weather cell and target date.
+
+    The inputs carry the shared weather and one square, which is calculated in full to run every shared check.
+    The result of each square equals calculate_forecast, without facts, and invalid input raises ValueError as there.
+    """
+    calculate_forecast(inputs=inputs, method=method)
+    reference = inputs.reference_altitude.value if inputs.reference_altitude else None
+    history_missing = len(inputs.daily_weather) != 30 or not inputs.daily_weather_source_id
+    shared: list[tuple[str | None, float, tuple[WeatherDay, ...]]] = []
+
+    def weather_checks() -> tuple[str | None, float, tuple[WeatherDay, ...]]:
+        # The checks run once, for the first square that reaches them, in the day and field order of calculate_candidate.
+        if not shared:
+            days = inputs.daily_weather
+            expected = tuple(inputs.target_date - timedelta(days=offset) for offset in range(30, 0, -1))
+            if tuple(day.day for day in days) != expected:
+                raise ValueError("Exactly 30 consecutive dates before the target are required.")
+            for day in days:
+                for name in ("rain_mm", "temperature_c", "et0_mm"):
+                    value = getattr(day, name)
+                    if value is None:
+                        shared.append((f"missing_{name}", 0.0, days))
+                        return shared[0]
+                    if (name != "temperature_c" and isinstance(value, bool)) or not math.isfinite(value):
+                        raise ValueError(f"{name} must be finite.")
+                    if name != "temperature_c" and value < 0:
+                        raise ValueError(f"{name} cannot be negative.")
+            shared.append((None, _moisture(days=days, initial_mm=40.0)[0], days))
+        return shared[0]
+
+    trees = host_trees if host_trees is not None else [None] * len(forest_shares)
+    results: list[tuple[int | None, str | None]] = []
+    for forest, altitude, host in zip(forest_shares, altitudes, trees, strict=True):
+        _check_square_value(value=altitude, name=SQUARE_ALTITUDE_KEY)
+        _check_square_value(value=forest, name=FOREST_SHARE_KEY)
+        if forest is not None and not 0 <= forest <= 1:
+            raise ValueError("forest_share value must be from zero to one")
+        if forest is not None and forest < 0.1:
+            results.append((None, "forest_below_minimum"))
+        elif forest is None:
+            results.append((None, "missing_forest_data"))
+        elif reference is None:
+            results.append((None, REFERENCE_ALTITUDE_KEY))
+        elif altitude is None:
+            results.append((None, SQUARE_ALTITUDE_KEY))
+        elif history_missing:
+            results.append((None, "weather_history"))
+        else:
+            reason, moisture, days = weather_checks()
+            if reason is not None:
+                results.append((None, reason))
+                continue
+            adjustment = method.temperature_lapse_rate_c_per_m * (altitude - reference)
+            temperature = sum(temperature_response(temperature_c=day.temperature_c - adjustment) for day in days[-7:]) / 7
+            if host is not None:
+                _validate_host_trees(trees=host, assessment_date=inputs.assessment_date)
+            results.append((_score(moisture=moisture, temperature=temperature), None))
+    return results
 
 
 def calculate_forecast(

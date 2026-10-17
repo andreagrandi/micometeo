@@ -361,76 +361,145 @@ class HoursRead:
     file_modified: dict[str, datetime]
 
 
-def _read_chunk(*, source: WeatherFileSource, path: str, runs: list[tuple[int, int]]) -> dict[int, np.ndarray]:
+@dataclass
+class HourArrays:
+    """The raw hourly values of every matched cell as compact float32 arrays, one row per cell in key order.
+
+    Turning them into CellHours one block of cells at a time keeps the Python objects small.
+    """
+
+    keys: list[str]
+    row_of: dict[str, int]
+    matches: dict[str, Match]
+    first_hour: int
+    count: int
+    values: dict[str, np.ndarray]
+    file_modified: dict[str, datetime]
+
+    @property
+    def timestamps(self) -> tuple[int, ...]:
+        return tuple((self.first_hour + index) * 3600 for index in range(self.count))
+
+
+def _read_chunk_into(
+    *,
+    source: WeatherFileSource,
+    path: str,
+    runs: list[tuple[int, int]],
+    rows_of_point: dict[int, list[int]],
+    target: np.ndarray,
+    first_hour: int,
+    count: int,
+    chunk: int,
+) -> None:
+    """Copy the hours of one chunk file that fall in the window into the rows of the cells that use each point."""
+    start = max(first_hour, chunk * CHUNK_HOURS)
+    stop = min(first_hour + count, (chunk + 1) * CHUNK_HOURS)
+    source_slice = slice(start - chunk * CHUNK_HOURS, stop - chunk * CHUNK_HOURS)
+    offset = start - first_hour
     om_file = source.open_om(path=path)
-    values: dict[int, np.ndarray] = {}
     for first, last in runs:
         block = om_file.read_array((slice(0, 1), slice(first, last), slice(None))).reshape(last - first, -1)
-        for offset in range(last - first):
-            values[first + offset] = block[offset]
-    return values
+        for point in range(first, last):
+            rows = rows_of_point.get(point)
+            if rows is None:
+                continue
+            values = block[point - first][source_slice]
+            for row in rows:
+                target[row, offset : offset + len(values)] = values
+
+
+def read_hour_arrays(
+    *, source: WeatherFileSource, matches: dict[str, Match], first_day: date, last_day: date, threads: int = READ_THREADS
+) -> HourArrays:
+    """Read the hours of the Rome days first_day to last_day for every matched cell, as float32 arrays.
+
+    The values include the closing midnight hour, because rain and evapotranspiration of the last day end at that hour.
+    """
+    first_hour, end_hour = local_window_hours(first_day=first_day, last_day=last_day)
+    count = end_hour - first_hour + 1
+    chunks = range(first_hour // CHUNK_HOURS, end_hour // CHUNK_HOURS + 1)
+    keys = list(matches)
+    runs = point_runs(points=[match.point for match in matches.values()], merge_gap=MERGE_GAP_POINTS)
+    rows_of_point: dict[int, list[int]] = {}
+    for row, key in enumerate(keys):
+        rows_of_point.setdefault(matches[key].point, []).append(row)
+    values = {variable: np.full((len(keys), count), np.nan, dtype=np.float32) for variable in READ_VARIABLES}
+    tasks = [(variable, chunk) for variable in READ_VARIABLES for chunk in chunks]
+
+    def read_one(task: tuple[str, int]) -> None:
+        variable, chunk = task
+        _read_chunk_into(
+            source=source,
+            path=chunk_path(variable=variable, chunk=chunk),
+            runs=runs,
+            rows_of_point=rows_of_point,
+            target=values[variable],
+            first_hour=first_hour,
+            count=count,
+            chunk=chunk,
+        )
+
+    with ThreadPoolExecutor(max_workers=threads) as pool:
+        list(pool.map(read_one, tasks))
+    file_modified = {path: source.modified(path=path) for path in (chunk_path(variable=v, chunk=c) for v, c in tasks)}
+    row_of = {key: row for row, key in enumerate(keys)}
+    return HourArrays(
+        keys=keys, row_of=row_of, matches=matches, first_hour=first_hour, count=count, values=values, file_modified=file_modified
+    )
 
 
 def _clean(values: np.ndarray) -> tuple[float | None, ...]:
     return tuple(None if math.isnan(value) else float(value) for value in values)
 
 
+def cell_hours_from_arrays(
+    *, arrays: HourArrays, key: str, timestamps: tuple[int, ...], toa_cache: dict[tuple[float, float], np.ndarray]
+) -> CellHours:
+    """Build the hourly values of one cell, with the height correction and the evapotranspiration.
+
+    Evapotranspiration is missing for an hour when any of its inputs is missing.
+    """
+    row = arrays.row_of[key]
+    match = arrays.matches[key]
+    series: dict[str, np.ndarray] = {}
+    for variable in READ_VARIABLES:
+        window = arrays.values[variable][row].astype(np.float64)
+        if variable in HEIGHT_CORRECTED:
+            window = window + match.correction
+        series[variable] = window
+    inputs = {
+        "temperature": series["temperature_2m"].reshape(1, -1),
+        "dew_point": series["dew_point_2m"].reshape(1, -1),
+        "shortwave_radiation": series["shortwave_radiation"].reshape(1, -1),
+        "wind_speed": np.hypot(series["wind_u_component_10m"], series["wind_v_component_10m"]).reshape(1, -1),
+    }
+    position = point_coordinates(point=match.point)
+    if position not in toa_cache:
+        toa_cache[position] = top_of_atmosphere_series(
+            latitude=position[0], longitude=position[1], first_hour=arrays.first_hour, count=arrays.count
+        )
+    elevation = match.place_height if not math.isnan(match.place_height) else match.point_height
+    et0 = evapotranspiration_series(arrays=inputs, row=0, elevation=elevation, toa=toa_cache[position], hours=range(arrays.count))
+    return CellHours(
+        timestamps=timestamps,
+        precipitation=_clean(series["precipitation"]),
+        temperature=_clean(series["temperature_2m"]),
+        soil_moisture=_clean(series["soil_moisture_0_to_7cm"]),
+        soil_temperature=_clean(series["soil_temperature_0_to_7cm"]),
+        et0=_clean(et0),
+    )
+
+
 def read_cell_hours(
     *, source: WeatherFileSource, matches: dict[str, Match], first_day: date, last_day: date, threads: int = READ_THREADS
 ) -> HoursRead:
-    """Read the hours of the Rome days first_day to last_day for every matched cell.
-
-    The values include the closing midnight hour, because rain and evapotranspiration of the last day end at that hour.
-    Evapotranspiration is missing for an hour when any of its inputs is missing.
-    """
-    first_hour, end_hour = local_window_hours(first_day=first_day, last_day=last_day)
-    count = end_hour - first_hour + 1
-    chunks = range(first_hour // CHUNK_HOURS, end_hour // CHUNK_HOURS + 1)
-    runs = point_runs(points=[match.point for match in matches.values()], merge_gap=MERGE_GAP_POINTS)
-    tasks = [(variable, chunk) for variable in READ_VARIABLES for chunk in chunks]
-
-    def read_one(task: tuple[str, int]) -> dict[int, np.ndarray]:
-        return _read_chunk(source=source, path=chunk_path(variable=task[0], chunk=task[1]), runs=runs)
-
-    with ThreadPoolExecutor(max_workers=threads) as pool:
-        results = list(pool.map(read_one, tasks))
-    by_chunk = {task: values for task, values in zip(tasks, results, strict=True)}
-    file_modified = {path: source.modified(path=path) for path in (chunk_path(variable=v, chunk=c) for v, c in tasks)}
-
-    offset = first_hour - chunks[0] * CHUNK_HOURS
-    timestamps = tuple((first_hour + index) * 3600 for index in range(count))
-    cells: dict[str, CellHours] = {}
+    """Read the hours of the Rome days first_day to last_day for every matched cell, all as Python values."""
+    arrays = read_hour_arrays(source=source, matches=matches, first_day=first_day, last_day=last_day, threads=threads)
+    timestamps = arrays.timestamps
     toa_cache: dict[tuple[float, float], np.ndarray] = {}
-    for key, match in matches.items():
-        series: dict[str, np.ndarray] = {}
-        for variable in READ_VARIABLES:
-            joined = np.concatenate([by_chunk[(variable, chunk)][match.point] for chunk in chunks]).astype(np.float64)
-            window = joined[offset : offset + count]
-            if len(window) < count:
-                window = np.concatenate([window, np.full(count - len(window), np.nan)])
-            if variable in HEIGHT_CORRECTED:
-                window = window + match.correction
-            series[variable] = window
-        arrays = {
-            "temperature": series["temperature_2m"].reshape(1, -1),
-            "dew_point": series["dew_point_2m"].reshape(1, -1),
-            "shortwave_radiation": series["shortwave_radiation"].reshape(1, -1),
-            "wind_speed": np.hypot(series["wind_u_component_10m"], series["wind_v_component_10m"]).reshape(1, -1),
-        }
-        position = point_coordinates(point=match.point)
-        if position not in toa_cache:
-            toa_cache[position] = top_of_atmosphere_series(latitude=position[0], longitude=position[1], first_hour=first_hour, count=count)
-        elevation = match.place_height if not math.isnan(match.place_height) else match.point_height
-        et0 = evapotranspiration_series(arrays=arrays, row=0, elevation=elevation, toa=toa_cache[position], hours=range(count))
-        cells[key] = CellHours(
-            timestamps=timestamps,
-            precipitation=_clean(series["precipitation"]),
-            temperature=_clean(series["temperature_2m"]),
-            soil_moisture=_clean(series["soil_moisture_0_to_7cm"]),
-            soil_temperature=_clean(series["soil_temperature_0_to_7cm"]),
-            et0=_clean(et0),
-        )
-    return HoursRead(cells=cells, file_modified=file_modified)
+    cells = {key: cell_hours_from_arrays(arrays=arrays, key=key, timestamps=timestamps, toa_cache=toa_cache) for key in arrays.keys}
+    return HoursRead(cells=cells, file_modified=arrays.file_modified)
 
 
 def estimate_read_bytes(*, cell_count: int, first_day: date, last_day: date) -> int:
