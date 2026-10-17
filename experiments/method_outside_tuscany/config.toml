@@ -1,0 +1,100 @@
+description = "Calculate the current method's estimate for every day of the last 12 months at 10 forest places outside Tuscany, from the Open-Meteo files alone, and set it next to porcini finds on GBIF and iNaturalist."
+seed = 42
+time_limit_minutes = 30
+
+[settings]
+forest_build_version = "italy-forest-copernicus-2018-v1"
+# Days of weather the method reads before a day: 30 days of moisture history.
+history_days = 30
+first_day = "2025-10-17"
+last_day = "2026-10-16"
+# The run stops before reading when the estimated download is larger than this.
+max_read_megabytes = 300
+# Extra bytes fetched after each requested range. The places are far apart, so a small value saves bytes.
+read_ahead_bytes = 4096
+threads = 8
+# Weather cells this many degrees from a place are candidates for its forest.
+search_radius_deg = 0.6
+
+# Finds counted around the centre of each weather cell.
+find_radius_km = 30
+duplicate_distance_m = 100
+earliest_find_date = "1990-01-01"
+not_find_kinds = ["MATERIAL_SAMPLE"]
+gbif_taxon_keys = [5954958, 8733688, 5954691, 5954949]
+gbif_country = "IT"
+gbif_page_size = 300
+inat_taxon_ids = [48701, 333772, 350216, 335942]
+# Italy.
+inat_place_id = 6973
+pause_seconds = 1.0
+
+[[settings.places]]
+name = "Val di Fiemme"
+region = "Trentino"
+latitude = 46.30
+longitude = 11.75
+note = "High Alps, spruce"
+
+[[settings.places]]
+name = "Campo dei Fiori"
+region = "Lombardy"
+latitude = 45.87
+longitude = 8.77
+note = "Low Alps"
+
+[[settings.places]]
+name = "Valle Gesso"
+region = "Piedmont"
+latitude = 44.24
+longitude = 7.35
+note = ""
+
+[[settings.places]]
+name = "Borgotaro"
+region = "Emilia-Romagna"
+latitude = 44.49
+longitude = 9.77
+note = "Northern Apennines"
+
+[[settings.places]]
+name = "Pescasseroli"
+region = "Abruzzo"
+latitude = 41.80
+longitude = 13.79
+note = "Central Apennines"
+
+[[settings.places]]
+name = "Pollino"
+region = "Basilicata"
+latitude = 39.92
+longitude = 16.18
+note = "Southern Apennines"
+
+[[settings.places]]
+name = "Sila"
+region = "Calabria"
+latitude = 39.33
+longitude = 16.45
+note = ""
+
+[[settings.places]]
+name = "Nebrodi"
+region = "Sicily"
+latitude = 37.95
+longitude = 14.70
+note = ""
+
+[[settings.places]]
+name = "Etna north"
+region = "Sicily"
+latitude = 37.83
+longitude = 15.05
+note = ""
+
+[[settings.places]]
+name = "Gennargentu"
+region = "Sardinia"
+latitude = 40.11
+longitude = 9.27
+note = ""
