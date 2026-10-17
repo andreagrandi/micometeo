@@ -155,6 +155,31 @@ Without `RESEND_API_KEY` or `NIGHTLY_ALERT_EMAIL`, the command writes the messag
 
 On 15 October 2026 the Resend pricing page listed 3 custom domains, 100 emails a day and 3,000 emails a month on the free plan. One check sends at most one email a day. The sender domain is `sporameteo.com`, to be verified in the same Resend account as book corners. Until the domain is verified, set `DEFAULT_FROM_EMAIL` to an address on the book corners domain.
 
+## Rebuild from the files in production
+
+The file weather of #129 was deployed on 16 October 2026 at 16:42 UTC. The
+night of 17 October 2026 was the first one on the file path, and it rebuilt
+the production weather from the files. `WEATHER_HISTORY_VERSION` stayed at 1.
+The file read reuses only rows from the files, so no older API row could enter
+a snapshot.
+
+The weather run `124b8876-f68e-4cc5-bf18-4661446963a0` started at 00:30 UTC
+and completed at 00:31 UTC in `refresh` mode. It made 0 provider attempts and
+planned 0 API calls. Its file read `a7b44f2f-73f5-437a-add1-8583aabf9d2e` used
+the 12:00 UTC run of 16 October, read 31.2 MB in 1,036 requests and wrote
+snapshots for all 333 cells with no missing hours. The 333 snapshots hold
+12,654 daily rows, 38 per cell, and every row has the file source name. No API
+request attempt was stored after the deploy.
+
+The forecast run `ea997a59-e7ad-4074-9de0-1d0891af097a` was published at
+00:37 UTC with 333 of 333 cells. The previous run,
+`d8fd4377-57ee-40db-ad95-fecb1bcd45e1` for 16 October, used API weather.
+
+No counts were taken before the deploy. After the rebuild the database held
+5,328 rows from the API forecast, 10,323 rows from the API archive and 12,654
+rows from the files. It also held 999 snapshots, 2 forecast runs and 355,155
+estimate results. The API rows stay in the database as decision D15 requires.
+
 ## Live worker check
 
 On 12 October 2026, a map request near Abetone queued the missing weather cell
