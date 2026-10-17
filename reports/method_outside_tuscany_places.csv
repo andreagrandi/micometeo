@@ -1,0 +1,11 @@
+place,region,region_of_squares,cell_key,distance_km,squares,place_height_m,grid_point_height_m,height_correction_c,altitude_min_m,altitude_median_m,altitude_max_m,forest_type,top_species_shares,days_without_weather,days_without_estimate
+Val di Fiemme,Trentino,Trentino-Alto Adige/Südtirol 252,"46.25,11.75",5.6,252,2380.0,1884.0,-3.22,1273,1827,2170,spruce_fir,spruce_fir 0.47; beech 0.10; pines 0.06,0,0
+Campo dei Fiori,Lombardy,Lombardia 282,"45.85,8.75",2.7,282,552.0,452.0,-0.65,237,491,1141,chestnut,chestnut 0.32; beech 0.14; oaks 0.09,0,0
+Valle Gesso,Piedmont,Piemonte 301,"44.25,7.35",1.1,301,1121.0,926.0,-1.27,773,1304,2281,beech,beech 0.24; pines 0.10; spruce_fir 0.09,0,0
+Borgotaro,Emilia-Romagna,Emilia-Romagna 291; Toscana 37,"44.45,9.75",4.7,328,848.0,848.0,0.0,386,759,1429,oaks,oaks 0.36; chestnut 0.34; beech 0.16,0,0
+Pescasseroli,Abruzzo,Abruzzo 357,"41.85,13.75",6.5,357,1589.0,1383.0,-1.34,1127,1494,1887,beech,beech 0.41; oaks 0.24; pines 0.07,0,0
+Pollino,Basilicata,Basilicata 325; Calabria 28,"39.95,16.15",4.2,353,1266.0,1189.0,-0.5,675,1287,2056,beech,beech 0.17; oaks 0.10; spruce_fir 0.08,0,0
+Sila,Calabria,Calabria 273,"39.35,16.45",2.2,273,1169.0,1039.0,-0.85,1150,1381,1742,beech,beech 0.20; chestnut 0.18; oaks 0.10,0,0
+Nebrodi,Sicily,Sicilia 364,"37.95,14.65",4.4,364,1043.0,1043.0,0.0,447,1131,1803,beech,beech 0.26; oaks 0.26; chestnut 0.01,0,0
+Etna north,Sicily,Sicilia 280,"37.85,15.05",2.2,280,903.0,1050.0,0.96,437,951,2033,oaks,oaks 0.11; chestnut 0.07; beech 0.02,0,0
+Gennargentu,Sardinia,Sardegna 366,"40.15,9.25",4.8,366,852.0,852.0,0.0,639,870,1080,oaks,oaks 0.13; chestnut 0.01; pines 0.00,0,0
