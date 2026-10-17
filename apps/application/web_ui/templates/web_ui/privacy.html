@@ -1,0 +1,139 @@
+{% extends "web_ui/base.html" %}
+{% load static i18n %}
+{% block title %}{% translate "Privacy Policy" %} - SporaMeteo{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'web_ui/landing.css' %}">
+{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
+{% endblock %}
+{% block content %}
+<div class="landing-page scroll-smooth" id="top">
+<header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between gap-space-md"><a class="flex items-center gap-space-sm group" data-lang-link href="/">{% include "web_ui/components/logo_mark.html" with mark_class="w-9 h-9 shrink-0 text-primary" %}<span class="font-headline-md text-headline-md tracking-tight text-primary font-serif">SporaMeteo</span></a><a class="inline-flex items-center gap-space-xs px-space-md py-2 bg-primary text-on-primary font-title-md text-title-md rounded-lg shadow-sm hover:bg-primary-container hover:text-on-primary-container transition-all" data-app-link href="/map/"><span class="hidden sm:inline">{% translate "Open the map" %}</span><span aria-hidden="true" class="material-symbols-outlined text-[18px]">arrow_forward</span></a></div></header>
+<main class="w-full pt-16 bg-background">
+<section class="w-full px-4 sm:px-6 lg:px-12 py-12 lg:py-16 bg-surface">
+<article class="max-w-3xl mx-auto space-y-8">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile sm:text-headline-lg tracking-tight text-primary font-serif">{% translate "Privacy Policy" %}</h1>
+<p class="font-caption-topo text-caption-topo text-outline">{% translate "Last updated: 17th October 2026" %}</p>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">{% translate "This Privacy Policy explains how SporaMeteo collects, uses and protects personal data in accordance with Regulation (EU) 2016/679 (GDPR) and applicable Italian data protection laws." %}</p>
+<section class="space-y-4">
+<h2 class="font-headline-md text-headline-md text-primary font-serif">{% translate "1. Data Controller" %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "The Data Controller is Andrea Grandi, operator of SporaMeteo, based in Italy." %}</p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "For any privacy related request, you can contact:" %}</p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "Email:" %} <a class="text-primary font-medium hover:text-on-tertiary-container transition-colors" href="mailto:privacy@sporameteo.com">privacy@sporameteo.com</a></p>
+</section>
+<section class="space-y-4">
+<h2 class="font-headline-md text-headline-md text-primary font-serif">{% translate "2. What personal data we collect" %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "We collect only the personal data necessary to provide and operate the service." %}</p>
+<div class="space-y-2">
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "No accounts" %}</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "SporaMeteo has no sign-up and no user accounts. We do not ask for a name, an email address or a password." %}</p>
+</div>
+<div class="space-y-2">
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Favorites" %}</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "When you save a favorite, the list is stored only in your browser. It is never sent to our servers, does not sync between devices and is lost when you clear your browser data." %}</p>
+</div>
+<div class="space-y-2">
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Place search" %}</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "When you search for a place, the text you type is sent to our server and passed to Photon, a search service run by Komoot, to find matching place names. We may keep the search text in a short-lived cache to reduce the load on that service." %}</p>
+</div>
+<div class="space-y-2">
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Technical data" %}</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "To run and protect the site, our server and the network in front of it process limited technical data for every request, such as:" %}</p>
+<ul class="space-y-2 font-body-md text-body-md text-on-surface-variant">
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "IP address" %}</span></li>
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "Date and time of access" %}</span></li>
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "Browser and device information" %}</span></li>
+</ul>
+</div>
+</section>
+<section class="space-y-4">
+<h2 class="font-headline-md text-headline-md text-primary font-serif">{% translate "3. Purposes and legal basis of processing" %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "Personal data is processed for the following purposes:" %}</p>
+<div class="space-y-2">
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Providing the service" %}</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "To deliver the site, run the map and answer place searches." %}</p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "Legal basis: performance of a contract or legitimate interest (Article 6(1)(b) and 6(1)(f) GDPR)." %}</p>
+</div>
+<div class="space-y-2">
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Security and abuse prevention" %}</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "To protect the site and prevent fraud, spam and misuse." %}</p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "Legal basis: legitimate interest (Article 6(1)(f) GDPR)." %}</p>
+</div>
+<div class="space-y-2">
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Responding to communications" %}</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "To reply to messages and support requests." %}</p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "Legal basis: performance of a contract or legitimate interest." %}</p>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "We do not reuse personal data for purposes unrelated to providing SporaMeteo." %}</p>
+</section>
+<section class="space-y-4">
+<h2 class="font-headline-md text-headline-md text-primary font-serif">{% translate "4. Data selling and marketing" %}</h2>
+<ul class="space-y-2 font-body-md text-body-md text-on-surface-variant">
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "We do not sell personal data." %}</span></li>
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "We do not share personal data for advertising purposes." %}</span></li>
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "We do not plan to sell personal data in the future." %}</span></li>
+</ul>
+</section>
+<section class="space-y-4">
+<h2 class="font-headline-md text-headline-md text-primary font-serif">{% translate "5. Data hosting and transfers" %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "SporaMeteo runs on a virtual private server provided by Hetzner, with infrastructure located in the European Union." %}</p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "The site is delivered through the Cloudflare network." %}</p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "Personal data is stored and processed within the European Union. No transfers outside the European Economic Area take place unless a service your browser contacts directly is based elsewhere, such as Google Fonts. Those providers follow their own privacy policies and safeguards." %}</p>
+</section>
+<section class="space-y-4">
+<h2 class="font-headline-md text-headline-md text-primary font-serif">{% translate "6. Data retention" %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "We keep personal data only as long as needed to provide the service." %}</p>
+<ul class="space-y-2 font-body-md text-body-md text-on-surface-variant">
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "Favorites stay in your browser and are removed when you clear your browser data." %}</span></li>
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "Place search results are cached for a limited period, at most 30 days." %}</span></li>
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "Technical logs and access records are kept for a limited period for security and troubleshooting." %}</span></li>
+</ul>
+</section>
+<section class="space-y-4">
+<h2 class="font-headline-md text-headline-md text-primary font-serif">{% translate "7. Recipients of data" %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "Personal data may be processed by service providers necessary to run the site. These providers act as data processors under Article 28 GDPR. They include the hosting provider and the network provider in front of the site." %}</p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "Some services are contacted directly by your browser and see your IP address: the map tile service OpenFreeMap, the place search service Photon by Komoot, and Google Fonts. Your browser requests them when you open the map." %}</p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "Personal data may also be disclosed where the law or a competent authority requires it." %}</p>
+</section>
+<section class="space-y-4">
+<h2 class="font-headline-md text-headline-md text-primary font-serif">{% translate "8. Your rights under GDPR" %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "As a data subject, you have the right to:" %}</p>
+<ul class="space-y-2 font-body-md text-body-md text-on-surface-variant">
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "Access your personal data" %}</span></li>
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "Request correction of inaccurate data" %}</span></li>
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "Request erasure of your data" %}</span></li>
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "Request restriction of processing" %}</span></li>
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "Object to processing based on legitimate interest" %}</span></li>
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span>{% translate "Request data portability" %}</span></li>
+</ul>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "You also have the right to lodge a complaint with the Italian Data Protection Authority (Garante per la Protezione dei Dati Personali)." %}</p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "To exercise your rights, write to privacy@sporameteo.com." %}</p>
+</section>
+<section class="space-y-4">
+<h2 class="font-headline-md text-headline-md text-primary font-serif">{% translate "9. Security measures" %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "We apply technical and organisational measures to protect personal data against unauthorised access, alteration, disclosure or destruction. No system can guarantee absolute security." %}</p>
+</section>
+<section class="space-y-4">
+<h2 class="font-headline-md text-headline-md text-primary font-serif">{% translate "10. Cookies" %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "SporaMeteo uses one cookie, which is strictly necessary for the site to work. No tracking, analytics or advertising cookies are used." %}</p>
+<div class="space-y-2">
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Cookies we set" %}</h3>
+<ul class="space-y-2 font-body-md text-body-md text-on-surface-variant">
+<li class="flex items-center gap-2"><span aria-hidden="true" class="w-1.5 h-1.5 shrink-0 rounded-full bg-primary"></span><span><code class="font-mono text-primary">sporameteo_language</code> {% translate "Remembers the language you choose. Expires after one year." %}</span></li>
+</ul>
+</div>
+<div class="space-y-2">
+<h3 class="font-title-lg text-title-lg text-primary">{% translate "Why no consent banner is shown" %}</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "Under the ePrivacy Directive (Article 5(3)) and Italian data protection guidelines, cookies that are strictly necessary for the service do not need user consent. Favorites are stored in your browser and are not cookies." %}</p>
+</div>
+</section>
+<section class="space-y-4">
+<h2 class="font-headline-md text-headline-md text-primary font-serif">{% translate "11. Changes to this policy" %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{% translate "This Privacy Policy may change from time to time. Any change is published on this page with a new revision date." %}</p>
+</section>
+</article>
+</section>
+</main><footer class="w-full bg-surface-container-low pt-space-xl pb-space-lg text-on-surface-variant"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12"><div class="p-space-lg mb-space-xl rounded-xl bg-surface-container-high border-l-4 border-tertiary-container flex flex-col md:flex-row items-start gap-space-md"><span class="material-symbols-outlined text-on-tertiary-container text-[24px] shrink-0 mt-0.5">info</span><div class="space-y-1"><h4 class="font-title-md text-title-md text-on-surface">{% translate "Before you go into the forest" %}</h4><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "SporaMeteo estimates are experimental and do not guarantee that porcini or other species will fruit. Mountain and forest environments carry real dangers. Only eat mushrooms whose safety has been checked by ASL mycology inspectors. Check the rules and permits of your region." %}</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-xl mb-space-xl"><div class="space-y-space-sm"><div class="flex items-center gap-space-sm">{% include "web_ui/components/logo_mark.html" with mark_class="w-8 h-8 shrink-0 text-primary" %}<span class="font-headline-md text-headline-md tracking-tight text-primary font-serif">SporaMeteo</span></div><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "A free map with experimental estimates of porcini growth in the forests of Tuscany." %}</p><p class="font-caption-topo text-caption-topo text-outline uppercase tracking-wider">{% translate "Free, no account, no advertising" %}</p></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">{% translate "Data sources" %}</h5><ul class="space-y-space-xs font-body-sm text-body-sm"><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">satellite_alt</span><span class="text-on-surface">{% translate "Copernicus forest map" %}</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">cloudy_snowing</span><span class="text-on-surface">{% translate "Open-Meteo modelled weather" %}</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-primary shrink-0">map</span><span class="text-on-surface">{% translate "OpenStreetMap map data" %}</span></li></ul></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">{% translate "Navigation" %}</h5><ul class="space-y-space-xs font-body-sm text-body-sm"><li><a class="hover:text-primary transition-colors" href="{% url 'landing' %}">{% translate "Home" %}</a></li><li><a class="hover:text-primary transition-colors" data-app-link href="{% url 'map' %}">{% translate "Open the map" %}</a></li><li><a class="hover:text-primary transition-colors" href="{% url 'privacy' %}">{% translate "Privacy" %}</a></li></ul></div><div class="space-y-space-sm"><h5 class="font-title-md text-title-md text-on-surface">{% translate "Account and favorites" %}</h5><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{% translate "SporaMeteo needs no account and shows no advertising. Favorites stay in your browser and do not sync between devices." %}</p></div></div><div class="pt-space-lg border-t border-surface-container-highest flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-sm font-body-sm text-body-sm text-outline"><p>{% translate "SporaMeteo, experimental porcini estimates." %}</p>{% include "web_ui/components/language.html" %}</div></div></footer>
+</div>
+{% endblock %}

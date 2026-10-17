@@ -657,6 +657,12 @@ body:has(.app) {
   min-height: 40px;
   padding: var(--space-1) var(--space-3);
 }
+.mapfoot-link {
+  color: var(--earth-700);
+  font-size: 11px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .attribution {
   align-items: center;
   display: flex;

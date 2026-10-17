@@ -40,6 +40,43 @@ def test_anonymous_visitor_reaches_landing_and_map() -> None:
 
 
 @pytest.mark.django_db
+def test_privacy_page_renders_english_policy_with_contact_address() -> None:
+    response = Client().get(path=reverse(viewname="privacy"))
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Privacy Policy" in body
+    assert "1. Data Controller" in body
+    assert "privacy@sporameteo.com" in body
+
+
+@pytest.mark.django_db
+def test_privacy_page_renders_italian_policy_for_italian_browsers() -> None:
+    response = Client(HTTP_ACCEPT_LANGUAGE="it-IT,it;q=0.9").get(path=reverse(viewname="privacy"))
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Informativa sulla privacy" in body
+    assert "Titolare del trattamento" in body
+    assert "Ultimo aggiornamento" in body
+    assert "1. Data Controller" not in body
+
+
+@pytest.mark.django_db
+def test_landing_links_to_privacy_page() -> None:
+    body = Client().get(path=reverse(viewname="landing")).content.decode()
+
+    assert 'href="/privacy/"' in body
+
+
+@pytest.mark.django_db
+def test_map_page_links_to_privacy_page() -> None:
+    body = Client().get(path=reverse(viewname="map")).content.decode()
+
+    assert 'href="/privacy/"' in body
+
+
+@pytest.mark.django_db
 def test_pages_load_static_files_from_fingerprinted_names(settings, tmp_path) -> None:
     # The application tests in CI do not install the MapLibre package, so stand-in files take its place.
     maplibre_directory = tmp_path / "maplibre"

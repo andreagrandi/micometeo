@@ -232,3 +232,10 @@ def map_page(request: HttpRequest, fixture: str | None = None) -> HttpResponse:
         }
     )
     return render(request, "web_ui/map.html", context)
+
+
+def privacy(request: HttpRequest) -> HttpResponse:
+    """Render the public privacy policy page."""
+    language = _language(request)
+    context = {"language": language, "labels": labels_for(language)}
+    return render(request, "web_ui/privacy.html", context)
