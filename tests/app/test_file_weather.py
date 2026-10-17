@@ -375,3 +375,29 @@ def test_dry_run_prints_megabytes_and_cell_count_and_writes_nothing(monkeypatch:
     assert "Estimated download: " in text and " MB" in text
     assert FileWeatherRead.objects.count() == 0
     assert WeatherDaily.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_a_read_in_small_blocks_stores_the_same_rows_as_one_block(tmp_path: Path) -> None:
+    from django.db import transaction
+
+    source = window_source(root=tmp_path)
+    fields = ("cell_key", "date", "rain_mm", "mean_temperature_c", "min_temperature_c", "et0_mm", "mean_soil_temperature_c",
+              "mean_soil_moisture", "reference_elevation_m", "forecast_issue_time", "status")
+
+    def stored() -> list[tuple[Any, ...]]:
+        return list(WeatherDaily.objects.order_by("cell_key", "date").values_list(*fields))
+
+    savepoint = transaction.savepoint_create()
+    in_blocks = store_file_weather(
+        cells=WEATHER_CELLS, assessment_date=ASSESSMENT, region_code="09", source=source, block_size=1
+    )
+    rows_in_blocks = stored()
+    snapshots_in_blocks = WeatherSnapshot.objects.count()
+    transaction.savepoint_rollback(savepoint)
+    in_one_block = store(source=source)
+
+    assert (in_blocks.cells_written, in_blocks.missing) == (in_one_block.cells_written, in_one_block.missing) == (2, {})
+    assert len(rows_in_blocks) == 76
+    assert rows_in_blocks == stored()
+    assert snapshots_in_blocks == WeatherSnapshot.objects.count() == 2

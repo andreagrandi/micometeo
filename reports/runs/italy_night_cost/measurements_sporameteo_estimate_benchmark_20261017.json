@@ -1,0 +1,2963 @@
+{
+  "database": "sporameteo_estimate_benchmark_20261017",
+  "assessment_date": "2026-10-17",
+  "written_at": "2026-10-17T12:20:45Z",
+  "steps": {
+    "database": {
+      "step": "database",
+      "started_at": "2026-10-17T10:00:27Z",
+      "seconds_create": 14.2,
+      "phases": [],
+      "size_after": {
+        "taken_at": "2026-10-17T10:00:42Z",
+        "database_bytes": 2094886035,
+        "groups_bytes": {
+          "weather": 679936,
+          "estimates": 360448,
+          "host_trees": 34603008,
+          "map_cache": 24576
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 0,
+          "weather_summaries_weatherdaily": 0,
+          "estimate_updates_hosttreecache": 90560,
+          "sporameteo_map_cache": 0
+        },
+        "tables_bytes": {
+          "estimate_updates_hosttreecache": 34603008,
+          "estimate_updates_estimateresult": 16384,
+          "sporameteo_map_cache": 24576,
+          "estimate_updates_tuscanyinputset": 24576,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 32768,
+          "weather_summaries_weathersummary": 32768,
+          "weather_summaries_weathersnapshot": 24576,
+          "weather_summaries_weathersnapshotday": 32768,
+          "weather_summaries_fileweatherread": 24576,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 81920,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 49152,
+          "estimate_updates_forecastrun": 49152,
+          "estimate_updates_publishedforecastrun": 40960
+        }
+      }
+    },
+    "weather": {
+      "step": "weather",
+      "started_at": "2026-10-17T10:00:42Z",
+      "phases": [
+        {
+          "name": "weather",
+          "arguments": [
+            "weather",
+            "--region",
+            "all",
+            "--limit-cells",
+            "0"
+          ],
+          "memory_limit": null,
+          "started_at": "2026-10-17T10:00:43Z",
+          "wall_seconds": 502.6,
+          "exit_code": 0,
+          "killed_for_memory": false,
+          "status": "complete",
+          "result": {
+            "phase": "weather",
+            "cells": 3726,
+            "plan": {
+              "assessment_date": "2026-10-17",
+              "cells_total": 3726,
+              "cells_already_ready": 0,
+              "cells_to_write": 3726,
+              "first_day": "2026-09-17",
+              "last_day": "2026-10-24",
+              "chunk_files": 24,
+              "estimated_megabytes": 316.6,
+              "estimated_bytes": 316560960
+            },
+            "status": "complete",
+            "error": "",
+            "seconds": 497.1,
+            "bytes_read": 155525388,
+            "http_requests": 4850,
+            "cells_written": 3726,
+            "cells_already_ready": 0,
+            "cells_missing": 0,
+            "missing_examples": {},
+            "run_time": "2026-10-17T00:00:00+00:00",
+            "peak_memory": {
+              "process_mb": 1076.5,
+              "container_mb": 1083.2
+            }
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/weather.log",
+          "size_before": {
+            "taken_at": "2026-10-17T10:00:43Z",
+            "database_bytes": 2094886035,
+            "groups_bytes": {
+              "weather": 679936,
+              "estimates": 360448,
+              "host_trees": 34603008,
+              "map_cache": 24576
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 0,
+              "weather_summaries_weatherdaily": 0,
+              "estimate_updates_hosttreecache": 90560,
+              "sporameteo_map_cache": 0
+            },
+            "tables_bytes": {
+              "estimate_updates_hosttreecache": 34603008,
+              "estimate_updates_estimateresult": 16384,
+              "sporameteo_map_cache": 24576,
+              "estimate_updates_tuscanyinputset": 24576,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 32768,
+              "weather_summaries_weathersummary": 32768,
+              "weather_summaries_weathersnapshot": 24576,
+              "weather_summaries_weathersnapshotday": 32768,
+              "weather_summaries_fileweatherread": 24576,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 81920,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 49152,
+              "estimate_updates_forecastrun": 49152,
+              "estimate_updates_publishedforecastrun": 40960
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T10:09:06Z",
+            "database_bytes": 2455817363,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 360448,
+              "host_trees": 34603008,
+              "map_cache": 24576
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 0,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 90560,
+              "sporameteo_map_cache": 0
+            },
+            "tables_bytes": {
+              "estimate_updates_hosttreecache": 34603008,
+              "estimate_updates_estimateresult": 16384,
+              "sporameteo_map_cache": 24576,
+              "estimate_updates_tuscanyinputset": 24576,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 81920,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 49152,
+              "estimate_updates_forecastrun": 49152,
+              "estimate_updates_publishedforecastrun": 40960
+            }
+          }
+        }
+      ],
+      "size_before": {
+        "taken_at": "2026-10-17T10:00:42Z",
+        "database_bytes": 2094886035,
+        "groups_bytes": {
+          "weather": 679936,
+          "estimates": 360448,
+          "host_trees": 34603008,
+          "map_cache": 24576
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 0,
+          "weather_summaries_weatherdaily": 0,
+          "estimate_updates_hosttreecache": 90560,
+          "sporameteo_map_cache": 0
+        },
+        "tables_bytes": {
+          "estimate_updates_hosttreecache": 34603008,
+          "estimate_updates_estimateresult": 16384,
+          "sporameteo_map_cache": 24576,
+          "estimate_updates_tuscanyinputset": 24576,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 32768,
+          "weather_summaries_weathersummary": 32768,
+          "weather_summaries_weathersnapshot": 24576,
+          "weather_summaries_weathersnapshotday": 32768,
+          "weather_summaries_fileweatherread": 24576,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 81920,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 49152,
+          "estimate_updates_forecastrun": 49152,
+          "estimate_updates_publishedforecastrun": 40960
+        }
+      },
+      "size_after": {
+        "taken_at": "2026-10-17T10:09:06Z",
+        "database_bytes": 2455817363,
+        "groups_bytes": {
+          "weather": 361611264,
+          "estimates": 360448,
+          "host_trees": 34603008,
+          "map_cache": 24576
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 0,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 90560,
+          "sporameteo_map_cache": 0
+        },
+        "tables_bytes": {
+          "estimate_updates_hosttreecache": 34603008,
+          "estimate_updates_estimateresult": 16384,
+          "sporameteo_map_cache": 24576,
+          "estimate_updates_tuscanyinputset": 24576,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 248963072,
+          "weather_summaries_weathersummary": 74907648,
+          "weather_summaries_weathersnapshot": 8019968,
+          "weather_summaries_weathersnapshotday": 29138944,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 81920,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 49152,
+          "estimate_updates_forecastrun": 49152,
+          "estimate_updates_publishedforecastrun": 40960
+        }
+      }
+    },
+    "first_night": {
+      "step": "first_night",
+      "started_at": "2026-10-17T10:51:26Z",
+      "phases": [
+        {
+          "name": "first_night",
+          "arguments": [
+            "estimates",
+            "--region",
+            "all",
+            "--label",
+            "first_night",
+            "--limit-cells",
+            "0"
+          ],
+          "memory_limit": null,
+          "started_at": "2026-10-17T10:51:27Z",
+          "wall_seconds": 4.1,
+          "exit_code": 1,
+          "killed_for_memory": false,
+          "status": "error",
+          "result": {
+            "phase": "estimates",
+            "status": "error",
+            "error": "IntegrityError: duplicate key value violates unique constraint \"forecast_run_identity_unique\"\nDETAIL:  Key (region_code, assessment_date, forest_build_id, terrain_build_id, calculation_version)=(IT, 2026-10-17, 1b1c26dc-4774-43dc-bf44-cdaab392d029, 8c3ba045-c47a-466a-b2e7-363dadfa1336, c94858a7ae361b306097be69489db22819fa9b66738daa18877dabb7be274f3b) already exists.",
+            "peak_memory": {
+              "process_mb": 182.6,
+              "container_mb": 111.8
+            }
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/first_night.log",
+          "size_before": {
+            "taken_at": "2026-10-17T10:51:27Z",
+            "database_bytes": 2692082835,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 59981824,
+              "host_trees": 211214336,
+              "map_cache": 24576
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 394847,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 476110,
+              "sporameteo_map_cache": 0
+            },
+            "tables_bytes": {
+              "estimate_updates_hosttreecache": 211214336,
+              "estimate_updates_estimateresult": 36306944,
+              "sporameteo_map_cache": 24576,
+              "estimate_updates_tuscanyinputset": 24576,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 22274048,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1138688,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T10:51:31Z",
+            "database_bytes": 2692082835,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 59981824,
+              "host_trees": 211214336,
+              "map_cache": 24576
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 394847,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 476110,
+              "sporameteo_map_cache": 0
+            },
+            "tables_bytes": {
+              "estimate_updates_hosttreecache": 211214336,
+              "estimate_updates_estimateresult": 36306944,
+              "sporameteo_map_cache": 24576,
+              "estimate_updates_tuscanyinputset": 24576,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 22274048,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1138688,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960
+            }
+          }
+        }
+      ],
+      "size_before": {
+        "taken_at": "2026-10-17T10:51:26Z",
+        "database_bytes": 2692082835,
+        "groups_bytes": {
+          "weather": 361611264,
+          "estimates": 59981824,
+          "host_trees": 211214336,
+          "map_cache": 24576
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 394847,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 476110,
+          "sporameteo_map_cache": 0
+        },
+        "tables_bytes": {
+          "estimate_updates_hosttreecache": 211214336,
+          "estimate_updates_estimateresult": 36306944,
+          "sporameteo_map_cache": 24576,
+          "estimate_updates_tuscanyinputset": 24576,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 248963072,
+          "weather_summaries_weathersummary": 74907648,
+          "weather_summaries_weathersnapshot": 8019968,
+          "weather_summaries_weathersnapshotday": 29138944,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 22274048,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1138688,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960
+        }
+      },
+      "size_after": {
+        "taken_at": "2026-10-17T10:51:32Z",
+        "database_bytes": 2692082835,
+        "groups_bytes": {
+          "weather": 361611264,
+          "estimates": 59981824,
+          "host_trees": 211214336,
+          "map_cache": 24576
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 394847,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 476110,
+          "sporameteo_map_cache": 0
+        },
+        "tables_bytes": {
+          "estimate_updates_hosttreecache": 211214336,
+          "estimate_updates_estimateresult": 36306944,
+          "sporameteo_map_cache": 24576,
+          "estimate_updates_tuscanyinputset": 24576,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 248963072,
+          "weather_summaries_weathersummary": 74907648,
+          "weather_summaries_weathersnapshot": 8019968,
+          "weather_summaries_weathersnapshotday": 29138944,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 22274048,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1138688,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960
+        }
+      }
+    },
+    "night": {
+      "step": "night",
+      "started_at": "2026-10-17T11:30:16Z",
+      "phases": [
+        {
+          "name": "night",
+          "arguments": [
+            "estimates",
+            "--region",
+            "all",
+            "--label",
+            "night",
+            "--limit-cells",
+            "0"
+          ],
+          "memory_limit": null,
+          "started_at": "2026-10-17T11:30:17Z",
+          "wall_seconds": 260.3,
+          "exit_code": 0,
+          "killed_for_memory": false,
+          "status": "completed",
+          "result": {
+            "phase": "estimates",
+            "status": "completed",
+            "run_id": "00c73213-82f0-4ea6-bf8d-77b807c1a381",
+            "region": "all",
+            "label": "night",
+            "cells": 3726,
+            "cells_completed": 3726,
+            "cells_without_weather": 0,
+            "cells_without_weather_examples": [],
+            "squares": 717104,
+            "result_rows": 717104,
+            "seconds": 256.1,
+            "peak_memory": {
+              "process_mb": 187.9,
+              "container_mb": 440.9
+            },
+            "peak_reached_at_cell": "37.95,14.55",
+            "failures": 0,
+            "failure_examples": [],
+            "cells_file": "/output/cells/night.jsonl"
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/night.log",
+          "size_before": {
+            "taken_at": "2026-10-17T11:30:17Z",
+            "database_bytes": 3113995411,
+            "groups_bytes": {
+              "weather": 556343296,
+              "estimates": 360448,
+              "host_trees": 321781760,
+              "map_cache": 176152576
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 0,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 16384,
+              "estimate_updates_hosttreecache": 321781760,
+              "sporameteo_map_cache": 176152576,
+              "estimate_updates_tuscanyinputset": 24576,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 49152,
+              "weather_summaries_weatherdaily": 320184320,
+              "estimate_updates_forecastrun": 49152,
+              "estimate_updates_publishedforecastrun": 40960,
+              "weather_summaries_weathersummary": 156393472,
+              "weather_summaries_weathersnapshot": 16089088,
+              "weather_summaries_weathersnapshotday": 63094784,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 81920
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T11:34:38Z",
+            "database_bytes": 3126627475,
+            "groups_bytes": {
+              "weather": 461660160,
+              "estimates": 107675648,
+              "host_trees": 321781760,
+              "map_cache": 176152576
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "sporameteo_map_cache": 176152576,
+              "estimate_updates_tuscanyinputset": 24576,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1269760,
+              "weather_summaries_weatherdaily": 320208896,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960,
+              "weather_summaries_weathersummary": 80125952,
+              "weather_summaries_weathersnapshot": 8462336,
+              "weather_summaries_weathersnapshotday": 52281344,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40263680
+            }
+          }
+        }
+      ],
+      "size_before": {
+        "taken_at": "2026-10-17T11:30:16Z",
+        "database_bytes": 3124645011,
+        "groups_bytes": {
+          "weather": 556343296,
+          "estimates": 11010048,
+          "host_trees": 321781760,
+          "map_cache": 176152576
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 71031,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_estimateresult": 6578176,
+          "estimate_updates_forecastruncell": 204800,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_hosttreecache": 321781760,
+          "sporameteo_map_cache": 176152576,
+          "estimate_updates_publishedforecastrun": 40960,
+          "estimate_updates_tuscanyinputset": 24576,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 320184320,
+          "weather_summaries_weathersummary": 156393472,
+          "weather_summaries_weathersnapshot": 16089088,
+          "weather_summaries_weathersnapshotday": 63094784,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 3964928
+        }
+      },
+      "size_after": {
+        "taken_at": "2026-10-17T11:34:38Z",
+        "database_bytes": 3126627475,
+        "groups_bytes": {
+          "weather": 461660160,
+          "estimates": 107675648,
+          "host_trees": 321781760,
+          "map_cache": 176152576
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 717104,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimateresult": 65880064,
+          "estimate_updates_hosttreecache": 321781760,
+          "sporameteo_map_cache": 176152576,
+          "estimate_updates_tuscanyinputset": 24576,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1269760,
+          "weather_summaries_weatherdaily": 320208896,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960,
+          "weather_summaries_weathersummary": 80125952,
+          "weather_summaries_weathersnapshot": 8462336,
+          "weather_summaries_weathersnapshotday": 52281344,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 40263680
+        }
+      }
+    },
+    "warmup_unlimited": {
+      "step": "warmup_unlimited",
+      "started_at": "2026-10-17T11:01:41Z",
+      "phases": [
+        {
+          "name": "warmup_cold",
+          "arguments": [
+            "warmup",
+            "--mode",
+            "cold",
+            "--region",
+            "all",
+            "--limit-tiles",
+            "0"
+          ],
+          "memory_limit": null,
+          "started_at": "2026-10-17T11:01:41Z",
+          "wall_seconds": 67.3,
+          "exit_code": 0,
+          "killed_for_memory": false,
+          "status": "completed",
+          "result": {
+            "phase": "warmup",
+            "status": "completed",
+            "mode": "cold",
+            "region": "all",
+            "run_id": "ef5c228c-a923-467a-b48d-cb3dd9f34dca",
+            "tiles": 3497,
+            "seconds": 61.5,
+            "seconds_summary": 0.1,
+            "seconds_tiles": 56.1,
+            "seconds_overview": 5.3,
+            "cache_entries_before": 0,
+            "cache_entries_after": 6996,
+            "peak_memory": {
+              "process_mb": 416.6,
+              "container_mb": 494.6
+            }
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/warmup_cold.log",
+          "size_before": {
+            "taken_at": "2026-10-17T11:01:41Z",
+            "database_bytes": 2850385043,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 107651072,
+              "host_trees": 321781760,
+              "map_cache": 24576
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 0
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "sporameteo_map_cache": 24576,
+              "estimate_updates_tuscanyinputset": 24576,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40255488,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1253376,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T11:02:49Z",
+            "database_bytes": 3009793171,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 107651072,
+              "host_trees": 321781760,
+              "map_cache": 159432704
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 159432704,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40255488,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1253376,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960
+            }
+          }
+        },
+        {
+          "name": "warmup_night",
+          "arguments": [
+            "warmup",
+            "--mode",
+            "night",
+            "--region",
+            "all",
+            "--limit-tiles",
+            "0"
+          ],
+          "memory_limit": null,
+          "started_at": "2026-10-17T11:02:49Z",
+          "wall_seconds": 35.0,
+          "exit_code": 0,
+          "killed_for_memory": false,
+          "status": "completed",
+          "result": {
+            "phase": "warmup",
+            "status": "completed",
+            "mode": "night",
+            "region": "all",
+            "run_id": "ef5c228c-a923-467a-b48d-cb3dd9f34dca",
+            "tiles": 3497,
+            "seconds": 29.8,
+            "seconds_summary": 0.1,
+            "seconds_tiles": 24.5,
+            "seconds_overview": 5.2,
+            "cache_entries_before": 3497,
+            "cache_entries_after": 6996,
+            "peak_memory": {
+              "process_mb": 417.6,
+              "container_mb": 445.3
+            }
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/warmup_night.log",
+          "size_before": {
+            "taken_at": "2026-10-17T11:02:49Z",
+            "database_bytes": 3009793171,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 107651072,
+              "host_trees": 321781760,
+              "map_cache": 159432704
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 159432704,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40255488,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1253376,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T11:03:25Z",
+            "database_bytes": 3026824339,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 107651072,
+              "host_trees": 321781760,
+              "map_cache": 176463872
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 176463872,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40255488,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1253376,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960
+            }
+          }
+        }
+      ],
+      "size_before": {
+        "taken_at": "2026-10-17T11:01:41Z",
+        "database_bytes": 2850385043,
+        "groups_bytes": {
+          "weather": 361611264,
+          "estimates": 107651072,
+          "host_trees": 321781760,
+          "map_cache": 24576
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 717104,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 0
+        },
+        "tables_bytes": {
+          "estimate_updates_estimateresult": 65880064,
+          "estimate_updates_hosttreecache": 321781760,
+          "sporameteo_map_cache": 24576,
+          "estimate_updates_tuscanyinputset": 24576,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 248963072,
+          "weather_summaries_weathersummary": 74907648,
+          "weather_summaries_weathersnapshot": 8019968,
+          "weather_summaries_weathersnapshotday": 29138944,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 40255488,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1253376,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960
+        }
+      },
+      "size_after": {
+        "taken_at": "2026-10-17T11:03:25Z",
+        "database_bytes": 3026824339,
+        "groups_bytes": {
+          "weather": 361611264,
+          "estimates": 107651072,
+          "host_trees": 321781760,
+          "map_cache": 176463872
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 717104,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimateresult": 65880064,
+          "estimate_updates_hosttreecache": 321781760,
+          "estimate_updates_tuscanyinputset": 24576,
+          "sporameteo_map_cache": 176463872,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 248963072,
+          "weather_summaries_weathersummary": 74907648,
+          "weather_summaries_weathersnapshot": 8019968,
+          "weather_summaries_weathersnapshotday": 29138944,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 40255488,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1253376,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960
+        }
+      }
+    },
+    "night_384mb": {
+      "step": "night_384mb",
+      "started_at": "2026-10-17T11:03:25Z",
+      "phases": [
+        {
+          "name": "night_384mb",
+          "arguments": [
+            "estimates",
+            "--region",
+            "all",
+            "--label",
+            "night_384mb",
+            "--limit-cells",
+            "0"
+          ],
+          "memory_limit": "384m",
+          "started_at": "2026-10-17T11:03:26Z",
+          "wall_seconds": 255.2,
+          "exit_code": 0,
+          "killed_for_memory": false,
+          "status": "completed",
+          "result": {
+            "phase": "estimates",
+            "status": "completed",
+            "run_id": "a962a43c-c788-4ccd-8a16-bfc721951786",
+            "region": "all",
+            "label": "night_384mb",
+            "cells": 3726,
+            "cells_completed": 3726,
+            "cells_without_weather": 0,
+            "cells_without_weather_examples": [],
+            "squares": 717104,
+            "result_rows": 717104,
+            "seconds": 250.8,
+            "peak_memory": {
+              "process_mb": 194.4,
+              "container_mb": 270.1
+            },
+            "peak_reached_at_cell": "39.05,16.45",
+            "failures": 0,
+            "failure_examples": [],
+            "cells_file": "/output/cells/night_384mb.jsonl"
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/night_384mb.log",
+          "size_before": {
+            "taken_at": "2026-10-17T11:03:26Z",
+            "database_bytes": 2919541907,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 360448,
+              "host_trees": 321781760,
+              "map_cache": 176463872
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 0,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 16384,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 176463872,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 81920,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 49152,
+              "estimate_updates_forecastrun": 49152,
+              "estimate_updates_publishedforecastrun": 40960
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T11:07:41Z",
+            "database_bytes": 3026873491,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 107659264,
+              "host_trees": 321781760,
+              "map_cache": 176463872
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 176463872,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40263680,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1253376,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960
+            }
+          }
+        }
+      ],
+      "size_before": {
+        "taken_at": "2026-10-17T11:03:25Z",
+        "database_bytes": 3026824339,
+        "groups_bytes": {
+          "weather": 361611264,
+          "estimates": 107651072,
+          "host_trees": 321781760,
+          "map_cache": 176463872
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 717104,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimateresult": 65880064,
+          "estimate_updates_hosttreecache": 321781760,
+          "estimate_updates_tuscanyinputset": 24576,
+          "sporameteo_map_cache": 176463872,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 248963072,
+          "weather_summaries_weathersummary": 74907648,
+          "weather_summaries_weathersnapshot": 8019968,
+          "weather_summaries_weathersnapshotday": 29138944,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 40255488,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1253376,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960
+        }
+      },
+      "size_after": {
+        "taken_at": "2026-10-17T11:07:42Z",
+        "database_bytes": 3026873491,
+        "groups_bytes": {
+          "weather": 361611264,
+          "estimates": 107659264,
+          "host_trees": 321781760,
+          "map_cache": 176463872
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 717104,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimateresult": 65880064,
+          "estimate_updates_hosttreecache": 321781760,
+          "estimate_updates_tuscanyinputset": 24576,
+          "sporameteo_map_cache": 176463872,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 248963072,
+          "weather_summaries_weathersummary": 74907648,
+          "weather_summaries_weathersnapshot": 8019968,
+          "weather_summaries_weathersnapshotday": 29138944,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 40263680,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1253376,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960
+        }
+      }
+    },
+    "warmup_384mb": {
+      "step": "warmup_384mb",
+      "started_at": "2026-10-17T11:07:42Z",
+      "phases": [
+        {
+          "name": "warmup_cold_384mb",
+          "arguments": [
+            "warmup",
+            "--mode",
+            "cold",
+            "--region",
+            "all",
+            "--limit-tiles",
+            "0"
+          ],
+          "memory_limit": "384m",
+          "started_at": "2026-10-17T11:07:43Z",
+          "wall_seconds": 68.7,
+          "exit_code": 0,
+          "killed_for_memory": false,
+          "status": "completed",
+          "result": {
+            "phase": "warmup",
+            "status": "completed",
+            "mode": "cold",
+            "region": "all",
+            "run_id": "a962a43c-c788-4ccd-8a16-bfc721951786",
+            "tiles": 3497,
+            "seconds": 63.2,
+            "seconds_summary": 0.1,
+            "seconds_tiles": 57.8,
+            "seconds_overview": 5.3,
+            "cache_entries_before": 0,
+            "cache_entries_after": 6996,
+            "peak_memory": {
+              "process_mb": 416.4,
+              "container_mb": 384.0
+            }
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/warmup_cold_384mb.log",
+          "size_before": {
+            "taken_at": "2026-10-17T11:07:43Z",
+            "database_bytes": 3026873491,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 107659264,
+              "host_trees": 321781760,
+              "map_cache": 176463872
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 176463872,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40263680,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1253376,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T11:08:52Z",
+            "database_bytes": 3009514643,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 107659264,
+              "host_trees": 321781760,
+              "map_cache": 159105024
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "sporameteo_map_cache": 159105024,
+              "estimate_updates_tuscanyinputset": 24576,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40263680,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1253376,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960
+            }
+          }
+        },
+        {
+          "name": "warmup_night_384mb",
+          "arguments": [
+            "warmup",
+            "--mode",
+            "night",
+            "--region",
+            "all",
+            "--limit-tiles",
+            "0"
+          ],
+          "memory_limit": "384m",
+          "started_at": "2026-10-17T11:08:52Z",
+          "wall_seconds": 36.0,
+          "exit_code": 0,
+          "killed_for_memory": false,
+          "status": "completed",
+          "result": {
+            "phase": "warmup",
+            "status": "completed",
+            "mode": "night",
+            "region": "all",
+            "run_id": "a962a43c-c788-4ccd-8a16-bfc721951786",
+            "tiles": 3497,
+            "seconds": 30.9,
+            "seconds_summary": 0.1,
+            "seconds_tiles": 25.4,
+            "seconds_overview": 5.3,
+            "cache_entries_before": 3497,
+            "cache_entries_after": 6996,
+            "peak_memory": {
+              "process_mb": 413.7,
+              "container_mb": 384.0
+            }
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/warmup_night_384mb.log",
+          "size_before": {
+            "taken_at": "2026-10-17T11:08:52Z",
+            "database_bytes": 3009514643,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 107659264,
+              "host_trees": 321781760,
+              "map_cache": 159105024
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "sporameteo_map_cache": 159105024,
+              "estimate_updates_tuscanyinputset": 24576,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40263680,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1253376,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T11:09:29Z",
+            "database_bytes": 3026562195,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 107659264,
+              "host_trees": 321781760,
+              "map_cache": 176152576
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "sporameteo_map_cache": 176152576,
+              "estimate_updates_tuscanyinputset": 24576,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40263680,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1253376,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960
+            }
+          }
+        }
+      ],
+      "size_before": {
+        "taken_at": "2026-10-17T11:07:42Z",
+        "database_bytes": 3026873491,
+        "groups_bytes": {
+          "weather": 361611264,
+          "estimates": 107659264,
+          "host_trees": 321781760,
+          "map_cache": 176463872
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 717104,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimateresult": 65880064,
+          "estimate_updates_hosttreecache": 321781760,
+          "estimate_updates_tuscanyinputset": 24576,
+          "sporameteo_map_cache": 176463872,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 248963072,
+          "weather_summaries_weathersummary": 74907648,
+          "weather_summaries_weathersnapshot": 8019968,
+          "weather_summaries_weathersnapshotday": 29138944,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 40263680,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1253376,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960
+        }
+      },
+      "size_after": {
+        "taken_at": "2026-10-17T11:09:29Z",
+        "database_bytes": 3026562195,
+        "groups_bytes": {
+          "weather": 361611264,
+          "estimates": 107659264,
+          "host_trees": 321781760,
+          "map_cache": 176152576
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 717104,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimateresult": 65880064,
+          "estimate_updates_hosttreecache": 321781760,
+          "sporameteo_map_cache": 176152576,
+          "estimate_updates_tuscanyinputset": 24576,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 248963072,
+          "weather_summaries_weathersummary": 74907648,
+          "weather_summaries_weathersnapshot": 8019968,
+          "weather_summaries_weathersnapshotday": 29138944,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 40263680,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1253376,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960
+        }
+      }
+    },
+    "tuscany": {
+      "step": "tuscany",
+      "started_at": "2026-10-17T11:09:29Z",
+      "phases": [
+        {
+          "name": "tuscany",
+          "arguments": [
+            "estimates",
+            "--region",
+            "09",
+            "--label",
+            "tuscany",
+            "--limit-cells",
+            "0"
+          ],
+          "memory_limit": null,
+          "started_at": "2026-10-17T11:09:30Z",
+          "wall_seconds": 28.2,
+          "exit_code": 0,
+          "killed_for_memory": false,
+          "status": "completed",
+          "result": {
+            "phase": "estimates",
+            "status": "completed",
+            "run_id": "587e1b48-65f5-4972-a5b2-9326855a37ce",
+            "region": "09",
+            "label": "tuscany",
+            "cells": 333,
+            "cells_completed": 333,
+            "cells_without_weather": 0,
+            "cells_without_weather_examples": [],
+            "squares": 71031,
+            "result_rows": 71031,
+            "seconds": 24.4,
+            "peak_memory": {
+              "process_mb": 189.9,
+              "container_mb": 296.9
+            },
+            "peak_reached_at_cell": "42.75,11.55",
+            "failures": 0,
+            "failure_examples": [],
+            "cells_file": "/output/cells/tuscany.jsonl"
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/tuscany.log",
+          "size_before": {
+            "taken_at": "2026-10-17T11:09:30Z",
+            "database_bytes": 2919263379,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 360448,
+              "host_trees": 321781760,
+              "map_cache": 176152576
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 0,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 49152,
+              "estimate_updates_forecastrun": 49152,
+              "estimate_updates_publishedforecastrun": 40960,
+              "estimate_updates_estimateresult": 16384,
+              "estimate_updates_hosttreecache": 321781760,
+              "sporameteo_map_cache": 176152576,
+              "estimate_updates_tuscanyinputset": 24576,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 81920
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T11:09:58Z",
+            "database_bytes": 2929912979,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 11010048,
+              "host_trees": 321781760,
+              "map_cache": 176152576
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 71031,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 221184,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960,
+              "estimate_updates_estimateresult": 6569984,
+              "estimate_updates_hosttreecache": 321781760,
+              "sporameteo_map_cache": 176152576,
+              "estimate_updates_tuscanyinputset": 24576,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 3956736
+            }
+          }
+        }
+      ],
+      "size_before": {
+        "taken_at": "2026-10-17T11:09:29Z",
+        "database_bytes": 3026562195,
+        "groups_bytes": {
+          "weather": 361611264,
+          "estimates": 107659264,
+          "host_trees": 321781760,
+          "map_cache": 176152576
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 717104,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimateresult": 65880064,
+          "estimate_updates_hosttreecache": 321781760,
+          "sporameteo_map_cache": 176152576,
+          "estimate_updates_tuscanyinputset": 24576,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 248963072,
+          "weather_summaries_weathersummary": 74907648,
+          "weather_summaries_weathersnapshot": 8019968,
+          "weather_summaries_weathersnapshotday": 29138944,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 40263680,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1253376,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960
+        }
+      },
+      "size_after": {
+        "taken_at": "2026-10-17T11:09:59Z",
+        "database_bytes": 2929912979,
+        "groups_bytes": {
+          "weather": 361611264,
+          "estimates": 11010048,
+          "host_trees": 321781760,
+          "map_cache": 176152576
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 71031,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 221184,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960,
+          "estimate_updates_estimateresult": 6569984,
+          "estimate_updates_hosttreecache": 321781760,
+          "sporameteo_map_cache": 176152576,
+          "estimate_updates_tuscanyinputset": 24576,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 248963072,
+          "weather_summaries_weathersummary": 74907648,
+          "weather_summaries_weathersnapshot": 8019968,
+          "weather_summaries_weathersnapshotday": 29138944,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 3956736
+        }
+      }
+    },
+    "tuscany_old": {
+      "step": "tuscany_old",
+      "started_at": "2026-10-17T11:11:56Z",
+      "phases": [
+        {
+          "name": "tuscany_old",
+          "arguments": [
+            "estimates",
+            "--region",
+            "09",
+            "--label",
+            "tuscany_old",
+            "--limit-cells",
+            "0"
+          ],
+          "memory_limit": null,
+          "started_at": "2026-10-17T11:12:08Z",
+          "wall_seconds": 240.9,
+          "exit_code": 0,
+          "killed_for_memory": false,
+          "status": "completed",
+          "result": {
+            "phase": "estimates",
+            "status": "completed",
+            "run_id": "d18a11d4-59aa-49e0-a8a1-e56f3c0e55be",
+            "region": "09",
+            "label": "tuscany_old",
+            "cells": 333,
+            "cells_completed": 333,
+            "cells_without_weather": 0,
+            "cells_without_weather_examples": [],
+            "squares": 71031,
+            "result_rows": 71031,
+            "seconds": 237.0,
+            "peak_memory": {
+              "process_mb": 183.6,
+              "container_mb": 122.0
+            },
+            "peak_reached_at_cell": "42.75,11.55",
+            "failures": 0,
+            "failure_examples": [],
+            "cells_file": "/output/cells/tuscany_old.jsonl"
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/tuscany_old.log",
+          "size_before": {
+            "taken_at": "2026-10-17T11:12:08Z",
+            "database_bytes": 2919263379,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 360448,
+              "host_trees": 321781760,
+              "map_cache": 176152576
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 0,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_estimateresult": 16384,
+              "estimate_updates_forecastruncell": 49152,
+              "estimate_updates_forecastrun": 49152,
+              "estimate_updates_hosttreecache": 321781760,
+              "sporameteo_map_cache": 176152576,
+              "estimate_updates_publishedforecastrun": 40960,
+              "estimate_updates_tuscanyinputset": 24576,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 81920
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T11:16:09Z",
+            "database_bytes": 2929912979,
+            "groups_bytes": {
+              "weather": 361611264,
+              "estimates": 11010048,
+              "host_trees": 321781760,
+              "map_cache": 176152576
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 71031,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_estimateresult": 6578176,
+              "estimate_updates_forecastruncell": 204800,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_hosttreecache": 321781760,
+              "sporameteo_map_cache": 176152576,
+              "estimate_updates_publishedforecastrun": 40960,
+              "estimate_updates_tuscanyinputset": 24576,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_summaries_weatherdaily": 248963072,
+              "weather_summaries_weathersummary": 74907648,
+              "weather_summaries_weathersnapshot": 8019968,
+              "weather_summaries_weathersnapshotday": 29138944,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 3964928
+            }
+          }
+        }
+      ],
+      "size_before": {
+        "taken_at": "2026-10-17T11:11:56Z",
+        "database_bytes": 2929937555,
+        "groups_bytes": {
+          "weather": 361611264,
+          "estimates": 11034624,
+          "host_trees": 321781760,
+          "map_cache": 176152576
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 71031,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 229376,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960,
+          "estimate_updates_estimateresult": 6578176,
+          "estimate_updates_hosttreecache": 321781760,
+          "sporameteo_map_cache": 176152576,
+          "estimate_updates_tuscanyinputset": 24576,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 248963072,
+          "weather_summaries_weathersummary": 74907648,
+          "weather_summaries_weathersnapshot": 8019968,
+          "weather_summaries_weathersnapshotday": 29138944,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 3964928
+        }
+      },
+      "size_after": {
+        "taken_at": "2026-10-17T11:16:10Z",
+        "database_bytes": 2929912979,
+        "groups_bytes": {
+          "weather": 361611264,
+          "estimates": 11010048,
+          "host_trees": 321781760,
+          "map_cache": 176152576
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 71031,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_estimateresult": 6578176,
+          "estimate_updates_forecastruncell": 204800,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_hosttreecache": 321781760,
+          "sporameteo_map_cache": 176152576,
+          "estimate_updates_publishedforecastrun": 40960,
+          "estimate_updates_tuscanyinputset": 24576,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_summaries_weatherdaily": 248963072,
+          "weather_summaries_weathersummary": 74907648,
+          "weather_summaries_weathersnapshot": 8019968,
+          "weather_summaries_weathersnapshotday": 29138944,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 3964928
+        }
+      }
+    },
+    "weather_night": {
+      "step": "weather_night",
+      "started_at": "2026-10-17T11:56:43Z",
+      "phases": [
+        {
+          "name": "weather_night_rewind",
+          "arguments": [
+            "rewind"
+          ],
+          "memory_limit": null,
+          "started_at": "2026-10-17T11:56:44Z",
+          "wall_seconds": 7.5,
+          "exit_code": 0,
+          "killed_for_memory": false,
+          "status": "completed",
+          "result": {
+            "phase": "rewind",
+            "status": "completed",
+            "deleted_snapshot_objects": 175122,
+            "deleted_daily_rows": 33534,
+            "deleted_reads": 1,
+            "forecast_rows_marked_as_older_run": 0,
+            "peak_memory": {
+              "process_mb": 711.4,
+              "container_mb": 640.1
+            }
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/weather_night_rewind.log",
+          "size_before": {
+            "taken_at": "2026-10-17T11:56:44Z",
+            "database_bytes": 3205622931,
+            "groups_bytes": {
+              "weather": 557572096,
+              "estimates": 107675648,
+              "host_trees": 321781760,
+              "map_cache": 159186944
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 175122,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 159186944,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1269760,
+              "weather_summaries_weatherdaily": 320331776,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960,
+              "weather_summaries_weathersummary": 156598272,
+              "weather_summaries_weathersnapshot": 16089088,
+              "weather_summaries_weathersnapshotday": 63971328,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40263680
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T11:56:51Z",
+            "database_bytes": 3205622931,
+            "groups_bytes": {
+              "weather": 557572096,
+              "estimates": 107675648,
+              "host_trees": 321781760,
+              "map_cache": 159186944
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 159186944,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1269760,
+              "weather_summaries_weatherdaily": 320331776,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960,
+              "weather_summaries_weathersummary": 156598272,
+              "weather_summaries_weathersnapshot": 16089088,
+              "weather_summaries_weathersnapshotday": 63971328,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40263680
+            }
+          }
+        },
+        {
+          "name": "weather_night",
+          "arguments": [
+            "weather",
+            "--region",
+            "all",
+            "--limit-cells",
+            "0"
+          ],
+          "memory_limit": null,
+          "started_at": "2026-10-17T11:56:52Z",
+          "wall_seconds": 354.3,
+          "exit_code": 0,
+          "killed_for_memory": false,
+          "status": "complete",
+          "result": {
+            "phase": "weather",
+            "cells": 3726,
+            "plan": {
+              "assessment_date": "2026-10-18",
+              "cells_total": 3726,
+              "cells_already_ready": 0,
+              "cells_to_write": 3726,
+              "first_day": "2026-10-17",
+              "last_day": "2026-10-25",
+              "chunk_files": 16,
+              "estimated_megabytes": 211.0,
+              "estimated_bytes": 211040640
+            },
+            "status": "complete",
+            "error": "",
+            "seconds": 349.4,
+            "bytes_read": 110894284,
+            "http_requests": 3464,
+            "cells_written": 3726,
+            "cells_already_ready": 0,
+            "cells_missing": 0,
+            "missing_examples": {},
+            "run_time": "2026-10-17T00:00:00+00:00",
+            "peak_memory": {
+              "process_mb": 193.6,
+              "container_mb": 208.3
+            }
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/weather_night.log",
+          "size_before": {
+            "taken_at": "2026-10-17T11:56:52Z",
+            "database_bytes": 3205622931,
+            "groups_bytes": {
+              "weather": 557572096,
+              "estimates": 107675648,
+              "host_trees": 321781760,
+              "map_cache": 159186944
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 159186944,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1269760,
+              "weather_summaries_weatherdaily": 320331776,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960,
+              "weather_summaries_weathersummary": 156598272,
+              "weather_summaries_weathersnapshot": 16089088,
+              "weather_summaries_weathersnapshotday": 63971328,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40263680
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T12:02:47Z",
+            "database_bytes": 3209186451,
+            "groups_bytes": {
+              "weather": 561135616,
+              "estimates": 107675648,
+              "host_trees": 321781760,
+              "map_cache": 159186944
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 175122,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 159186944,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1269760,
+              "weather_summaries_weatherdaily": 321757184,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960,
+              "weather_summaries_weathersummary": 156721152,
+              "weather_summaries_weathersnapshot": 16089088,
+              "weather_summaries_weathersnapshotday": 65953792,
+              "weather_summaries_fileweatherread": 81920,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40263680
+            }
+          }
+        }
+      ],
+      "size_before": {
+        "taken_at": "2026-10-17T11:56:43Z",
+        "database_bytes": 3205622931,
+        "groups_bytes": {
+          "weather": 557572096,
+          "estimates": 107675648,
+          "host_trees": 321781760,
+          "map_cache": 159186944
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 717104,
+          "weather_summaries_weatherdaily": 175122,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimateresult": 65880064,
+          "estimate_updates_hosttreecache": 321781760,
+          "estimate_updates_tuscanyinputset": 24576,
+          "sporameteo_map_cache": 159186944,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1269760,
+          "weather_summaries_weatherdaily": 320331776,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960,
+          "weather_summaries_weathersummary": 156598272,
+          "weather_summaries_weathersnapshot": 16089088,
+          "weather_summaries_weathersnapshotday": 63971328,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 40263680
+        }
+      },
+      "size_after": {
+        "taken_at": "2026-10-17T12:02:47Z",
+        "database_bytes": 3209186451,
+        "groups_bytes": {
+          "weather": 561135616,
+          "estimates": 107675648,
+          "host_trees": 321781760,
+          "map_cache": 159186944
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 717104,
+          "weather_summaries_weatherdaily": 175122,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimateresult": 65880064,
+          "estimate_updates_hosttreecache": 321781760,
+          "estimate_updates_tuscanyinputset": 24576,
+          "sporameteo_map_cache": 159186944,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1269760,
+          "weather_summaries_weatherdaily": 321757184,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960,
+          "weather_summaries_weathersummary": 156721152,
+          "weather_summaries_weathersnapshot": 16089088,
+          "weather_summaries_weathersnapshotday": 65953792,
+          "weather_summaries_fileweatherread": 81920,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 40263680
+        }
+      }
+    },
+    "weather_night_384mb": {
+      "step": "weather_night_384mb",
+      "started_at": "2026-10-17T12:02:47Z",
+      "phases": [
+        {
+          "name": "weather_night_384mb_rewind",
+          "arguments": [
+            "rewind"
+          ],
+          "memory_limit": null,
+          "started_at": "2026-10-17T12:02:48Z",
+          "wall_seconds": 8.2,
+          "exit_code": 0,
+          "killed_for_memory": false,
+          "status": "completed",
+          "result": {
+            "phase": "rewind",
+            "status": "completed",
+            "deleted_snapshot_objects": 175122,
+            "deleted_daily_rows": 33534,
+            "deleted_reads": 1,
+            "forecast_rows_marked_as_older_run": 0,
+            "peak_memory": {
+              "process_mb": 716.9,
+              "container_mb": 803.6
+            }
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/weather_night_384mb_rewind.log",
+          "size_before": {
+            "taken_at": "2026-10-17T12:02:48Z",
+            "database_bytes": 3209186451,
+            "groups_bytes": {
+              "weather": 561135616,
+              "estimates": 107675648,
+              "host_trees": 321781760,
+              "map_cache": 159186944
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 175122,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 159186944,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1269760,
+              "weather_summaries_weatherdaily": 321757184,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960,
+              "weather_summaries_weathersummary": 156721152,
+              "weather_summaries_weathersnapshot": 16089088,
+              "weather_summaries_weathersnapshotday": 65953792,
+              "weather_summaries_fileweatherread": 81920,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40263680
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T12:02:57Z",
+            "database_bytes": 3209186451,
+            "groups_bytes": {
+              "weather": 561135616,
+              "estimates": 107675648,
+              "host_trees": 321781760,
+              "map_cache": 159186944
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 159186944,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1269760,
+              "weather_summaries_weatherdaily": 321757184,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960,
+              "weather_summaries_weathersummary": 156721152,
+              "weather_summaries_weathersnapshot": 16089088,
+              "weather_summaries_weathersnapshotday": 65953792,
+              "weather_summaries_fileweatherread": 81920,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40263680
+            }
+          }
+        },
+        {
+          "name": "weather_night_384mb",
+          "arguments": [
+            "weather",
+            "--region",
+            "all",
+            "--limit-cells",
+            "0"
+          ],
+          "memory_limit": "384m",
+          "started_at": "2026-10-17T12:02:57Z",
+          "wall_seconds": 358.3,
+          "exit_code": 0,
+          "killed_for_memory": false,
+          "status": "complete",
+          "result": {
+            "phase": "weather",
+            "cells": 3726,
+            "plan": {
+              "assessment_date": "2026-10-18",
+              "cells_total": 3726,
+              "cells_already_ready": 0,
+              "cells_to_write": 3726,
+              "first_day": "2026-10-17",
+              "last_day": "2026-10-25",
+              "chunk_files": 16,
+              "estimated_megabytes": 211.0,
+              "estimated_bytes": 211040640
+            },
+            "status": "complete",
+            "error": "",
+            "seconds": 352.9,
+            "bytes_read": 110894284,
+            "http_requests": 3464,
+            "cells_written": 3726,
+            "cells_already_ready": 0,
+            "cells_missing": 0,
+            "missing_examples": {},
+            "run_time": "2026-10-17T00:00:00+00:00",
+            "peak_memory": {
+              "process_mb": 201.8,
+              "container_mb": 207.4
+            }
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/weather_night_384mb.log",
+          "size_before": {
+            "taken_at": "2026-10-17T12:02:57Z",
+            "database_bytes": 3209186451,
+            "groups_bytes": {
+              "weather": 561135616,
+              "estimates": 107675648,
+              "host_trees": 321781760,
+              "map_cache": 159186944
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 159186944,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1269760,
+              "weather_summaries_weatherdaily": 321757184,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960,
+              "weather_summaries_weathersummary": 156721152,
+              "weather_summaries_weathersnapshot": 16089088,
+              "weather_summaries_weathersnapshotday": 65953792,
+              "weather_summaries_fileweatherread": 81920,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40263680
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T12:08:56Z",
+            "database_bytes": 3210005651,
+            "groups_bytes": {
+              "weather": 561954816,
+              "estimates": 107675648,
+              "host_trees": 321781760,
+              "map_cache": 159186944
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 717104,
+              "weather_summaries_weatherdaily": 175122,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 6996
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 65880064,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 159186944,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "estimate_updates_estimatetask": 81920,
+              "estimate_updates_forecastruncell": 1269760,
+              "weather_summaries_weatherdaily": 321781760,
+              "estimate_updates_forecastrun": 98304,
+              "estimate_updates_publishedforecastrun": 40960,
+              "weather_summaries_weathersummary": 156803072,
+              "weather_summaries_weathersnapshot": 16089088,
+              "weather_summaries_weathersnapshotday": 66666496,
+              "weather_summaries_fileweatherread": 81920,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 40263680
+            }
+          }
+        }
+      ],
+      "size_before": {
+        "taken_at": "2026-10-17T12:02:47Z",
+        "database_bytes": 3209186451,
+        "groups_bytes": {
+          "weather": 561135616,
+          "estimates": 107675648,
+          "host_trees": 321781760,
+          "map_cache": 159186944
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 717104,
+          "weather_summaries_weatherdaily": 175122,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimateresult": 65880064,
+          "estimate_updates_hosttreecache": 321781760,
+          "estimate_updates_tuscanyinputset": 24576,
+          "sporameteo_map_cache": 159186944,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1269760,
+          "weather_summaries_weatherdaily": 321757184,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960,
+          "weather_summaries_weathersummary": 156721152,
+          "weather_summaries_weathersnapshot": 16089088,
+          "weather_summaries_weathersnapshotday": 65953792,
+          "weather_summaries_fileweatherread": 81920,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 40263680
+        }
+      },
+      "size_after": {
+        "taken_at": "2026-10-17T12:08:56Z",
+        "database_bytes": 3210005651,
+        "groups_bytes": {
+          "weather": 561954816,
+          "estimates": 107675648,
+          "host_trees": 321781760,
+          "map_cache": 159186944
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 717104,
+          "weather_summaries_weatherdaily": 175122,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 6996
+        },
+        "tables_bytes": {
+          "estimate_updates_estimateresult": 65880064,
+          "estimate_updates_hosttreecache": 321781760,
+          "estimate_updates_tuscanyinputset": 24576,
+          "sporameteo_map_cache": 159186944,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1269760,
+          "weather_summaries_weatherdaily": 321781760,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960,
+          "weather_summaries_weathersummary": 156803072,
+          "weather_summaries_weathersnapshot": 16089088,
+          "weather_summaries_weathersnapshotday": 66666496,
+          "weather_summaries_fileweatherread": 81920,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 40263680
+        }
+      }
+    },
+    "weather_first_load_384mb": {
+      "step": "weather_first_load_384mb",
+      "started_at": "2026-10-17T12:11:38Z",
+      "phases": [
+        {
+          "name": "weather_first_load_384mb",
+          "arguments": [
+            "weather",
+            "--region",
+            "all",
+            "--limit-cells",
+            "0"
+          ],
+          "memory_limit": "384m",
+          "started_at": "2026-10-17T12:11:39Z",
+          "wall_seconds": 545.0,
+          "exit_code": 0,
+          "killed_for_memory": false,
+          "status": "complete",
+          "result": {
+            "phase": "weather",
+            "cells": 3726,
+            "plan": {
+              "assessment_date": "2026-10-17",
+              "cells_total": 3726,
+              "cells_already_ready": 0,
+              "cells_to_write": 3726,
+              "first_day": "2026-09-17",
+              "last_day": "2026-10-24",
+              "chunk_files": 24,
+              "estimated_megabytes": 316.6,
+              "estimated_bytes": 316560960
+            },
+            "status": "complete",
+            "error": "",
+            "seconds": 540.8,
+            "bytes_read": 155525388,
+            "http_requests": 4850,
+            "cells_written": 3726,
+            "cells_already_ready": 0,
+            "cells_missing": 0,
+            "missing_examples": {},
+            "run_time": "2026-10-17T00:00:00+00:00",
+            "peak_memory": {
+              "process_mb": 302.1,
+              "container_mb": 292.4
+            }
+          },
+          "log": "data/processed/italy_night_cost/work/sporameteo_estimate_benchmark_20261017/logs/weather_first_load_384mb.log",
+          "size_before": {
+            "taken_at": "2026-10-17T12:11:39Z",
+            "database_bytes": 2390936723,
+            "groups_bytes": {
+              "weather": 679936,
+              "estimates": 360448,
+              "host_trees": 321781760,
+              "map_cache": 8708096
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 0,
+              "weather_summaries_weatherdaily": 0,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 36
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 16384,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 8708096,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "estimate_updates_forecastrun": 49152,
+              "estimate_updates_publishedforecastrun": 40960,
+              "weather_summaries_weatherdaily": 32768,
+              "weather_summaries_fileweatherread": 24576,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "estimate_updates_estimatetask": 81920,
+              "weather_summaries_weathersummary": 32768,
+              "weather_summaries_weathersnapshot": 24576,
+              "weather_summaries_weathersnapshotday": 32768,
+              "estimate_updates_forecastruncell": 49152,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 81920
+            }
+          },
+          "size_after": {
+            "taken_at": "2026-10-17T12:20:44Z",
+            "database_bytes": 2751745171,
+            "groups_bytes": {
+              "weather": 361488384,
+              "estimates": 360448,
+              "host_trees": 321781760,
+              "map_cache": 8708096
+            },
+            "row_counts": {
+              "estimate_updates_estimateresult": 0,
+              "weather_summaries_weatherdaily": 141588,
+              "estimate_updates_hosttreecache": 717104,
+              "sporameteo_map_cache": 36
+            },
+            "tables_bytes": {
+              "estimate_updates_estimateresult": 16384,
+              "estimate_updates_hosttreecache": 321781760,
+              "estimate_updates_tuscanyinputset": 24576,
+              "sporameteo_map_cache": 8708096,
+              "weather_on_demand_weatherfetchpart": 65536,
+              "weather_on_demand_weathercleanupjob": 49152,
+              "weather_on_demand_weathervisitorreservation": 40960,
+              "weather_on_demand_weathervisitorwindow": 40960,
+              "weather_requests_weatherquotalock": 24576,
+              "estimate_updates_forecastrun": 49152,
+              "estimate_updates_publishedforecastrun": 40960,
+              "weather_summaries_weatherdaily": 248913920,
+              "weather_summaries_fileweatherread": 49152,
+              "weather_on_demand_weatherfetch": 73728,
+              "weather_on_demand_weatherfetchbatch": 73728,
+              "weather_on_demand_scheduledweatherrun": 32768,
+              "weather_requests_weatherrequestmember": 32768,
+              "estimate_updates_estimatetask": 81920,
+              "weather_summaries_weathersummary": 74866688,
+              "weather_summaries_weathersnapshot": 8011776,
+              "weather_summaries_weathersnapshotday": 29114368,
+              "estimate_updates_forecastruncell": 49152,
+              "weather_requests_weatherrequest": 49152,
+              "weather_requests_weatherrequestattempt": 49152,
+              "estimate_updates_estimateupdate": 81920
+            }
+          }
+        }
+      ],
+      "size_before": {
+        "taken_at": "2026-10-17T12:11:38Z",
+        "database_bytes": 3059526803,
+        "groups_bytes": {
+          "weather": 561954816,
+          "estimates": 107675648,
+          "host_trees": 321781760,
+          "map_cache": 8708096
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 717104,
+          "weather_summaries_weatherdaily": 175122,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 36
+        },
+        "tables_bytes": {
+          "estimate_updates_estimateresult": 65880064,
+          "estimate_updates_hosttreecache": 321781760,
+          "estimate_updates_tuscanyinputset": 24576,
+          "sporameteo_map_cache": 8708096,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "estimate_updates_estimatetask": 81920,
+          "estimate_updates_forecastruncell": 1269760,
+          "weather_summaries_weatherdaily": 321781760,
+          "estimate_updates_forecastrun": 98304,
+          "estimate_updates_publishedforecastrun": 40960,
+          "weather_summaries_weathersummary": 156803072,
+          "weather_summaries_weathersnapshot": 16089088,
+          "weather_summaries_weathersnapshotday": 66666496,
+          "weather_summaries_fileweatherread": 81920,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 40263680
+        }
+      },
+      "size_after": {
+        "taken_at": "2026-10-17T12:20:45Z",
+        "database_bytes": 2751745171,
+        "groups_bytes": {
+          "weather": 361488384,
+          "estimates": 360448,
+          "host_trees": 321781760,
+          "map_cache": 8708096
+        },
+        "row_counts": {
+          "estimate_updates_estimateresult": 0,
+          "weather_summaries_weatherdaily": 141588,
+          "estimate_updates_hosttreecache": 717104,
+          "sporameteo_map_cache": 36
+        },
+        "tables_bytes": {
+          "estimate_updates_estimateresult": 16384,
+          "estimate_updates_hosttreecache": 321781760,
+          "estimate_updates_tuscanyinputset": 24576,
+          "sporameteo_map_cache": 8708096,
+          "weather_on_demand_weatherfetchpart": 65536,
+          "weather_on_demand_weathercleanupjob": 49152,
+          "weather_on_demand_weathervisitorreservation": 40960,
+          "weather_on_demand_weathervisitorwindow": 40960,
+          "weather_requests_weatherquotalock": 24576,
+          "estimate_updates_forecastrun": 49152,
+          "estimate_updates_publishedforecastrun": 40960,
+          "weather_summaries_weatherdaily": 248913920,
+          "weather_summaries_fileweatherread": 49152,
+          "weather_on_demand_weatherfetch": 73728,
+          "weather_on_demand_weatherfetchbatch": 73728,
+          "weather_on_demand_scheduledweatherrun": 32768,
+          "weather_requests_weatherrequestmember": 32768,
+          "estimate_updates_estimatetask": 81920,
+          "weather_summaries_weathersummary": 74866688,
+          "weather_summaries_weathersnapshot": 8011776,
+          "weather_summaries_weathersnapshotday": 29114368,
+          "estimate_updates_forecastruncell": 49152,
+          "weather_requests_weatherrequest": 49152,
+          "weather_requests_weatherrequestattempt": 49152,
+          "estimate_updates_estimateupdate": 81920
+        }
+      }
+    }
+  },
+  "vps_comparison": {
+    "vps": {
+      "night_date": "2026-10-17",
+      "weather_read_start_utc": "00:30:12",
+      "weather_read_end_utc": "00:31:48",
+      "weather_bytes": 31217953,
+      "weather_http_requests": 1036,
+      "weather_cells": 333,
+      "forecast_seconds": 326.8,
+      "forecast_squares": 71031,
+      "forecast_cells": 333,
+      "forecast_peak_memory_mb": 245.2,
+      "warmup_seconds": 5.2,
+      "warmup_tiles": 300,
+      "first_nightly_check_utc": "02:30",
+      "worker_memory_limit_mb": 384,
+      "cpus": 2,
+      "memory_gb": 3.7,
+      "swap_gb": 2,
+      "source": "Tuscany night of 17 October 2026 on the VPS, as given for issue 152. Limits from docs/hosting.md.",
+      "worker_memory_with_swap_mb": 768,
+      "web_memory_mb": 512,
+      "web_memory_with_swap_mb": 1024,
+      "cpu_limit": "none",
+      "limits_source": "dokku ps:inspect on the VPS: worker 384 MB, 768 MB with swap; web 512 MB, 1 GB with swap; no CPU limit."
+    },
+    "by_squares_seconds": 3299.3,
+    "by_local_speed_seconds": 3430.1,
+    "local_tuscany_seconds": 24.4,
+    "local_tuscany_squares": 71031
+  }
+}

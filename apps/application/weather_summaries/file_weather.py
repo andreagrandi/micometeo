@@ -5,7 +5,8 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
-from typing import Any
+from typing import Any, NamedTuple
+from uuid import UUID
 
 from django.db import transaction
 
@@ -24,6 +25,7 @@ SOURCE_ENDPOINT = "https://openmeteo.s3.amazonaws.com/data/ecmwf_ifs"
 SOURCE_ID = "open-meteo-files:ecmwf_ifs"
 VALUE_KIND = "modelled file values"
 MAX_READ_BYTES = 1_000_000_000
+BLOCK_SIZE = 200
 
 
 @dataclass(frozen=True)
@@ -66,37 +68,70 @@ def _ready_cell_keys(*, cell_keys: list[str], assessment_date: date) -> set[str]
     )
 
 
+class StoredDay(NamedTuple):
+    """The id and reference elevation of a stored daily row, which is all a snapshot needs from it."""
+
+    id: UUID
+    reference_elevation_m: float | None
+
+
 def _reusable_rows(
     *, cell_keys: list[str], assessment_date: date, run_time: datetime | None
-) -> dict[str, dict[date, WeatherDaily]]:
-    """Return the stored file rows that stay valid, by cell and date.
+) -> dict[str, dict[date, StoredDay]]:
+    """Return the stored file rows that stay valid, by cell and date, reading only the columns that are needed.
 
     A past day counts only when it never was a forecast. A day from the assessment date on counts only when it came from the newest run.
     """
     dates = window_dates(assessment_date=assessment_date)
-    candidates = WeatherDaily.objects.filter(
-        cell_key__in=cell_keys,
-        source_endpoint=SOURCE_ENDPOINT,
-        date__gte=dates[0],
-        date__lte=dates[-1],
-        status=WeatherDaily.Status.COMPLETE,
-    ).order_by("created_at", "id")
-    rows: dict[str, dict[date, WeatherDaily]] = {key: {} for key in cell_keys}
-    for row in candidates:
-        if row.date < assessment_date:
-            if row.forecast_issue_time is not None or row.metadata.get("history_version") != WEATHER_HISTORY_VERSION:
+    candidates = (
+        WeatherDaily.objects.filter(
+            cell_key__in=cell_keys,
+            source_endpoint=SOURCE_ENDPOINT,
+            date__gte=dates[0],
+            date__lte=dates[-1],
+            status=WeatherDaily.Status.COMPLETE,
+        )
+        .order_by("created_at", "id")
+        .values_list("cell_key", "date", "forecast_issue_time", "metadata__history_version", "id", "reference_elevation_m")
+    )
+    rows: dict[str, dict[date, StoredDay]] = {key: {} for key in cell_keys}
+    for cell_key, day, issue_time, history_version, row_id, elevation in candidates.iterator(chunk_size=5000):
+        if day < assessment_date:
+            if issue_time is not None or history_version != WEATHER_HISTORY_VERSION:
                 continue
-        elif run_time is None or row.forecast_issue_time != run_time:
+        elif run_time is None or issue_time != run_time:
             continue
-        rows[row.cell_key].setdefault(row.date, row)
+        rows[cell_key].setdefault(day, StoredDay(id=row_id, reference_elevation_m=elevation))
     return rows
 
 
-def _needed_dates(*, assessment_date: date, reusable: dict[date, WeatherDaily]) -> list[date]:
+def _needed_dates(*, assessment_date: date, reusable: dict[date, StoredDay]) -> list[date]:
     return [day for day in window_dates(assessment_date=assessment_date) if day not in reusable]
 
 
-def plan_file_weather(*, cells: Any, assessment_date: date) -> FileWeatherPlan:
+def _blocks(*, keys: list[str], block_size: int) -> list[list[str]]:
+    return [keys[start : start + block_size] for start in range(0, len(keys), block_size)]
+
+
+def _scan_needed(
+    *, open_keys: list[str], assessment_date: date, run_time: datetime | None, block_size: int
+) -> tuple[set[str], date | None, date | None]:
+    """Return the cells that need days and the first and last day needed, loading the stored rows one block at a time."""
+    reading: set[str] = set()
+    first_day: date | None = None
+    last_day: date | None = None
+    for block in _blocks(keys=open_keys, block_size=block_size):
+        reusable = _reusable_rows(cell_keys=block, assessment_date=assessment_date, run_time=run_time)
+        for key in block:
+            days = _needed_dates(assessment_date=assessment_date, reusable=reusable[key])
+            if days:
+                reading.add(key)
+                first_day = days[0] if first_day is None else min(first_day, days[0])
+                last_day = days[-1] if last_day is None else max(last_day, days[-1])
+    return reading, first_day, last_day
+
+
+def plan_file_weather(*, cells: Any, assessment_date: date, block_size: int = BLOCK_SIZE) -> FileWeatherPlan:
     """Work out from the database what a read would do, without any network call.
 
     The newest run is unknown here, so every day from the assessment date on counts as needed.
@@ -104,9 +139,9 @@ def plan_file_weather(*, cells: Any, assessment_date: date) -> FileWeatherPlan:
     keys = [cell.key for cell in cells]
     ready = _ready_cell_keys(cell_keys=keys, assessment_date=assessment_date)
     open_keys = [key for key in keys if key not in ready]
-    reusable = _reusable_rows(cell_keys=open_keys, assessment_date=assessment_date, run_time=None)
-    needed = {key: _needed_dates(assessment_date=assessment_date, reusable=reusable[key]) for key in open_keys}
-    needed = {key: days for key, days in needed.items() if days}
+    needed, first_day, last_day = _scan_needed(
+        open_keys=open_keys, assessment_date=assessment_date, run_time=None, block_size=block_size
+    )
     if not needed:
         return FileWeatherPlan(
             assessment_date=assessment_date,
@@ -118,8 +153,6 @@ def plan_file_weather(*, cells: Any, assessment_date: date) -> FileWeatherPlan:
             chunk_files=0,
             estimated_bytes=0,
         )
-    first_day = min(days[0] for days in needed.values())
-    last_day = max(days[-1] for days in needed.values())
     first_hour, end_hour = bucket_files.local_window_hours(first_day=first_day, last_day=last_day)
     return FileWeatherPlan(
         assessment_date=assessment_date,
@@ -214,7 +247,7 @@ def _is_complete(*, daily: Any) -> bool:
     )
 
 
-def _snapshot_for(*, cell_key: str, assessment_date: date, rows: dict[date, WeatherDaily], elevation: float | None) -> bool:
+def _snapshot_for(*, cell_key: str, assessment_date: date, rows: dict[date, StoredDay], elevation: float | None) -> bool:
     """Build the snapshot when all 38 days have a row. Return whether one now exists."""
     if any(day not in rows for day in window_dates(assessment_date=assessment_date)):
         return False
@@ -235,7 +268,7 @@ def _store_cell(
     match: Match,
     hours: bucket_files.CellHours,
     needed: list[date],
-    reused: dict[date, WeatherDaily],
+    reused: dict[date, StoredDay],
     retrieved_at: datetime,
     run_time: datetime,
     file_modified: dict[str, datetime],
@@ -263,7 +296,7 @@ def _store_cell(
                 if not _is_complete(daily=daily):
                     incomplete.append(day.isoformat())
                     continue
-                rows[day] = WeatherDaily.objects.create(
+                created = WeatherDaily.objects.create(
                     **_row_fields(
                         read=read,
                         cell=cell,
@@ -274,6 +307,7 @@ def _store_cell(
                         daily=daily,
                     )
                 )
+                rows[day] = StoredDay(id=created.id, reference_elevation_m=created.reference_elevation_m)
             elevation = None if math.isnan(match.place_height) else match.place_height
             has_snapshot = _snapshot_for(cell_key=cell.key, assessment_date=read.assessment_date, rows=rows, elevation=elevation)
     except WeatherDailyConflictError as exc:
@@ -284,13 +318,19 @@ def _store_cell(
 
 
 def store_file_weather(
-    *, cells: Any, assessment_date: date, region_code: str, source: WeatherFileSource | None = None
+    *,
+    cells: Any,
+    assessment_date: date,
+    region_code: str,
+    source: WeatherFileSource | None = None,
+    block_size: int = BLOCK_SIZE,
 ) -> FileWeatherRead:
     """Read the files once for all cells that need days, store the complete days and build snapshots.
 
-    A file that fails to read ends the read as failed and stores no row.
+    The downloaded values stay in compact arrays. Stored rows are loaded and the Python values are built for
+    block_size cells at a time. A file that fails to read ends the read as failed and stores no row.
     """
-    plan = plan_file_weather(cells=cells, assessment_date=assessment_date)
+    plan = plan_file_weather(cells=cells, assessment_date=assessment_date, block_size=block_size)
     if plan.estimated_bytes > MAX_READ_BYTES:
         raise ValueError(f"The read would download about {plan.estimated_bytes} bytes, over the limit of {MAX_READ_BYTES}.")
     source = source or BucketSource()
@@ -306,21 +346,18 @@ def store_file_weather(
         by_key = {cell.key: cell for cell in cells}
         ready = _ready_cell_keys(cell_keys=list(by_key), assessment_date=assessment_date)
         open_keys = [key for key in by_key if key not in ready]
-        reusable = _reusable_rows(cell_keys=open_keys, assessment_date=assessment_date, run_time=run_time)
-        needed = {key: _needed_dates(assessment_date=assessment_date, reusable=reusable[key]) for key in open_keys}
-        reading = {key: days for key, days in needed.items() if days}
-        hours = bucket_files.HoursRead(cells={}, file_modified={})
-        matches: dict[str, Match] = {}
+        reading, first_day, last_day = _scan_needed(
+            open_keys=open_keys, assessment_date=assessment_date, run_time=run_time, block_size=block_size
+        )
+        arrays: bucket_files.HourArrays | None = None
+        file_modified: dict[str, datetime] = {}
         if reading:
             matches = bucket_files.match_cells(
-                source=source, cells={key: (by_key[key].latitude, by_key[key].longitude) for key in reading}
-            )
-            hours = bucket_files.read_cell_hours(
                 source=source,
-                matches=matches,
-                first_day=min(days[0] for days in reading.values()),
-                last_day=max(days[-1] for days in reading.values()),
+                cells={key: (by_key[key].latitude, by_key[key].longitude) for key in open_keys if key in reading},
             )
+            arrays = bucket_files.read_hour_arrays(source=source, matches=matches, first_day=first_day, last_day=last_day)
+            file_modified = arrays.file_modified
         retrieved_at = datetime.now(tz=UTC)
     except Exception as exc:
         read.status = FileWeatherRead.Status.FAILED
@@ -333,34 +370,38 @@ def store_file_weather(
 
     written = 0
     missing: dict[str, Any] = {}
-    for key in open_keys:
-        if key not in reading:
-            rows = reusable[key]
-            elevation = next(iter(rows.values())).reference_elevation_m
-            try:
-                with transaction.atomic():
-                    written += _snapshot_for(cell_key=key, assessment_date=assessment_date, rows=rows, elevation=elevation)
-            except WeatherDailyConflictError as exc:
-                missing[key] = {"reason": "conflict", "error": str(exc), "dates": []}
-            continue
-        has_snapshot, problem = _store_cell(
-            read=read,
-            cell=by_key[key],
-            match=matches[key],
-            hours=hours.cells[key],
-            needed=reading[key],
-            reused=reusable[key],
-            retrieved_at=retrieved_at,
-            run_time=run_time,
-            file_modified=hours.file_modified,
-        )
-        written += has_snapshot
-        if problem is not None:
-            missing[key] = problem
+    timestamps = arrays.timestamps if arrays is not None else ()
+    for block in _blocks(keys=open_keys, block_size=block_size):
+        reusable = _reusable_rows(cell_keys=block, assessment_date=assessment_date, run_time=run_time)
+        toa_cache: dict[tuple[float, float], Any] = {}
+        for key in block:
+            if key not in reading:
+                rows = reusable[key]
+                elevation = next(iter(rows.values())).reference_elevation_m
+                try:
+                    with transaction.atomic():
+                        written += _snapshot_for(cell_key=key, assessment_date=assessment_date, rows=rows, elevation=elevation)
+                except WeatherDailyConflictError as exc:
+                    missing[key] = {"reason": "conflict", "error": str(exc), "dates": []}
+                continue
+            has_snapshot, problem = _store_cell(
+                read=read,
+                cell=by_key[key],
+                match=arrays.matches[key],
+                hours=bucket_files.cell_hours_from_arrays(arrays=arrays, key=key, timestamps=timestamps, toa_cache=toa_cache),
+                needed=_needed_dates(assessment_date=assessment_date, reusable=reusable[key]),
+                reused=reusable[key],
+                retrieved_at=retrieved_at,
+                run_time=run_time,
+                file_modified=file_modified,
+            )
+            written += has_snapshot
+            if problem is not None:
+                missing[key] = problem
     read.cells_written = written
     read.cells_already_ready = len(ready)
     read.missing = missing
-    read.file_modified = {path: moment.isoformat() for path, moment in hours.file_modified.items()}
+    read.file_modified = {path: moment.isoformat() for path, moment in file_modified.items()}
     read.bytes_read = source.bytes_read()
     read.http_requests = source.request_count()
     read.status = FileWeatherRead.Status.COMPLETE

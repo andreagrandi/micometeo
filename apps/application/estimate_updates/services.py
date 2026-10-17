@@ -32,6 +32,7 @@ from sporameteo.forecast_method import (
     NumericInput,
     HostTrees,
     calculate_forecast,
+    calculate_v4_scores,
 )
 from national_forest.models import ForestBuild, ForestCell
 from sporameteo.moisture_method import WeatherDay
@@ -496,6 +497,79 @@ def validate_prepared_rows(
     return tuple(rows)
 
 
+def _accept_outcome(
+    *,
+    percentage: int | None,
+    reason: str | None,
+    values: list[int | None],
+    reasons: list[str | None],
+) -> None:
+    """Check one calculated percentage or unavailable reason and append it."""
+    if percentage is None:
+        if reason not in UNAVAILABLE_REASON_CODES:
+            raise EstimateValidationError(f"Unknown estimate unavailable reason: {reason!r}.")
+        values.append(None)
+        reasons.append(reason)
+        return
+    if isinstance(percentage, bool) or not isinstance(percentage, int):
+        raise EstimateValidationError("Estimate percentages must be whole integers.")
+    if not math.isfinite(float(percentage)) or not 0 <= percentage <= 100:
+        raise EstimateValidationError(
+            "Estimate percentages must be finite and from zero through one hundred."
+        )
+    values.append(percentage)
+    reasons.append(None)
+
+
+def _v4_rows(
+    *,
+    snapshot: WeatherSnapshot,
+    summaries: Mapping[date, WeatherSummary],
+    forest_cells: Sequence[ForestCell],
+    terrain_cells: Mapping[int, TerrainCell],
+    terrain_build_id: uuid.UUID,
+    daily_rows: Mapping[date, Any],
+    tree_inputs: dict[str, Any],
+    method: ForecastMethodV4Config,
+) -> list[PreparedEstimateRow]:
+    """Calculate all squares of a cell with the shared weather work done once per target date."""
+    if not forest_cells:
+        return []
+    altitudes = [
+        None if (terrain := terrain_cells.get(row.grid_build_cell_id)) is None else terrain.altitude_m
+        for row in forest_cells
+    ]
+    shares = [row.forest_share for row in forest_cells]
+    trees = [saved_host_trees(tree_inputs=tree_inputs, forest_cell_id=row.id) for row in forest_cells]
+    values: list[list[int | None]] = [[] for _ in forest_cells]
+    reasons: list[list[str | None]] = [[] for _ in forest_cells]
+    for target_date in sorted(summaries):
+        shared = _forecast_inputs(
+            snapshot=snapshot,
+            summary=summaries[target_date],
+            forest_cell=forest_cells[0],
+            terrain_cell=terrain_cells.get(forest_cells[0].grid_build_cell_id),
+            terrain_build_id=terrain_build_id,
+            daily_rows=daily_rows,
+            host_trees=trees[0],
+        )
+        try:
+            outcomes = calculate_v4_scores(
+                inputs=shared, forest_shares=shares, altitudes=altitudes, host_trees=trees, method=method,
+            )
+        except (TypeError, ValueError) as exc:
+            raise EstimateValidationError(str(exc)) from exc
+        for index, (percentage, reason) in enumerate(outcomes):
+            _accept_outcome(percentage=percentage, reason=reason, values=values[index], reasons=reasons[index])
+    return [
+        PreparedEstimateRow(
+            forest_cell_id=row.id,
+            values=encode_result_bytes(percentages=values[index], unavailable_reasons=reasons[index]),
+        )
+        for index, row in enumerate(forest_cells)
+    ]
+
+
 def calculate_estimate_update(
     *,
     snapshot_id: uuid.UUID | str,
@@ -560,6 +634,18 @@ def calculate_estimate_update(
     )
     expected_ids = [row.id for row in forest_cells]
     prepared_rows: list[PreparedEstimateRow] = []
+    if calculator is None and isinstance(method, ForecastMethodV4Config):
+        prepared_rows = _v4_rows(
+            snapshot=snapshot,
+            summaries=summaries,
+            forest_cells=forest_cells,
+            terrain_cells=terrain_cells,
+            terrain_build_id=terrain_build.id,
+            daily_rows=daily_rows,
+            tree_inputs=tree_inputs,
+            method=method,
+        )
+        forest_cells = []
     for forest_cell in forest_cells:
         terrain_cell = terrain_cells.get(forest_cell.grid_build_cell_id)
         values: list[int | None] = []
@@ -583,24 +669,12 @@ def calculate_estimate_update(
                 raise EstimateValidationError(str(exc)) from exc
             if result.method_version != method.version:
                 raise EstimateValidationError("Estimate rows use mixed method versions.")
-            if result.whole_percentage is None:
-                if result.unavailable_reason not in UNAVAILABLE_REASON_CODES:
-                    raise EstimateValidationError(
-                        f"Unknown estimate unavailable reason: {result.unavailable_reason!r}."
-                    )
-                values.append(None)
-                reasons.append(result.unavailable_reason)
-            else:
-                if isinstance(result.whole_percentage, bool) or not isinstance(
-                    result.whole_percentage, int
-                ):
-                    raise EstimateValidationError("Estimate percentages must be whole integers.")
-                if not math.isfinite(float(result.whole_percentage)) or not 0 <= result.whole_percentage <= 100:
-                    raise EstimateValidationError(
-                        "Estimate percentages must be finite and from zero through one hundred."
-                    )
-                values.append(result.whole_percentage)
-                reasons.append(None)
+            _accept_outcome(
+                percentage=result.whole_percentage,
+                reason=result.unavailable_reason,
+                values=values,
+                reasons=reasons,
+            )
         encoded = encode_result_bytes(percentages=values, unavailable_reasons=reasons)
         prepared_rows.append(PreparedEstimateRow(forest_cell_id=forest_cell.id, values=encoded))
     rows = validate_prepared_rows(rows=prepared_rows, expected_forest_cell_ids=expected_ids)

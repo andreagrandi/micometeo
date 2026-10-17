@@ -37,9 +37,10 @@ keyed by run ID, target date, view or 10 km tile, and forest build, so a new
 run uses new keys and never mixes with old entries.
 `SPORAMETEO_MAP_CACHE_MAX_ENTRIES` bounds the table, 50,000 entries by default.
 An evicted entry is rebuilt from the database. After each publication a
-background task fills the cache for the new run, and
-`manage.py warm_published_map_cache` does the same by hand. Both accept only
-Tuscany.
+background task prepares the run summary and the overview points of the new
+run, and `manage.py warm_published_map_cache` does the same by hand. Both
+accept only Tuscany. The square and result tiles of a 10 km area are built by
+the first request that needs them, which takes 7 to 16 ms per tile.
 
 ## Metadata and forest layer
 
